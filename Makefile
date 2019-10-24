@@ -38,7 +38,7 @@ doc-pdf:
 zip: clean
 	@echo "Compressing the project into file" $(ZIP)".zip"...
 	@rm -f ./releases/$(ZIP)__$(VERSION).zip
-	@zip -r ./releases/$(ZIP)__$(VERSION).zip $(PACKAGE) setup.py dependencies Dockerfile LICENSE Makefile README.md VERSION petkovsek_algorithm.ipynb
+	@zip -r ./releases/$(ZIP)__$(VERSION).zip $(PACKAGE) setup.py Dockerfile LICENSE Makefile README.md VERSION petkovsek_algorithm.ipynb
 	@cp ./releases/$(ZIP)__$(VERSION).zip ./releases/old/$(ZIP)__$(VERSION)__`date +'%y.%m.%d_%H:%M:%S'`.zip
 	@cp ./releases/$(ZIP)__$(VERSION).zip ./releases/$(ZIP).zip
 	
