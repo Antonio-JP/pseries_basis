@@ -364,3 +364,18 @@ class PolyBasis(PSBasis):
     
     def __repr__(self):
         return "PolyBasis -- WARNING: this is an abstract class";
+
+class OrderBasis(PSBasis):
+    r'''
+        Abstract class for a order power series basis. 
+        
+        Their elements must be indexed by natural numbers such that the n-th
+        element of the basis has order exactly `n`.
+        
+        This class must never be instantiated.
+    '''
+    def __init__(self):
+        super(OrderBasis,self).__init__(False);
+    
+    def __repr__(self):
+        return "PolyBasis -- WARNING: this is an abstract class";
