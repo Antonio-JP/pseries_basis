@@ -45,7 +45,7 @@ class FunctionalBasis(OrderBasis):
         return r"\left\{%s(x)^n\right\}_{n \geq 0}" %(self.__fun_name);
 
 ###############################################################
-### EXAMPLES OF PARTICULAR ORTHOGONAL BASIS
+### EXAMPLES OF PARTICULAR GENERALIZED POWER BASIS
 ###############################################################
 class ExponentialBasis(FunctionalBasis):
     r'''
@@ -79,3 +79,35 @@ class ExponentialBasis(FunctionalBasis):
     def _latex_(self):
         return r"\left\{P_n^{(%s,%s)}(%s)\right\}_{n \geq 0}" %(self.__alpha, self.__beta,self.var_name());
 
+###############################################################
+### EXAMPLES OF PARTICULAR ORDER BASIS
+###############################################################
+class BesselBasis(OrderBasis):
+    r'''
+        Class for representing a basis of Bessel functions.
+        
+        The Bessel functions with integer index form naturally an order basis. They are usually denoted
+        by `J_n(x)` where `n` is a natural number.
+        
+        INPUT::
+            - ``Xi``: the name for the operator representing the multiplication by `1/x`.
+            - ``Dx``: the name of the operator representing the standard derivation.
+    '''
+    def __init__(self, Xi='Xi', Dx='Dx'):
+        ## Initializing the PolyBasis strcuture
+        super(BesselBasis,self).__init__();
+        
+        ## The multiplication by X compatibility is given
+        Sni = self.Sni; n = self.n; Sn = self.Sn; Q12 = 1/Integer(2);
+        self.set_compatibility(Xi, (Q12/n)*Sn + (Q12/n)*Sni);
+        self.set_compatibility(Dx, Q12*Sn - Q12*Sni);
+        
+    @cached_method
+    def get_element(self, n):
+        return bessel_J(n,x);
+
+    def __repr__(self):
+        return "Bessel Basis (J_n)";
+    
+    def _latex_(self):
+        return r"\left\{J_n(x)\right\}_{n \geq 0}";
