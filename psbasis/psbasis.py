@@ -119,6 +119,24 @@ class PSBasis(object):
             else:
                 result += coefficients[i];
         return result;
+
+    def remove_Sni(self, operator):
+        r'''
+            Method to remove Sni from an operator. 
+
+            This method allows to compute an equivalent operator but without inverse shifts. This
+            can be helpful to compute a holonomic operator and apply methods from the package
+            OreAlgebra to manipulate it.
+
+            In the case the input is a matrix, we remove all the inverse shifts simultaneously.
+        '''
+        Sni = self.Sni; Sn = self.Sn;
+        if(is_Matrix(operator)):
+            d = max(max(el.degree(self.Sni) for el in row) for row in operator);
+            return Matrix(self.OSS, [[self.reduce_SnSni((Sn**d)*el) for el in row] for row in operator]);
+
+        d = operator.degree(Sni);
+        return self.OSS(self.reduce_SnSni((Sn**d)*operator));
     
     def polynomial_ring(self,var_name='x'):
         return PolynomialRing(self.OB.base(), [var_name]);
@@ -212,7 +230,6 @@ class PSBasis(object):
             
         return compatibility.degree(self.Sni);
         
-    @cached_method
     def get_compatibility(self, operator):
         r'''
             Method to get the compatibility for an operator.
@@ -234,7 +251,12 @@ class PSBasis(object):
             else:
                 return self.__compatibility[operator];
         else:
-            return self.reduce_SnSni(operator.polynomial()(**self.__compatibility));
+            try:
+                poly = operator.polynomial();
+            except TypeError:
+                poly = operator;
+
+            return self.reduce_SnSni(poly(**self.__compatibility));
 
     @cached_method
     def get_compatibility_sections(self, size, operator):
