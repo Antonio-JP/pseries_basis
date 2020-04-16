@@ -29,6 +29,19 @@ class FactorialBasis(PolyBasis):
     def var_name(self):
         return self.__var_name;
 
+    def root_sequence(self):
+        r'''
+            Method that returns the root sequence of the polynomial basis.
+
+            Since a factorial basis satisties that `P_n(x)` divides `P_{n+1}(x)` for all
+            `n`, we have that the basis forms a sequence of polynomials with a persistent
+            set of roots.
+
+            We can then define the root sequence with `\rho_n` the new root in the polynomial
+            `P_{n+1}(x)`.
+        '''
+        return lambda n : (self.get_element(n+1)/self.get_element(n)).numerator().roots()[0][0];
+
     ## Method related with equivalence of Proposition 1
     def increasing_polynomial(self, *args, **kwds):
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)");
@@ -113,6 +126,10 @@ class SFactorialBasis(FactorialBasis):
             return self.get_element(n-1) * (an(n=n)*x + bn(n=n));
         elif(n == 0):
             return R.one();
+
+    # Override from FactorialBasis
+    def root_sequence(self):
+        return lambda n : -self.__bn(n=n+1)/self.__an(n=n+1);
 
     def constant_coefficient(self):
         r'''
