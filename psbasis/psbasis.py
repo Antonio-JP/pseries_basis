@@ -1,5 +1,34 @@
 r'''
     Sage package for Power Series Basis.
+
+    This module introduces the basic structures in Sage for computing with *Power
+    Series Basis*. We based this work in the paper https://arxiv.org/abs/1804.02964v1
+    by M. Petkovsek, where all definitions and proofs for the algorithms here can be found.
+
+    A Power Series basis is defined as a sequence `\{f_n\}_{n\in\mathbb{N}} \subset \mathbb{K}[[x]]`
+    that form a `\mathbb{K}`-basis of the whole ring of formal power series. We distinguish
+    between two basic type of basis:
+
+    * Polynomial basis: here `f_n \in \mathbb{K}[x]` with degree equal to `n`.
+    * Order basis: here `ord(f_n) = n`, meaning that `f_n = x^n g_n(x)` such that `g(0) \neq 0`.
+
+    Any formal power series `g(x)` can be expressed in terms of the power series basis:
+
+    .. MATH::
+
+        g(x) = \sum_{n \in \mathbb{N}} \alpha_n f_n.
+
+    The main aim of this work is to understand which `\mathbb{K}`-linear operators over the
+    ring of formal power series are *compatible* with a power series basis, meaning that, 
+    `L\cdot g(x) = 0` if and only if the sequence `\alpha_n` is P-recursive.
+
+    EXAMPLES::
+
+        sage: from psbasis import *
+
+    This package includes no example since all the structures it offers are abstract, so they should
+    never be instancaited. For particular examples and test, look to the modules :mod:`~psbasis.factorial_basis`
+    and :mod:`~psbasis.product_basis`.
 '''
 
 ## Sage imports
@@ -10,40 +39,113 @@ from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 from ore_algebra import OreAlgebra
 
 ## Private module variables (static elements)
-__OB = FractionField(PolynomialRing(QQ, ['n']))
-__n = __OB.gens()[0]
-__OS = OreAlgebra(__OB, ('Sn', lambda p: p(n=__n+1), lambda p : 0), ('Sni', lambda p : p(n=__n-1), lambda p : 0))
-__OSS = OreAlgebra(__OB, ('Sn', lambda p: p(n=__n+1), lambda p : 0))
-__Sn = __OS.gens()[0]
-__Sni = __OS.gens()[1]
+_psbasis__OB = FractionField(PolynomialRing(QQ, ['n']))
+_psbasis__n = _psbasis__OB.gens()[0]
+_psbasis__OS = OreAlgebra(_psbasis__OB, ('Sn', lambda p: p(n=_psbasis__n+1), lambda p : 0), ('Sni', lambda p : p(n=_psbasis__n-1), lambda p : 0))
+_psbasis__OSS = OreAlgebra(_psbasis__OB, ('Sn', lambda p: p(n=_psbasis__n+1), lambda p : 0))
+_psbasis__Sn = _psbasis__OS.gens()[0]
+_psbasis__Sni = _psbasis__OS.gens()[1]
 
 class PSBasis(object):
     r'''
         Generic (abstract) class for a power series basis.
         
         Their elements must be indexed by natural numbers and ordered by
-        `degree` or `order`.
+        *degree* or *order*.
         
-        This class must never be instantiated.
+        This class must never be instantiated, but contains all the methods that will
+        have a common implementation for particular basis.
     '''
     ### Getters from the module variable as objects of the class
     def OB(self):
-        return __OB
+        r'''
+            Method to get the generic base ring for rational functions in `n`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B.OB()
+                Fraction Field of Univariate Polynomial Ring in n over Rational Field
+        '''
+        return _psbasis__OB
 
     def n(self):
-        return __n
+        r'''
+            Method to get the generic variable `n` for the recurrences.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B.n()
+                n
+                sage: B.n().parent()
+                Fraction Field of Univariate Polynomial Ring in n over Rational Field
+        '''
+        return _psbasis__n
 
     def OS(self):
-        return __OS
+        r'''
+            Method to get the generic variable :class:`~ore_algebra.OreAlgebra` for the shift 
+            and inverse shift operators over the rational functions in `n`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B.OS()
+                Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
+        '''
+        return _psbasis__OS
 
     def OSS(self):
-        return __OSS
+        r'''
+            Method to get the generic variable :class:`~ore_algebra.OreAlgebra` with only the direct shift 
+            over the rational functions in `n`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B.OSS()
+                Univariate Ore algebra in Sn over Fraction Field of Univariate Polynomial Ring in n over Rational Field
+        '''
+        return _psbasis__OSS
 
     def Sn(self):
-        return __Sn
+        r'''
+            Method to get the generic variable for the direct shift operator.
+
+            This object is in the ring :func:`~PSBasis.OS`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B.Sn()
+                Sn
+                sage: B.Sn().parent()
+                Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
+        '''
+        return _psbasis__Sn
 
     def Sni(self):
-        return __Sni
+        r'''
+            Method to get the generic variable for the inverse shift operator.
+
+            This object is in the ring :func:`~PSBasis.OS`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B.Sni()
+                Sni
+                sage: B.Sni().parent()
+                Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
+        '''
+        return _psbasis__Sni
     
     ### CONSTRUCTOR
     def __init__(self, degree=True):
@@ -53,11 +155,11 @@ class PSBasis(object):
     ### BASIC METHODS
     def get_element(self, n, var_name=None):
         r'''
-            Method to return the $n$th element of the basis.
+            Method to return the `n`-th element of the basis.
             
-            This method must return the $n$th element for this series. This means
-            a power series with degree $n$ if ``self.by_degree()`` or of order
-            $n$ if ``self.by_order()``.
+            This method must return the `n`-th element for this series. This means
+            a power series with degree `n` if ``self.by_degree()`` is ``True`` or of order
+            `n` if ``self.by_order()`` is ``True``.
         '''
         raise NotImplementedError("Method get_element must be implemented in each subclass of polynomial_basis")
         
@@ -65,8 +167,8 @@ class PSBasis(object):
         r'''
             Getter for the type of ordering of the basis.
             
-            Return ``True`` if the $n$th element of the basis is a polynomial
-            of degree $n$.
+            Return ``True`` if the `n`th element of the basis is a polynomial
+            of degree `n`.
         '''
         return self.__degree
     
@@ -75,18 +177,47 @@ class PSBasis(object):
         '''
             Getter for the type of ordering of the basis.
             
-            Return ``True`` if the $n$th element of the basis is a power series
-            of order $n$.
+            Return ``True`` if the `n`th element of the basis is a power series
+            of order `n`.
         '''
         return (not self.__degree)
 
     ### AUXILIARY METHODS
     def reduce_SnSni(self,operator):
         r'''
-            Method to reduce operators with Sn and Sni. 
+            Method to reduce operators with ``Sn`` and ``Sni``.
 
-            Operators in Sn and Sni can be usually simplified until we obtain a Laurent polynomial where Sni = Sn^{-1}.
-            Since they are inverses of each other, Sn*Sni = Sni*Sn = 1.
+            The operators we handle will have two shifts in the variable `n`: the direct shift (`\sigma: n \mapsto n+1`)
+            and the inverse shift (`\sigma^{-1}: n \mapsto n-1`). These two shifts are represented in our system with the 
+            operators ``Sn`` and ``Sni`` respectively.
+
+            However, the computations with the package ``ore_algebra`` do not take care automatically of the obvious cancellation
+            between these two operators: `\sigma \sigma^{-1} = \sigma^{-1}\sigma = id`. This method performs this cancellation
+            in all terms that have the two operators involved and returns a reduced version of the input.
+
+            INPUT:
+                * ``operator``: an operator involving ``Sn`` and ``Sni``.
+
+            OUTPUT:
+            
+            A reduced but equivalent version of ``operator`` such that the monomials involved in the reduced version only have
+            ``Sn`` or ``Sni``, but never mixed. 
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = PSBasis() # illegal build just for examples
+                sage: Sn = B.Sn(); Sni = B.Sni()
+                sage: Sn*Sni
+                Sn*Sni
+                sage: Sni*Sn
+                Sn*Sni
+                sage: B.reduce_SnSni(Sn*Sni)
+                1
+                sage: B.reduce_SnSni(Sni*Sn)
+                1
+                sage: B.reduce_SnSni(Sni*Sn^2 - 3*Sni^2*Sn^3 + Sn)
+                -Sn
         '''
         if(is_Matrix(operator)):
             base = operator.parent().base(); n = operator.nrows()
@@ -111,13 +242,42 @@ class PSBasis(object):
 
     def remove_Sni(self, operator):
         r'''
-            Method to remove Sni from an operator. 
+            Method to remove ``Sni`` from an operator. 
 
             This method allows to compute an equivalent operator but without inverse shifts. This
             can be helpful to compute a holonomic operator and apply methods from the package
-            OreAlgebra to manipulate it.
+            :mod:`ore_algebra` to manipulate it.
 
-            In the case the input is a matrix, we remove all the inverse shifts simultaneously.
+            We are usually interested in sequencessuch that when we apply an operator 
+            `L \in \mathbb{K}(n)[\sigma,\sigma^{-1}]` we obtain zero. In this sense, we can always
+            find an operator `\tilde{L} \in \mathbb{K}(n)[\sigma]` that also annihilates the same object.
+
+            This method transform an operator with both direct and inverse shift to another operator
+            only with direct shifts such that if the original operator annihilates an object, then
+            the transformed operator also annihilates it.
+
+            This elimination is the multiplication by ``Sn`` to the highest power of the simplified form
+            of the input. This cancels all the appearances of ``Sni`` and only ``Sn`` remains. Since this is
+            a left multiplication, the annihilator space only increases, hence obtaining the desired property.
+
+            INPUT:
+                * ``operator``: and operators involving ``Sn`` and ``Sni`` (i.e, in the ring returned by
+                  the method :func:`~PSBasis.OS`)
+
+            OUTPUT:
+
+            An operator that annihilates all the objects annihilated by ``operator`` that belong to the ring
+            returned by :func:`~PSBasis.OSS`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = PSBasis() # do not do this in your code
+                sage: Sn = B.Sn(); Sni = B.Sni()
+                sage: B.remove_Sni(Sni)
+                1
+                sage: B.remove_Sni(Sni + 2 + Sn)
+                Sn^2 + 2*Sn + 1
         '''
         Sni = self.Sni(); Sn = self.Sn()
         if(is_Matrix(operator)):
@@ -137,7 +297,7 @@ class PSBasis(object):
             
             This method sets the operator given by ``name`` the translation rule
             given by ``trans``. The latter argument must be a compatible operator
-            of self.OS().
+            in the ring :func:`~PSBasis.OS`.
             
             See https://arxiv.org/abs/1804.02964v1 for further information about the
             definition of a compatible operator.
@@ -146,7 +306,7 @@ class PSBasis(object):
                 - ``name``: the operator we want to set the compatibility. It can be the
                   name for any generator in the *ore_algebra* package or the generator
                   itself.
-                - ``trans``: an operator that can be casted into self.OS(). This can
+                - ``trans``: an operator that can be casted into the ring :func:`~PSBasis.OS`. This can
                   be also be a matrix of operators, associating then the compatibility
                   with its sections.
                 - ``sub`` (optional): if set to True, the compatibility rule for ``name``
@@ -403,3 +563,5 @@ class OrderBasis(PSBasis):
     
     def __repr__(self):
         return "PolyBasis -- WARNING: this is an abstract class"
+
+__all__ = ["PSBasis", "PolyBasis", "OrderBasis"]

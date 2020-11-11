@@ -2,9 +2,9 @@
 Inverse Zeibelger Problem
 =============================
 
-This is the documentation for the package `psbasis`.
+This is the documentation for the package ``psbasis``.
 
-To use this module, you need to import it:: 
+The main package of this project is the package , you need to import it:: 
 
     from psbasis import *
 
@@ -13,8 +13,8 @@ power series ring, and provides methods to compute recurrence equations
 for solutions of difference/differential equations within the ring
 of formal power series.
 
-This package sinergizes pretty naturally with other packages from the author 
-and with the package `ore_algebra` from M. Kauers et. al.
+This package synergies pretty naturally with other packages from the author 
+and with the package ``ore_algebra`` from M. Kauers et. al.
 
 This work is licensed under a `Creative Commons Attribution-Share Alike
 3.0 License`__.
@@ -27,10 +27,10 @@ Sequences
 .. toctree::
    :maxdepth: 1
 
-   psbasis
-   factorial_basis
-   product_basis
-   ortho_basis
+   psbasis/psbasis
+   psbasis/factorial_basis
+   psbasis/product_basis
+   psbasis/ortho_basis
 
 
 Indices and Tables
