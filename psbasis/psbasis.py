@@ -2,64 +2,53 @@ r'''
     Sage package for Power Series Basis.
 '''
 
-from sage.all_cmdline import *   # import sage library
-from sage.structure.element import is_Matrix;
+## Sage imports
+from sage.all import FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method
+from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
-from ore_algebra import *;
+# ore_algebra imports
+from ore_algebra import OreAlgebra
+
+## Private module variables (static elements)
+__OB = FractionField(PolynomialRing(QQ, ['n']))
+__n = __OB.gens()[0]
+__OS = OreAlgebra(__OB, ('Sn', lambda p: p(n=__n+1), lambda p : 0), ('Sni', lambda p : p(n=__n-1), lambda p : 0))
+__OSS = OreAlgebra(__OB, ('Sn', lambda p: p(n=__n+1), lambda p : 0))
+__Sn = __OS.gens()[0]
+__Sni = __OS.gens()[1]
 
 class PSBasis(object):
     r'''
-        Generic (abstract) class for a power series basis. 
+        Generic (abstract) class for a power series basis.
         
-        Their elements must be indexed by natural numbers and ordered by 
+        Their elements must be indexed by natural numbers and ordered by
         `degree` or `order`.
         
         This class must never be instantiated.
     '''
-    ### STATIC  IMMUTABLE ELEMENTS
-    _OB = FractionField(PolynomialRing(QQ, ['n']));
-    _n = _OB.gens()[0];
-    _OS = None;
-    _OSS = None;
-    _Sn = None;
-    _Sni = None;
-
-    @property
+    ### Getters from the module variable as objects of the class
     def OB(self):
-        return PSBasis._OB;
+        return __OB
 
-    @property
     def n(self):
-        return PSBasis._n;
+        return __n
 
-    @property
     def OS(self):
-        if(PSBasis._OS is None):
-            PSBasis._OS = OreAlgebra(self.OB, ('Sn', lambda p: p(n=self.n+1), lambda p : 0), ('Sni', lambda p : p(n=self.n-1), lambda p : 0));
-        return PSBasis._OS;
+        return __OS
 
-    @property
     def OSS(self):
-        if(PSBasis._OSS is None):
-            PSBasis._OSS = OreAlgebra(self.OB, ('Sn', lambda p: p(n=self.n+1), lambda p : 0));
-        return PSBasis._OSS;
+        return __OSS
 
-    @property
     def Sn(self):
-        if(PSBasis._Sn is None):
-            PSBasis._Sn = self.OS.gens()[0];
-        return PSBasis._Sn;
+        return __Sn
 
-    @property
     def Sni(self):
-        if(PSBasis._Sni is None):
-            PSBasis._Sni = self.OS.gens()[1];
-        return PSBasis._Sni;
+        return __Sni
     
     ### CONSTRUCTOR
     def __init__(self, degree=True):
-        self.__degree = degree;
-        self.__compatibility = {};
+        self.__degree = degree
+        self.__compatibility = {}
     
     ### BASIC METHODS
     def get_element(self, n, var_name=None):
@@ -70,7 +59,7 @@ class PSBasis(object):
             a power series with degree $n$ if ``self.by_degree()`` or of order
             $n$ if ``self.by_order()``.
         '''
-        raise NotImplementedError("Method get_element must be implemented in each subclass of polynomial_basis");
+        raise NotImplementedError("Method get_element must be implemented in each subclass of polynomial_basis")
         
     def by_degree(self):
         r'''
@@ -79,7 +68,7 @@ class PSBasis(object):
             Return ``True`` if the $n$th element of the basis is a polynomial
             of degree $n$.
         '''
-        return self.__degree;
+        return self.__degree
     
     def by_order(self):
         
@@ -89,7 +78,7 @@ class PSBasis(object):
             Return ``True`` if the $n$th element of the basis is a power series
             of order $n$.
         '''
-        return (not self.__degree);
+        return (not self.__degree)
 
     ### AUXILIARY METHODS
     def reduce_SnSni(self,operator):
@@ -100,25 +89,25 @@ class PSBasis(object):
             Since they are inverses of each other, Sn*Sni = Sni*Sn = 1.
         '''
         if(is_Matrix(operator)):
-            base = operator.parent().base(); n = operator.nrows();
-            return Matrix(base, [[self.reduce_SnSni(operator.coefficient((i,j))) for j in range(n)] for i in range(n)]);
-        operator = self.OS(str(operator));
-        Sn = self.Sn; Sni = self.Sni;
+            base = operator.parent().base(); n = operator.nrows()
+            return Matrix(base, [[self.reduce_SnSni(operator.coefficient((i,j))) for j in range(n)] for i in range(n)])
+        operator = self.OS()(str(operator))
+        Sn = self.Sn(); Sni = self.Sni()
 
-        poly = operator.polynomial();
-        monomials = poly.monomials();
-        coefficients = poly.coefficients();
-        result = operator.parent().zero(); 
+        poly = operator.polynomial()
+        monomials = poly.monomials()
+        coefficients = poly.coefficients()
+        result = operator.parent().zero()
 
         for i in range(len(monomials)):
-            d1,d2 = monomials[i].degrees();
+            d1,d2 = monomials[i].degrees()
             if(d1 > d2):
-                result += coefficients[i]*Sn**(d1-d2);
+                result += coefficients[i]*Sn**(d1-d2)
             elif(d2 > d1):
-                result += coefficients[i]*Sni**(d2-d1);
+                result += coefficients[i]*Sni**(d2-d1)
             else:
-                result += coefficients[i];
-        return result;
+                result += coefficients[i]
+        return result
 
     def remove_Sni(self, operator):
         r'''
@@ -130,16 +119,16 @@ class PSBasis(object):
 
             In the case the input is a matrix, we remove all the inverse shifts simultaneously.
         '''
-        Sni = self.Sni; Sn = self.Sn;
+        Sni = self.Sni(); Sn = self.Sn()
         if(is_Matrix(operator)):
-            d = max(max(el.degree(self.Sni) for el in row) for row in operator);
-            return Matrix(self.OSS, [[self.reduce_SnSni((Sn**d)*el) for el in row] for row in operator]);
+            d = max(max(el.degree(self.Sni()) for el in row) for row in operator)
+            return Matrix(self.OSS(), [[self.reduce_SnSni((Sn**d)*el) for el in row] for row in operator])
 
-        d = operator.degree(Sni);
-        return self.OSS(self.reduce_SnSni((Sn**d)*operator));
+        d = operator.degree(Sni)
+        return self.OSS()(self.reduce_SnSni((Sn**d)*operator))
     
     def polynomial_ring(self,var_name='x'):
-        return PolynomialRing(self.OB.base(), [var_name]);
+        return PolynomialRing(self.OB().base(), [var_name])
     
     ### COMPATIBILITY RELATED METHODS
     def set_compatibility(self, name, trans, sub=False):
@@ -148,36 +137,36 @@ class PSBasis(object):
             
             This method sets the operator given by ``name`` the translation rule
             given by ``trans``. The latter argument must be a compatible operator
-            of self.OS.
+            of self.OS().
             
             See https://arxiv.org/abs/1804.02964v1 for further information about the
-            definicion of a compatible operator.
+            definition of a compatible operator.
             
-            INPUT::
+            INPUT:
                 - ``name``: the operator we want to set the compatibility. It can be the
                   name for any generator in the *ore_algebra* package or the generator
                   itself.
-                - ``trans``: an operator that can be casted into self.OS. This can
+                - ``trans``: an operator that can be casted into self.OS(). This can
                   be also be a matrix of operators, associating then the compatibility
                   with its sections.
                 - ``sub`` (optional): if set to True, the compatibility rule for ``name``
                   will be updated even if the operator was already compatible.
         '''
-        name = str(name);
+        name = str(name)
         
         if(name in self.__compatibility and (not sub)):
-            raise ValueError("The operator is already compatible with this basis");
+            raise ValueError("The operator is already compatible with this basis")
         
         if(is_Matrix(trans)):
             trans = Matrix([
                 [
-                    self.reduce_SnSni(self.OS(trans.coefficient((i,j))))
+                    self.reduce_SnSni(self.OS()(trans.coefficient((i,j))))
                 for j in range(trans.ncols())]
-            for i in range(trans.nrows())]);
+            for i in range(trans.nrows())])
         else:
-            trans = self.reduce_SnSni(self.OS(trans));
+            trans = self.reduce_SnSni(self.OS()(trans))
             
-        self.__compatibility[name] = trans;
+        self.__compatibility[name] = trans
         
     @cached_method
     def get_lower_bound(self, operator):
@@ -189,7 +178,7 @@ class PSBasis(object):
             https://arxiv.org/abs/1804.02964v1, for a $(A,B)$-compatible operator,
             this lower bound corresponds to the value of $A$.
             
-            INPUT::
+            INPUT:
                 - ``operator``: the operator we want to check. It can be the
                   name for any generator in the *ore_algebra* package or the generator
                   itself.
@@ -198,12 +187,12 @@ class PSBasis(object):
                 - The case when the compatibility rule is a matrix is not implemented.
         '''
         ## Case of the name
-        compatibility = self.get_compatibility(operator);
+        compatibility = self.get_compatibility(operator)
         
         if(is_Matrix(compatibility)):
-            raise NotImplementedError("The lower bound for matrix compatibilities is not implemented");
+            raise NotImplementedError("The lower bound for matrix compatibilities is not implemented")
             
-        return compatibility.degree(self.Sn);
+        return compatibility.degree(self.Sn())
     
     @cached_method
     def get_upper_bound(self, operator):
@@ -215,7 +204,7 @@ class PSBasis(object):
             https://arxiv.org/abs/1804.02964v1, for a $(A,B)$-compatible operator,
             this lower bound corresponds to the value of $B$.
             
-            INPUT::
+            INPUT:
                 - ``operator``: the operator we want to check. It can be the
                   name for any generator in the *ore_algebra* package or the generator
                   itself.
@@ -223,13 +212,26 @@ class PSBasis(object):
             WARNING::
                 - The case when the compatibility rule is a matrix is not implemented.
         '''
-        compatibility = self.get_compatibility(operator);
+        compatibility = self.get_compatibility(operator)
         
         if(is_Matrix(compatibility)):
-            raise NotImplementedError("The lower bound for matrix compatibilities is not implemented");
+            raise NotImplementedError("The lower bound for matrix compatibilities is not implemented")
             
-        return compatibility.degree(self.Sni);
+        return compatibility.degree(self.Sni())
         
+    def has_compatibility(self, operator):
+        r'''
+            Method to know if an operator has compatibility with this basis.
+
+            This method checks whether the operator given has a compatibility or not.
+
+            INPUT:
+                * ``operator``: the operator we want to know if it is compatible or not.
+                  It has to be the name for any generator in the *ore_algebra*.
+        '''
+        if(isinstance(operator,str)):
+            return isinstance(operator, str) and operator in self.__compatibility
+
     def get_compatibility(self, operator):
         r'''
             Method to get the compatibility for an operator.
@@ -240,27 +242,27 @@ class PSBasis(object):
             final sequence operator using the ore_algebra package and a plain 
             substitution.
             
-            INPUT::
-                - ``operator``: the operator we want to get the compatibility. It can be the
+            INPUT:
+                - ``operator``: the operator we want to get the compatibility. It has to be the
                   name for any generator in the *ore_algebra* package or the generator
                   itself.
         '''
         if(isinstance(operator,str)):
             if(not operator in self.__compatibility):
-                raise ValueError("The operator %s is not compatible with %s" %(operator,self));
+                raise ValueError("The operator %s is not compatible with %s" %(operator,self))
             else:
-                return self.__compatibility[operator];
+                return self.__compatibility[operator]
         else:
             try:
-                poly = operator.polynomial();
+                poly = operator.polynomial()
             except TypeError:
-                poly = operator;
+                poly = operator
 
-            return self.reduce_SnSni(poly(**self.__compatibility));
+            return self.reduce_SnSni(poly(**self.__compatibility))
 
     @cached_method
     def get_compatibility_sections(self, size, operator):
-        '''
+        r'''
             Compute the matrix operator for the sections of a compatibility operator.
             
             This method computes a recurrence operator matrix for a basis
@@ -269,51 +271,51 @@ class PSBasis(object):
             
             $$L(b_{km+j}) = \sum_{i=-A}^B compatibility(k,j,i)b_{km+j+i}$$
 
-            INPUT::
+            INPUT:
                 * ``size``: the value of the section size (i.e., $m$).
                 * ``operator``: this must be either a tuple with the values $A$, $B$
                   and a function with three arguments (i,j,k) that returns the compatibility 
-                  coefficients in the appropiate order or a compatible operator with this basis.
+                  coefficients in the appropriate order or a compatible operator with this basis.
         '''
         ## Considering the case of an operator
         if(not (isinstance(operator, tuple) or isinstance(operator, list))):
-            aux = operator;
-            operator = (self.A(operator),self.B(operator),lambda k,j,i : self.compatibility_coefficient(aux, k*size+j, i));
+            aux = operator
+            operator = (self.A(operator),self.B(operator),lambda k,j,i : self.compatibility_coefficient(aux, k*size+j, i))
 
         ## Checking the input
         if(len(operator) != 3):
-            raise TypeError("The input must be a valid operator or a tuple with 3 elements");
-        A,B,alpha = operator;
+            raise TypeError("The input must be a valid operator or a tuple with 3 elements")
+        A,B,alpha = operator
 
         if(not size in ZZ or size <= 0):
-            raise ValueError("The section size must be a positive integer (got %s)" %m);
+            raise ValueError("The section size must be a positive integer (got %s)" %size)
         elif(not A in ZZ or A < 0):
-            raise ValueError("The upper bound condition is not valid");
+            raise ValueError("The upper bound condition is not valid")
         elif(not B in ZZ or B < 0):
-            raise ValueError("The lower bound condition is not valid");
+            raise ValueError("The lower bound condition is not valid")
 
         ## Creating an auxiliary function
         def SN(index):
-            index = ZZ(index);
+            index = ZZ(index)
             if(index < 0):
-                return self.Sni**(-index);
+                return self.Sni()**(-index)
             else:
-                return self.Sn**index;
+                return self.Sn()**index
 
         ## Computing the operator matrix
         M = Matrix(
             [
                 [self.reduce_SnSni(sum(
-                    alpha(self.n+(r-i-j)/size,j,i)*SN((r-i-j)/size) 
+                    alpha(self.n()+(r-i-j)/size,j,i)*SN((r-i-j)/size) 
                     for i in range(-A,B+1) if ((r-i-j)%size == 0)
                 )) for j in range(size)
                 ] for r in range(size)
-            ]);
+            ])
 
         ## Returning the solution
         if(size == 1): # Case of section of size 1: we do not return a matrix
-            return M.coefficient((0,0));
-        return M;
+            return M.coefficient((0,0))
+        return M
     
     @cached_method
     def compatibility_coefficient(self, operator, pos, ind):
@@ -327,12 +329,12 @@ class PSBasis(object):
             This method returns, for the operator given by ``name``, the value 
             $\alpha_{n,i}$ where $n$ is ``pos`` and $i$ is ``ind``.
             
-            INPUT::
+            INPUT:
                 - ``operator``: the operator we want to set the compatibility. It can be the
                   name for any generator in the *ore_algebra* package or the generator
                   itself.
                 - ``pos``: position of the compatibility. This is the $n$ in the
-                  definicion of compatibility. 
+                  definition of compatibility. 
                 - ``ind``: index of the compatibility coefficient. If it is bigger than
                   ``self.get_upper_bound(operator)`` or smaller than ``self.get_lower_bound(operator)``
                   then 0 is returned.
@@ -340,37 +342,37 @@ class PSBasis(object):
             WARNING::
                 - The case when the compatibility rule is a matrix is not implemented.
         '''
-        compatibility = self.get_compatibility(operator);
-        A = self.A(operator); B = self.B(operator);
+        compatibility = self.get_compatibility(operator)
+        A = self.A(operator); B = self.B(operator)
             
         if(is_Matrix(compatibility)):
-            raise NotImplementedError("The coefficient for matrix compatibilities is not implemented");
+            raise NotImplementedError("The coefficient for matrix compatibilities is not implemented")
         
         if(ind < 0 and -ind <= A):
-            Sn = self.Sn;
-            coeff = self.OB(compatibility.polynomial().coefficient({Sn : -ind}));
-            return coeff(n = pos + ind);
+            Sn = self.Sn()
+            coeff = self.OB()(compatibility.polynomial().coefficient({Sn : -ind}))
+            return coeff(n = pos + ind)
         elif(ind > 0 and ind <= B):
-            Sni = self.Sni;
-            coeff = self.OB(compatibility.polynomial().coefficient({Sni : ind}));
-            return coeff(n = pos + ind);
+            Sni = self.Sni()
+            coeff = self.OB()(compatibility.polynomial().coefficient({Sni : ind}))
+            return coeff(n = pos + ind)
         elif(ind == 0):
-            return self.OB(compatibility.polynomial().constant_coefficient());
+            return self.OB()(compatibility.polynomial().constant_coefficient())
         else:
-            return self.OB.zero();
+            return self.OB().zero()
 
-    ### MADIC METHODS
+    ### MAGIC METHODS
     def __getitem__(self, n):
-        return self.get_element(n);
+        return self.get_element(n)
     
     ### MAGIC REPRESENTATION METHODS
     def __repr__(self):
-        return "PSBasis -- WARNING: this is an abstract class";
+        return "PSBasis -- WARNING: this is an abstract class"
     
     ### OTHER ALIASES FOR METHODS
-    A = get_lower_bound;
-    B = get_upper_bound;
-    alpha = compatibility_coefficient;
+    A = get_lower_bound
+    B = get_upper_bound
+    alpha = compatibility_coefficient
     
 class PolyBasis(PSBasis):
     r'''
@@ -382,10 +384,10 @@ class PolyBasis(PSBasis):
         This class must never be instantiated.
     '''
     def __init__(self):
-        super(PolyBasis,self).__init__(True);
+        super(PolyBasis,self).__init__(True)
     
     def __repr__(self):
-        return "PolyBasis -- WARNING: this is an abstract class";
+        return "PolyBasis -- WARNING: this is an abstract class"
 
 class OrderBasis(PSBasis):
     r'''
@@ -397,7 +399,7 @@ class OrderBasis(PSBasis):
         This class must never be instantiated.
     '''
     def __init__(self):
-        super(OrderBasis,self).__init__(False);
+        super(OrderBasis,self).__init__(False)
     
     def __repr__(self):
-        return "PolyBasis -- WARNING: this is an abstract class";
+        return "PolyBasis -- WARNING: this is an abstract class"
