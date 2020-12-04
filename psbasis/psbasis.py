@@ -315,7 +315,7 @@ class PSBasis(object):
         name = str(name)
         
         if(name in self.__compatibility and (not sub)):
-            raise ValueError("The operator is already compatible with this basis")
+            print("The operator is already compatible with this basis -- no changes are done")
         
         if(is_Matrix(trans)):
             trans = Matrix([
@@ -466,7 +466,7 @@ class PSBasis(object):
         M = Matrix(
             [
                 [self.reduce_SnSni(sum(
-                    alpha(self.n()+(r-i-j)/size,j,i)*SN((r-i-j)/size) 
+                    alpha(self.n()+(r-i-j)//size,j,i)*SN((r-i-j)//size) # we use exact division to avoid casting issues
                     for i in range(-A,B+1) if ((r-i-j)%size == 0)
                 )) for j in range(size)
                 ] for r in range(size)

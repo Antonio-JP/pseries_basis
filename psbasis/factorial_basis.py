@@ -44,7 +44,11 @@ class FactorialBasis(PolyBasis):
             We can then define the root sequence with `\rho_n` the new root in the polynomial
             `P_{n+1}(x)`.
         '''
-        return lambda n : (self.get_element(n+1)/self.get_element(n)).numerator().roots()[0][0]
+        def __root_fn(n):
+            nth_poly = (self.get_element(n+1)/self.get_element(n)).numerator()
+            # This polynomial has degree 1, hence the root is easily computable
+            return -nth_poly[0]/nth_poly[1]
+        return __root_fn
 
     ## Method related with equivalence of Proposition 1
     def increasing_polynomial(self, *args, **kwds):
@@ -439,7 +443,7 @@ class FallingBasis(SFactorialBasis):
         a = self.__a; b = self.__b; c = self.__c
         x = self.polynomial_ring(self.var_name()).gens()[0]
         if(c == -1):
-            return r"\left\{(%s)^{\upperline{n}}\right\}_{n \geq 0}" %self.get_element(1)
+            return r"\left\{(%s)^{\overline{n}}\right\}_{n \geq 0}" %self.get_element(1)
         elif(c == 1):
             return r"\left\{(%s)^{\underline{n}}\right\}_{n \geq 0}" %self.get_element(1)
         return r"\left\{(%s)^{\underline{n}_%s}\right\}_{n \geq 0}" %(a*x, b)
