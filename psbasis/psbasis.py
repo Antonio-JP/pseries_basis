@@ -379,6 +379,15 @@ class PSBasis(object):
             
         return compatibility.degree(self.Sni())
         
+    def compatible_operators(self):
+        r'''
+            Method that returns a list with the compatible operators stored in the dictionary.
+
+            This method allows the user to know the names of the basic compatible operators with this 
+            basis. Any polynomial built on these operators will be valid for the method :func:`get_compatibility`.
+        '''
+        return self.__compatibility.keys()
+
     def has_compatibility(self, operator):
         r'''
             Method to know if an operator has compatibility with this basis.
@@ -521,9 +530,37 @@ class PSBasis(object):
         else:
             return self.OB().zero()
 
+    def scalar(self, factor):
+        r'''
+            Method to create an equivalent basis built by multiplying by a sequence of constants.
+
+            It is clear that if we compute the Hadamard product of a basis and a sequence
+            of constants, we obtain a basis of the ring of formal power series. This 
+            new basis carry over all the compatibilities of the old basis with small modifications.
+
+            INPUT:
+                * ``factor``: rational function in `n` that will be interpreted as a sequence.
+
+            OUTPUT:
+
+            A :class:`PSBasis` of the same type as ``self`` but representing the equivalent basis
+            multiplied by ``factor``.
+        '''
+        raise NotImplementedError("Method scalar must be implemented in each subclass of polynomial_basis")
+
     ### MAGIC METHODS
     def __getitem__(self, n):
         return self.get_element(n)
+
+    def __mul__(self,other):
+        try:
+            other = self.OB()(other)
+            return self.scalar(other)
+        except:
+            return NotImplemented
+        
+    def __rmul__(self, other):
+        return self.__mul__(other)
     
     ### MAGIC REPRESENTATION METHODS
     def __repr__(self):

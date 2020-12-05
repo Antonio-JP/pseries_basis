@@ -135,6 +135,15 @@ class SFactorialBasis(FactorialBasis):
         elif(n == 0):
             return R.one()
 
+    def scalar(self, factor):
+        factor = self.OB()(factor)
+        new_basis = SFactorialBasis(self.__an*factor, self.__bn*factor, X=self.__var_name)
+        for el in self.compatible_operators():
+            if not new_basis.has_compatibility(el):
+                raise NotImplementedError("Need to add new compatibilities by hand")
+        
+        return new_basis
+
     # Override from FactorialBasis
     def root_sequence(self):
         return lambda n : -self.__bn(n=n+1)/self.__an(n=n+1)
