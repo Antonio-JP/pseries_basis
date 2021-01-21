@@ -582,6 +582,77 @@ class PolyBasis(PSBasis):
     '''
     def __init__(self):
         super(PolyBasis,self).__init__(True)
+
+    def basis_matrix(self, nrows, ncols):
+        r'''
+            Method that returns the matrix that make the change from the canonical basis
+            `\{1, x, x^2, \ldots\}` to the current polynomial basis.
+            
+            All polynomials basis are based on elements `P_n(x)` of degree `n` for each
+            value of `n \in \mathbb{N}`. This means that we can write:
+
+            .. MATH::
+
+                P_n(x) = \sum_{k=0}^n a_{n,k} x^k
+
+            And by taking `a_{n,k} = 0` for all `k > 0`, we can build a matrix 
+            `M = \left(a_{n,k}\right)_{n,k \geq 0}`, such that:
+
+            .. MATH::
+
+                \begin{pmatrix}P_0(x)\\P_1(x)\\P_2(x)\\P_3(x)\\\vdots\end{pmatrix} = 
+                \begin{pmatrix}
+                    a_{0,0} & 0 & 0 & 0 & \ldots\\
+                    a_{1,0} & a_{1,1} & 0 & 0 & \ldots\\
+                    a_{2,0} & a_{2,1} & a_{2,2} & 0 & \ldots\\
+                    a_{3,0} & a_{3,1} & a_{3,2} & a_{3,3} & \ldots\\
+                    \vdots&\vdots&\vdots&\vdots&\ddots
+                \end{pmatrix} \begin{pmatrix}1\\x\\x^2\\x^3\\\vdots\end{pmatrix}
+
+            This matrix is infinite, so this method only returns a bounded region of the matrix.
+
+            INPUT:
+                * ``nrows``: number of rows for the matrix
+                * ``ncols``: number of columns for the matrix
+
+            OUTPUT:
+            
+            The matrix `M = \left(a_{n,k}\right)_{0\leq n \leq nrows}^{0 \leq k \leq ncols}`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = BinomialBasis()
+                sage: B.basis_matrix(5,5)
+                [    1     0     0     0     0]
+                [    0     1     0     0     0]
+                [    0  -1/2   1/2     0     0]
+                [    0   1/3  -1/2   1/6     0]
+                [    0  -1/4 11/24  -1/4  1/24]
+                sage: B.basis_matrix(3,7)
+                [      1       0       0]
+                [      0       1       0]
+                [      0    -1/2     1/2]
+                [      0     1/3    -1/2]
+                [      0    -1/4   11/24]
+                [      0     1/5   -5/12]
+                [      0    -1/6 137/360]
+                sage: H = HermiteBasis()
+                sage: H.basis_matrix(5,5)
+                [  1   0   0   0   0]
+                [  0   2   0   0   0]
+                [ -2   0   4   0   0]
+                [  0 -12   0   8   0]
+                [ 12   0 -48   0  16]
+                sage: P = PowerBasis(1,1)
+                sage: P.basis_matrix(5,5)
+                [1 0 0 0 0]
+                [1 1 0 0 0]
+                [1 2 1 0 0]
+                [1 3 3 1 0]
+                [1 4 6 4 1]
+        '''
+        return Matrix([[self[n][k] for k in range(ncols)] for n in range(nrows)])
     
     def __repr__(self):
         return "PolyBasis -- WARNING: this is an abstract class"
