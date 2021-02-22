@@ -150,6 +150,39 @@ class SFactorialBasis(FactorialBasis):
 
             This method implements the abstract method :func:`psbasis.psbasis.PSBasis._scalar_basis`.
             See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = BinomialBasis(); n = B.n()
+                sage: f = (n^2+1)/(n+2)
+                sage: B2 = B.scalar(f)
+                sage: B2
+                Factorial basis: (1/2, 2/3*x, 5/8*x^2 - 5/8*x, ...)
+                sage: all(B[i]*f(n=i) == B2[i] for i in range(100))
+                True
+                sage: B.compatible_operators() == B2.compatible_operators()
+                True
+                sage: B2.get_compatibility('E')
+                ((n^3 + 4*n^2 + 6*n + 4)/(n^3 + 3*n^2 + n + 3))*Sn + 1
+
+            This scalar product also work with the other subclasses of :class:`SFactorialBasis`::
+
+                sage: P = PowerBasis()
+                sage: P2 = P.scalar(n^4+1)
+                sage: P2
+                Factorial basis: (1, 2*x, 17*x^2, ...)
+                sage: P2.compatible_operators()
+                dict_keys(['x', 'Id', 'Dx'])
+                sage: all(P[i]*(i^4+1) == P2[i] for i in range(100))
+                True
+
+            It is interesting to remark that the output class is :class:`SFactorialBasis`, loosing the 
+            information of how the basic basis was created. However, as seen before, we keep all
+            compatibilities::
+
+                sage: P2.__class__ == P.__class__
+                False
         '''
         to_mult = factor/factor(n=self.n()-1)
         return SFactorialBasis(self.__an*to_mult, self.__bn*to_mult, X=self.__var_name, init=self[0]*factor(n=0))
