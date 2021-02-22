@@ -330,7 +330,7 @@ class PSBasis(object):
             if(len(trans) != 3):
                 raise ValueError("The operator given has not the appropriate format: not a triplet")
             A, B, coeffs = trans
-            if(len(coeffs) != A+B):
+            if(len(coeffs) != A+B+1):
                 raise ValueError("The operator given has not the appropriate format: list of coefficients of wrong size")
             Sn = self.Sn(); Sni = self.Sni(); n = self.n()
             coeffs = [self.OB()(el) for el in coeffs]
@@ -582,7 +582,9 @@ class PSBasis(object):
             A = self.A(key); B = self.B(key); n = self.n()
             coeffs = [self.alpha(key, n, i)*(factor/factor(n=n+i)) for i in range(-A, B+1)]
 
-            self.set_compatibility(key, (A, B, coeffs))
+            new_basis.set_compatibility(key, (A, B, coeffs))
+        
+        return new_basis
 
     def _scalar_basis(self, factor):
         r'''
