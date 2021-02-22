@@ -161,10 +161,6 @@ class PSBasis(object):
     def element(self, n, var_name=None):
         r'''
             Method to return the `n`-th element of the basis.
-            
-            This method must return the `n`-th element for this series. This means
-            a power series with degree `n` if ``self.by_degree()`` is ``True`` or of order
-            `n` if ``self.by_order()`` is ``True``.
         '''
         raise NotImplementedError("Method element must be implemented in each subclass of polynomial_basis")
         
