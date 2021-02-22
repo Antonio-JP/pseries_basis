@@ -308,20 +308,34 @@ class PSBasis(object):
             definition of a compatible operator.
             
             INPUT:
-                - ``name``: the operator we want to set the compatibility. It can be the
-                  name for any generator in the *ore_algebra* package or the generator
-                  itself.
-                - ``trans``: an operator that can be casted into the ring :func:`~PSBasis.OS`. This can
-                  be also be a matrix of operators, associating then the compatibility
-                  with its sections.
-                - ``sub`` (optional): if set to True, the compatibility rule for ``name``
-                  will be updated even if the operator was already compatible.
+            
+            * ``name``: the operator we want to set the compatibility. It can be the
+                name for any generator in the *ore_algebra* package or the generator
+                itself.
+            * ``trans``: an operator that can be casted into the ring :func:`~PSBasis.OS`. This can
+                be also be a matrix of operators, associating then the compatibility
+                with its sections. This input can be a triplet ``(A, B, coeffs)``
+                where the values of the lower bound, the upper bound and the coefficients
+                are given. This method builds then the corresponding difference operator.
+            * ``sub`` (optional): if set to True, the compatibility rule for ``name``
+                will be updated even if the operator was already compatible.
         '''
         name = str(name)
         
         if(name in self.__compatibility and (not sub)):
-            print("The operator is already compatible with this basis -- no changes are done")
+            print("The operator %s is already compatible with this basis -- no changes are done" %name)
+            return
         
+        if(isinstance(trans, tuple)):
+            if(len(trans) != 3):
+                raise ValueError("The operator given has not the appropriate format: not a triplet")
+            A, B, coeffs = trans
+            if(len(coeffs) != A+B):
+                raise ValueError("The operator given has not the appropriate format: list of coefficients of wrong size")
+            Sn = self.Sn(); Sni = self.Sni(); n = self.n()
+            coeffs = [self.OB()(el) for el in coeffs]
+            trans = coeffs[A] + sum(coeffs[A-i](n=n+i)*Sn**i for i in range(1, A+1)) + sum(coeffs[A+i](n=n-i)*Sni**i for i in range(1, B+1))
+             
         if(is_Matrix(trans)):
             trans = Matrix([
                 [
@@ -551,7 +565,34 @@ class PSBasis(object):
             A :class:`PSBasis` of the same type as ``self`` but representing the equivalent basis
             multiplied by ``factor``.
         '''
-        raise NotImplementedError("Method 'scalar' must be implemented in each subclass of polynomial_basis")
+        factor = self.OB()(factor) # we cast the factor into a rational function
+
+        ## We check the denominator never vanishes on positive integers
+        if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in factor.denominator().roots()])):
+            raise ValueError("The scalar factor is not valid: it takes value infinity at some 'n'")
+
+        ## We check the numerator never vanishes on the positive integers
+        if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in factor.numerator().roots()])):
+            raise ValueError("The scalar factor is not valid: it takes value 0 at some 'n'")
+
+        new_basis = self._scalar_basis(factor) # we create the structure for the new basis
+
+        compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
+        for key in compatibilities:
+            A = self.A(key); B = self.B(key); n = self.n()
+            coeffs = [self.alpha(key, n, i)*(factor/factor(n=n+i)) for i in range(-A, B+1)]
+
+            self.set_compatibility(key, (A, B, coeffs))
+
+    def _scalar_basis(self, factor):
+        r'''
+            Method that actually builds the structure for the new basis.
+
+            This method (that is abstract) build the actual structure for the new basis. This may have
+            some intrinsic compatibilities that will be extended with the compatibilities that 
+            are in ``self`` according with the factor.
+        '''
+        raise NotImplementedError("Method '_scalar_basis' must be implemented in each subclass of PSBasis")
 
     ### MAGIC METHODS
     def __getitem__(self, n):
