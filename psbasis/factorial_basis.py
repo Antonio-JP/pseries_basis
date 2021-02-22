@@ -15,14 +15,15 @@ class FactorialBasis(PolyBasis):
         Abstract class for a factorial basis.
 
         A factorial basis is a type of polynomial basis for power series where
-        the $(n+1)$th element is build from the $n$th element. This can be seeing
+        the `(n+1)`-th element is build from the $n$th element. This can be seeing
         as a two-term recurrence basis.
 
         It provides several functionalities and methods that all Factorial Basis
         must provide, but may differ in the implementation.
 
         INPUT:
-            - ``X``: the name for the operator representing the multiplication by $x$.
+
+        * ``X``: the name for the operator representing the multiplication by `x`.
     '''
     def __init__(self, X='x'):
         super(FactorialBasis,self).__init__()
@@ -62,16 +63,16 @@ class FactorialBasis(PolyBasis):
         r'''
             Method for getting the matrix from the power basis to the increasing basis.
 
-            In a Factorial Basis, the $n$th element of the basis divides all the following.
-            This means for any pair of indices $m > n$, there is a particular polynomial
-            $Q_{n,m} = P_m/P_n$.
+            In a Factorial Basis, the `n`-th element of the basis divides all the following.
+            This means for any pair of indices `m > n`, there is a particular polynomial
+            `Q_{n,m} = P_m/P_n`.
 
-            In particular, for a fixed $n$ and $i \in \mathfrak{Z}$, the polynomials $Q_{n,n+i}$
+            In particular, for a fixed `n` and `i \in \mathbb{Z}`, the polynomials `Q_{n,n+i}`
             form another Factorial Basis. This method computes a matrix that represents the
             identity between polynomials of degree smaller or equal to ``size`` from the
-            power basis to the basis $Q_{n,n+i}$.
+            power basis to the basis `Q_{n,n+i}`.
 
-            For further information about the input, see the documentation of ``self.matrix_ItP``.
+            For further information about the input, see the documentation of :func:`matrix_ItP`.
         '''
         return self.matrix_ItP(*args, **kwds).inverse()
 
@@ -131,6 +132,42 @@ class SFactorialBasis(FactorialBasis):
     # PSBasis abstract method
     @cached_method
     def element(self, n, var_name=None):
+        r'''
+            Method to return the `n`-th element of the basis.
+
+            This method implements the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            The output will be a polynomial of degree `n`.
+
+            The user can also get the `n`-th element of the sequence using the *magic* Python syntax for 
+            element in a list (i.e., using the ``[]`` notation).
+
+            INPUT:
+
+            * ``n``: the index of the element to get.
+            * ``var_name``: the name of the variable of the resulting polynomial. If ``None`` is given, 
+              we use the variable `x`. Otherwise we create the corresponding polynomial ring and 
+              return the polynomial in that polynomial ring.
+
+            OUTPUT:
+
+            A polynomial with variable name given by ``var_name`` and of degree ``n``.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = SFactorialBasis(1,0); B
+                Factorial basis: (1, x, x^2, ...)
+                sage: B.element(0)
+                1
+                sage: B.element(10)
+                x^10
+                sage: B.element(5)
+                x^5
+                sage: B[3]
+                x^3
+                sage: B.element(7, var_name='y_2')
+                y_2^7
+        '''
         if(var_name is None):
             name = self.__var_name
         else:
@@ -140,7 +177,7 @@ class SFactorialBasis(FactorialBasis):
 
         if(n > 0):
             an = self.__an; bn = self.__bn
-            return self.element(n-1) * (an(n=n)*x + bn(n=n))
+            return self.element(n-1, var_name=var_name) * (an(n=n)*x + bn(n=n))
         elif(n == 0):
             return self.__init
 
