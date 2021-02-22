@@ -2,7 +2,7 @@ r'''
     Sage package for Factorial Series Basis.
 '''
 # sage imports
-from sage.all import prod, vector, binomial, ZZ, cached_method, QQ, Matrix
+from sage.all import prod, vector, binomial, ZZ, cached_method, QQ, Matrix, latex
 
 # ore_algebra imports
 from ore_algebra import OreAlgebra
@@ -151,12 +151,14 @@ class SFactorialBasis(FactorialBasis):
             This method implements the abstract method :func:`psbasis.psbasis.PSBasis._scalar_basis`.
             See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
         '''
-        new_basis = SFactorialBasis(self.__an*factor, self.__bn*factor, X=self.__var_name)
-        for el in self.compatible_operators():
-            if not new_basis.has_compatibility(el):
-                raise NotImplementedError("Need to add new compatibilities by hand")
+        to_mult = factor/factor(n=self.n()-1)
+        return SFactorialBasis(self.__an*to_mult, self.__bn*to_mult, X=self.__var_name, init=self[0]*factor(n=0))
         
-        return new_basis
+    def __repr__(self):
+        return "Factorial basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])
+
+    def _latex_(self):
+        return r"Factorial basis \left(%s,%s\right): \left\{%s,%s,%s,\ldots\right\}" %(latex(self.__an), latex(self.__bn), latex(self[0]), latex(self[1]), latex(self[2]))
 
     # Override from FactorialBasis
     def root_sequence(self):
