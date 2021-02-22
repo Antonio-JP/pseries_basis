@@ -7,3 +7,4 @@ Factorial Basis: simplest Polynomial basis
    :members:
    :undoc-members:
    :show-inheritance:
+   :member-order: bysource

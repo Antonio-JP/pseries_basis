@@ -24,6 +24,12 @@ class FactorialBasis(PolyBasis):
         INPUT:
 
         * ``X``: the name for the operator representing the multiplication by `x`.
+        
+        List of abstract methods:
+
+        * :func:`psbasis.psbasis.PSBasis.element`.
+        * :func:`psbasis.psbasis.PSBasis._scalar_basis`.
+        * :func:`~FactorialBasis.increasing_polynomial`.
     '''
     def __init__(self, X='x'):
         super(FactorialBasis,self).__init__()
@@ -44,6 +50,11 @@ class FactorialBasis(PolyBasis):
 
             We can then define the root sequence with `\rho_n` the new root in the polynomial
             `P_{n+1}(x)`.
+
+            OUTPUT:
+
+            This method returns a function or lambda expression (i.e., a *callable* object)
+            that takes `n` as input and returns `\rho_n`.
         '''
         def __root_fn(n):
             nth_poly = (self.element(n+1)/self.element(n)).numerator()
@@ -53,6 +64,22 @@ class FactorialBasis(PolyBasis):
 
     ## Method related with equivalence of Proposition 1
     def increasing_polynomial(self, *args, **kwds):
+        r'''
+            Returns the increasing factorial for the factorial basis.
+
+            In a Factorial Basis, the `n`-th element of the basis divides all the following.
+            This means for any pair of indices `m > n`, there is a particular polynomial
+            `Q_{n,m}(x) = P_m(x)/P_n(x) \in \mathbb{Q}[x]`.
+
+            This method computes the corresponding increasing polynomial.
+
+            This is an abstract method that has to be implemented in some subclass. The input
+            may depend in each subclass.
+
+            OUTPUT:
+
+            A polynomial in `\mathbb{Q}[x]` representing the requested increasing polynomial.
+        '''
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
 
     def matrix_ItP(self, *args, **kwds):
@@ -135,7 +162,7 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method implements the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
             The output will be a polynomial of degree `n`.
 
             The user can also get the `n`-th element of the sequence using the *magic* Python syntax for 
@@ -185,7 +212,7 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method that actually builds the structure for the new basis.
 
-            This method implements the abstract method :func:`psbasis.psbasis.PSBasis._scalar_basis`.
+            This method *implements* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
 
             EXAMPLES::
@@ -230,53 +257,128 @@ class SFactorialBasis(FactorialBasis):
     def _latex_(self):
         return r"Factorial basis \left(%s,%s\right): \left\{%s,%s,%s,\ldots\right\}" %(latex(self.__an), latex(self.__bn), latex(self[0]), latex(self[1]), latex(self[2]))
 
-    # Override from FactorialBasis
     def root_sequence(self):
+        r'''
+            Method that returns the root sequence of the polynomial basis.
+
+            This method overrides the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.root_sequence`
+            for a description on the output.
+
+            In this case, as the basis is built from the first order recurrence:
+            
+            .. MATH::
+            
+                P_n(x) = (a_nx + b_n)P_{n-1}(x),
+
+            we can explicitly build the new root added in `P_{n+1}(x)` by simply taking
+            `-b_{n+1}/a_{n+1}`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = SFactorialBasis(1,0); roots = B.root_sequence()
+                sage: all(roots(i) == 0 for i in range(100))
+                True
+                sage: n = B.n()
+                sage: B2 = SFactorialBasis(n+1, n-1); roots = B2.root_sequence()
+                sage: [roots(i) for i in range(7)]
+                [0, -1/3, -1/2, -3/5, -2/3, -5/7, -3/4]
+        '''
         return lambda n : -self.__bn(n=n+1)/self.__an(n=n+1)
 
     def constant_coefficient(self):
         r'''
             Getter for the constant coefficient of the factorial basis.
 
-            This method return a sequence (in n) for the constant coefficient of the
+            This method return a sequence (in `n`) for the constant coefficient of the
             increasing polynomial for the Factorial Basis. Recall that for any Factorial
-            Basis, the $n$th element divide the following, so we have:
-                $$P_n = (a_nx + b_n)P_{n-1}$$
+            Basis, the `n`-th element divide the next in the following way:
 
-            This method returns the value of $b_n$.
+            .. MATH::
+
+                P_n(x) = (a_nx + b_n)P_{n-1}(x)
+
+            OUTPUT:
+            
+            This method returns the value of `b_n`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: SFactorialBasis(1,0).constant_coefficient()
+                0
+                sage: SFactorialBasis(2,1).constant_coefficient()
+                1
+                sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').constant_coefficient()
+                (n^2 - 3)/(n + 1)
+
+            This class also allows to access this value with the property :attr:`~SFactorialBasis.bn`::
+
+                sage: SFactorialBasis(1,0).bn
+                0
+                sage: SFactorialBasis(2,1).bn
+                1
+                sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').bn
+                (n^2 - 3)/(n + 1)
         '''
         return self.__bn
 
     def linear_coefficient(self):
         r'''
-            Getter for the constant coefficient of the factorial basis.
+            Getter for the linear coefficient of the factorial basis.
 
-            This method return a sequence (in n) for the constant coefficient of the
+            This method return a sequence (in `n`) for the linear coefficient of the
             increasing polynomial for the Factorial Basis. Recall that for any Factorial
-            Basis, the $n$th element divides the following, so we have:
-                $$P_n = (a_nx + b_n)P_{n-1}$$
+            Basis, the `n`-th element divide the next in the following way:
 
-            This method returns the value of $a_n$.
+            .. MATH::
+
+                P_n(x) = (a_nx + b_n)P_{n-1}(x)
+
+            OUTPUT:
+            
+            This method returns the value of `a_n`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: SFactorialBasis(1,0).linear_coefficient()
+                1
+                sage: SFactorialBasis(2,1).linear_coefficient()
+                2
+                sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').linear_coefficient()
+                1
+
+            This class also allows to access this value with the property :attr:`~SFactorialBasis.an`::
+
+                sage: SFactorialBasis(1,0).an
+                1
+                sage: SFactorialBasis(2,1).an
+                2
+                sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').an
+                1
         '''
         return self.__an
 
-    # FactorialBasis abstract method
+    bn = property(constant_coefficient) #: alias property for the constant coefficient (see :func:`~SFactorialBasis.constant_coefficient`)
+    an = property(linear_coefficient) #: alias property for the linear coefficient (see :func:`~SFactorialBasis.linear_coefficient`)
+
     def increasing_polynomial(self, src, diff=None, dst=None):
         r'''
-            Method to get the increasing polynomial given the appropriate indices.
+            Returns the increasing factorial for the factorial basis.
 
-            In a Factorial Basis, the $n$th element of the basis divides all the following.
-            This means for any pair of indices $m > n$, there is a particular polynomial
-            $Q_{n,m} = P_m/P_n$.
-
-            This method computes such polynomial where $n = src$ and $m = src+diff$ or
-            $m = dst$. Depending which one is given.
+            This method *implements* the corresponding abstract method from :func:`psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
+            in the description or the output.
 
             INPUT:
-                - ``src``: value for $n$.
-                - ``diff``: difference between $n$ and $m$. Must be a positive integer.
-                - ``dst``: value for $m$. Only used (and required) if ``diff`` is None. Must
-                  be bigger than $n$.
+
+            * ``src``: value for lowest index `n`.
+            * ``diff``: difference between ``n` and the largest index `m`. Must be a positive integer.
+            * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
+              be bigger than `n`.
+
+            TODO: add examples
         '''
         ## Checking the arguments
         if(((src in ZZ) and src < 0) or (not src in self.OB())):

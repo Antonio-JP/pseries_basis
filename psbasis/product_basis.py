@@ -279,21 +279,23 @@ class ProductBasis(FactorialBasis):
     # FactorialBasis abstract method
     def increasing_polynomial(self, src, shift, diff=None, dst=None):
         r'''
-            Method to get the increasing polynomial given the appropriate indices.
+            Returns the increasing factorial for the factorial basis.
 
-            In a ProductBasis, since all the factors are Factorial basis, it is itself
-            a Factorial Basis and we can compute again increasing polynomials
-            $D_{n,m} = Q_m/Q_n$.
+            This method *implements* the corresponding abstract method from :func:`psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
+            in the description or the output.
 
-            As the Product basis have several factors, we consider its elements always indexed
-            by two elements: $k$ and $j$ --> $n = km + j$, where $m$ is the number of factors.
+            As a :class:`ProductBasis` have several factors, we consider its elements always indexed
+            by two elements: `(k,j) \mapsto n = kF + j`, where $F$ is the number of factors.
 
             INPUT:
-                - ``src``: value for $k$.
-                - ``shift``: value for $j$, it has to be a value from $\{0,\dots,m-1\}$.
-                - ``diff``: difference between the indices to compare. Must be a positive integer.
-                - ``dst``: value for the final index. Only used (and required) if ``diff`` is None. Must
-                  be bigger than $n$.
+
+            * ``src``: value for `k`.
+            * ``shift``: value for `j`, it has to be a value in `\{0,\dots,m-1\}`.
+            * ``diff``: difference between the index `n` and the largest index `m`. Must be a positive integer.
+            * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must be bigger than `n`.
+
+            TODO: add examples
         '''
         ## Checking the arguments
         if(((src in ZZ) and src < 0) or (not src in self.OB())):
