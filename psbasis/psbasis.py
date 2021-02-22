@@ -53,7 +53,7 @@ class PSBasis(object):
         Their elements must be indexed by natural numbers and ordered by
         *degree* or *order*.
         
-        This class must never be instantiated, but contains all the methods that will
+        This class **must never** be instantiated, but contains all the methods that will
         have a common implementation for particular basis.
     '''
     ### Getters from the module variable as objects of the class
@@ -153,7 +153,7 @@ class PSBasis(object):
         self.__compatibility = {}
     
     ### BASIC METHODS
-    def get_element(self, n, var_name=None):
+    def element(self, n, var_name=None):
         r'''
             Method to return the `n`-th element of the basis.
             
@@ -161,7 +161,7 @@ class PSBasis(object):
             a power series with degree `n` if ``self.by_degree()`` is ``True`` or of order
             `n` if ``self.by_order()`` is ``True``.
         '''
-        raise NotImplementedError("Method get_element must be implemented in each subclass of polynomial_basis")
+        raise NotImplementedError("Method element must be implemented in each subclass of polynomial_basis")
         
     def by_degree(self):
         r'''
@@ -546,11 +546,11 @@ class PSBasis(object):
             A :class:`PSBasis` of the same type as ``self`` but representing the equivalent basis
             multiplied by ``factor``.
         '''
-        raise NotImplementedError("Method scalar must be implemented in each subclass of polynomial_basis")
+        raise NotImplementedError("Method 'scalar' must be implemented in each subclass of polynomial_basis")
 
     ### MAGIC METHODS
     def __getitem__(self, n):
-        return self.get_element(n)
+        return self.element(n)
 
     def __mul__(self,other):
         try:

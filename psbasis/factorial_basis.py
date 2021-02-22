@@ -45,7 +45,7 @@ class FactorialBasis(PolyBasis):
             `P_{n+1}(x)`.
         '''
         def __root_fn(n):
-            nth_poly = (self.get_element(n+1)/self.get_element(n)).numerator()
+            nth_poly = (self.element(n+1)/self.element(n)).numerator()
             # This polynomial has degree 1, hence the root is easily computable
             return -nth_poly[0]/nth_poly[1]
         return __root_fn
@@ -121,7 +121,7 @@ class SFactorialBasis(FactorialBasis):
 
     # PSBasis abstract method
     @cached_method
-    def get_element(self, n, var_name=None):
+    def element(self, n, var_name=None):
         if(var_name is None):
             name = self.__var_name
         else:
@@ -131,7 +131,7 @@ class SFactorialBasis(FactorialBasis):
 
         if(n > 0):
             an = self.__an; bn = self.__bn
-            return self.get_element(n-1) * (an(n=n)*x + bn(n=n))
+            return self.element(n-1) * (an(n=n)*x + bn(n=n))
         elif(n == 0):
             return R.one()
 
@@ -443,18 +443,18 @@ class FallingBasis(SFactorialBasis):
     def __repr__(self):
         a = self.__a; b = self.__b; c = self.__c
         if(c == -1):
-            return "Raising Factorial Basis (1, %s, %s(%s+1),...)" %(self.get_element(1), self.get_element(1), self.get_element(1))
+            return "Raising Factorial Basis (1, %s, %s(%s+1),...)" %(self.element(1), self.element(1), self.element(1))
         elif(c == 1):
-            return "Falling Factorial Basis (1, %s, %s(%s-1),...)" %(self.get_element(1), self.get_element(1), self.get_element(1))
-        return "General (%s,%s,%s)-Falling Factorial Basis (%s, %s,%s,...)" %(a,b,c,self.get_element(0), self.get_element(1), self.get_element(2))
+            return "Falling Factorial Basis (1, %s, %s(%s-1),...)" %(self.element(1), self.element(1), self.element(1))
+        return "General (%s,%s,%s)-Falling Factorial Basis (%s, %s,%s,...)" %(a,b,c,self.element(0), self.element(1), self.element(2))
 
     def _latex_(self):
         a = self.__a; b = self.__b; c = self.__c
         x = self.polynomial_ring(self.var_name()).gens()[0]
         if(c == -1):
-            return r"\left\{(%s)^{\overline{n}}\right\}_{n \geq 0}" %self.get_element(1)
+            return r"\left\{(%s)^{\overline{n}}\right\}_{n \geq 0}" %self.element(1)
         elif(c == 1):
-            return r"\left\{(%s)^{\underline{n}}\right\}_{n \geq 0}" %self.get_element(1)
+            return r"\left\{(%s)^{\underline{n}}\right\}_{n \geq 0}" %self.element(1)
         return r"\left\{(%s)^{\underline{n}_%s}\right\}_{n \geq 0}" %(a*x, b)
 
 class PowerBasis(FallingBasis):
@@ -484,16 +484,16 @@ class PowerBasis(FallingBasis):
     def __repr__(self):
         a = self.linear_coefficient(); b = self.constant_coefficient()
         if(a == 1 and b == 0):
-            return "Power Basis %s^n" %self.get_element(1)
+            return "Power Basis %s^n" %self.element(1)
         else:
-            return "(%s,%s)-Power Basis (%s)^n" %(a,b,self.get_element(1))
+            return "(%s,%s)-Power Basis (%s)^n" %(a,b,self.element(1))
 
     def _latex_(self):
         a = self.linear_coefficient(); b = self.constant_coefficient()
         if(a == 1 and b == 0):
-            return r"\left\{%s^n\right\}_{n \geq 0}" %self.get_element(1)
+            return r"\left\{%s^n\right\}_{n \geq 0}" %self.element(1)
         else:
-            return r"\left\{(%s)^n\right\}_{n \geq 0}" %self.get_element(1)
+            return r"\left\{(%s)^n\right\}_{n \geq 0}" %self.element(1)
 
 class BinomialBasis(SFactorialBasis):
     r'''

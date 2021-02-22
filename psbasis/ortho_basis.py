@@ -87,7 +87,7 @@ class OrthogonalBasis(PolyBasis):
         self.__der_name = Dx
 
     @cached_method
-    def get_element(self, n, var_name=None):
+    def element(self, n, var_name=None):
         if(var_name is None):
             name = self.__var_name
         else:
@@ -102,7 +102,7 @@ class OrthogonalBasis(PolyBasis):
         elif(n == 1):
             return an(n=0)*x + bn(n=0)
         else: # General (recursive) case
-            return (an(n=n-1)*x + bn(n=n-1))*self.get_element(n-1, name) - cn(n=n-1)*self.get_element(n-2, name)
+            return (an(n=n-1)*x + bn(n=n-1))*self.element(n-1, name) - cn(n=n-1)*self.element(n-2, name)
 
     @cached_method
     def get_differential_equation(self, var_name=None):
@@ -215,7 +215,7 @@ class JacobiBasis(OrthogonalBasis):
         super(JacobiBasis, self).__init__(an,bn,cn,X,Dx)
 
     @cached_method
-    def get_element(self, n, var_name=None):
+    def element(self, n, var_name=None):
         if(self.__special_zero and n == 1):
             if(var_name is None):
                 name = self.var_name()
@@ -225,7 +225,7 @@ class JacobiBasis(OrthogonalBasis):
             a0 = (self.__alpha + self.__beta)/2 + 1; b0 = (self.__alpha - self.__beta)/2
             return a0*x + b0
 
-        return super(JacobiBasis, self).get_element(n,var_name)
+        return super(JacobiBasis, self).element(n,var_name)
 
     @cached_method
     def _first_compatibility(self):
@@ -244,7 +244,7 @@ class JacobiBasis(OrthogonalBasis):
         return -op
 
     def __repr__(self):
-        return "Jacobi (%s,%s)-Basis (%s, %s, %s,...)" %(self.__alpha, self.__beta,self.get_element(0), self.get_element(1), self.get_element(2))
+        return "Jacobi (%s,%s)-Basis (%s, %s, %s,...)" %(self.__alpha, self.__beta,self.element(0), self.element(1), self.element(2))
 
     def _latex_(self):
         return r"\left\{P_n^{(%s,%s)}(%s)\right\}_{n \geq 0}" %(self.__alpha, self.__beta,self.var_name())
@@ -294,7 +294,7 @@ class GegenbauerBasis(OrthogonalBasis):
         return -op
 
     def __repr__(self):
-        return "Gegenbauer (%s)-Basis (%s, %s, %s,...)" %(self.__lambda, self.get_element(0), self.get_element(1), self.get_element(2))
+        return "Gegenbauer (%s)-Basis (%s, %s, %s,...)" %(self.__lambda, self.element(0), self.element(1), self.element(2))
 
     def _latex_(self):
         return r"\left\{C_n^{(%s)}(%s)\right\}_{n \geq 0}" %(self.__lambda, self.var_name())
@@ -326,7 +326,7 @@ class LegendreBasis(JacobiBasis):
         return self.reduce_SnSni((n*(n-1)/(2*n-1))*Sni - ((n+1)*(n+2)/(2*n+3))*Sn)
 
     def __repr__(self):
-        return "Legendre Basis (%s, %s, %s,...)" %(self.get_element(0), self.get_element(1), self.get_element(2))
+        return "Legendre Basis (%s, %s, %s,...)" %(self.element(0), self.element(1), self.element(2))
 
     def _latex_(self):
         return r"\left\{P_n(%s)\right\}_{n \geq 0}" %(self.var_name())
@@ -358,7 +358,7 @@ class TChebyshevBasis(OrthogonalBasis):
         return self.reduce_SnSni(((n-1)/2)*Sni - ((n+1)/2)*Sn)
 
     def __repr__(self):
-        return "T-Chebyshev Basis (%s, %s, %s,...)" %(self.get_element(0), self.get_element(1), self.get_element(2))
+        return "T-Chebyshev Basis (%s, %s, %s,...)" %(self.element(0), self.element(1), self.element(2))
 
     def _latex_(self):
         return r"\left\{T_n(%s)\right\}_{n \geq 0}" %(self.var_name())
@@ -390,7 +390,7 @@ class UChebyshevBasis(OrthogonalBasis):
         return self.reduce_SnSni(((3*n-1)/2)*Sni + ((n+1)/2)*Sn)
 
     def __repr__(self):
-        return "U-Chebyshev Basis (%s, %s, %s,...)" %(self.get_element(0), self.get_element(1), self.get_element(2))
+        return "U-Chebyshev Basis (%s, %s, %s,...)" %(self.element(0), self.element(1), self.element(2))
 
     def _latex_(self):
         return r"\left\{U_n(%s)\right\}_{n \geq 0}" %(self.var_name())
@@ -423,7 +423,7 @@ class LaguerreBasis(OrthogonalBasis):
         return self.reduce_SnSni(n*Sni - (n+self.alpha+1))
 
     def __repr__(self):
-        return "%s-Laguerre Basis (%s, %s, %s,...)" %(self.alpha,self.get_element(0), self.get_element(1), self.get_element(2))
+        return "%s-Laguerre Basis (%s, %s, %s,...)" %(self.alpha,self.element(0), self.element(1), self.element(2))
 
     def _latex_(self):
         return r"\left\{L_n^{(%s)}(%s)\right\}_{n \geq 0}" %(self.alpha,self.var_name())
@@ -450,7 +450,7 @@ class HermiteBasis(OrthogonalBasis):
         self.set_compatibility(Dx, 2*(n+1)*Sn)
 
     def __repr__(self):
-        return "Hermite Basis (%s, %s, %s,...)" %(self.get_element(0), self.get_element(1), self.get_element(2))
+        return "Hermite Basis (%s, %s, %s,...)" %(self.element(0), self.element(1), self.element(2))
 
     def _latex_(self):
         return r"\left\{H_n(%s)\right\}_{n \geq 0}" %self.var_name()
@@ -477,7 +477,7 @@ class HermitePBasis(OrthogonalBasis):
         self.set_compatibility(Dx, (n+1)*Sn)
 
     def __repr__(self):
-        return "Probabilistic Hermite Basis (%s, %s, %s,...)" %(self.get_element(0), self.get_element(1), self.get_element(2))
+        return "Probabilistic Hermite Basis (%s, %s, %s,...)" %(self.element(0), self.element(1), self.element(2))
 
     def _latex_(self):
         return r"\left\{He_n(%s)\right\}_{n \geq 0}" %self.var_name()

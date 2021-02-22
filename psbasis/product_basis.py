@@ -77,7 +77,7 @@ class ProductBasis(FactorialBasis):
 
     # PSBasis abstract method
     @cached_method
-    def get_element(self, n, var_name=None):
+    def element(self, n, var_name=None):
         if(var_name is None):
             name = self.var_name()
         else:
@@ -87,7 +87,7 @@ class ProductBasis(FactorialBasis):
         k = n//m
         j = n%m
 
-        return prod(factors[i].get_element(k+1,name) for i in range(j))*prod(factors[i].get_element(k,name) for i in range(j,m))
+        return prod(factors[i].element(k+1,name) for i in range(j))*prod(factors[i].element(k,name) for i in range(j,m))
 
     def factors(self):
         r'''

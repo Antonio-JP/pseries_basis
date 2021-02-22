@@ -35,7 +35,7 @@ class FunctionalBasis(OrderBasis):
         self.set_compatibility(X, Sni)
 
     @cached_method
-    def get_element(self, n):
+    def element(self, n):
         R = self.polynomial_ring(self.__fun_name)
         f = R.gens()[0]
         return f**n
@@ -105,7 +105,7 @@ class BesselBasis(OrderBasis):
         self.set_compatibility(Dx, Q12*Sn - Q12*Sni)
 
     @cached_method
-    def get_element(self, n):
+    def element(self, n):
         return bessel_J(n,x)
 
     def __repr__(self):
