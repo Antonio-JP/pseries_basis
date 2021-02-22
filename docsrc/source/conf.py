@@ -22,9 +22,8 @@ authors = u"Antonio Jimenez-Pastor"
 import sys
 import os
 
-from sage.env import SAGE_DOC_SRC, SAGE_DOC, SAGE_SRC
-
 try:
+    from sage.env import SAGE_DOC_SRC, SAGE_DOC, SAGE_SRC
     import sage.all
 except ImportError:
     raise RuntimeError("to build the documentation you need to be inside a Sage shell (run first the command 'sage -sh' in a shell")
@@ -51,6 +50,7 @@ extensions = [
     # 'sage_package.sphinx',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
+    'sphinx.ext.extlinks',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -120,11 +120,14 @@ pythonversion = sys.version.split(' ')[0]
 extlinks = {
     'python': ('https://docs.python.org/release/'+pythonversion+'/%s', ''),
     'trac': ('http://trac.sagemath.org/%s', 'trac ticket #'),
-    'wikipedia': ('https://en.wikipedia.org/wiki/%s', 'Wikipedia article '),
+    'wiki': ('https://en.wikipedia.org/wiki/%s', 'Wikipedia: '),
     'arxiv': ('http://arxiv.org/abs/%s', 'Arxiv '),
     'oeis': ('https://oeis.org/%s', 'OEIS sequence '),
     'doi': ('https://dx.doi.org/%s', 'doi:'),
-    'mathscinet': ('http://www.ams.org/mathscinet-getitem?mr=%s', 'MathSciNet ')
+    'mathscinet': ('http://www.ams.org/mathscinet-getitem?mr=%s', 'MathSciNet '),
+    'dlmf': ('https://dlmf.nist.gov/%s', 'DLMF Chapter '),
+    'wolf': ('https://mathworld.wolfram.com/%s.html', 'Wolfram MathWorld: '),
+    'sageref': ('https://doc.sagemath.org/html/en/reference/%s', 'Sage doc: ')
     }
 
 # -- Options for HTML output ----------------------------------------------
