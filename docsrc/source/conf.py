@@ -121,7 +121,7 @@ extlinks = {
     'python': ('https://docs.python.org/release/'+pythonversion+'/%s', ''),
     'trac': ('http://trac.sagemath.org/%s', 'trac ticket #'),
     'wiki': ('https://en.wikipedia.org/wiki/%s', 'Wikipedia: '),
-    'arxiv': ('http://arxiv.org/abs/%s', 'Arxiv '),
+    'arxiv': ('https://arxiv.org/abs/%s', 'Arxiv '),
     'oeis': ('https://oeis.org/%s', 'OEIS sequence '),
     'doi': ('https://dx.doi.org/%s', 'doi:'),
     'mathscinet': ('http://www.ams.org/mathscinet-getitem?mr=%s', 'MathSciNet '),

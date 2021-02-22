@@ -17,9 +17,7 @@ This package synergies pretty naturally with other packages from the author
 and with the package ``ore_algebra`` from M. Kauers et. al.
 
 This work is licensed under a `Creative Commons Attribution-Share Alike
-3.0 License`__.
-
-__ https://creativecommons.org/licenses/by-sa/3.0/
+3.0 License <https://creativecommons.org/licenses/by-sa/3.0/>`_.
 
 Sequences 
 =========

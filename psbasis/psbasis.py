@@ -2,7 +2,7 @@ r'''
     Sage package for Power Series Basis.
 
     This module introduces the basic structures in Sage for computing with *Power
-    Series Basis*. We based this work in the paper https://arxiv.org/abs/1804.02964v1
+    Series Basis*. We based this work in the paper :arxiv:`1804.02964v1`
     by M. Petkovsek, where all definitions and proofs for the algorithms here can be found.
 
     A Power Series basis is defined as a sequence `\{f_n\}_{n\in\mathbb{N}} \subset \mathbb{K}[[x]]`
@@ -55,6 +55,11 @@ class PSBasis(object):
         
         This class **must never** be instantiated, but contains all the methods that will
         have a common implementation for particular basis.
+
+        List of abstract methods:
+
+        * :func:`~PSBasis.element`.
+        * :func:`~PSBasis.scalar`.
     '''
     ### Getters from the module variable as objects of the class
     def OB(self):
@@ -299,7 +304,7 @@ class PSBasis(object):
             given by ``trans``. The latter argument must be a compatible operator
             in the ring :func:`~PSBasis.OS`.
             
-            See https://arxiv.org/abs/1804.02964v1 for further information about the
+            See :arxiv:`1804.02964v1` for further information about the
             definition of a compatible operator.
             
             INPUT:
@@ -335,7 +340,7 @@ class PSBasis(object):
             
             This method returns the minimal index for the compatibility property
             for a particular operator. In the notation of the paper
-            https://arxiv.org/abs/1804.02964v1, for a $(A,B)$-compatible operator,
+            :arxiv:`1804.02964v1`, for a $(A,B)$-compatible operator,
             this lower bound corresponds to the value of $A$.
             
             INPUT:
@@ -361,7 +366,7 @@ class PSBasis(object):
             
             This method returns the maximal index for the compatibility property
             for a particular operator. In the notation of the paper
-            https://arxiv.org/abs/1804.02964v1, for a $(A,B)$-compatible operator,
+            :arxiv:`1804.02964v1`, for a $(A,B)$-compatible operator,
             this lower bound corresponds to the value of $B$.
             
             INPUT:
@@ -406,7 +411,7 @@ class PSBasis(object):
             Method to get the compatibility for an operator.
             
             This method returns the compatibility of an operator showing the associated
-            sequence operator. In https://arxiv.org/abs/1804.02964v1 this compatibility
+            sequence operator. In :arxiv:`1804.02964v1` this compatibility
             is shown to be an algebra isomorphism, so we can compute the compatibility
             final sequence operator using the ore_algebra package and a plain 
             substitution.
@@ -491,7 +496,7 @@ class PSBasis(object):
         r'''
             Method to get the compatibility coefficient.
             
-            Following https://arxiv.org/abs/1804.02964v1, an operator $L$ is
+            Following :arxiv:`1804.02964v1`, an operator $L$ is
             $(A,B)$-compatible if there are some $\alpha_{n,i}$ such that for all $n$
             $$L(P_n) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i}.$$
             
@@ -578,7 +583,12 @@ class PolyBasis(PSBasis):
         Their elements must be indexed by natural numbers such that the n-th
         element of the basis has degree exactly `n`.
         
-        This class must never be instantiated.
+        This class **must never** be instantiated.
+
+        List of abstract methods:
+
+        * :func:`PSBasis.element`.
+        * :func:`PSBasis.scalar`.
     '''
     def __init__(self):
         super(PolyBasis,self).__init__(True)
@@ -664,7 +674,12 @@ class OrderBasis(PSBasis):
         Their elements must be indexed by natural numbers such that the n-th
         element of the basis has order exactly `n`.
         
-        This class must never be instantiated.
+        This class **must never** be instantiated.
+
+        List of abstract methods:
+
+        * :func:`PSBasis.element`.
+        * :func:`PSBasis.scalar`.
     '''
     def __init__(self):
         super(OrderBasis,self).__init__(False)

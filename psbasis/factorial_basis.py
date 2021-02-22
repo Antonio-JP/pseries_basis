@@ -234,7 +234,7 @@ class SFactorialBasis(FactorialBasis):
             This means for any pair of indices $m > n$, there is a particular polynomial
             $Q_{n,m} = P_m/P_n$.
 
-            Moreover, by Proposition 1 of https://arxiv.org/abs/1804.02964v1, for a fixed operator $L$
+            Moreover, by Proposition 1 of :arxiv:`1804.02964v1`, for a fixed operator $L$
             that is $(A,B)$-compatible, we know that $P_{n-A}$ divides $L(P_n)$.
 
             This method computes that division where $n = src$ and $m = src+diff$ or
@@ -317,7 +317,7 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            Following the notation and ideas of https://arxiv.org/abs/1804.02964v1, there is an
+            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
             equivalent condition to be a compatible operator. Namely, and operator is compatible
             by definition if it expands:
                 $$L(P_n) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},$$
@@ -355,7 +355,7 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            Following the notation and ideas of https://arxiv.org/abs/1804.02964v1, there is an
+            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
             equivalent condition to be a compatible operator. Namely, and operator is compatible
             by definition if it expands:
                 $$L(P_n) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},$$
@@ -403,7 +403,7 @@ class FallingBasis(SFactorialBasis):
         PowerBasis) and in the case of $a=1$ $b = 0$ and $c = \pm 1$ we have the falling (or
         raising) factorial basis.
 
-        Following the notation in https://arxiv.org/abs/1804.02964v1, this basis
+        Following the notation in :arxiv:`1804.02964v1`, this basis
         has compatibilities with the multiplication by 'x' and with the isomorphism
         $E_c: x \rightarrow x+c$.
 
@@ -464,7 +464,7 @@ class PowerBasis(FallingBasis):
         This class represents the FactorialBasis formed by the simplest basis
         for the power series: $1$, $(ax+b)$, $(ax+b)^2$, etc.
 
-        Following the notation in https://arxiv.org/abs/1804.02964v1, this basis
+        Following the notation in :arxiv:`1804.02964v1`, this basis
         corresponds with $\mathfrak{P}_{a,b}$. In that paper we can find that this basis
         has compatibilities with the multiplication by 'x' and with the derivation
         by 'x'.
@@ -504,7 +504,7 @@ class BinomialBasis(SFactorialBasis):
         $$\binom{ax+b}{n},$$
         where $a$ is a natural number and $b$ is a rational number.
 
-        In https://arxiv.org/abs/1804.02964v1 this corresponds to $\mathfrak{C}_{a,b}$
+        In :arxiv:`1804.02964v1` this corresponds to $\mathfrak{C}_{a,b}$
         and it is compatible with the multiplication by $x$ and by the shift operator
         $x \rightarrow x+1$.
 

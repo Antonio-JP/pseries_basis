@@ -17,7 +17,7 @@ class ProductBasis(FactorialBasis):
         Namely, the $n=km+j$ element of the product of $m$ basis, is the product of
             $$Q_n = \prod_{i=1}^{j}P_{k+1}^{(j)}\prod_{i=j+1}^{m}P_{k}^{(j)}.$$
 
-        See the paper https://arxiv.org/abs/1804.02964v1 for further information.
+        See the paper :arxiv:`1804.02964v1` for further information.
 
         INPUT:
             * args: list of Polynomial Basis
@@ -143,7 +143,7 @@ class ProductBasis(FactorialBasis):
             the ring K[x]. Such derivation must be compatible with all the
             factors on the basis.
 
-            Following the results of https://arxiv.org/abs/1804.02964v1, if $L$
+            Following the results of :arxiv:`1804.02964v1`, if $L$
             is $(A_i,B_i)$-compatible with the $i$th factor of ``self``, then
             $L$ is $(mA, B)$-compatible where $A = max(A_i)$ and $B = min(B_i)$.
 
@@ -177,7 +177,7 @@ class ProductBasis(FactorialBasis):
             the ring K[x]. Such derivation must be compatible with all the
             factors on the basis.
 
-            Following the results of https://arxiv.org/abs/1804.02964v1, if $L$
+            Following the results of :arxiv:`1804.02964v1`, if $L$
             is $(A_i,B_i)$-compatible with the $i$th factor of ``self``, then
             $L$ is $(mA, B)$-compatible where $A = max(A_i)$ and $B = min(B_i)$.
 
@@ -215,7 +215,7 @@ class ProductBasis(FactorialBasis):
             a map $L: K[x] \rightarrow K[x]$ that is a ring homomorphism. Such
             endomorphism must be compatible with all the factors on the basis.
 
-            Following the results of https://arxiv.org/abs/1804.02964v1, if $L$
+            Following the results of :arxiv:`1804.02964v1`, if $L$
             is $(A_i,B_i)$-compatible with the $i$th factor of ``self``, then
             $L$ is $(mA, B)$-compatible where $A = max(A_i)$ and $B = min(B_i)$.
 
@@ -249,7 +249,7 @@ class ProductBasis(FactorialBasis):
             a map $L: K[x] \rightarrow K[x]$ that is a ring homomorphism. Such
             endomorphism must be compatible with all the factors on the basis.
 
-            Following the results of https://arxiv.org/abs/1804.02964v1, if $L$
+            Following the results of :arxiv:`1804.02964v1`, if $L$
             is $(A_i,B_i)$-compatible with the $i$th factor of ``self``, then
             $L$ is $(mA, B)$-compatible where $A = max(A_i)$ and $B = min(B_i)$.
 
@@ -385,7 +385,7 @@ class ProductBasis(FactorialBasis):
             This means for any pair of indices $r > n$, there is a particular polynomial
             $Q_{n,r} = P_r/P_n$.
 
-            Moreover, by Proposition 1 of https://arxiv.org/abs/1804.02964v1, for a fixed operator $L$
+            Moreover, by Proposition 1 of :arxiv:`1804.02964v1`, for a fixed operator $L$
             that is $(A,B)$-compatible, we know that $P_{n-A}$ divides $L(P_n)$.
 
             For a ProductBasis, it is convenient to take the index $n = km + j$ where $m$ is
@@ -461,7 +461,7 @@ class ProductBasis(FactorialBasis):
             This means for any pair of indices $r > n$, there is a particular polynomial
             $Q_{n,r} = P_r/P_n$.
 
-            Moreover, by Proposition 1 of https://arxiv.org/abs/1804.02964v1, for a fixed operator $L$
+            Moreover, by Proposition 1 of :arxiv:`1804.02964v1`, for a fixed operator $L$
             that is $(A,B)$-compatible, we know that $P_{n-A}$ divides $L(P_n)$.
 
             For a ProductBasis, it is convenient to take the index $n = km + j$ where $m$ is
@@ -525,7 +525,7 @@ class ProductBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            Following the notation and ideas of https://arxiv.org/abs/1804.02964v1, there is an
+            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
             equivalent condition to be a compatible operator. Namely, and operator is compatible
             by definition if it expands:
                 $$L(P_n) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},$$
@@ -572,7 +572,7 @@ class ProductBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            Following the notation and ideas of https://arxiv.org/abs/1804.02964v1, there is an
+            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
             equivalent condition to be a compatible operator. Namely, and operator is compatible
             by definition if it expands:
                 $$L(P_n) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},$$
@@ -624,7 +624,7 @@ class ProductBasis(FactorialBasis):
     #         Method to get the compatibility for an operator.
 
     #         This method returns the compatibility of an operator showing the associated
-    #         sequence operator. In https://arxiv.org/abs/1804.02964v1 this compatibility
+    #         sequence operator. In :arxiv:`1804.02964v1` this compatibility
     #         is shown to be an algebra isomorphism, so we can compute the compatibility
     #         final sequence operator using the ore_algebra package and a plain
     #         substitution.
