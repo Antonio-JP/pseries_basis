@@ -299,8 +299,6 @@ class GegenbauerBasis(OrthogonalBasis):
     def _latex_(self):
         return r"\left\{C_n^{(%s)}(%s)\right\}_{n \geq 0}" %(self.__lambda, self.var_name())
 
-
-
 class LegendreBasis(JacobiBasis):
     r'''
         Class for the Legendre Basis.

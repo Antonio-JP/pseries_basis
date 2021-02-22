@@ -59,7 +59,7 @@ class PSBasis(object):
         List of abstract methods:
 
         * :func:`~PSBasis.element`.
-        * :func:`~PSBasis.scalar`.
+        * :func:`~PSBasis._scalar_basis`.
     '''
     ### Getters from the module variable as objects of the class
     def OB(self):
@@ -629,7 +629,7 @@ class PolyBasis(PSBasis):
         List of abstract methods:
 
         * :func:`PSBasis.element`.
-        * :func:`PSBasis.scalar`.
+        * :func:`PSBasis._scalar_basis`.
     '''
     def __init__(self):
         super(PolyBasis,self).__init__(True)
@@ -720,7 +720,7 @@ class OrderBasis(PSBasis):
         List of abstract methods:
 
         * :func:`PSBasis.element`.
-        * :func:`PSBasis.scalar`.
+        * :func:`PSBasis._scalar_basis`.
     '''
     def __init__(self):
         super(OrderBasis,self).__init__(False)

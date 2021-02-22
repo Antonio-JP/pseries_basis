@@ -89,23 +89,32 @@ class SFactorialBasis(FactorialBasis):
         Class for representing a simple factorial basis.
 
         A factorial basis is a type of polynomial basis for power series where
-        the $(n+1)$th element is build from the $n$th element. This can be seeing
+        the `(n+1)`-th element is build from the `n`-th element. This can be seeing
         as a two-term recurrence basis.
 
-        The first element in the sequence will always be the constant polynomial 1.
+        This factorial nature is representing using two coefficients `a_n` and `b_n`
+        such that for all `n`:
 
-        This factorial nature is representing using two coefficients $a_n$ and $b_n$
-        such that for all $n$:
-        $$P_n = (a_nx + b_n)P_{n-1}$$
+        .. MATH::
+
+            P_n = (a_nx + b_n)P_{n-1}
 
         INPUT:
-            - ``an``: the sequence of leading coefficients to build the factorial basis.
-            - ``bn``: the sequence of constant coefficients to build the factorial basis.
-            - ``X``: the name for the operator representing the multiplication by $x$.
+        
+        * ``an``: the sequence of leading coefficients to build the factorial basis.
+        * ``bn``: the sequence of constant coefficients to build the factorial basis.
+        * ``X``: the name for the operator representing the multiplication by `x`.
+        * ``init``: the value of `P_0(x)`. Must be a constant.
     '''
-    def __init__(self, an, bn, X='x'):
+    def __init__(self, an, bn, X='x',init=1):
         ## Initializing the PolyBasis structure
         super(SFactorialBasis,self).__init__(X)
+
+        ## Cheking the first element
+        init = self.OB().base()(init)
+        if(init == 0):
+            raise ValueError("The first polynomial must be non-zero")
+        self.__init = init
 
         ## Adding the extra information
         an = self.OB()(an); self.__an = an
@@ -133,10 +142,15 @@ class SFactorialBasis(FactorialBasis):
             an = self.__an; bn = self.__bn
             return self.element(n-1) * (an(n=n)*x + bn(n=n))
         elif(n == 0):
-            return R.one()
+            return self.__init
 
-    def scalar(self, factor):
-        factor = self.OB()(factor)
+    def _scalar_basis(self, factor):
+        r'''
+            Method that actually builds the structure for the new basis.
+
+            This method implements the abstract method :func:`psbasis.psbasis.PSBasis._scalar_basis`.
+            See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
+        '''
         new_basis = SFactorialBasis(self.__an*factor, self.__bn*factor, X=self.__var_name)
         for el in self.compatible_operators():
             if not new_basis.has_compatibility(el):
