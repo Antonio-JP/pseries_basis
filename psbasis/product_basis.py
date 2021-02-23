@@ -423,7 +423,7 @@ class ProductBasis(FactorialBasis):
             $Q_{n,r} = P_r/P_n$.
 
             Moreover, by Proposition 1 of :arxiv:`1804.02964v1`, for a fixed operator $L$
-            that is $(A,B)$-compatible, we know that $P_{n-A}$ divides $L(P_n)$.
+            that is `(A,B)`-compatible, we know that $P_{n-A}$ divides $L(P_n)$.
 
             For a ProductBasis, it is convenient to take the index $n = km + j$ where $m$ is
             the number of factors.
@@ -499,7 +499,7 @@ class ProductBasis(FactorialBasis):
             $Q_{n,r} = P_r/P_n$.
 
             Moreover, by Proposition 1 of :arxiv:`1804.02964v1`, for a fixed operator $L$
-            that is $(A,B)$-compatible, we know that $P_{n-A}$ divides $L(P_n)$.
+            that is `(A,B)`-compatible, we know that $P_{n-A}$ divides $L(P_n)$.
 
             For a ProductBasis, it is convenient to take the index $n = km + j$ where $m$ is
             the number of factors.

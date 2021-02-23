@@ -179,18 +179,15 @@ class PSBasis(object):
         r'''
             Getter for the type of ordering of the basis.
             
-            Return ``True`` if the `n`th element of the basis is a polynomial
-            of degree `n`.
+            Return ``True`` if the `n`-th element of the basis is a polynomial of degree `n`.
         '''
         return self.__degree
     
     def by_order(self):
-        
-        '''
+        r'''
             Getter for the type of ordering of the basis.
             
-            Return ``True`` if the `n`th element of the basis is a power series
-            of order `n`.
+            Return ``True`` if the `n`-th element of the basis is a power series of order `n`.
         '''
         return (not self.__degree)
 
@@ -208,7 +205,8 @@ class PSBasis(object):
             in all terms that have the two operators involved and returns a reduced version of the input.
 
             INPUT:
-                * ``operator``: an operator involving ``Sn`` and ``Sni``.
+
+            * ``operator``: an operator involving ``Sn`` and ``Sni``.
 
             OUTPUT:
             
@@ -273,8 +271,9 @@ class PSBasis(object):
             a left multiplication, the annihilator space only increases, hence obtaining the desired property.
 
             INPUT:
-                * ``operator``: and operators involving ``Sn`` and ``Sni`` (i.e, in the ring returned by
-                  the method :func:`~PSBasis.OS`)
+
+            * ``operator``: and operators involving ``Sn`` and ``Sni`` (i.e, in the ring returned by
+              the method :func:`~PSBasis.OS`)
 
             OUTPUT:
 
@@ -300,6 +299,12 @@ class PSBasis(object):
         return self.OSS()(self.reduce_SnSni((Sn**d)*operator))
     
     def polynomial_ring(self,var_name='x'):
+        r'''
+            Method to create a polynomial ring.
+
+            This method creates a polynomial ring with a given variable name
+            with coefficients in the field given by default by :func:`OB`.
+        '''
         return PolynomialRing(self.OB().base(), [var_name])
     
     ### COMPATIBILITY RELATED METHODS
@@ -361,16 +366,18 @@ class PSBasis(object):
             
             This method returns the minimal index for the compatibility property
             for a particular operator. In the notation of the paper
-            :arxiv:`1804.02964v1`, for a $(A,B)$-compatible operator,
-            this lower bound corresponds to the value of $A$.
+            :arxiv:`1804.02964v1`, for a `(A,B)`-compatible operator,
+            this lower bound corresponds to the value of `A`.
             
             INPUT:
-                - ``operator``: the operator we want to check. It can be the
-                  name for any generator in the *ore_algebra* package or the generator
-                  itself.
+
+            * ``operator``: the operator we want to check. It can be the
+              name for any generator in the ``ore_algebra`` package or the generator
+              itself.
                 
-            WARNING::
-                - The case when the compatibility rule is a matrix is not implemented.
+            WARNING:
+            
+            * The case when the compatibility rule is a matrix is not implemented.
         '''
         ## Case of the name
         compatibility = self.get_compatibility(operator)
@@ -387,16 +394,18 @@ class PSBasis(object):
             
             This method returns the maximal index for the compatibility property
             for a particular operator. In the notation of the paper
-            :arxiv:`1804.02964v1`, for a $(A,B)$-compatible operator,
-            this lower bound corresponds to the value of $B$.
+            :arxiv:`1804.02964v1`, for a `(A,B)`-compatible operator,
+            this lower bound corresponds to the value of `B`.
             
             INPUT:
-                - ``operator``: the operator we want to check. It can be the
-                  name for any generator in the *ore_algebra* package or the generator
-                  itself.
+
+            * ``operator``: the operator we want to check. It can be the
+              name for any generator in the ``ore_algebra`` package or the generator
+              itself.
                 
-            WARNING::
-                - The case when the compatibility rule is a matrix is not implemented.
+            WARNING:
+                
+            * The case when the compatibility rule is a matrix is not implemented.
         '''
         compatibility = self.get_compatibility(operator)
         
@@ -411,6 +420,13 @@ class PSBasis(object):
 
             This method allows the user to know the names of the basic compatible operators with this 
             basis. Any polynomial built on these operators will be valid for the method :func:`get_compatibility`.
+
+            OUTPUT:
+
+            Return the key set of the dictionary of compatibilities. This set will be composed of the names of 
+            the compatible operators with ``self``.
+
+            TODO: add examples
         '''
         return self.__compatibility.keys()
 
@@ -421,11 +437,18 @@ class PSBasis(object):
             This method checks whether the operator given has a compatibility or not.
 
             INPUT:
-                * ``operator``: the operator we want to know if it is compatible or not.
-                  It has to be the name for any generator in the *ore_algebra*.
+
+            * ``operator``: the operator we want to know if it is compatible or not.
+              It has to be the name for any generator in an ``ore_algebra``.
+
+            OUTPUT:
+
+            ``True`` if the givenoperator is compatible and ``False`` otherwise.
+
+            TODO: add examples
         '''
-        if(isinstance(operator,str)):
-            return isinstance(operator, str) and operator in self.__compatibility
+        
+        return isinstance(operator, str) and operator in self.__compatibility
 
     def get_compatibility(self, operator):
         r'''
@@ -434,13 +457,21 @@ class PSBasis(object):
             This method returns the compatibility of an operator showing the associated
             sequence operator. In :arxiv:`1804.02964v1` this compatibility
             is shown to be an algebra isomorphism, so we can compute the compatibility
-            final sequence operator using the ore_algebra package and a plain 
+            final sequence operator using the ``ore_algebra`` package and a plain 
             substitution.
             
             INPUT:
-                - ``operator``: the operator we want to get the compatibility. It has to be the
-                  name for any generator in the *ore_algebra* package or the generator
-                  itself.
+
+            * ``operator``: the operator we want to get the compatibility. It has to be the
+              name for any generator in an ``ore_algebra`` package or the generator
+              itself.
+
+            OUTPUT:
+
+            An operator in the algebra returned by :func:`OS` that represents the compatibility
+            condition of ``operator`` with the basis ``self``.
+
+            TODO: add examples
         '''
         if(isinstance(operator,str)):
             if(not operator in self.__compatibility):
@@ -462,15 +493,25 @@ class PSBasis(object):
             
             This method computes a recurrence operator matrix for a basis
             associated with its compatibility with an operator. Such compatibility
-            must be given as a method taking 3 parameters k,j,i and then:
+            must be given as a method taking 3 parameters `k`,`j`,`i` such that:
             
-            $$L(b_{km+j}) = \sum_{i=-A}^B compatibility(k,j,i)b_{km+j+i}$$
+            .. MATH::
+
+                L\cdot b_{km+j} = \sum_{i=-A}^B \alpha_{k,j,i}b_{km+j+i}
 
             INPUT:
-                * ``size``: the value of the section size (i.e., $m$).
-                * ``operator``: this must be either a tuple with the values $A$, $B$
-                  and a function with three arguments (i,j,k) that returns the compatibility 
-                  coefficients in the appropriate order or a compatible operator with this basis.
+
+            * ``size``: the value of the section size (i.e., `m`).
+            * ``operator``: this must be either a triplet with the values `A`, `B`
+              and a function with three arguments (i,j,k) that returns the compatibility 
+              coefficients in the appropriate order or a compatible operator with this basis.
+
+            OUTPUT:
+
+            A matrix representing the compatibility condition by sections. See :arxiv:`1804.02964v1`
+            for further information. 
+
+            TODO: add examples
         '''
         ## Considering the case of an operator
         if(not (isinstance(operator, tuple) or isinstance(operator, list))):
@@ -517,25 +558,32 @@ class PSBasis(object):
         r'''
             Method to get the compatibility coefficient.
             
-            Following :arxiv:`1804.02964v1`, an operator $L$ is
-            $(A,B)$-compatible if there are some $\alpha_{n,i}$ such that for all $n$
-            $$L(P_n) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i}.$$
+            Following :arxiv:`1804.02964v1`, an operator `L` is
+            `(A,B)`-compatible if there are some `\alpha_{n,i}` such that for all `n`
+
+            .. MATH::
+
+                L \cdot b_n = \sum_{i=-A}^B \alpha_{n,i}b_{n+i}.
             
-            This method returns, for the operator given by ``name``, the value 
-            $\alpha_{n,i}$ where $n$ is ``pos`` and $i$ is ``ind``.
+            This method returns, for the given operator, the value `\alpha_{n,i}`
             
             INPUT:
-                - ``operator``: the operator we want to set the compatibility. It can be the
-                  name for any generator in the *ore_algebra* package or the generator
-                  itself.
-                - ``pos``: position of the compatibility. This is the $n$ in the
-                  definition of compatibility. 
-                - ``ind``: index of the compatibility coefficient. If it is bigger than
-                  ``self.get_upper_bound(operator)`` or smaller than ``self.get_lower_bound(operator)``
-                  then 0 is returned.
+
+            * ``operator``: the operator we want to get the compatibility. It can be the
+              name for any generator in an ``ore_algebra`` or the generator itself.
+            * ``pos``: position of the compatibility. This is the `n` in the
+              definition of compatibility. 
+            * ``ind``: index of the compatibility coefficient. This is the index `i` in the 
+              definition of compatibility. If it is out of range, `0` is returned.
                 
-            WARNING::
-                - The case when the compatibility rule is a matrix is not implemented.
+            OUTPUT:
+
+            The coefficient `\alpha_{n,i}` for the operator in ``operator`` where `n` is 
+            given by ``pos`` and `i` is given by ``ind``.
+
+            WARNING:
+
+            * The case when the compatibility rule is a matrix is not implemented.
         '''
         compatibility = self.get_compatibility(operator)
         A = self.A(operator); B = self.B(operator)
@@ -565,7 +613,8 @@ class PSBasis(object):
             new basis carry over all the compatibilities of the old basis with small modifications.
 
             INPUT:
-                * ``factor``: rational function in `n` that will be interpreted as a sequence.
+
+            * ``factor``: rational function in `n` that will be interpreted as a sequence.
 
             OUTPUT:
 
@@ -605,9 +654,15 @@ class PSBasis(object):
 
     ### MAGIC METHODS
     def __getitem__(self, n):
+        r'''
+            See method :func:`element`
+        '''
         return self.element(n)
 
     def __mul__(self,other):
+        r'''
+            See method :func:`scalar`.
+        '''
         try:
             other = self.OB()(other)
             return self.scalar(other)
@@ -615,6 +670,9 @@ class PSBasis(object):
             return NotImplemented
         
     def __rmul__(self, other):
+        r'''
+            See method :func:`scalar`.
+        '''
         return self.__mul__(other)
     
     ### MAGIC REPRESENTATION METHODS
