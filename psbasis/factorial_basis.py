@@ -33,6 +33,7 @@ class FactorialBasis(PolyBasis):
         * :func:`~FactorialBasis.increasing_basis`.
         * :func:`~FactorialBasis.matrix_ItP`.
         * :func:`~FactorialBasis.equiv_DtC`.
+        * :func:`~FactorialBasis.equiv_CtD`.
     '''
     def __init__(self, X='x'):
         super(FactorialBasis,self).__init__()
@@ -41,6 +42,13 @@ class FactorialBasis(PolyBasis):
 
     ## Getters and setters
     def var_name(self):
+        r'''
+            Getter of the name for the variable.
+
+            This is the name of the variable that will be used to characterize the multiplication
+            operator `X: \mathbb{Q}[[x]] \mapsto \mathbb{Q}[[x]]` defined by `X(f(x)) = xf(x)`.
+            This method returns the name of the map `X`.
+        '''
         return self.__var_name
 
     def root_sequence(self):
@@ -247,6 +255,8 @@ class SFactorialBasis(FactorialBasis):
         * ``bn``: the sequence of constant coefficients to build the factorial basis.
         * ``X``: the name for the operator representing the multiplication by `x`.
         * ``init``: the value of `P_0(x)`. Must be a constant.
+
+        TODO: add examples
     '''
     def __init__(self, an, bn, X='x',init=1):
         ## Initializing the PolyBasis structure
@@ -270,17 +280,15 @@ class SFactorialBasis(FactorialBasis):
         ## Extra cached variables
         self.__cached_increasing = {}
 
-    # PSBasis abstract method
     @cached_method
     def element(self, n, var_name=None):
         r'''
             Method to return the `n`-th element of the basis.
 
             This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
-            The output will be a polynomial of degree `n`.
+            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
 
-            The user can also get the `n`-th element of the sequence using the *magic* Python syntax for 
-            element in a list (i.e., using the ``[]`` notation).
+            For a :class:`SFactorialBasis` the output will be a polynomial of degree `n`.
 
             INPUT:
 
@@ -291,7 +299,7 @@ class SFactorialBasis(FactorialBasis):
 
             OUTPUT:
 
-            A polynomial with variable name given by ``var_name`` and of degree ``n``.
+            A polynomial with variable name given by ``var_name`` and degree ``n``.
 
             EXAMPLES::
 
@@ -375,7 +383,7 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method that returns the root sequence of the polynomial basis.
 
-            This method overrides the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.root_sequence`
+            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.root_sequence`
             for a description on the output.
 
             In this case, as the basis is built from the first order recurrence:
@@ -697,26 +705,34 @@ class SFactorialBasis(FactorialBasis):
 ###############################################################
 class FallingBasis(SFactorialBasis):
     r'''
-        Class for the Falling factorial Basis $(1, (ax+b), (ax+b)(ax+b-c), (ax+b)(ax+b-c)(ax+b-2c), \dots))$.
+        Class for the Falling factorial Basis `(1, (ax+b), (ax+b)(ax+b-c), (ax+b)(ax+b-c)(ax+b-2c), \dots))`.
 
         This class represent the FactorialBasis formed by the falling factorial basis
-        for the power series ring with two extra paramenters $a$ and $b$:
-            $$1,\quad (ax+b),\quad (ax+b)(ax+b-c),\quad (ax+b)(ax+b-c)(ax+b-2c),\dots$$
+        for the power series ring `\mathbb{Q}[[x]]` with two extra paramenters `a` and `b`:
 
-        In the case of $a = 1$, $b = 0$ and $c = 0$, we have the usual power basis (see class
-        PowerBasis) and in the case of $a=1$ $b = 0$ and $c = \pm 1$ we have the falling (or
+        .. MATH::
+
+            1,\quad (ax+b),\quad (ax+b)(ax+b-c),\quad (ax+b)(ax+b-c)(ax+b-2c),\dots
+
+        In the case of `a = 1`, `b = 0` and `c = 0`, we have the usual power basis (see class
+        :class:`PowerBasis`) and in the case of `a=1`, `b = 0` and `c = \pm 1` we have the falling (or
         raising) factorial basis.
 
-        Following the notation in :arxiv:`1804.02964v1`, this basis
-        has compatibilities with the multiplication by 'x' and with the isomorphism
-        $E_c: x \rightarrow x+c$.
+        Following the notation in :arxiv:`1804.02964v1`, these basis
+        have compatibilities with the multiplication by `x` and with the isomorphism
+        `E_c: x \mapsto x+c`.
 
         INPUT:
-            - ``dilation``: the natural number corresponding to the value $a$.
-            - ``shift``: the shift corresponding to the value $b$.
-            - ``decay``: the value for $c$
-            - ``X``: the name for the operator representing the multiplication by $x$.
-            - ``E``: the name for the operator representing the derivation by $x$.
+
+        * ``dilation``: the natural number corresponding to the parameter `a`.
+        * ``shift``: the shift corresponding to the value `b`.
+        * ``decay``: the value for `c`
+        * ``X``: the name for the operator representing the multiplication by `x`. If not given, we will
+          consider `x` as default.
+        * ``E``: the name for the operator representing the shift of `x` by `c`. If not given, we will consider
+          "Id" if `c = 0`, "E" if `c = 1` and "E_c" otherwise by default.
+
+        TODO add examples
     '''
     def __init__(self, dilation, shift, decay, X='x', E=None):
         if(not dilation in ZZ or dilation <= 0):
@@ -727,6 +743,8 @@ class FallingBasis(SFactorialBasis):
         self.__c = decay; c = self.__c
 
         if(E is None):
+            if(c == 0):
+                self.__E_name = "Id"
             if(c == 1):
                 self.__E_name = "E"
             else:
@@ -781,21 +799,26 @@ class FallingBasis(SFactorialBasis):
 
 class PowerBasis(FallingBasis):
     r'''
-        Class for the Power Basis $(1,x,x^2,\dots)$.
+        Class for the Power Basis `(1,x,x^2,\dots)`.
 
-        This class represents the FactorialBasis formed by the simplest basis
-        for the power series: $1$, $(ax+b)$, $(ax+b)^2$, etc.
+        This class represents the :class:`FactorialBasis` formed by the simplest basis
+        for the power series: `1`, `(ax+b)`, `(ax+b)^2`, etc.
 
         Following the notation in :arxiv:`1804.02964v1`, this basis
-        corresponds with $\mathfrak{P}_{a,b}$. In that paper we can find that this basis
-        has compatibilities with the multiplication by 'x' and with the derivation
-        by 'x'.
+        corresponds with $\mathfrak{P}_{a,b}$. In that paper we can find that these basis
+        have compatibilities with the multiplication by `x` and with the derivation
+        with respect to `x`.
 
         INPUT:
-            - ``dilation``: the natural number corresponding to the value $a$.
-            - ``shift``: the shift corresponding to the value $b$.
-            - ``X``: the name for the operator representing the multiplication by $x$.
-            - ``Dx``: the name for the operator representing the derivation by $x$.
+
+        * ``dilation``: the natural number corresponding to the value `a`.
+        * ``shift``: the shift corresponding to the value `b`.
+        * ``X``: the name for the operator representing the multiplication by `x`. If not given, we will
+          consider `x` as default.
+        * ``Dx``: the name for the operator representing the derivation by `x`. If not given, we will
+          consider `Dx` as default.
+
+        TODO: add examples
     '''
     def __init__(self, dilation=1, shift=0, X='x', Dx='Dx'):
         super(PowerBasis, self).__init__(dilation,shift,0,X,'Id')
@@ -841,18 +864,25 @@ class BinomialBasis(SFactorialBasis):
 
         This class represents a binomial basis with a shift and dilation effect on the
         top variable. Namely, a basis of the form
-        $$\binom{ax+b}{n},$$
-        where $a$ is a natural number and $b$ is a rational number.
+
+        .. MATH::
+
+            \binom{ax+b}{n},
+
+        where `a` is a natural number and `b` is a rational number.
 
         In :arxiv:`1804.02964v1` this corresponds to $\mathfrak{C}_{a,b}$
-        and it is compatible with the multiplication by $x$ and by the shift operator
-        $x \rightarrow x+1$.
+        and it is compatible with the multiplication by `x` and by the shift operator
+        `E: x \rightarrow x+1`.
 
         INPUT:
-            - ``dilation``: the natural number corresponding to the value $a$.
-            - ``shift``: the shift corresponding to the value $b$.
-            - ``X``: the name for the operator representing the multiplication by $x$.
-            - ``E``: the name for the operator representing the derivation by $x$.
+
+        * ``dilation``: the natural number corresponding to the value `a`.
+        * ``shift``: the shift corresponding to the value `b`.
+        * ``X``: the name for the operator representing the multiplication by $x$. If not given, we will
+          consider `x` as default.
+        * ``E``: the name for the operator representing the shift of $x$ by `1`. If not given, we will
+          consider `E` as default.
     '''
     def __init__(self, dilation=1, shift=0, X='x', E='E'):
         if(not dilation in ZZ or dilation <= 0):

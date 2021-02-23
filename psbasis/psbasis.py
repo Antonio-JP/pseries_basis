@@ -161,6 +161,9 @@ class PSBasis(object):
     def element(self, n, var_name=None):
         r'''
             Method to return the `n`-th element of the basis.
+
+            The user can also get the `n`-th element of the sequence using the *magic* Python syntax for 
+            element in a list (i.e., using the ``[]`` notation).
         '''
         raise NotImplementedError("Method element must be implemented in each subclass of polynomial_basis")
         
