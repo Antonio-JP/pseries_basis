@@ -335,6 +335,7 @@ class ProductBasis(FactorialBasis):
 
         return self.__cached_increasing[(k,j,d)]
 
+    @cached_method
     def increasing_basis(self, shift):
         r'''
             Method to get the structure for the `n`-th increasing basis.
@@ -360,7 +361,7 @@ class ProductBasis(FactorialBasis):
             raise ValueError("The argument `shift` must be a positive integer")
         F = self.nfactors(); factors = self.factors()
 
-        k = shift//self.F; j = shift%F
+        k = shift//F; j = shift%F
         return ProductBasis(*[factors[i].increasing_basis(k) for i in range(j, F)], *[factors[i].increasing_basis(k+1) for i in range(j)])
 
     @cached_method
@@ -368,22 +369,17 @@ class ProductBasis(FactorialBasis):
         r'''
             Method to get the matrix for converting from the increasing basis to the power basis.
 
-            In a Factorial Basis, the $n$th element of the basis divides all the following.
-            This means for any pair of indices $m > n$, there is a particular polynomial
-            $Q_{n,m} = P_m/P_n$.
+            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.matrix_ItP`.
 
-            In particular, for a fixed $n$ and $i \in \mathfrak{Z}$, the polynomials $Q_{n,n+i}$
-            form another Factorial Basis. This method computes a matrix that represents the
-            identity between polynomials of degree smaller or equal to ``size`` from the
-            basis $Q_{n,n+i}$ and the power basis.
-
-            For a ProductBasis, it is convenient to take the index $n = km + j$ where $m$ is
+            For a :class:`ProductBasis`, it is convenient to take the index `n = kF + j` where `F` is
             the number of factors.
 
             INPUT:
-                - ``src``: value for $k$.
-                - ``shift``: value for $j$.
-                - ``size``: bound on the degree for computing the matrix.
+
+            * ``src``: value for `k`.
+            * ``shift``: value for `j`.
+            * ``size``: bound on the degree for computing the matrix.
         '''
         ## Checking the arguments
         if(((src in ZZ) and src < 0) or (not src in self.OB())):

@@ -153,6 +153,12 @@ class FactorialBasis(PolyBasis):
             power basis to the basis `Q_{n,n+i}`.
 
             For further information about the input, see the documentation of :func:`matrix_ItP`.
+
+            OUTPUT:
+
+            A matrix that convert coordinates from the canonical power basis to the requested increasing basis. 
+
+            TODO: add examples
         '''
         return self.matrix_ItP(*args, **kwds).inverse()
 
@@ -467,6 +473,7 @@ class SFactorialBasis(FactorialBasis):
 
         return self.__cached_increasing[(n,d)]
 
+    @cached_method
     def increasing_basis(self, shift):
         r'''
             Method to get the structure for the `n`-th increasing basis.
@@ -551,7 +558,6 @@ class SFactorialBasis(FactorialBasis):
             This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.matrix_ItP`.
             
-
             INPUT:
                 - ``src``: value for $n$.
                 - ``size``: bound on the degree for computing the matrix.
@@ -698,6 +704,7 @@ class FallingBasis(SFactorialBasis):
         P = aux_OE(prod(a*x+b-c*i for i in range(-a,0)))
         self.set_compatibility(self.__E_name, self.get_compatibility(P)*(Sn**a), True)
 
+    @cached_method
     def increasing_basis(self, shift):
         r'''
             Method to get the structure for the `n`-th increasing basis.
@@ -757,6 +764,7 @@ class PowerBasis(FallingBasis):
         n = self.n(); Sn = self.Sn(); a = self.linear_coefficient()
         self.set_compatibility(Dx, a*(n+1)*Sn)
 
+    @cached_method
     def increasing_basis(self, shift):
         r'''
             Method to get the structure for the `n`-th increasing basis.
