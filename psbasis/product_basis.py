@@ -27,6 +27,8 @@ class ProductBasis(FactorialBasis):
                   for the derivations compatible with the basis.
                 * ``E`` or ``shift`` or ``sh`` or ``endo`` or ``endomorphism``: name or list of names for
                   the endomorphisms compatible with the basis.
+                * ``init``: the value of the first element of the basis. It has to be a constant element.
+                  It takes the value `1` by default.
 
         REMARK::
             * If any factor of the basis is a ProductBasis, we will consider its factors as normal
@@ -37,13 +39,20 @@ class ProductBasis(FactorialBasis):
         X = kwds.get('name', kwds.get('X', 'x'))
         ders = kwds.get('Dx', kwds.get('ders', kwds.get('der', kwds.get('derivations', kwds.get('derivation', [])))))
         endos = kwds.get('E', kwds.get('shift', kwds.get('sh', kwds.get('endo', kwds.get('endomorphism', [])))))
+        init = kwds.get('init', 1)
+
         if(not (type(ders) in (list,tuple))):
             ders = [ders]
         if(not (type(endos) in (list,tuple))):
             endos = [endos]
+        if((not (init in self.OB().base())) or init == 0):
+            raise ValueError("The first element of the basis has to be a non-zero constant element")
 
         ## Calling the super constructor
         super(ProductBasis, self).__init__(X)
+
+        ## Saving the first element
+        self.__init = init
 
         ##Checking the input
         if(len(args) == 1 and type(args[0]) == list):
@@ -100,7 +109,7 @@ class ProductBasis(FactorialBasis):
         F = self.nfactors(); factors = self.factors()
         k = n//F; j = n%F
 
-        return prod(factors[i].element(k+1,name) for i in range(j))*prod(factors[i].element(k,name) for i in range(j,F))
+        return self.__init*prod(factors[i].element(k+1,name) for i in range(j))*prod(factors[i].element(k,name) for i in range(j,F))
 
     def factors(self):
         r'''
@@ -118,7 +127,6 @@ class ProductBasis(FactorialBasis):
         '''
         return len(self.__factors)
 
-    ## METHODS FOR COMPUTING THE COMPATIBILITY FROM THE BASIS FACTORS
     def __compute_operator_for_X(self, name):
         r'''
             Get the matrix operator for the multiplication by the variable.

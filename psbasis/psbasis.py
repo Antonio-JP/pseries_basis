@@ -32,7 +32,7 @@ r'''
 '''
 
 ## Sage imports
-from sage.all import FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method
+from sage.all import FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method, latex
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
 # ore_algebra imports
@@ -59,7 +59,6 @@ class PSBasis(object):
         List of abstract methods:
 
         * :func:`~PSBasis.element`.
-        * :func:`~PSBasis._scalar_basis`.
     '''
     def __init__(self, degree=True):
         self.__degree = degree
@@ -646,11 +645,15 @@ class PSBasis(object):
         r'''
             Method that actually builds the structure for the new basis.
 
-            This method (that is abstract) build the actual structure for the new basis. This may have
+            This method build the actual structure for the new basis. This may have
             some intrinsic compatibilities that will be extended with the compatibilities that 
             are in ``self`` according with the factor.
+
+            By default, this structure will be :class:`BruteBasis`, with the trivial method to 
+            generate new elements. However, different subclasses may override this method to 
+            provide a better structure to the scalar product.
         '''
-        raise NotImplementedError("Method '_scalar_basis' must be implemented in each subclass of PSBasis")
+        return BruteBasis(lambda n : self.element(n)*factor(n=n), self.by_degree())
 
     ### MAGIC METHODS
     def __getitem__(self, n):
@@ -683,7 +686,47 @@ class PSBasis(object):
     A = get_lower_bound #: alias for the method :func:`get_lower_bound`, according to notation in :arxiv:`1804.02964v1`
     B = get_upper_bound #: alias for the method :func:`get_upper_bound`, according to notation in :arxiv:`1804.02964v1`
     alpha = compatibility_coefficient #: alias for the method :func:`compatibility_coefficient`, according to notation in :arxiv:`1804.02964v1`
-    
+
+class BruteBasis(PSBasis):
+    r'''
+        A brute type of basis where the elements are provided by a method.
+
+        Class for representing basis where the construction does not fit into any other construction
+        but can be given, element by element, via a function. These basis have no default compatibilities
+        and provide no guarantee that the set compatibilities are correct.
+
+        In order to reduce the impact of this lack of proof, we provide a method to check empirically the compatibility 
+        for certain amount of elements in the basis.
+
+        INPUT:
+
+        * ``elements``: function or lambda method that takes one parameter `n` and return the `n`-th element
+          of this basis.
+        * ``degree``: indicates if it is a polynomial basis or an order basis.
+
+        TODO: add examples
+    '''
+    def __init__(self, elements, degree=True):
+        super().__init__(degree)
+        self.__get_element = elements
+
+    @cached_method
+    def element(self, n, var_name=None):
+        r'''
+            Method to return the `n`-th element of the basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+        '''
+        return self.__get_element(n)
+
+    def __repr__(self):
+        return "Brute basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])
+
+    def _latex_(self):
+        return r"Brute basis: \left(%s, %s, %s, \ldots\right)" %(latex(self[0]), latex(self[1]), latex(self[2]))
+
+
 class PolyBasis(PSBasis):
     r'''
         Abstract class for a polynomial power series basis. 
@@ -696,7 +739,6 @@ class PolyBasis(PSBasis):
         List of abstract methods:
 
         * :func:`PSBasis.element`.
-        * :func:`PSBasis._scalar_basis`.
     '''
     def __init__(self):
         super(PolyBasis,self).__init__(True)
@@ -788,7 +830,6 @@ class OrderBasis(PSBasis):
         List of abstract methods:
 
         * :func:`PSBasis.element`.
-        * :func:`PSBasis._scalar_basis`.
     '''
     def __init__(self):
         super(OrderBasis,self).__init__(False)

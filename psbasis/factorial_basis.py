@@ -28,7 +28,6 @@ class FactorialBasis(PolyBasis):
         List of abstract methods:
 
         * :func:`psbasis.psbasis.PSBasis.element`.
-        * :func:`psbasis.psbasis.PSBasis._scalar_basis`.
         * :func:`~FactorialBasis.increasing_polynomial`.
         * :func:`~FactorialBasis.increasing_basis`.
         * :func:`~FactorialBasis.matrix_ItP`.
@@ -327,7 +326,7 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method that actually builds the structure for the new basis.
 
-            This method *implements* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
+            This method *overrides* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
 
             EXAMPLES::

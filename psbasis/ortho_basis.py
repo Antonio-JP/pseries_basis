@@ -13,7 +13,7 @@ class OrthogonalBasis(PolyBasis):
 
         A basis of orthogonal polynomials is a type of polynomial basis for power series
         where the $(n+2)$th element is build from the $n$th and $n+1$ elements. This can be
-        seeing as a three-term recurrence basis. See https://dlmf.nist.gov/18 for further
+        seeing as a three-term recurrence basis. See :dlmf:`18` for further
         information and formulas for orthogonal polynomials.
 
         The first element in the sequence will always be the constant polynomial 1.
@@ -31,6 +31,7 @@ class OrthogonalBasis(PolyBasis):
             - ``cn``: the third coefficient of the three term recurrence.
             - ``X``: the name for the operator representing the multiplication by `x`.
             - ``Dx``: the name for the operator representing the derivation w.r.t. `x`.
+            - ``init``: the first element of the basis (by default, it is `1`)
     '''
     # Static elements
     @staticmethod
@@ -60,9 +61,15 @@ class OrthogonalBasis(PolyBasis):
         raise TypeError("The input is not a polynomial")
 
     # Builder
-    def __init__(self, an, bn, cn, X='x', Dx='Dx'):
+    def __init__(self, an, bn, cn, X='x', Dx='Dx', init=1):
         ## Initializing the PolyBasis structure
         super(OrthogonalBasis,self).__init__()
+
+        ## Cheking the first element
+        init = self.OB().base()(init)
+        if(init == 0):
+            raise ValueError("The first polynomial must be non-zero")
+        self.__init = init
 
         ## Adding the extra information
         n = self.n()
@@ -112,11 +119,28 @@ class OrthogonalBasis(PolyBasis):
 
         ## Basic cases
         if(n == 0):
-            return R.one()
+            return self.__init
         elif(n == 1):
-            return an(n=0)*x + bn(n=0)
+            return (an(n=0)*x + bn(n=0))*self.__init
         else: # General (recursive) case
             return (an(n=n-1)*x + bn(n=n-1))*self.element(n-1, name) - cn(n=n-1)*self.element(n-2, name)
+
+    def _scalar_basis(self, factor):
+        r'''
+            Method that actually builds the structure for the new basis.
+
+            This method *overrides* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
+
+            TODO: add examples
+        '''
+        n = self.n()
+        return OrthogonalBasis(
+            self.__an*factor(n=n+1)/factor, # an = an*f(n+1)/f(n) 
+            self.__bn*factor(n=n+1)/factor, # bn = bn*f(n+1)/f(n)
+            self.__cn*factor(n=n+1)/factor(n=n-1), # cn = cn*f(n+1)/f(n-1)
+            self.__var_name, self.__der_name, init = self.__init * factor(n=0)
+        )
 
     @cached_method
     def get_differential_equation(self, var_name=None):
@@ -147,7 +171,6 @@ class OrthogonalBasis(PolyBasis):
     def _first_compatibility(self):
         raise NotImplementedError("The general first compatibility with derivation is not implemented")
 
-    # OVERRIDDEN METHOD
     @cached_method
     def get_compatibility(self, operator):
         try:
