@@ -587,28 +587,20 @@ class ProductBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
-            equivalent condition to be a compatible operator. Namely, and operator is compatible
-            by definition if it expands:
-                $$L(P_n) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},$$
-            and that is equivalent to the following two conditions:
-                - $\deg(L(P_n)) \leq n + B$,
-                - $P_{n-A}$ divides $L(P_n)$.
+            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_CtD`.
 
-            For a ProductBasis, it is convenient to take the index $n = km + j$ where $m$ is
+            For a ProductBasis, it is convenient to take the index `n = kF + j` where `F` is
             the number of factors.
 
-            This method the division $L(P_n)/P_{n-A}$ as a list of its $A+B+1$ coefficients and computes
-            the the compatibility coefficients for the operator $L$.
-
             INPUT:
-                - ``bound``: value for $A$.
-                - ``shift``: value for $j$.
-                - ``coeffs``: list of coefficients in ``self.OB()`` representing the coefficients
-                  $\alpha_{k,j,i}$.
 
-            OUTPUT:
-                List of coefficients of $\alpha_{n,i}$.
+            * ``bound``: value for the lower bound for the compatibility condition (i.e, `A`).
+            * ``shift``: value for `j`.
+            * ``coeffs``: list representing the coefficients of the polynomial `L \cdot P_n(x)/P_{n-A}(x)` in the canonical 
+              power basis.
+
+            TODO: add examples
         '''
         ## Checking the input parameters
         if((not bound in ZZ) or (bound < 0)):
@@ -631,36 +623,6 @@ class ProductBasis(FactorialBasis):
         new_alpha = self.matrix_PtI(n-A, shift, mA+B+1)*vector(coeffs)
 
         return [el for el in new_alpha]
-
-    # Overriding PSBasis `get_compatibility`
-    # @cached_method
-    # def get_compatibility(self, operator):
-    #     r'''
-    #         Method to get the compatibility for an operator.
-
-    #         This method returns the compatibility of an operator showing the associated
-    #         sequence operator. In :arxiv:`1804.02964v1` this compatibility
-    #         is shown to be an algebra isomorphism, so we can compute the compatibility
-    #         final sequence operator using the ore_algebra package and a plain
-    #         substitution.
-
-    #         INPUT:
-    #             - ``operator``: the operator we want to get the compatibility. It can be the
-    #               name for any generator in the *ore_algebra* package or the generator
-    #               itself.
-    #     '''
-    #     if(isinstance(operator,str)):
-    #         if(not operator in self._PSBasis__compatibility):
-    #             raise ValueError("The operator %s is not compatible with %s" %(operator,self))
-    #         else:
-    #             return self._PSBasis__compatibility[operator]
-    #     else:
-    #         mons = [el(**self._PSBasis__compatibility) for el in operator.polynomial().monomials()]
-    #         coeffs = [el(**self._PSBasis__compatibility) for el in operator.polynomial().coefficients()]
-    #         result = sum(coeffs[i]*mons[i] for i in range(len(mons)))
-    #         result = Matrix(self.OS(), [[self.reduce_SnSni(result.coefficient((i,j))) for j in range(self.nfactors())] for i in range(self.nfactors())])
-
-    #         return result
 
     def __repr__(self):
         return "ProductBasis" + "".join(["\n\t- %s" %repr(f) for f in self.factors()])

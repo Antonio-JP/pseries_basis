@@ -32,6 +32,7 @@ class FactorialBasis(PolyBasis):
         * :func:`~FactorialBasis.increasing_polynomial`.
         * :func:`~FactorialBasis.increasing_basis`.
         * :func:`~FactorialBasis.matrix_ItP`.
+        * :func:`~FactorialBasis.equiv_DtC`.
     '''
     def __init__(self, X='x'):
         super(FactorialBasis,self).__init__()
@@ -193,6 +194,33 @@ class FactorialBasis(PolyBasis):
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
 
     def equiv_CtD(self, *args, **kwds):
+        r'''
+            Method to get the equivalence condition for a compatible operator.
+
+            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
+            equivalent condition to be a compatible operator. Namely, and operator is compatible
+            by definition if it expands:
+
+            .. MATH::
+
+                L \cdot P_n(x) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},
+
+            and that is equivalent to the following two conditions:
+
+            * `deg(L\cdot P_n(x))) \leq n + B`
+            * `P_{n-A}(x)` divides `L \cdot P_n(x)`.
+
+            This method takes the division `L\cdot P_n(x)/P_{n-A}(x)` as a list of its `A+B+1` coefficients and,
+            computes the compatibility coefficients for the operator `L`,
+            which transforms the two equivalent conditions to the definition of compatible operator
+            explicitly.
+
+            This is an abstract method that has to be implemented in some subclass. The input
+            may depend in each subclass.
+
+            OUTPUT:
+                List of coefficients of `\alpha_{n,i}`.
+        '''
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
 
     def __repr__(self):
@@ -639,24 +667,16 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
-            equivalent condition to be a compatible operator. Namely, and operator is compatible
-            by definition if it expands:
-                $$L(P_n) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},$$
-            and that is equivalent to the following two conditions:
-                - $\deg(L(P_n)) \leq n + B$,
-                - $P_{n-A}$ divides $L(P_n)$.
-
-            This method takes the division $L(P_n)/P_{n-A}$ as a list of its $A+B+1$ coefficients and,
-            computes the compatibility coefficients for the operator $L$.
+            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_CtD`.
 
             INPUT:
-                - ``bound``: value for $A$.
-                - ``coeffs``: list of coefficients in ``self.OB()`` representing the coefficients
-                  of the polynomial $L(P_n)/P_{n-A}$ in the usual Power Basis.
 
-            OUTPUT:
-                List of coefficients of $\alpha_{n,i}$.
+            * ``bound``: value for the lower bound for the compatibility (i.e., `A`).
+            * ``coeffs``: list representing the coefficients of the polynomial `L \cdot P_n(x)/P_{n-A}(x)` in the canonical 
+              power basis.
+
+            TODO: add examples
         '''
         ## Checking the input parameters
         if((not bound in ZZ) or (bound < 0)):
