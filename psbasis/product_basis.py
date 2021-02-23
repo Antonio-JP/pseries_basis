@@ -276,12 +276,11 @@ class ProductBasis(FactorialBasis):
             return alphas[j][i+mA](n=k)
         return self.get_compatibility_sections(self.nfactors(), (mA,B,alpha))
 
-    # FactorialBasis abstract method
     def increasing_polynomial(self, src, shift, diff=None, dst=None):
         r'''
             Returns the increasing factorial for the factorial basis.
 
-            This method *implements* the corresponding abstract method from :func:`psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
             in the description or the output.
 
@@ -292,7 +291,7 @@ class ProductBasis(FactorialBasis):
 
             * ``src``: value for `k`.
             * ``shift``: value for `j`, it has to be a value in `\{0,\dots,m-1\}`.
-            * ``diff``: difference between the index `n` and the largest index `m`. Must be a positive integer.
+            * ``diff``: difference between the index `n` and the largest index, `m`. Must be a positive integer.
             * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must be bigger than `n`.
 
             TODO: add examples
@@ -336,7 +335,34 @@ class ProductBasis(FactorialBasis):
 
         return self.__cached_increasing[(k,j,d)]
 
-    # FactorialBasis abstract method
+    def increasing_basis(self, shift):
+        r'''
+            Method to get the structure for the `n`-th increasing basis.
+
+            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+
+            For a :class:`ProductBasis`, the increasing basis is again a :class:`ProductBasis` of the increasing basis
+            of its factors. Depending on the actual shift, the increasing basis may differ. Namely, if the shift is 
+            `N = kF+j` where `F` is the number of factors of ``self`` and `B_i` are those factors, then the `N`-th 
+            increasing basis is the product:
+
+            .. MATH::
+
+                I(B_{j}, k)\cdots I(B_{F-1},k) I(B_0, k+1) \cdots I(B_{j-1}, k+1),
+
+            where `I(\cdot, k)` is the `k`-th increasing basis of `\cdot`.
+
+            TODO: add examples
+        '''
+        ## Checking the arguments
+        if((shift in ZZ) and shift < 0):
+            raise ValueError("The argument `shift` must be a positive integer")
+        F = self.nfactors(); factors = self.factors()
+
+        k = shift//self.F; j = shift%F
+        return ProductBasis(*[factors[i].increasing_basis(k) for i in range(j, F)], *[factors[i].increasing_basis(k+1) for i in range(j)])
+
     @cached_method
     def matrix_ItP(self, src, shift, size):
         r'''
@@ -446,12 +472,12 @@ class ProductBasis(FactorialBasis):
             return k
 
         # We apply Leibniz rule to the product and combine it using increasing basis and
-        # the method `applied_division_polynomial` for each factor of the basis.
+        # the method `compatible_division` for each factor of the basis.
         return sum( # Leibniz rule
             prod(
                 [self.factors()[p].increasing_polynomial(decide_index(k,j,p)-A, A) # Increasing basis
                 for p in range(self.nfactors) if p != i],
-                self.factors()[i].applied_division_polynomial(operator, decide_index(k,j,i), A)) # Starting with the derivative
+                self.factors()[i].compatible_division(operator, decide_index(k,j,i), A)) # Starting with the derivative
             for i in range(self.nfactors())
             )
 
@@ -520,7 +546,7 @@ class ProductBasis(FactorialBasis):
             if(i < j):
                 return k+1
             return k
-        return prod(self.factors()[i].applied_division_polynomial(operator, decide_index(k,j,i), A) for i in range(self.nfactors()))
+        return prod(self.factors()[i].compatible_division(operator, decide_index(k,j,i), A) for i in range(self.nfactors()))
 
     # FactorialBasis abstract method
     def equiv_DtC(self, bound, shift, *coeffs):

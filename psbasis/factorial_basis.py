@@ -30,6 +30,8 @@ class FactorialBasis(PolyBasis):
         * :func:`psbasis.psbasis.PSBasis.element`.
         * :func:`psbasis.psbasis.PSBasis._scalar_basis`.
         * :func:`~FactorialBasis.increasing_polynomial`.
+        * :func:`~FactorialBasis.increasing_basis`.
+        * :func:`~FactorialBasis.matrix_ItP`.
     '''
     def __init__(self, X='x'):
         super(FactorialBasis,self).__init__()
@@ -82,7 +84,58 @@ class FactorialBasis(PolyBasis):
         '''
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
 
+    def increasing_basis(self, shift):
+        r'''
+            Method to get the structure for the `n`-th increasing basis.
+
+            In a Factorial Basis, the `n`-th element of the basis divides all the following.
+            This means for any pair of indices `m > n`, there is a particular polynomial
+            `Q_{n,m}(x) = P_m(x)/P_n(x)` (see method :func:`increasing_polynomial` for further
+            information).
+
+            In particular, for a fixed `n` and `i \in \mathbb{N}`, the polynomials `Q_{n,n+i}(x)`
+            are another Factorial Basis, since we have:
+
+            .. MATH::
+
+                Q_{n,n+i+1}(x) = \frac{P_{n+i+1}(x)}{P_n(x)} = \frac{(a_{n+i}x + b_{n+i})P_{n+i}(x)}{P_n(x)} = 
+                (a_{n+i}x + b_{n+i})Q_{n,n+i}(x).
+
+            This method returns the corresponding structure for the Factorial Basis.
+
+            This is an abstract method that has to be implemented in some subclass.
+
+            INPUT:
+
+            * ``shift``: value for the fixed shift `n` for the increasing basis.
+
+            OUTPUT:
+
+            An object of type :class:`FactorialBasis` representing the corresponding 
+        '''
+        raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
+
     def matrix_ItP(self, *args, **kwds):
+        r'''
+            Method to get the matrix for converting from the increasing basis to the power basis.
+
+            In a Factorial Basis, the `n`-th element of the basis divides all the following.
+            This means for any pair of indices `m > n`, there is a particular polynomial
+            `Q_{n,m}(x) = P_m(x)/P_n(x)` (see method :func:`increasing_polynomial` for further
+            information).
+
+            In particular, for a fixed `n` and `i \in \mathbb{N}`, the polynomials `Q_{n,n+i}(x)`
+            are another Factorial Basis (see method :func:`increasing_basis`). This method 
+            computes a matrix that represents the identity map between polynomials of degree smaller 
+            or equal to a given size from the basis $Q_{n,n+i}(x)$ and the canonical power basis.
+
+            This is an abstract method that has to be implemented in some subclass. The input
+            may depend in each subclass.
+
+            OUTPUT:
+
+            A matrix that convert coordinates from the increasing basis to the canonical power basis.
+        '''
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
 
     @cached_method
@@ -367,14 +420,14 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Returns the increasing factorial for the factorial basis.
 
-            This method *implements* the corresponding abstract method from :func:`psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
             in the description or the output.
 
             INPUT:
 
-            * ``src``: value for lowest index `n`.
-            * ``diff``: difference between ``n` and the largest index `m`. Must be a positive integer.
+            * ``src``: value for lowest index, `n`.
+            * ``diff``: difference between `n` and the largest index, `m`. Must be a positive integer.
             * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
               be bigger than `n`.
 
@@ -414,28 +467,51 @@ class SFactorialBasis(FactorialBasis):
 
         return self.__cached_increasing[(n,d)]
 
-    def applied_division_polynomial(self, operator, src, diff=None, dst=None):
+    def increasing_basis(self, shift):
+        r'''
+            Method to get the structure for the `n`-th increasing basis.
+
+            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+
+            TODO: add examples
+        '''
+        ## Checking the arguments
+        if((shift in ZZ) and shift < 0):
+            raise ValueError("The argument `shift` must be a positive integer")
+        n = self.n()
+        return SFactorialBasis(self.an(n=n+shift),self.bn(n=n+shift), X=self.var_name())
+
+    def compatible_division(self, operator, src, diff=None, dst=None):
         r'''
             Method to get the division of a polynomial by other element of the basis after an operator.
 
-            In a Factorial Basis, the $n$th element of the basis divides all the following.
-            This means for any pair of indices $m > n$, there is a particular polynomial
-            $Q_{n,m} = P_m/P_n$.
+            It was proven in :arxiv:`1804.02964v1` that if `L` is an `(A,B)`-compatible operator
+            with a factorial basis, then for any `n \in \mathbb{N}`, we have
 
-            Moreover, by Proposition 1 of :arxiv:`1804.02964v1`, for a fixed operator $L$
-            that is $(A,B)$-compatible, we know that $P_{n-A}$ divides $L(P_n)$.
+            .. MATH::
 
-            This method computes that division where $n = src$ and $m = src+diff$ or
-            $m = dst$ with $m < n=-A$. Depending which one is given.
+                P_{n-A}(x) | L\cdot P_n(x).
+
+            Moreover, since the basis is factorial, it is clear that for any `m < n-A`, we have
+            that `P_m(x)` also divides `L\cdot P_n(x)`. See method :func:`increasing_polynomial`
+            for further information.
+
+            This method allows to compute the resulting polynomial `(L\cdot P_n(x))/P_m(x)` for 
+            any valid `m \leq n-A`.
 
             INPUT:
-                - ``src``: value for $n$.
-                - ``operator``: the operator we want to check. It can be the
-                  name for any generator in the *ore_algebra* package or the generator
-                  itself.
-                - ``diff``: difference between $n$ and $m$. Must be a positive integer.
-                - ``dst``: value for $m$. Only used (and required) if ``diff`` is None. Must
-                  be bigger than $n$.
+
+            * ``src``: value for `n`.
+            * ``operator``: the operator we want to check. See the input description
+              of method :func:`get_compatibility`. This operator has to be compatible,
+              so we can obtain the value for `A`.
+            * ``diff``: difference between `n` and `m`. Must be a positive integer greater than
+              the corresponding `A` value for ``operator``.
+            * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
+              be smaller or equal to `n-A`.
+
+            TODO: add examples
         '''
         ## Checking the arguments
         ## Reading ``src``
@@ -472,14 +548,9 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method to get the matrix for converting from the increasing basis to the power basis.
 
-            In a Factorial Basis, the $n$th element of the basis divides all the following.
-            This means for any pair of indices $m > n$, there is a particular polynomial
-            $Q_{n,m} = P_m/P_n$.
-
-            In particular, for a fixed $n$ and $i \in \mathfrak{N}$, the polynomials $Q_{n,n+i}$
-            form another Factorial Basis. This method computes a matrix that represents the
-            identity between polynomials of degree smaller or equal to ``size`` from the
-            basis $Q_{n,n+i}$ and the power basis.
+            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.matrix_ItP`.
+            
 
             INPUT:
                 - ``src``: value for $n$.
@@ -612,21 +683,38 @@ class FallingBasis(SFactorialBasis):
 
         if(E is None):
             if(c == 1):
-                E_name = "E"
+                self.__E_name = "E"
             else:
-                E_name = "E_%s" %b
+                self.__E_name = "E_%s" %b
         else:
-            E_name = E
+            self.__E_name = E
 
         n = self.n()
         super(FallingBasis, self).__init__(a, b-c*(n-1), X)
 
         Sn = self.Sn()
         aux_PR = self.polynomial_ring(X); x = aux_PR.gens()[0]
-        aux_OE = OreAlgebra(aux_PR, (E_name, lambda p : p(x=x+b), lambda p: 0))
+        aux_OE = OreAlgebra(aux_PR, (self.__E_name, lambda p : p(x=x+b), lambda p: 0))
         P = aux_OE(prod(a*x+b-c*i for i in range(-a,0)))
-        self.set_compatibility(E_name, 0)
-        self.set_compatibility(E_name, self.get_compatibility(P)*(Sn**a), True)
+        self.set_compatibility(self.__E_name, self.get_compatibility(P)*(Sn**a), True)
+
+    def increasing_basis(self, shift):
+        r'''
+            Method to get the structure for the `n`-th increasing basis.
+
+            This method *overrides* the corresponding method from :func:`~psbasis.factorial_basis.SFactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+
+            In the particular case of a :class:`FallingBasis`, we had parameters `a`, `b` and `c` that defines
+            the leading coefficients, the shift and the dilation of the falling basis. Hence the `N`-th increasing
+            basis is a new :class:`FallingBasis` with parameters `a`, `b-Nc` and `c`.
+
+            TODO: add examples
+        '''
+        if((shift in ZZ) and shift < 0):
+            raise ValueError("The argument `shift` must be a positive integer")
+
+        return FallingBasis(self.__a, self.__b - shift*self.__c, self.__c, self.var_name(),self.__E_name)
 
     def __repr__(self):
         a = self.__a; b = self.__b; c = self.__c
@@ -668,6 +756,23 @@ class PowerBasis(FallingBasis):
 
         n = self.n(); Sn = self.Sn(); a = self.linear_coefficient()
         self.set_compatibility(Dx, a*(n+1)*Sn)
+
+    def increasing_basis(self, shift):
+        r'''
+            Method to get the structure for the `n`-th increasing basis.
+
+            This method *overrides* the corresponding method from :func:`~psbasis.factorial_basis.SFactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+
+            In the particular case of :class:`PowerBasis`, the `n`-th increasing basis is always 
+            equal to itself.
+
+            TODO: add examples
+        '''
+        if((shift in ZZ) and shift < 0):
+            raise ValueError("The argument `shift` must be a positive integer")
+
+        return self
 
     def __repr__(self):
         a = self.linear_coefficient(); b = self.constant_coefficient()
@@ -714,7 +819,6 @@ class BinomialBasis(SFactorialBasis):
 
         Sn = self.Sn()
         self.set_compatibility(E, sum(binomial(a, i)*Sn**i for i in range(a+1)))
-
 
     def __repr__(self):
         x = self.polynomial_ring(self.var_name()).gens()[0]
