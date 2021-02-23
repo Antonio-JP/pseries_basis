@@ -61,6 +61,10 @@ class PSBasis(object):
         * :func:`~PSBasis.element`.
         * :func:`~PSBasis._scalar_basis`.
     '''
+    def __init__(self, degree=True):
+        self.__degree = degree
+        self.__compatibility = {}
+
     ### Getters from the module variable as objects of the class
     def OB(self):
         r'''
@@ -152,11 +156,6 @@ class PSBasis(object):
         '''
         return _psbasis__Sni
     
-    ### CONSTRUCTOR
-    def __init__(self, degree=True):
-        self.__degree = degree
-        self.__compatibility = {}
-    
     ### BASIC METHODS
     def element(self, n, var_name=None):
         r'''
@@ -164,6 +163,15 @@ class PSBasis(object):
 
             The user can also get the `n`-th element of the sequence using the *magic* Python syntax for 
             element in a list (i.e., using the ``[]`` notation).
+
+            This is an abstract method that has to be implemented in some subclass. 
+
+            INPUT:
+
+            * ``n``: the index of the element to get.
+            * ``var_name``: the name of the variable of the resulting polynomial. If ``None`` is given, 
+              we use the variable `x`. Otherwise we create the corresponding polynomial ring and 
+              return the polynomial in that polynomial ring.
         '''
         raise NotImplementedError("Method element must be implemented in each subclass of polynomial_basis")
         
@@ -614,9 +622,9 @@ class PSBasis(object):
         return "PSBasis -- WARNING: this is an abstract class"
     
     ### OTHER ALIASES FOR METHODS
-    A = get_lower_bound
-    B = get_upper_bound
-    alpha = compatibility_coefficient
+    A = get_lower_bound #: alias for the method :func:`get_lower_bound`, according to notation in :arxiv:`1804.02964v1`
+    B = get_upper_bound #: alias for the method :func:`get_upper_bound`, according to notation in :arxiv:`1804.02964v1`
+    alpha = compatibility_coefficient #: alias for the method :func:`compatibility_coefficient`, according to notation in :arxiv:`1804.02964v1`
     
 class PolyBasis(PSBasis):
     r'''
@@ -664,8 +672,9 @@ class PolyBasis(PSBasis):
             This matrix is infinite, so this method only returns a bounded region of the matrix.
 
             INPUT:
-                * ``nrows``: number of rows for the matrix
-                * ``ncols``: number of columns for the matrix
+
+            * ``nrows``: number of rows for the matrix
+            * ``ncols``: number of columns for the matrix
 
             OUTPUT:
             

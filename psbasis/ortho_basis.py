@@ -88,6 +88,20 @@ class OrthogonalBasis(PolyBasis):
 
     @cached_method
     def element(self, n, var_name=None):
+        r'''
+            Method to return the `n`-th element of the basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+
+            For a :class:`OrthogonalBasis` the output will be a polynomial of degree `n`.
+
+            OUTPUT:
+
+            A polynomial with variable name given by ``var_name`` and degree ``n``.
+
+            TODO: add examples
+        '''
         if(var_name is None):
             name = self.__var_name
         else:
@@ -216,12 +230,22 @@ class JacobiBasis(OrthogonalBasis):
 
     @cached_method
     def element(self, n, var_name=None):
+        r'''
+            Method to return the `n`-th element of the basis.
+
+            This method *overrides* the corresponding method from :class:`~psbasis.ortho_basis.OrthogonalBasis`.
+            See method :func:`~psbasis.ortho_basis.OrthogonalBasis.element` for further information.
+
+            This method takes into consideration special cases of the Jacobi polynomial basis, when the 
+            coefficients create non-standard behaviors (namely, for `n = 1` when `\alpha + \beta = 0` or 
+            `\alpha + \beta == -1`).
+        '''
         if(self.__special_zero and n == 1):
             if(var_name is None):
                 name = self.var_name()
             else:
                 name = var_name
-            R = self.polynomial_ring(name);    x = R.gens()[0]
+            R = self.polynomial_ring(name); x = R.gens()[0]
             a0 = (self.__alpha + self.__beta)/2 + 1; b0 = (self.__alpha - self.__beta)/2
             return a0*x + b0
 

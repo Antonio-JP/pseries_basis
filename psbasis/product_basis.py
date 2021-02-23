@@ -78,6 +78,20 @@ class ProductBasis(FactorialBasis):
     # PSBasis abstract method
     @cached_method
     def element(self, n, var_name=None):
+        r'''
+            Method to return the `n`-th element of the basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+
+            For a :class:`ProductBasis` the output will be a polynomial of degree `n`.
+
+            OUTPUT:
+
+            A polynomial with variable name given by ``var_name`` and degree ``n``.
+
+            TODO: add examples
+        '''
         if(var_name is None):
             name = self.var_name()
         else:

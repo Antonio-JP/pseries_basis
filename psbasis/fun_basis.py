@@ -36,6 +36,22 @@ class FunctionalBasis(OrderBasis):
 
     @cached_method
     def element(self, n):
+        r'''
+            Method to return the `n`-th element of the basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+
+            This method removes the optional argument of variable name. 
+
+            For a :class:`FunctionalBasis` the output will be a function of order `n`.
+
+            OUTPUT:
+
+            A formal power series of order ``n``.
+
+            TODO: add examples
+        '''
         R = self.polynomial_ring(self.__fun_name)
         f = R.gens()[0]
         return f**n
@@ -106,6 +122,22 @@ class BesselBasis(OrderBasis):
 
     @cached_method
     def element(self, n):
+        r'''
+            Method to return the `n`-th element of the basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+
+            This method removes the optional argument of variable name. 
+
+            For a :class:`BesselBasis` the output will be the `n`-th Bessel function `J_n(x)`.
+
+            OUTPUT:
+
+            The `n`-th Bessel function that has order `n` as a formal power series.
+
+            TODO: add examples
+        '''
         return bessel_J(n,x)
 
     def __repr__(self):

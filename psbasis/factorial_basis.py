@@ -290,13 +290,6 @@ class SFactorialBasis(FactorialBasis):
 
             For a :class:`SFactorialBasis` the output will be a polynomial of degree `n`.
 
-            INPUT:
-
-            * ``n``: the index of the element to get.
-            * ``var_name``: the name of the variable of the resulting polynomial. If ``None`` is given, 
-              we use the variable `x`. Otherwise we create the corresponding polynomial ring and 
-              return the polynomial in that polynomial ring.
-
             OUTPUT:
 
             A polynomial with variable name given by ``var_name`` and degree ``n``.
