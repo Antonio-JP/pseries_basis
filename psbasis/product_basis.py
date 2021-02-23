@@ -549,28 +549,19 @@ class ProductBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
-            equivalent condition to be a compatible operator. Namely, and operator is compatible
-            by definition if it expands:
-                $$L(P_n) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},$$
-            and that is equivalent to the following two conditions:
-                - $\deg(L(P_n)) \leq n + B$,
-                - $P_{n-A}$ divides $L(P_n)$.
+            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_DtC`.
 
-            For a ProductBasis, it is convenient to take the index $n = km + j$ where $m$ is
+            For a :class:`ProductBasis`, it is convenient to take the index `n = kF + j` where `F` is
             the number of factors.
 
-            This method takes the list of $\alpha_{k,j,i}$ and computes
-            the division $L(P_n)/P_{n-A}$ for $n \geq A$ as a polynomial of degree $A+B$.
-
             INPUT:
-                - ``bound``: value for $A$.
-                - ``shift``: value for $j$.
-                - ``coeffs``: list of coefficients in ``self.OB()`` representing the coefficients
-                  $\alpha_{k,j,i}$.
 
-            OUTPUT:
-                List of coefficients of $L(P_n)/P_{n-A}$.
+            * ``bound``: value for the lower bound for the compatibility condition (i.e, `A`).
+            * ``shift``: value for `j`.
+            * ``coeffs``: list of coefficients in representing the coefficients `\alpha_{k,j,i}`.
+
+            TODO: add examples
         '''
         ## Checking the input parameters
         if((not bound in ZZ) or (bound < 0)):

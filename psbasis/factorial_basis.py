@@ -163,6 +163,33 @@ class FactorialBasis(PolyBasis):
         return self.matrix_ItP(*args, **kwds).inverse()
 
     def equiv_DtC(self, *args, **kwds):
+        r'''
+            Method to get the equivalence condition for a compatible operator.
+
+            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
+            equivalent condition to be a compatible operator. Namely, and operator is compatible
+            by definition if it expands:
+
+            .. MATH::
+
+                L \cdot P_n(x) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},
+
+            and that is equivalent to the following two conditions:
+
+            * `deg(L\cdot P_n(x))) \leq n + B`
+            * `P_{n-A}(x)` divides `L \cdot P_n(x)`.
+
+            This method takes the list of `\alpha_{n,i}` and computes
+            the division `L \cdot P_n(x)/P_{n-A}(x)` for `n \geq A` as a polynomial of degree `A+B`,
+            which transforms the definition of compatible operator to the two equivalent conditions
+            explicitly.
+
+            This is an abstract method that has to be implemented in some subclass. The input
+            may depend in each subclass.
+
+            OUTPUT:
+                List of coefficients of $L(P_n)/P_{n-A}$.
+        '''
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
 
     def equiv_CtD(self, *args, **kwds):
@@ -582,24 +609,16 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
-            equivalent condition to be a compatible operator. Namely, and operator is compatible
-            by definition if it expands:
-                $$L(P_n) = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},$$
-            and that is equivalent to the following two conditions:
-                - $\deg(L(P_n)) \leq n + B$,
-                - $P_{n-A}$ divides $L(P_n)$.
-
-            This method takes the list of $\alpha_{n,i}$ and computes
-            the division $L(P_n)/P_{n-A}$ for $n \geq A$ as a polynomial of degree $A+B$.
+            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_DtC`.
 
             INPUT:
-                - ``bound``: value for $A$.
-                - ``coeffs``: list of coefficients in ``self.OB()`` representing the coefficients
-                  $\alpha_{n,i}$, i.e., $coeffs[j] = \alpha_{n,j-A}$.
 
-            OUTPUT:
-                List of coefficients of $L(P_n)/P_{n-A}$.
+            * ``bound``: value for the lower bound for the compatibility condition (i.e., `A`).
+            * ``coeffs``: list of coefficients in ``self.OB()`` representing the coefficients
+              `\alpha_{n,i}`, i.e., `coeffs[j] = \alpha_{n,j-A}`.
+
+            TODO: add examples
         '''
         ## Checking the input parameters
         if((not bound in ZZ) or (bound < 0)):
