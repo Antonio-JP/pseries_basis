@@ -262,7 +262,7 @@ class OrthogonalBasis(PolyBasis):
 
             TODO: add examples
 
-            WARNING: this method is currently not implemented.
+            WARNING: **this method is currently not implemented.**
         '''
         raise NotImplementedError("The mixed relation is not (yet) implemented in general")
 
@@ -432,7 +432,7 @@ class JacobiBasis(OrthogonalBasis):
         with weight function `(1-x)^\alpha (1+x)^\beta`.
 
         Following the notation in :arxiv:`1804.02964v1`, we can find that
-        this basis has compatibilities with the multiplication by 'x' and the derivation
+        this basis has compatibilities with the multiplication by `x` and the derivation
         `(1-x^2)\partial_x`.
 
         INPUT:

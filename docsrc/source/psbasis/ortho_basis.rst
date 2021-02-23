@@ -7,3 +7,4 @@ Orthogonal Polynomials: second order Polynomial Basis
    :members:
    :undoc-members:
    :show-inheritance:
+   :member-order: bysource
