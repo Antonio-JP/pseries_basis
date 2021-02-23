@@ -97,11 +97,10 @@ class ProductBasis(FactorialBasis):
         else:
             name = var_name
 
-        m = self.nfactors(); factors = self.factors()
-        k = n//m
-        j = n%m
+        F = self.nfactors(); factors = self.factors()
+        k = n//F; j = n%F
 
-        return prod(factors[i].element(k+1,name) for i in range(j))*prod(factors[i].element(k,name) for i in range(j,m))
+        return prod(factors[i].element(k+1,name) for i in range(j))*prod(factors[i].element(k,name) for i in range(j,F))
 
     def factors(self):
         r'''
