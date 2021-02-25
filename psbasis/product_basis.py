@@ -123,6 +123,15 @@ class ProductBasis(FactorialBasis):
 
             This method returns the factor basis that compose the :class:`ProductBasis`
             represented by ``self``.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B1 = BinomialBasis(); B2 = PowerBasis(); B3 = FallingBasis(1,0,1)
+                sage: ProductBasis(B1,B2).factors == [B1, B2]
+                True
+                sage: ProductBasis(B1,B3,B2).factors == [B1,B3,B2]
+                True
         '''
         return self.__factors
 
@@ -130,6 +139,15 @@ class ProductBasis(FactorialBasis):
     def nfactors(self):
         r'''
             Getter for the number of factors of this basis.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B1 = BinomialBasis(); B2 = PowerBasis(); B3 = FallingBasis(1,0,1)
+                sage: ProductBasis(B1,B2).nfactors()
+                2
+                sage: ProductBasis(B1,B3,B2).nfactors()
+                3
         '''
         return len(self.__factors)
 
@@ -141,13 +159,19 @@ class ProductBasis(FactorialBasis):
             of the multiplication by the variable in the Product Basis. This matrix has
             as many columns and rows as factors the basis.
 
+            See :arxiv:`1804.02964v1` for further information.
+
             INPUT:
-                * ``name``: name for the variable. If there is any factor which variable
-                  is called differently, this method will raise an error.
+
+            * ``name``: name for the variable. If there is any factor which variable
+              is called differently, this method will raise an error.
+
+            TODO: add examples
         '''
         ## Checking all factors are compatible with the basis
-        for el in self.factors:
-            el.get_compatibility(name)
+        if(any(not el.has_compatibility(name) for el in self.factors)):
+            raise TypeError("There is a factor not compatible with '%s'" %name)
+            
 
         ## Building the elements required for the matrix
         m = self.nfactors()
@@ -164,29 +188,39 @@ class ProductBasis(FactorialBasis):
 
     def add_derivation(self, name):
         r'''
-            Method to get the compatibility of a derivation.
+            Method to set the compatibility of a derivation.
 
-            This method computes the compatibility of a derivation L over
-            the ring K[x]. Such derivation must be compatible with all the
+            This method computes the compatibility of a derivation `L` over
+            the ring `\mathbb{K}[x]`. Such derivation must be compatible with all the
             factors on the basis.
 
-            Following the results of :arxiv:`1804.02964v1`, if $L$
-            is $(A_i,B_i)$-compatible with the $i$th factor of ``self``, then
-            $L$ is $(mA, B)$-compatible where $A = max(A_i)$ and $B = min(B_i)$.
+            Following the results of :arxiv:`1804.02964v1`, if `L`
+            is `(A_i,B_i)`-compatible with the `i`-th factor of ``self``, then
+            `L` is `(mA, B)`-compatible with ``self``, where `A = max(A_i)` and `B = min(B_i)`.
 
             This method computes the matrix operator representing the compatibility
-            of $L$ in as many sections as factors the basis have and add it to the
+            of `L` in as many sections as factors the basis have and add it to the
             compatibility dictionary of this basis.
 
-            Then it returns this matrix.
+            If the operator `L` was already compatible with ``self``, this method does
+            nothing.
 
             INPUT:
-                - ``name``: name of the derivation or a generator of a *ore_algebra*
-                  ring of operators.
 
-            WARNING::
-                This method do not check whether the operator given is an derivation
-                or not. That remains as a user responsability.
+            * ``name``: name of the derivation or a generator of a *ore_algebra*
+              ring of operators.
+
+            OUTPUT:
+
+            A matrix representing the compatibility of `L` with ``self`` in 
+            as many sections as factors has thi basis.
+
+            WARNING:
+
+            This method do not check whether the operator given is an derivation
+            or not. That remains as a user responsability.
+
+            TODO: add examples
         '''
         if(not (type(name) is str)):
             name = str(name)
@@ -200,27 +234,9 @@ class ProductBasis(FactorialBasis):
         r'''
             Method to get the compatibility of a derivation.
 
-            This method computes the compatibility of a derivation L over
-            the ring K[x]. Such derivation must be compatible with all the
-            factors on the basis.
-
-            Following the results of :arxiv:`1804.02964v1`, if $L$
-            is $(A_i,B_i)$-compatible with the $i$th factor of ``self``, then
-            $L$ is $(mA, B)$-compatible where $A = max(A_i)$ and $B = min(B_i)$.
-
-            This method computes the matrix operator representing the compatibility
-            of $L$ in as many sections as factors the basis have and add it to the
-            compatibility dictionary of this basis.
-
-            Then it returns this matrix.
-
-            INPUT:
-                - ``name``: name of the derivation or a generator of a *ore_algebra*
-                  ring of operators.
-
-            WARNING::
-                This method do not check whether the operator given is an derivation
-                or not. That remains as a user responsability.
+            This private method actually compute the compatibility operators explained in method
+            :func:`add_derivation` for a derivation. This method assumes that ``name`` is already 
+            a string.
         '''
         n = self.n()
         A = max(factor.A(name) for factor in self.factors); B = max(factor.B(name) for factor in self.factors); mA = self.nfactors()*A
@@ -236,29 +252,39 @@ class ProductBasis(FactorialBasis):
 
     def add_endomorphism(self, name):
         r'''
-            Method to get the compatibility of a endomorphism.
+            Method to set the compatibility of a derivation.
 
-            This method computes the compatibility of an endomorphism L, i.e.,
-            a map $L: K[x] \rightarrow K[x]$ that is a ring homomorphism. Such
-            endomorphism must be compatible with all the factors on the basis.
+            This method computes the compatibility of a derivation `L` over
+            the ring `\mathbb{K}[x]`. Such derivation must be compatible with all the
+            factors on the basis.
 
-            Following the results of :arxiv:`1804.02964v1`, if $L$
-            is $(A_i,B_i)$-compatible with the $i$th factor of ``self``, then
-            $L$ is $(mA, B)$-compatible where $A = max(A_i)$ and $B = min(B_i)$.
+            Following the results of :arxiv:`1804.02964v1`, if `L`
+            is `(A_i,B_i)`-compatible with the `i`-th factor of ``self``, then
+            `L` is `(mA, B)`-compatible with ``self``, where `A = max(A_i)` and `B = min(B_i)`.
 
             This method computes the matrix operator representing the compatibility
-            of $L$ in as many sections as factors the basis have and add it to the
+            of `L` in as many sections as factors the basis have and add it to the
             compatibility dictionary of this basis.
 
-            Then it returns this matrix.
+            If the operator `L` was already compatible with ``self``, this method does
+            nothing.
 
             INPUT:
-                - ``name``: name of the endomorphism or a generator of a *ore_algebra*
-                  ring of operators.
 
-            WARNING::
-                This method do not check whether the operator given is an endomorphism
-                or not. That remains as a user responsability.
+            * ``name``: name of the derivation or a generator of a *ore_algebra*
+              ring of operators.
+
+            OUTPUT:
+
+            A matrix representing the compatibility of `L` with ``self`` in 
+            as many sections as factors has thi basis.
+
+            WARNING:
+
+            This method do not check whether the operator given is an endomorphism
+            or not. That remains as a user responsability.
+
+            TODO: add examples
         '''
         if(not (type(name) is str)):
             name = str(name)
@@ -270,26 +296,11 @@ class ProductBasis(FactorialBasis):
 
     def __compute_operator_for_endomorphism(self, name):
         r'''
-            Method to get the compatibility of a endomorphism.
+            Method to get the compatibility of an endomorphism.
 
-            This method computes the compatibility of an endomorphism L, i.e.,
-            a map $L: K[x] \rightarrow K[x]$ that is a ring homomorphism. Such
-            endomorphism must be compatible with all the factors on the basis.
-
-            Following the results of :arxiv:`1804.02964v1`, if $L$
-            is $(A_i,B_i)$-compatible with the $i$th factor of ``self``, then
-            $L$ is $(mA, B)$-compatible where $A = max(A_i)$ and $B = min(B_i)$.
-
-            This method returns a matrix operator representing the compatibility
-            of $L$ in as many sections as factors the basis have.
-
-            INPUT:
-                - ``name``: name of the endomorphism or a generator of a *ore_algebra*
-                  ring of operators
-
-            WARNING::
-                This method do not check whether the operator given is an endomorphism
-                or not. That remains as a user responsability.
+            This private method actually compute the compatibility operators explained in method
+            :func:`add_endomorphism` for an endomorphism. This method assumes that ``name`` is already 
+            a string.
         '''
         n = self.n()
         A = max(factor.A(name) for factor in self.factors); B = max(factor.B(name) for factor in self.factors); mA = self.nfactors()*A
@@ -430,30 +441,34 @@ class ProductBasis(FactorialBasis):
 
     def derivation_division_polynomial(self, operator, src, shift, diff=None, dst=None):
         r'''
-            Method to get the division of a polynomial by other element of the basis after an operator.
+            Method to get the division of a polynomial by other element of the basis after a derivation.
 
-            In a Factorial Basis, the $n$th element of the basis divides all the following.
-            This means for any pair of indices $r > n$, there is a particular polynomial
-            $Q_{n,r} = P_r/P_n$.
+            As we explained in the method :func:`~psbasis.factorial_basis.SFactorialBasis.compatible_division`,
+            for any `(A,B)`-compatible operator `L` with ``self``, we have that 
+            `P_{n-A}(x)` divides `L\cdot P_n(x)` for all `n \in \mathbb{N}` (see :arxiv:`1804.02964v1`
+            for further information).
 
-            Moreover, by Proposition 1 of :arxiv:`1804.02964v1`, for a fixed operator $L$
-            that is `(A,B)`-compatible, we know that $P_{n-A}$ divides $L(P_n)$.
-
-            For a ProductBasis, it is convenient to take the index $n = km + j$ where $m$ is
+            The computation of these polynomials for :class:`ProductBasis` depends on the nature of 
+            the operator `L`. This method do the same as :func:`~psbasis.factorial_basis.SFactorialBasis.compatible_division`
+            but assuming that the operator `L` is compatible with all the factor of ``self`` and 
+            `L` is a *derivation*.
+            
+            For a :class:`ProductBasis`, it is convenient to take the index `n = kF + j` where `F` is
             the number of factors.
 
-            This method computes the division $L(P_n)/P_m$ where $L$ is a derivation,
-            for $m < n-A$.
-
             INPUT:
-                - ``operator``: the operator we want to check. It can be the
-                  name for any generator in the *ore_algebra* package or the generator
-                  itself.
-                - ``src``: value for $k$.
-                - ``shift``: the value for $j$.
-                - ``diff``: difference between $n$ and $m$. Must be a positive integer.
-                - ``dst``: value for $m$. Only used (and required) if ``diff`` is None. Must
-                  be smaller than $n-A$.
+
+            * ``operator``: the operator we want to check. See the input description
+              of method :func:`get_compatibility`. This operator has to be compatible,
+              so we can obtain the value for `A`.
+            * ``src``: value for `k`.
+            * ``shift``: value for `j`.
+            * ``diff``: difference between `n` and `m`. Must be a positive integer greater than
+              the corresponding `A` value for ``operator``.
+            * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
+              be smaller or equal to `n-A`.
+
+            TODO: add examples
         '''
         ## Checking the arguments
         ## Reading ``src``
@@ -506,30 +521,34 @@ class ProductBasis(FactorialBasis):
 
     def endomorphism_division_polynomial(self, operator, src, shift, diff=None, dst=None):
         r'''
-            Method to get the division of a polynomial by other element of the basis after an operator.
+            Method to get the division of a polynomial by other element of the basis after an endomorphism.
 
-            In a Factorial Basis, the $n$th element of the basis divides all the following.
-            This means for any pair of indices $r > n$, there is a particular polynomial
-            $Q_{n,r} = P_r/P_n$.
+            As we explained in the method :func:`~psbasis.factorial_basis.SFactorialBasis.compatible_division`,
+            for any `(A,B)`-compatible operator `L` with ``self``, we have that 
+            `P_{n-A}(x)` divides `L\cdot P_n(x)` for all `n \in \mathbb{N}` (see :arxiv:`1804.02964v1`
+            for further information).
 
-            Moreover, by Proposition 1 of :arxiv:`1804.02964v1`, for a fixed operator $L$
-            that is `(A,B)`-compatible, we know that $P_{n-A}$ divides $L(P_n)$.
-
-            For a ProductBasis, it is convenient to take the index $n = km + j$ where $m$ is
+            The computation of these polynomials for :class:`ProductBasis` depends on the nature of 
+            the operator `L`. This method do the same as :func:`~psbasis.factorial_basis.SFactorialBasis.compatible_division`
+            but assuming that the operator `L` is compatible with all the factor of ``self`` and 
+            `L` is an *endomorphism*.
+            
+            For a :class:`ProductBasis`, it is convenient to take the index `n = kF + j` where `F` is
             the number of factors.
 
-            This method computes the division $L(P_n)/P_m$ where $L$ is an endomorphism,
-            for $m < n-A$.
-
             INPUT:
-                - ``operator``: the operator we want to check. It can be the
-                  name for any generator in the *ore_algebra* package or the generator
-                  itself.
-                - ``src``: value for $k$.
-                - ``shift``: the value for $j$.
-                - ``diff``: difference between $n$ and $m$. Must be a positive integer.
-                - ``dst``: value for $m$. Only used (and required) if ``diff`` is None. Must
-                  be smaller than $n-A$.
+
+            * ``operator``: the operator we want to check. See the input description
+              of method :func:`get_compatibility`. This operator has to be compatible,
+              so we can obtain the value for `A`.
+            * ``src``: value for `k`.
+            * ``shift``: value for `j`.
+            * ``diff``: difference between `n` and `m`. Must be a positive integer greater than
+              the corresponding `A` value for ``operator``.
+            * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
+              be smaller or equal to `n-A`.
+
+            TODO: add examples
         '''
         ## Checking the arguments
         ## Reading ``src``

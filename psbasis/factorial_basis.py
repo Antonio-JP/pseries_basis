@@ -564,10 +564,10 @@ class SFactorialBasis(FactorialBasis):
 
             INPUT:
 
-            * ``src``: value for `n`.
             * ``operator``: the operator we want to check. See the input description
               of method :func:`get_compatibility`. This operator has to be compatible,
               so we can obtain the value for `A`.
+            * ``src``: value for `n`.
             * ``diff``: difference between `n` and `m`. Must be a positive integer greater than
               the corresponding `A` value for ``operator``.
             * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
