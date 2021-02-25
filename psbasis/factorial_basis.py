@@ -362,9 +362,21 @@ class SFactorialBasis(FactorialBasis):
                 sage: P2.__class__ == P.__class__
                 False
         '''
-        to_mult = factor/factor(n=self.n()-1)
+        factor = self.OB()(factor); n = self.n()
+        to_mult = factor(n=n)/factor(n=self.n()-1)
         return SFactorialBasis(self.__an*to_mult, self.__bn*to_mult, X=self.__var_name, init=self[0]*factor(n=0))
         
+    def _scalar_hypergeometric(self, factor, quotient):
+        r'''
+            Method that actually builds the structure for the new basis.
+
+            This method *overrides* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
+
+            TODO: add examples
+        '''
+        return SFactorialBasis(self.__an*quotient, self.__bn*quotient, X=self.__var_name, init=self[0]*factor(n=0))
+
     def __repr__(self):
         return "Factorial basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])
 
@@ -740,7 +752,7 @@ class FallingBasis(SFactorialBasis):
             if(c == 1):
                 self.__E_name = "E"
             else:
-                self.__E_name = "E_%s" %b
+                self.__E_name = "E_%s" %abs(QQ(c))
         else:
             self.__E_name = E
 

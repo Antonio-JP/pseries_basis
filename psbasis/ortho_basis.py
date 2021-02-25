@@ -173,11 +173,29 @@ class OrthogonalBasis(PolyBasis):
 
             TODO: add examples
         '''
+        factor = self.OB()(factor)
         n = self.n()
         return OrthogonalBasis(
             self.__an*factor(n=n+1)/factor, # an = an*f(n+1)/f(n) 
             self.__bn*factor(n=n+1)/factor, # bn = bn*f(n+1)/f(n)
             self.__cn*factor(n=n+1)/factor(n=n-1), # cn = cn*f(n+1)/f(n-1)
+            self.__var_name, self.__der_name, init = self.__init * factor(n=0)
+        )
+
+    def _scalar_hypergeometric(self, factor, quotient):
+        r'''
+            Method that actually builds the structure for the new basis.
+
+            This method *overrides* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
+
+            TODO: add examples
+        '''
+        n = self.n()
+        return OrthogonalBasis(
+            self.__an*quotient, # an = an*f(n+1)/f(n) 
+            self.__bn*quotient, # bn = bn*f(n+1)/f(n)
+            self.__cn*quotient*quotient(n=n-1), # cn = cn*f(n+1)/f(n-1)
             self.__var_name, self.__der_name, init = self.__init * factor(n=0)
         )
 

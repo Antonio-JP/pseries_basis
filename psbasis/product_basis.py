@@ -116,6 +116,19 @@ class ProductBasis(FactorialBasis):
 
         return self.__init*prod(factors[i].element(k+1,name) for i in range(j))*prod(factors[i].element(k,name) for i in range(j,F))
 
+    # def _scalar_hypergeometric(self, factor, quotient):
+    #     r'''
+    #         Method that actually builds the structure for the new basis.
+
+    #         This method *overrides* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
+    #         See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
+
+    #         TODO: add examples
+    #     '''
+    #     n = self.n(); F = self.nfactors()
+    #     gfactors = [quotient(n=n*F+i) for i in range(F)]
+    #     return ProductBasis(*[gfactors[i]*self.factors[i] for i in range(F)], init=self[0]*factor(n=0))
+
     @property
     def factors(self):
         r'''

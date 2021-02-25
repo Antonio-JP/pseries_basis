@@ -32,7 +32,7 @@ r'''
 '''
 
 ## Sage imports
-from sage.all import FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff
+from sage.all import FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff, Expression, prod
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
 # ore_algebra imports
@@ -156,6 +156,32 @@ class PSBasis(object):
         '''
         return _psbasis__Sni
     
+    def is_hypergeometric(self, element):
+        r'''
+            Method to check if a symbolic expression is hypergeometric or not.
+
+            This method checks whether ``element`` is a symbolic expression or a function
+            with a parameter `n` that is hypergeometric. This excludes the case of ``element``
+            being an rational function (see method :func:`OB` for further information).
+
+            This method returns ``True`` or ``False`` and the quotient (if the output is hypergeometric)
+            or ``None`` otherwise.
+
+            TODO: add examples
+        '''
+        if(element in self.OB()):
+            return False, None
+
+        n = self.n()
+        quotient = element(n=n+1)/element(n=n)
+        if(isinstance(quotient, Expression)):
+            quotient = quotient.simplify_full()
+        
+        try:
+            return True, self.OB()(str(quotient))
+        except:
+            return False, None
+
     ### BASIC METHODS
     def element(self, n, var_name=None):
         r'''
@@ -654,24 +680,55 @@ class PSBasis(object):
             A :class:`PSBasis` of the same type as ``self`` but representing the equivalent basis
             multiplied by ``factor``.
         '''
-        factor = self.OB()(factor) # we cast the factor into a rational function
+        n = self.n()
+        hyper, quotient = self.is_hypergeometric(factor)
+        if(hyper): # the input is an hypergeometric expression
+            print("hypergeometric factor")
+            new_basis = self._scalar_hypergeometric(factor, quotient)
 
-        ## We check the denominator never vanishes on positive integers
-        if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in factor.denominator().roots()])):
-            raise ValueError("The scalar factor is not valid: it takes value infinity at some 'n'")
+            compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
+            for key in compatibilities:
+                comp = self.get_compatibility(key)
+                if(is_Matrix(comp)):
+                    print("Matrix compatibility, not implemented for hypergeometric (skipping)")
+                else:
+                    A = self.A(key); B = self.B(key)
+                    mult = [prod(quotient(n=n-i+j) for j in range(i,0)) for i in range(-A,0)] + [1] + [prod(quotient(n+j) for j in range(i)) for i in range(1,B)]
+                    coeffs = [self.alpha(key, n, i)*mult[A+i] for i in range(-A, B+1)]
 
-        ## We check the numerator never vanishes on the positive integers
-        if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in factor.numerator().roots()])):
-            raise ValueError("The scalar factor is not valid: it takes value 0 at some 'n'")
+                    new_basis.set_compatibility(key, (A, B, coeffs))
+
+            return new_basis
+
+        # if the factor is not hypergeometric, we assume factor(n=n) is a rational function
+        if(factor in self.OB()): # the input is a rational function
+            factor = self.OB()(factor)
+            ## We check the denominator never vanishes on positive integers
+            if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in factor.denominator().roots()])):
+                raise ValueError("The scalar factor is not valid: it takes value infinity at some 'n'")
+
+            ## We check the numerator never vanishes on the positive integers
+            if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in factor.numerator().roots()])):
+                raise ValueError("The scalar factor is not valid: it takes value 0 at some 'n'")
+        # otherwise we assume the input is a function with one parameter. This may break somewhere later
 
         new_basis = self._scalar_basis(factor) # we create the structure for the new basis
 
         compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
         for key in compatibilities:
-            A = self.A(key); B = self.B(key); n = self.n()
-            coeffs = [self.alpha(key, n, i)*(factor/factor(n=n+i)) for i in range(-A, B+1)]
+            comp = self.get_compatibility(key)
+            if(is_Matrix(comp)): # special case: compatibility by sections
+                ns = comp.nrows()
+                factors = [factor(n=ns*n+i) for i in range(ns)]
+                # weird behavior on matrices with ore algebras
+                # we build the new matrix from the coefficients
+                coeffs = comp.coefficients()
+                new_basis.set_compatibility(key, Matrix([[coeffs[i*ns+j]*factors[i] for j in range(ns)] for i in range(ns)]))
+            else:
+                A = self.A(key); B = self.B(key)
+                coeffs = [self.alpha(key, n, i)*(factor/factor(n=n+i)) for i in range(-A, B+1)]
 
-            new_basis.set_compatibility(key, (A, B, coeffs))
+                new_basis.set_compatibility(key, (A, B, coeffs))
         
         return new_basis
 
@@ -686,6 +743,30 @@ class PSBasis(object):
             By default, this structure will be :class:`BruteBasis`, with the trivial method to 
             generate new elements. However, different subclasses may override this method to 
             provide a better structure to the scalar product.
+
+            INPUT:
+
+            * ``factor``: the scalar factor for each step.
+        '''
+        return BruteBasis(lambda n : self.element(n)*factor(n=n), self.by_degree())
+
+    def _scalar_hypergeometric(self, factor, quotient):
+        r'''
+            Method that actually builds the structure for the new basis.
+
+            This method build the actual structure for the new basis in the case of 
+            a hypergeometric factor. This may have
+            some intrinsic compatibilities that will be extended with the compatibilities that 
+            are in ``self`` according with the factor.
+
+            By default, this structure will be :class:`BruteBasis`, with the trivial method to 
+            generate new elements. However, different subclasses may override this method to 
+            provide a better structure to the scalar product.
+
+            INPUT:
+
+            * ``factor``: the scalar factor for each step.
+            * ``quotient``: the quotient that defines ``factor`` as a hypergeometric element.
         '''
         return BruteBasis(lambda n : self.element(n)*factor(n=n), self.by_degree())
 
