@@ -14,25 +14,30 @@ class ProductBasis(FactorialBasis):
         Class for Product Basis.
 
         This class represent basis built using the pieces of other polynomial basis.
-        Namely, the $n=km+j$ element of the product of $m$ basis, is the product of
-            $$Q_n = \prod_{i=1}^{j}P_{k+1}^{(j)}\prod_{i=j+1}^{m}P_{k}^{(j)}.$$
+        Namely, the `n=km+j` element of the product of `m` basis, is the product of
+
+        .. MATH::
+
+            Q_n(x) = \prod_{i=1}^{j}P_{k+1}^{(j)}(x)\prod_{i=j+1}^{m}P_{k}^{(j)}(x).
 
         See the paper :arxiv:`1804.02964v1` for further information.
 
         INPUT:
-            * args: list of Polynomial Basis
-            * kwds: optional parameters. The following are allowed:
-                * ``X`` or ``name``: name for the variable. 'x' is the default.
-                * ``Dx`` or ``ders`` or ``der`` or ``derivations`` or ``derivation``: name or list of names
-                  for the derivations compatible with the basis.
-                * ``E`` or ``shift`` or ``sh`` or ``endo`` or ``endomorphism``: name or list of names for
-                  the endomorphisms compatible with the basis.
-                * ``init``: the value of the first element of the basis. It has to be a constant element.
-                  It takes the value `1` by default.
 
-        REMARK::
-            * If any factor of the basis is a ProductBasis, we will consider its factors as normal
-              factors of this basis.
+        * ``args``: list of :class:`~psbasis.factorial_basis.FactorialBasis` to build the :class:`ProductBasis`.
+        * ``kwds``: optional parameters. The following are allowed:
+            * ``X`` or ``name``: name for the variable. 'x' is the default.
+            * ``Dx`` or ``ders`` or ``der`` or ``derivations`` or ``derivation``: name or list of names
+              for the derivations compatible with the basis.
+            * ``E`` or ``shift`` or ``sh`` or ``endo`` or ``endomorphism``: name or list of names for
+              the endomorphisms compatible with the basis.
+            * ``init``: the value of the first element of the basis. It has to be a constant element.
+              It takes the value `1` by default.
+
+        REMARK:
+
+        * If any factor of the basis is a :class:`ProductBasis`, we will consider its factors as normal
+          factors of this basis.
     '''
     def __init__(self, *args, **kwds):
         ## Processing the optional parameters
@@ -64,7 +69,7 @@ class ProductBasis(FactorialBasis):
         final_args = []
         for el in args:
             if(isinstance(el, ProductBasis)):
-                final_args += el.factors()
+                final_args += el.factors
             elif(isinstance(el, FactorialBasis)):
                 final_args += [el]
             else:
@@ -106,16 +111,17 @@ class ProductBasis(FactorialBasis):
         else:
             name = var_name
 
-        F = self.nfactors(); factors = self.factors()
+        F = self.nfactors(); factors = self.factors
         k = n//F; j = n%F
 
         return self.__init*prod(factors[i].element(k+1,name) for i in range(j))*prod(factors[i].element(k,name) for i in range(j,F))
 
+    @property
     def factors(self):
         r'''
-            Getter for the factor of this basis
+            Immutable property for the factors of ``self``
 
-            This method returns the factor basis that compose the Product Basis
+            This method returns the factor basis that compose the :class:`ProductBasis`
             represented by ``self``.
         '''
         return self.__factors
@@ -140,13 +146,13 @@ class ProductBasis(FactorialBasis):
                   is called differently, this method will raise an error.
         '''
         ## Checking all factors are compatible with the basis
-        for el in self.factors():
+        for el in self.factors:
             el.get_compatibility(name)
 
         ## Building the elements required for the matrix
         m = self.nfactors()
-        ccoeff = [el.constant_coefficient() for el in self.factors()]
-        lcoeff = [el.linear_coefficient() for el in self.factors()]
+        ccoeff = [el.constant_coefficient() for el in self.factors]
+        lcoeff = [el.linear_coefficient() for el in self.factors]
 
         def alpha(k,j,i):
             if(i==0):
@@ -217,7 +223,7 @@ class ProductBasis(FactorialBasis):
                 or not. That remains as a user responsability.
         '''
         n = self.n()
-        A = max(factor.A(name) for factor in self.factors()); B = max(factor.B(name) for factor in self.factors()); mA = self.nfactors()*A
+        A = max(factor.A(name) for factor in self.factors); B = max(factor.B(name) for factor in self.factors); mA = self.nfactors()*A
 
         alphas = []
         for j in range(self.nfactors()):
@@ -286,7 +292,7 @@ class ProductBasis(FactorialBasis):
                 or not. That remains as a user responsability.
         '''
         n = self.n()
-        A = max(factor.A(name) for factor in self.factors()); B = max(factor.B(name) for factor in self.factors()); mA = self.nfactors()*A
+        A = max(factor.A(name) for factor in self.factors); B = max(factor.B(name) for factor in self.factors); mA = self.nfactors()*A
 
         alphas = []
         for j in range(self.nfactors()):
@@ -351,7 +357,7 @@ class ProductBasis(FactorialBasis):
                 return k
 
             self.__cached_increasing[(k,j,d)] = prod(
-                self.factors()[i].increasing_polynomial(decide_index(k,j,i),dst=decide_index(p,q,i))
+                self.factors[i].increasing_polynomial(decide_index(k,j,i),dst=decide_index(p,q,i))
                 for i in range(self.nfactors()))
 
         return self.__cached_increasing[(k,j,d)]
@@ -380,7 +386,7 @@ class ProductBasis(FactorialBasis):
         ## Checking the arguments
         if((shift in ZZ) and shift < 0):
             raise ValueError("The argument `shift` must be a positive integer")
-        F = self.nfactors(); factors = self.factors()
+        F = self.nfactors(); factors = self.factors
 
         k = shift//F; j = shift%F
         return ProductBasis(*[factors[i].increasing_basis(k) for i in range(j, F)], *[factors[i].increasing_basis(k+1) for i in range(j)])
@@ -462,7 +468,7 @@ class ProductBasis(FactorialBasis):
         n = k*self.nfactors() + j
 
         ## Compatibility of ``operator``
-        A = [factor.A(operator) for factor in self.factors()]; B = [factor.B(operator) for factor in self.factors()]
+        A = [factor.A(operator) for factor in self.factors]; B = [factor.B(operator) for factor in self.factors]
         A = max(A); B = min(B); mA = self.nfactors()*A
 
         ## Reading ``diff`` or ``dst``
@@ -492,9 +498,9 @@ class ProductBasis(FactorialBasis):
         # the method `compatible_division` for each factor of the basis.
         return sum( # Leibniz rule
             prod(
-                [self.factors()[p].increasing_polynomial(decide_index(k,j,p)-A, A) # Increasing basis
+                [self.factors[p].increasing_polynomial(decide_index(k,j,p)-A, A) # Increasing basis
                 for p in range(self.nfactors) if p != i],
-                self.factors()[i].compatible_division(operator, decide_index(k,j,i), A)) # Starting with the derivative
+                self.factors[i].compatible_division(operator, decide_index(k,j,i), A)) # Starting with the derivative
             for i in range(self.nfactors())
             )
 
@@ -538,7 +544,7 @@ class ProductBasis(FactorialBasis):
         n = k*self.nfactors() + j
 
         ## Compatibility of ``operator``
-        A = [factor.A(operator) for factor in self.factors()]; B = [factor.B(operator) for factor in self.factors()]
+        A = [factor.A(operator) for factor in self.factors]; B = [factor.B(operator) for factor in self.factors]
         A = max(A); B = min(B); mA = self.nfactors()*A
 
         ## Reading ``diff`` or ``dst``
@@ -563,7 +569,7 @@ class ProductBasis(FactorialBasis):
             if(i < j):
                 return k+1
             return k
-        return prod(self.factors()[i].compatible_division(operator, decide_index(k,j,i), A) for i in range(self.nfactors()))
+        return prod(self.factors[i].compatible_division(operator, decide_index(k,j,i), A) for i in range(self.nfactors()))
 
     # FactorialBasis abstract method
     def equiv_DtC(self, bound, shift, *coeffs):
@@ -646,7 +652,7 @@ class ProductBasis(FactorialBasis):
         return [el for el in new_alpha]
 
     def __repr__(self):
-        return "ProductBasis" + "".join(["\n\t- %s" %repr(f) for f in self.factors()])
+        return "ProductBasis" + "".join(["\n\t- %s" %repr(f) for f in self.factors])
 
     def _latex_(self):
-        return "".join([f._latex_() for f in self.factors()])
+        return "".join([f._latex_() for f in self.factors])

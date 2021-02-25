@@ -2,7 +2,7 @@ r'''
     Sage package for Functional order Basis.
 '''
 # Sage imports
-from sage.all import cached_method, Integer, bessel_J
+from sage.all import cached_method, Integer, bessel_J, exp
 from sage.all_cmdline import x
 
 # Local imports
@@ -23,26 +23,31 @@ class FunctionalBasis(OrderBasis):
         INPUT:
             - ``X``: the name for the operator representing the multiplication by `f(x)`.
     '''
-    def __init__(self, X='f'):
+    def __init__(self, f, X='f'):
         ## Initializing the PolyBasis structure
         super(FunctionalBasis,self).__init__()
 
         ## Adding the extra information
         self.__fun_name = X
 
+        if(f(x=0) != 0):
+            raise ValueError("The first initial value of the function has to be zero. Found %s" %f(x=0))
+        self.__function = f
+
         ## The multiplication by X compatibility is given
         Sni = self.Sni()
         self.set_compatibility(X, Sni)
 
     @cached_method
-    def element(self, n):
+    def element(self, n, real=True):
         r'''
             Method to return the `n`-th element of the basis.
 
             This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
 
-            This method removes the optional argument of variable name. 
+            This method removes the optional argument of but adds a new argument for getting 
+            a symbolic representation as a polynomial in the function or the real object.
 
             For a :class:`FunctionalBasis` the output will be a function of order `n`.
 
@@ -52,9 +57,12 @@ class FunctionalBasis(OrderBasis):
 
             TODO: add examples
         '''
-        R = self.polynomial_ring(self.__fun_name)
-        f = R.gens()[0]
-        return f**n
+        if(not real):
+            R = self.polynomial_ring(self.__fun_name)
+            f = R.gens()[0]
+            return f**n
+        else:
+            return self.__function**n
 
     def __repr__(self):
         return "Functional Power Basis (%s)" %(self.__fun_name)
@@ -82,7 +90,7 @@ class ExponentialBasis(FunctionalBasis):
             - ``Dx``: the name for the operator representing the derivation by `x`.
     '''
     def __init__(self, E='E', Dx='Dx'):
-        super(ExponentialBasis, self).__init__()
+        super(ExponentialBasis, self).__init__(exp(x)-1)
 
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
 

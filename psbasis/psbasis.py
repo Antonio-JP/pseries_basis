@@ -32,7 +32,7 @@ r'''
 '''
 
 ## Sage imports
-from sage.all import FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method, latex
+from sage.all import FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
 # ore_algebra imports
@@ -59,6 +59,7 @@ class PSBasis(object):
         List of abstract methods:
 
         * :func:`~PSBasis.element`.
+        * :func:`~PSBasis._basis_matrix`.
     '''
     def __init__(self, degree=True):
         self.__degree = degree
@@ -189,6 +190,37 @@ class PSBasis(object):
             Return ``True`` if the `n`-th element of the basis is a power series of order `n`.
         '''
         return (not self.__degree)
+
+    def basis_matrix(self, nrows, ncols=None):
+        r'''
+            Method to get a matrix representation of the basis.
+
+            This method returns a matrix `M = (m_{i,j})` with ``nrows`` rows and
+            ``ncols`` columns such that `m_{i,j} = [x^j]f_i(x)`, where `f_i(x)` is 
+            the `i`-th element of ``self``.
+
+            INPUT:
+
+            * ``nrows``: number of rows of the final matrix
+            * ``ncols``: number of columns of the final matrix. If ``None`` is given, we
+              will automatically return the square matrix with size given by ``nrows``.
+        '''
+        ## Checking the arguments
+        if(not ((nrows in ZZ) and nrows > 0)):
+            raise ValueError("The number of rows must be a positive integer")
+        if(not ncols is None):
+            if(not ((ncols in ZZ) and ncols > 0)):
+                raise ValueError("The number of columns must be a positive integer")
+            return self._basis_matrix(nrows, ncols)
+        return self._basis_matrix(nrows, nrows)
+
+    def _basis_matrix(self, nrows, ncols):
+        r'''
+            Method that actually computes the matrix for basis.
+
+            In this method we have guaranteed that the arguments are positive integers.
+        '''
+        raise NotImplementedError("Method element must be implemented in each subclass of polynomial_basis")
 
     ### AUXILIARY METHODS
     def reduce_SnSni(self,operator):
@@ -479,7 +511,9 @@ class PSBasis(object):
                 return self.__compatibility[operator]
         else:
             try:
+                PR = operator.polynomial().parent()
                 poly = operator.polynomial()
+                poly = PR.flattening_morphism()(poly)
             except TypeError:
                 poly = operator
 
@@ -720,12 +754,25 @@ class BruteBasis(PSBasis):
         '''
         return self.__get_element(n)
 
+    def _basis_matrix(self, nrows, ncols):
+        r'''
+            Method to get a matrix representation of the basis.
+            
+            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.basis_matrix` for further information.
+
+            TODO: add examples                
+        '''
+        try:
+            return Matrix([[self[n].sequence(k) for k in range(ncols)] for n in range(nrows)])
+        except AttributeError:
+            return Matrix([[diff(self[n], k)(x=0)/factorial(k) for k in range(ncols)] for n in range(nrows)])
+
     def __repr__(self):
         return "Brute basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])
 
     def _latex_(self):
         return r"Brute basis: \left(%s, %s, %s, \ldots\right)" %(latex(self[0]), latex(self[1]), latex(self[2]))
-
 
 class PolyBasis(PSBasis):
     r'''
@@ -743,20 +790,22 @@ class PolyBasis(PSBasis):
     def __init__(self):
         super(PolyBasis,self).__init__(True)
 
-    def basis_matrix(self, nrows, ncols):
+    def _basis_matrix(self, nrows, ncols):
         r'''
-            Method that returns the matrix that make the change from the canonical basis
-            `\{1, x, x^2, \ldots\}` to the current polynomial basis.
+            Method to get a matrix representation of the basis.
             
-            All polynomials basis are based on elements `P_n(x)` of degree `n` for each
+            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.basis_matrix` for further information.
+
+            In particular for a :class:`PolyBasis`, the elements `P_n(x)` have degree `n` for each
             value of `n \in \mathbb{N}`. This means that we can write:
 
             .. MATH::
 
                 P_n(x) = \sum_{k=0}^n a_{n,k} x^k
 
-            And by taking `a_{n,k} = 0` for all `k > 0`, we can build a matrix 
-            `M = \left(a_{n,k}\right)_{n,k \geq 0}`, such that:
+            And by taking `a_{n,k} = 0` for all `k > 0`, we can build the matrix 
+            `M = \left(a_{n,k}\right)_{n,k \geq 0}` with the following shape:
 
             .. MATH::
 
@@ -769,17 +818,6 @@ class PolyBasis(PSBasis):
                     \vdots&\vdots&\vdots&\vdots&\ddots
                 \end{pmatrix} \begin{pmatrix}1\\x\\x^2\\x^3\\\vdots\end{pmatrix}
 
-            This matrix is infinite, so this method only returns a bounded region of the matrix.
-
-            INPUT:
-
-            * ``nrows``: number of rows for the matrix
-            * ``ncols``: number of columns for the matrix
-
-            OUTPUT:
-            
-            The matrix `M = \left(a_{n,k}\right)_{0\leq n \leq nrows}^{0 \leq k \leq ncols}`.
-
             EXAMPLES::
 
                 sage: from psbasis import *
@@ -790,7 +828,7 @@ class PolyBasis(PSBasis):
                 [    0  -1/2   1/2     0     0]
                 [    0   1/3  -1/2   1/6     0]
                 [    0  -1/4 11/24  -1/4  1/24]
-                sage: B.basis_matrix(3,7)
+                sage: B.basis_matrix(7,3)
                 [      1       0       0]
                 [      0       1       0]
                 [      0    -1/2     1/2]
@@ -833,6 +871,52 @@ class OrderBasis(PSBasis):
     '''
     def __init__(self):
         super(OrderBasis,self).__init__(False)
+
+    def _basis_matrix(self, nrows, ncols):
+        r'''
+            Method to get a matrix representation of the basis.
+            
+            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.basis_matrix` for further information.
+            
+            In an order basis, the `n`-th element of the basis is always a formal power series
+            of order `n`. Hence, we can consider the infinite matrix where the coefficient
+            `m_{i,j} = [x^j]f_i(x) = a_{i,j}` and the matrix have the following shape:
+
+            .. MATH::
+
+                \begin{pmatrix}
+                    a_{0,0} & a_{0,1} & a_{0,2} & a_{0,3} & \ldots\\
+                    0 & a_{1,1} & a_{1,2} & a_{1,3} & \ldots\\
+                    0 & 0 & a_{2,2} & a_{2,3} & \ldots\\
+                    0 & 0 & 0 & a_{3,3} & \ldots\\
+                    \vdots&\vdots&\vdots&\vdots&\ddots
+                \end{pmatrix}
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = FunctionalBasis(sin(x))
+                sage: B.basis_matrix(5,5)
+                [   1    0    0    0    0]
+                [   0    1    0 -1/6    0]
+                [   0    0    1    0 -1/3]
+                [   0    0    0    1    0]
+                [   0    0    0    0    1]
+                sage: ExponentialBasis().basis_matrix(4,7)
+                [     1      0      0      0      0      0      0]
+                [     0      1    1/2    1/6   1/24  1/120  1/720]
+                [     0      0      1      1   7/12    1/4 31/360]
+                [     0      0      0      1    3/2    5/4    3/4]
+                sage: BesselBasis().basis_matrix(3,6)
+                [    1     0  -1/4     0  1/64     0]
+                [    0   1/2     0 -1/16     0 1/384]
+                [    0     0   1/8     0 -1/96     0]
+        '''
+        try:
+            return Matrix([[self[n].sequence(k) for k in range(ncols)] for n in range(nrows)])
+        except AttributeError:
+            return Matrix([[diff(self[n], k)(x=0)/factorial(k) for k in range(ncols)] for n in range(nrows)])
     
     def __repr__(self):
         return "PolyBasis -- WARNING: this is an abstract class"
