@@ -161,8 +161,7 @@ class PSBasis(object):
             Method to check if a symbolic expression is hypergeometric or not.
 
             This method checks whether ``element`` is a symbolic expression or a function
-            with a parameter `n` that is hypergeometric. This excludes the case of ``element``
-            being an rational function (see method :func:`OB` for further information).
+            with a parameter `n` that is hypergeometric. 
 
             This method returns ``True`` or ``False`` and the quotient (if the output is hypergeometric)
             or ``None`` otherwise.
@@ -170,7 +169,8 @@ class PSBasis(object):
             TODO: add examples
         '''
         if(element in self.OB()):
-            return False, None
+            element = self.OB()(element); n = self.n()
+            return True, element(n=n+1)/element(n)
 
         n = self.n()
         quotient = element(n=n+1)/element(n=n)
@@ -181,6 +181,38 @@ class PSBasis(object):
             return True, self.OB()(str(quotient))
         except:
             return False, None
+
+    def valid_factor(self, element):
+        r'''
+            Checks whether a rational function has poles or zeros in the positive integers.
+
+            When we compute a scaling of a basis for the ring of formal power series, we 
+            should be careful that the factor (which is a sequence `\mathbb{K}^\mathbb{N}`)
+            never vanishes and it is well defined for all possible values of `n`.
+
+            This method perform that checking for a rational function (which we can explicitly
+            compute the zeros and poles). We do not need to compute the algebraic roots of the polynomial,
+            simply the rational roots (which can be done with the usual Sage algorithms).
+
+            INPUT:
+
+            * ``element``: rational function in `n` (see :func:`OB`).
+
+            OUTPUT:
+
+            This method return ``True`` if the rational function has no pole nor zero on `\mathbb{N}`.
+
+            TODO: add examples
+        '''
+        ## We check the denominator never vanishes on positive integers
+        if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in element.denominator().roots()])):
+            return False
+
+        ## We check the numerator never vanishes on the positive integers
+        if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in element.numerator().roots()])):
+            return False
+            
+        return True
 
     ### BASIC METHODS
     def element(self, n, var_name=None):
@@ -680,56 +712,22 @@ class PSBasis(object):
             A :class:`PSBasis` of the same type as ``self`` but representing the equivalent basis
             multiplied by ``factor``.
         '''
-        n = self.n()
         hyper, quotient = self.is_hypergeometric(factor)
-        if(hyper): # the input is an hypergeometric expression
-            print("hypergeometric factor")
+        if(factor in self.OB()): # rational function case
+            if(not self.valid_factor(self.OB()(factor))):
+                raise ValueError("The scalar factor is not valid: not well defined for all 'n'")
+            new_basis = self._scalar_basis(factor)
+            # we extend the compatibilities
+            self.__scalar_extend_compatibilities(new_basis, factor)  
+        elif(hyper): # the input is an hypergeometric expression
             new_basis = self._scalar_hypergeometric(factor, quotient)
-
-            compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
-            for key in compatibilities:
-                comp = self.get_compatibility(key)
-                if(is_Matrix(comp)):
-                    print("Matrix compatibility, not implemented for hypergeometric (skipping)")
-                else:
-                    A = self.A(key); B = self.B(key)
-                    mult = [prod(quotient(n=n-i+j) for j in range(i,0)) for i in range(-A,0)] + [1] + [prod(quotient(n+j) for j in range(i)) for i in range(1,B)]
-                    coeffs = [self.alpha(key, n, i)*mult[A+i] for i in range(-A, B+1)]
-
-                    new_basis.set_compatibility(key, (A, B, coeffs))
-
-            return new_basis
-
-        # if the factor is not hypergeometric, we assume factor(n=n) is a rational function
-        if(factor in self.OB()): # the input is a rational function
-            factor = self.OB()(factor)
-            ## We check the denominator never vanishes on positive integers
-            if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in factor.denominator().roots()])):
-                raise ValueError("The scalar factor is not valid: it takes value infinity at some 'n'")
-
-            ## We check the numerator never vanishes on the positive integers
-            if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in factor.numerator().roots()])):
-                raise ValueError("The scalar factor is not valid: it takes value 0 at some 'n'")
-        # otherwise we assume the input is a function with one parameter. This may break somewhere later
-
-        new_basis = self._scalar_basis(factor) # we create the structure for the new basis
-
-        compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
-        for key in compatibilities:
-            comp = self.get_compatibility(key)
-            if(is_Matrix(comp)): # special case: compatibility by sections
-                ns = comp.nrows()
-                factors = [factor(n=ns*n+i) for i in range(ns)]
-                # weird behavior on matrices with ore algebras
-                # we build the new matrix from the coefficients
-                coeffs = comp.coefficients()
-                new_basis.set_compatibility(key, Matrix([[coeffs[i*ns+j]*factors[i] for j in range(ns)] for i in range(ns)]))
-            else:
-                A = self.A(key); B = self.B(key)
-                coeffs = [self.alpha(key, n, i)*(factor/factor(n=n+i)) for i in range(-A, B+1)]
-
-                new_basis.set_compatibility(key, (A, B, coeffs))
-        
+            # we extend the compatibilities
+            self.__scalar_hyper_extend_compatibilities(new_basis, factor, quotient)
+        else:
+            new_basis = self._scalar_basis(factor) # we create the structure for the new basis
+            # we extend the compatibilities
+            self.__scalar_extend_compatibilities(new_basis, factor)  
+             
         return new_basis
 
     def _scalar_basis(self, factor):
@@ -769,6 +767,49 @@ class PSBasis(object):
             * ``quotient``: the quotient that defines ``factor`` as a hypergeometric element.
         '''
         return BruteBasis(lambda n : self.element(n)*factor(n=n), self.by_degree())
+
+    def __scalar_extend_compatibilities(self, new_basis, factor):
+        r'''
+            Method to extend compatibilities to ``new_basis`` with a rational function or a method
+            that returns a rational function when feeded by `n` (see :func:`OB`)
+        '''
+        n = self.n()
+        compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
+        for key in compatibilities:
+            comp = self.get_compatibility(key)
+            if(is_Matrix(comp)): # special case: compatibility by sections
+                ns = comp.nrows()
+                factors = [factor(n=ns*n+i) for i in range(ns)]
+                # weird behavior on matrices with ore algebras
+                # we build the new matrix from the coefficients
+                coeffs = comp.coefficients()
+                new_basis.set_compatibility(key, Matrix([[coeffs[i*ns+j]*factors[i] for j in range(ns)] for i in range(ns)]))
+            else:
+                A = self.A(key); B = self.B(key)
+                coeffs = [self.alpha(key, n, i)*(factor/factor(n=n+i)) for i in range(-A, B+1)]
+
+                new_basis.set_compatibility(key, (A, B, coeffs))
+        return
+
+    def __scalar_hyper_extend_compatibilities(self, new_basis, factor, quotient):
+        r'''
+            Method to extend compatibilities to ``new_basis`` with a rational function or a method
+            that returns a rational function when feeded by `n` (see :func:`OB`)
+        '''
+        n = self.n()
+        compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
+        for key in compatibilities:
+            comp = self.get_compatibility(key)
+            if(is_Matrix(comp)):
+                print("Matrix compatibility, not implemented for hypergeometric (skipping)")
+            else:
+                A = self.A(key); B = self.B(key)
+                mult = [prod(quotient(n=n-i+j) for j in range(i,0)) for i in range(-A,0)] + [1] + [prod(quotient(n=n+j) for j in range(i)) for i in range(1,B)]
+                coeffs = [self.alpha(key, n, i)*mult[A+i] for i in range(-A, B+1)]
+
+                new_basis.set_compatibility(key, (A, B, coeffs))
+
+        return
 
     ### MAGIC METHODS
     def __getitem__(self, n):
