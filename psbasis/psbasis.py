@@ -782,7 +782,7 @@ class PSBasis(object):
             comp = self.get_compatibility(key)
             if(is_Matrix(comp)): # special case: compatibility by sections
                 ns = comp.nrows()
-                factors = [factor(n=ns*n+j) for j in range(ns)]
+                factors = [1/factor(n=ns*n+j) for j in range(ns)]
                 # weird behavior on matrices with ore algebras
                 # we build the new matrix from the coefficients
                 coeffs = comp.coefficients() # comp[i][j] == coeffs[i*ns+j]
@@ -822,19 +822,21 @@ class PSBasis(object):
         '''
         # defining the method for computing the jumps for ``factor`` using the quotient
         def _Q(q,n,m):
-            if(m >= 0):
+            if(m > 0):
                 return prod(q(n=n+i) for i in range(m))
-            else:
-                return 1/_Q(q,n+m, -m)
+            elif(m < 0):
+                return 1/prod(q(n=n+i) for i in range(m, 0))
+            return QQ(1)
         def _apply_to_hyper(L, q):
-            A = L.degree(self.Sni()); B = L.degree(self.Sn())
+            Sn = self.Sn(); Sni = self.Sni()
+            A = L.degree(Sni); B = L.degree(Sn)
             L = L.polynomial()
             coeffs = (
-                [L.coefficient({self.Sni(): i, self.Sn(): 0}) for i in range(A,0,-1)] + 
+                [L.coefficient({Sni: i, Sn: 0})*Sni**i for i in range(A,0,-1)] + 
                 [L.constant_coefficient()] + 
-                [L.coefficient({self.Sni(): 0, self.Sn(): i}) for i in range(1,B+1)]
+                [L.coefficient({Sni: 0, Sn: i})*Sn**i for i in range(1,B+1)]
             )
-            return sum(coeffs[i+A]*_Q(q,self.n(),i) for i in range(-A,B+1))
+            return sum(_Q(q,self.n(),i)*coeffs[i+A] for i in range(-A,B+1))
 
         n = self.n()
         compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
@@ -843,9 +845,9 @@ class PSBasis(object):
             if(is_Matrix(comp)):
                 ns = comp.nrows()
                 # since factor is hypergeometric, the sections are hypergeometric too
-                quotients = [self.is_hypergeometric(factor(n=n*ns+i))[1] for i in range(ns)]
+                quotients = [self.is_hypergeometric(1/factor(n=n*ns+i))[1] for i in range(ns)]
                 coeffs = comp.coefficients() # comp[i][j] == coeffs[i*ns+j]
-                new_coeffs = [[_apply_to_hyper(coeffs[i*ns+j], quotients[j])*_Q(quotient, n*ns, i)*coeffs[i*ns+j] for j in range(ns)] for i in range(ns)]
+                new_coeffs = [[(1/_Q(quotient, n*ns, j))*_apply_to_hyper(coeffs[i*ns+j], quotients[j]) for j in range(ns)] for i in range(ns)]
                 new_basis.set_compatibility(key, Matrix(new_coeffs))
             else:
                 A = self.A(key); B = self.B(key)
