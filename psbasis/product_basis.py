@@ -674,3 +674,33 @@ class ProductBasis(FactorialBasis):
 
     def _latex_(self):
         return "".join([f._latex_() for f in self.factors])
+    
+    def root_sequence(self):
+        r'''
+            Method that returns the root sequence of the polynomial basis.
+
+            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.root_sequence`
+            for a description on the output.
+
+            For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
+            extract the roots from those basis sequences.
+        '''
+        @cached_method
+        def __root_ps(n):
+            F = self.nfactors()
+            if(n in ZZ and n >= 0):
+                k = n//F; r = n%F
+            else: # symbolic input
+                n = self.OB()(n)
+                if(n.denominator() == 1):
+                    n = n.numerator().change_ring(ZZ)
+                    if(all(el%F == 0 for el in n.list()[1:])):
+                        k = n//F
+                        r = ZZ(n%F)
+                    else:
+                        raise TypeError("The input is not divisible by the number of factors")
+                else:
+                    raise TypeError("The input is not a polynomial in 'n'")
+
+            return self.factors[r].root_sequence()(k)
+        return __root_ps
