@@ -723,7 +723,10 @@ class PSBasis(object):
             new_basis = self._scalar_hypergeometric(factor, quotient)
             # we extend the compatibilities
             self.__scalar_hyper_extend_compatibilities(new_basis, factor, quotient)
-        else:
+        else: # we need that factor(n) is a rational function
+            n = self.n(); factor_n = factor(n=n)
+            if((not factor_n in self.OB()) or (not self.valid_factor(self.OB()(factor)))):
+                raise ValueError("The scalar factor is not valid: the general term is not well defined for all 'n'")
             new_basis = self._scalar_basis(factor) # we create the structure for the new basis
             # we extend the compatibilities
             self.__scalar_extend_compatibilities(new_basis, factor)  
@@ -779,12 +782,12 @@ class PSBasis(object):
             comp = self.get_compatibility(key)
             if(is_Matrix(comp)): # special case: compatibility by sections
                 ns = comp.nrows()
-                factors = [factor(n=ns*n+i) for i in range(ns)]
+                factors = [factor(n=ns*n+j) for j in range(ns)]
                 # weird behavior on matrices with ore algebras
                 # we build the new matrix from the coefficients
-                coeffs = comp.coefficients()
-                new_basis.set_compatibility(key, Matrix([[coeffs[i*ns+j]*factors[i] for j in range(ns)] for i in range(ns)]))
-            else:
+                coeffs = comp.coefficients() # comp[i][j] == coeffs[i*ns+j]
+                new_basis.set_compatibility(key, Matrix([[coeffs[i*ns+j]*factors[j] for j in range(ns)] for i in range(ns)]))
+            else: # usual case: compatibility with direct formula
                 A = self.A(key); B = self.B(key)
                 coeffs = [self.alpha(key, n, i)*(factor/factor(n=n+i)) for i in range(-A, B+1)]
 
@@ -794,18 +797,59 @@ class PSBasis(object):
     def __scalar_hyper_extend_compatibilities(self, new_basis, factor, quotient):
         r'''
             Method to extend compatibilities to ``new_basis`` with a rational function or a method
-            that returns a rational function when feeded by `n` (see :func:`OB`)
+            that returns a rational function when feeded by `n` (see :func:`OB`).
+
+            If ``factor`` (let say `f_n`) is hypergeometric with defining quotient given by ``quotient``
+            (denoted by `q_n`), then we have for all `n \in \mathbb{N}` that:
+
+            .. MATH::
+
+                f_{n+1} = q_nf_n
+
+            In particular, we have that for any `m \in \mathbb{N}`:
+
+            .. MATH::
+
+                f_{n+m} = Q_{n,m}f_n,
+
+            where `Q_{n,m}` is defined by:
+
+            .. MATH::
+
+                Q_{n,m} = \prod_{i=n}^{n+m-1}q_i
+            
+            This formula can be adapted for `m < 0` too.
         '''
+        # defining the method for computing the jumps for ``factor`` using the quotient
+        def _Q(q,n,m):
+            if(m >= 0):
+                return prod(q(n=n+i) for i in range(m))
+            else:
+                return 1/_Q(q,n+m, -m)
+        def _apply_to_hyper(L, q):
+            A = L.degree(self.Sni()); B = L.degree(self.Sn())
+            L = L.polynomial()
+            coeffs = (
+                [L.coefficient({self.Sni(): i, self.Sn(): 0}) for i in range(A,0,-1)] + 
+                [L.constant_coefficient()] + 
+                [L.coefficient({self.Sni(): 0, self.Sn(): i}) for i in range(1,B+1)]
+            )
+            return sum(coeffs[i+A]*_Q(q,self.n(),i) for i in range(-A,B+1))
+
         n = self.n()
         compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
         for key in compatibilities:
             comp = self.get_compatibility(key)
             if(is_Matrix(comp)):
-                print("Matrix compatibility, not implemented for hypergeometric (skipping)")
+                ns = comp.nrows()
+                # since factor is hypergeometric, the sections are hypergeometric too
+                quotients = [self.is_hypergeometric(factor(n=n*ns+i))[1] for i in range(ns)]
+                coeffs = comp.coefficients() # comp[i][j] == coeffs[i*ns+j]
+                new_coeffs = [[_apply_to_hyper(coeffs[i*ns+j], quotients[j])*_Q(quotient, n*ns, i)*coeffs[i*ns+j] for j in range(ns)] for i in range(ns)]
+                new_basis.set_compatibility(key, Matrix(new_coeffs))
             else:
                 A = self.A(key); B = self.B(key)
-                mult = [prod(quotient(n=n-i+j) for j in range(i,0)) for i in range(-A,0)] + [1] + [prod(quotient(n=n+j) for j in range(i)) for i in range(1,B)]
-                coeffs = [self.alpha(key, n, i)*mult[A+i] for i in range(-A, B+1)]
+                coeffs = [self.alpha(key, n, i)/_Q(quotient,n,i) for i in range(-A, B+1)]
 
                 new_basis.set_compatibility(key, (A, B, coeffs))
 

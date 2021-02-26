@@ -5,8 +5,7 @@ r'''
 from sage.all import cached_method, prod, ZZ, QQ, Matrix, vector
 
 # Local imports
-from .psbasis import PolyBasis
-from .factorial_basis import FactorialBasis
+from .factorial_basis import FactorialBasis, SFactorialBasis
 
 
 class ProductBasis(FactorialBasis):
@@ -62,7 +61,7 @@ class ProductBasis(FactorialBasis):
         ##Checking the input
         if(len(args) == 1 and type(args[0]) == list):
             args = args[0]
-        if(not all(isinstance(el, PolyBasis) for el in args)):
+        if(not all(el.by_degree() for el in args)):
             raise TypeError("All the elements in args must be PolyBasis")
 
         ## Unrolling the inner Product Basis
@@ -70,10 +69,10 @@ class ProductBasis(FactorialBasis):
         for el in args:
             if(isinstance(el, ProductBasis)):
                 final_args += el.factors
-            elif(isinstance(el, FactorialBasis)):
+            elif(isinstance(el, SFactorialBasis)):
                 final_args += [el]
-            else:
-                raise TypeError("All the elements in args must be either FactorialBasis or ProductBasis")
+            else: 
+                raise TypeError("The structure for the polynomial basis are not valid")
 
         ## Setting the final list factors to the inner variable
         self.__factors = final_args
@@ -115,19 +114,6 @@ class ProductBasis(FactorialBasis):
         k = n//F; j = n%F
 
         return self.__init*prod(factors[i].element(k+1,name) for i in range(j))*prod(factors[i].element(k,name) for i in range(j,F))
-
-    # def _scalar_hypergeometric(self, factor, quotient):
-    #     r'''
-    #         Method that actually builds the structure for the new basis.
-
-    #         This method *overrides* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
-    #         See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
-
-    #         TODO: add examples
-    #     '''
-    #     n = self.n(); F = self.nfactors()
-    #     gfactors = [quotient(n=n*F+i) for i in range(F)]
-    #     return ProductBasis(*[gfactors[i]*self.factors[i] for i in range(F)], init=self[0]*factor(n=0))
 
     @property
     def factors(self):
