@@ -15,7 +15,7 @@ class FactorialBasis(PolyBasis):
         Abstract class for a factorial basis.
 
         A factorial basis is a type of polynomial basis for power series where
-        the `(n+1)`-th element is build from the $n$th element. This can be seeing
+        the `(n+1)`-th element is build from the `n`-th element. This can be seeing
         as a two-term recurrence basis.
 
         It provides several functionalities and methods that all Factorial Basis
@@ -37,9 +37,39 @@ class FactorialBasis(PolyBasis):
     def __init__(self, X='x'):
         super(FactorialBasis,self).__init__()
 
+        ## Saving the name of the variable
         self.__var_name = X
 
-    ## Getters and setters
+        ## Creating the compatibility with the multiplication by X (if possible)
+        try:
+            Sni = self.Sni(); n = self.n(); an = self.an; bn = self.bn
+            self.set_compatibility(X, -bn(n=n+1)/an(n=n+1) + (1/an(n=n))*Sni)
+        except AttributeError:
+            pass
+
+    def _scalar_basis(self, factor):
+        r'''
+            Method that actually builds the structure for the new basis.
+
+            This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
+
+            TODO: add examples
+        '''
+        return RootSequenceBasis(self.rho, lambda n : self.cn(n=n)*factor(n=n), X=self.var_name())
+        
+    def _scalar_hypergeometric(self, factor, quotient):
+        r'''
+            Method that actually builds the structure for the new basis.
+
+            This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
+
+            TODO: add examples
+        '''
+        return RootSequenceBasis(self.rho, lambda n : self.cn(n=n)*factor(n=n), X=self.var_name())
+
+    ## Basic properties
     def var_name(self):
         r'''
             Getter of the name for the variable.
@@ -71,6 +101,79 @@ class FactorialBasis(PolyBasis):
             # This polynomial has degree 1, hence the root is easily computable
             return -nth_poly[0]/nth_poly[1]
         return __root_fn
+
+    def leading_coefficient(self):
+        r'''
+            Method that returns the sequence of leading coefficients for a factorial basis.
+
+            This method returns the leading coefficient sequence of the polynomial basis.
+
+            OUTPUT:
+
+            This method returns a function or lambda expression (i.e., a *callable* object)
+            that takes `n` as input and returns the leading coefficient of ``self[n]``.
+        '''
+        return lambda n : self[n].leading_coefficient()
+
+    def constant_coefficient(self):
+        r'''
+            Getter for the constant coefficient of the factorial basis.
+
+            This method return a sequence (in `n`) for the constant coefficient of the
+            increasing polynomial for the Factorial Basis. Recall that for any Factorial
+            Basis, the `n`-th element divide the next in the following way:
+
+            .. MATH::
+
+                P_n(x) = (a_nx + b_n)P_{n-1}(x)
+
+            OUTPUT:
+            
+            This method returns the value of `b_n`.
+        '''
+        return lambda n : self.OB()(self[n+1]/self[n])[0]
+
+    def linear_coefficient(self):
+        r'''
+            Getter for the linear coefficient of the factorial basis.
+
+            This method return a sequence (in `n`) for the linear coefficient of the
+            increasing polynomial for the Factorial Basis. Recall that for any Factorial
+            Basis, the `n`-th element divide the next in the following way:
+
+            .. MATH::
+
+                P_n(x) = (a_nx + b_n)P_{n-1}(x)
+
+            OUTPUT:
+            
+            This method returns the value of `a_n`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: SFactorialBasis(1,0).linear_coefficient()
+                1
+                sage: SFactorialBasis(2,1).linear_coefficient()
+                2
+                sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').linear_coefficient()
+                1
+
+            This class also allows to access this value with the property :attr:`~SFactorialBasis.an`::
+
+                sage: SFactorialBasis(1,0).an
+                1
+                sage: SFactorialBasis(2,1).an
+                2
+                sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').an
+                1
+        '''
+        return lambda n : self.OB()(self[n+1]/self[n])[1]
+
+    rho = property(lambda self: self.root_sequence()) #: alias property for the root sequence (see :func:`~FactorialBasis.constant_coefficient`)
+    an = property(lambda self: self.linear_coefficient()) #: alias property for the linear coefficient (see :func:`~FactorialBasis.linear_coefficient`)
+    bn = property(lambda self: self.constant_coefficient()) #: alias property for the constant coefficient (see :func:`~FactorialBasis.constant_coefficient`)
+    cn = property(lambda self: self.leading_coefficient()) #: alias property for the leading coefficient sequence (see :func:`~FactorialBasis.constant_coefficient`)
 
     ## Method related with equivalence of Proposition 1
     def increasing_polynomial(self, *args, **kwds):
@@ -122,6 +225,66 @@ class FactorialBasis(PolyBasis):
             An object of type :class:`FactorialBasis` representing the corresponding 
         '''
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
+
+    def compatible_division(self, operator, src, diff=None, dst=None):
+        r'''
+            Method to get the division of a polynomial by other element of the basis after an operator.
+
+            It was proven in :arxiv:`1804.02964v1` that if `L` is an `(A,B)`-compatible operator
+            with a factorial basis, then for any `n \in \mathbb{N}`, we have
+
+            .. MATH::
+
+                P_{n-A}(x) | L\cdot P_n(x).
+
+            Moreover, since the basis is factorial, it is clear that for any `m < n-A`, we have
+            that `P_m(x)` also divides `L\cdot P_n(x)`. See method :func:`increasing_polynomial`
+            for further information.
+
+            This method allows to compute the resulting polynomial `(L\cdot P_n(x))/P_m(x)` for 
+            any valid `m \leq n-A`.
+
+            INPUT:
+
+            * ``operator``: the operator we want to check. See the input description
+              of method :func:`get_compatibility`. This operator has to be compatible,
+              so we can obtain the value for `A`.
+            * ``src``: value for `n`.
+            * ``diff``: difference between `n` and `m`. Must be a positive integer greater than
+              the corresponding `A` value for ``operator``.
+            * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
+              be smaller or equal to `n-A`.
+
+            TODO: add examples
+        '''
+        ## Checking the arguments
+        ## Reading ``src``
+        if(((src in ZZ) and src < 0) or (not src in self.OB())):
+            raise ValueError("The argument `src` must be a expression involving `self.n()` or a positive integer")
+        n = src
+
+        ## Compatibility of ``operator``
+        A = self.A(operator); B = self.B(operator)
+
+        ## Reading ``diff`` or ``dst``
+        if(not diff is None):
+            if((not diff in ZZ) or diff < A):
+                raise ValueError("The argument `diff` must be None or a positive integer bigger than %s" %A)
+            else:
+                d = ZZ(diff); m = n - d
+        else:
+            if(n in ZZ):
+                if((not dst in ZZ) or dst < n-A):
+                    raise ValueError("The argument `dst` must be an integer bigger than `src`")
+                m = ZZ(dst); d = n - m
+            else:
+                d = n-dst
+                if((not d in ZZ) or d < A):
+                    raise ValueError("The difference between `dst` and `src` must be a positive integer bigger than %s" %A)
+                d = ZZ(d); m = dst
+
+        ## Computing the polynomial
+        return sum(self.compatibility_coefficient(operator, n, i-A)*self.increasing_polynomial(m, diff=i) for i in range(A+B+1))
 
     def matrix_ItP(self, *args, **kwds):
         r'''
@@ -258,9 +421,7 @@ class SFactorialBasis(FactorialBasis):
         TODO: add examples
     '''
     def __init__(self, an, bn, X='x',init=1):
-        ## Initializing the PolyBasis structure
-        super(SFactorialBasis,self).__init__(X)
-
+        
         ## Cheking the first element
         init = self.OB().base()(init)
         if(init == 0):
@@ -270,11 +431,9 @@ class SFactorialBasis(FactorialBasis):
         ## Adding the extra information
         an = self.OB()(an); self.__an = an
         bn = self.OB()(bn); self.__bn = bn
-        self.__var_name = X
 
-        ## The multiplication by X compatibility is given
-        Sni = self.Sni(); n = self.n()
-        self.set_compatibility(X, -bn(n=n+1)/an(n=n+1) + (1/an)*Sni)
+        ## Initializing the FactorialBasis structure
+        super(SFactorialBasis,self).__init__(X)
 
         ## Extra cached variables
         self.__cached_increasing = {}
@@ -310,7 +469,7 @@ class SFactorialBasis(FactorialBasis):
                 y_2^7
         '''
         if(var_name is None):
-            name = self.__var_name
+            name = self.var_name()
         else:
             name = var_name
         R = self.polynomial_ring(name)
@@ -326,7 +485,7 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method that actually builds the structure for the new basis.
 
-            This method *overrides* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
+            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
 
             EXAMPLES::
@@ -364,18 +523,18 @@ class SFactorialBasis(FactorialBasis):
         '''
         factor = self.OB()(factor); n = self.n()
         to_mult = factor(n=n)/factor(n=self.n()-1)
-        return SFactorialBasis(self.__an*to_mult, self.__bn*to_mult, X=self.__var_name, init=self[0]*factor(n=0))
+        return SFactorialBasis(self.__an*to_mult, self.__bn*to_mult, X=self.var_name(), init=self[0]*factor(n=0))
         
     def _scalar_hypergeometric(self, factor, quotient):
         r'''
             Method that actually builds the structure for the new basis.
 
-            This method *overrides* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
+            This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
 
             TODO: add examples
         '''
-        return SFactorialBasis(self.__an*quotient, self.__bn*quotient, X=self.__var_name, init=self[0]*factor(n=0))
+        return SFactorialBasis(self.__an*quotient, self.__bn*quotient, X=self.var_name(), init=self[0]*factor(n=0))
 
     def __repr__(self):
         return "Factorial basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])
@@ -416,17 +575,9 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Getter for the constant coefficient of the factorial basis.
 
-            This method return a sequence (in `n`) for the constant coefficient of the
-            increasing polynomial for the Factorial Basis. Recall that for any Factorial
-            Basis, the `n`-th element divide the next in the following way:
-
-            .. MATH::
-
-                P_n(x) = (a_nx + b_n)P_{n-1}(x)
-
-            OUTPUT:
-            
-            This method returns the value of `b_n`.
+            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.constant_coefficient` for further information 
+            in the description or the output.
 
             EXAMPLES::
 
@@ -453,15 +604,9 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Getter for the linear coefficient of the factorial basis.
 
-            This method return a sequence (in `n`) for the linear coefficient of the
-            increasing polynomial for the Factorial Basis. Recall that for any Factorial
-            Basis, the `n`-th element divide the next in the following way:
-
-            .. MATH::
-
-                P_n(x) = (a_nx + b_n)P_{n-1}(x)
-
-            OUTPUT:
+            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.linear_coefficient` for further information 
+            in the description or the output.
             
             This method returns the value of `a_n`.
 
@@ -486,14 +631,11 @@ class SFactorialBasis(FactorialBasis):
         '''
         return self.__an
 
-    bn = property(constant_coefficient) #: alias property for the constant coefficient (see :func:`~SFactorialBasis.constant_coefficient`)
-    an = property(linear_coefficient) #: alias property for the linear coefficient (see :func:`~SFactorialBasis.linear_coefficient`)
-
     def increasing_polynomial(self, src, diff=None, dst=None):
         r'''
             Returns the increasing factorial for the factorial basis.
 
-            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
             in the description or the output.
 
@@ -529,14 +671,14 @@ class SFactorialBasis(FactorialBasis):
                 d = ZZ(d); m = dst
 
         ## Building the polynomial
-        PR = self.polynomial_ring(self.__var_name); x = PR.gens()[0]
+        PR = self.polynomial_ring(self.var_name()); x = PR.gens()[0]
         if(d == 0):
             return PR.one()
 
         if(not (n,d) in self.__cached_increasing):
             n_name = str(self.n())
 
-            self.__cached_increasing[(n,d)] = prod(self.constant_coefficient()(**{n_name : n+i}) + x*self.linear_coefficient()(**{n_name : n+i}) for i in range(1,d+1))
+            self.__cached_increasing[(n,d)] = prod(self.bn(**{n_name : n+i}) + x*self.an(**{n_name : n+i}) for i in range(1,d+1))
 
         return self.__cached_increasing[(n,d)]
 
@@ -545,7 +687,7 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
-            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
             TODO: add examples
@@ -556,77 +698,17 @@ class SFactorialBasis(FactorialBasis):
         n = self.n()
         return SFactorialBasis(self.an(n=n+shift),self.bn(n=n+shift), X=self.var_name())
 
-    def compatible_division(self, operator, src, diff=None, dst=None):
-        r'''
-            Method to get the division of a polynomial by other element of the basis after an operator.
-
-            It was proven in :arxiv:`1804.02964v1` that if `L` is an `(A,B)`-compatible operator
-            with a factorial basis, then for any `n \in \mathbb{N}`, we have
-
-            .. MATH::
-
-                P_{n-A}(x) | L\cdot P_n(x).
-
-            Moreover, since the basis is factorial, it is clear that for any `m < n-A`, we have
-            that `P_m(x)` also divides `L\cdot P_n(x)`. See method :func:`increasing_polynomial`
-            for further information.
-
-            This method allows to compute the resulting polynomial `(L\cdot P_n(x))/P_m(x)` for 
-            any valid `m \leq n-A`.
-
-            INPUT:
-
-            * ``operator``: the operator we want to check. See the input description
-              of method :func:`get_compatibility`. This operator has to be compatible,
-              so we can obtain the value for `A`.
-            * ``src``: value for `n`.
-            * ``diff``: difference between `n` and `m`. Must be a positive integer greater than
-              the corresponding `A` value for ``operator``.
-            * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
-              be smaller or equal to `n-A`.
-
-            TODO: add examples
-        '''
-        ## Checking the arguments
-        ## Reading ``src``
-        if(((src in ZZ) and src < 0) or (not src in self.OB())):
-            raise ValueError("The argument `src` must be a expression involving `self.n()` or a positive integer")
-        n = src
-
-        ## Compatibility of ``operator``
-        A = self.A(operator); B = self.B(operator)
-
-        ## Reading ``diff`` or ``dst``
-        if(not diff is None):
-            if((not diff in ZZ) or diff < A):
-                raise ValueError("The argument `diff` must be None or a positive integer bigger than %s" %A)
-            else:
-                d = ZZ(diff); m = n - d
-        else:
-            if(n in ZZ):
-                if((not dst in ZZ) or dst < n-A):
-                    raise ValueError("The argument `dst` must be an integer bigger than `src`")
-                m = ZZ(dst); d = n - m
-            else:
-                d = n-dst
-                if((not d in ZZ) or d < A):
-                    raise ValueError("The difference between `dst` and `src` must be a positive integer bigger than %s" %A)
-                d = ZZ(d); m = dst
-
-        ## Computing the polynomial
-        return sum(self.compatibility_coefficient(operator, n, i-A)*self.increasing_polynomial(m, diff=i) for i in range(A+B+1))
-
     # FactorialBasis abstract method
     @cached_method
     def matrix_ItP(self, src, size):
         r'''
             Method to get the matrix for converting from the increasing basis to the power basis.
 
-            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.matrix_ItP`.
             
             INPUT:
-                - ``src``: value for $n$.
+                - ``src``: value for `n`.
                 - ``size``: bound on the degree for computing the matrix.
         '''
         if(((src in ZZ) and src < 0) or (not src in self.OB())):
@@ -649,7 +731,7 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_DtC`.
 
             INPUT:
@@ -679,7 +761,287 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_CtD`.
+
+            INPUT:
+
+            * ``bound``: value for the lower bound for the compatibility (i.e., `A`).
+            * ``coeffs``: list representing the coefficients of the polynomial `L \cdot P_n(x)/P_{n-A}(x)` in the canonical 
+              power basis.
+
+            TODO: add examples
+        '''
+        ## Checking the input parameters
+        if((not bound in ZZ) or (bound < 0)):
+            raise ValueError("The argument `bound` must be a positive integer")
+        if(len(coeffs) ==  1 and (type(coeffs) in (tuple, list))):
+            coeffs = coeffs[0]
+        A = ZZ(bound); B = len(coeffs) - A - 1; n = self.n()
+
+        ## At this point we have that `coeffs` is the list of coefficients of
+        ## L(P_n)/P_{n-A} in the power basis. If we change to the increasing
+        ## basis starting in $n-A$ then we have the $alpha_{n,i}$.
+        new_alpha = self.matrix_PtI(n-A, A+B+1)*vector(coeffs)
+
+        return [el for el in new_alpha]
+
+class RootSequenceBasis(FactorialBasis):
+    r'''
+        Class representing a factorial basis from the root sequence and sequence of coefficients.
+
+        A factorial basis is a type of polynomial basis for power series where
+        the `(n+1)`-th element is build from the `n`-th element. This is equivalent to provide
+        a sequence of roots `\rho_n` (each polynomial add the corresponding root)
+        and the sequence of leading coefficients `c_n`:
+
+        .. MATH::
+
+            P_n(x) = c_n\prod_{i=1}^n (x-\rho_n)
+
+        INPUT:
+
+        * ``rho``: the sequence of roots for the factorial basis.
+        * ``cn``: the sequence of leading coefficients for the factorial basis.
+        * ``X``: the name for the operator representing the multiplication by `x`.
+
+        TODO: add examples.
+    '''
+    def __init__(self, rho, cn, X='x'):
+        ## Checking the input of leading coefficient
+        if(cn in self.OB() and self.valid_factor(self.OB()(cn))):
+            self.__cn = self.OB()(cn)
+        elif(cn in self.OB()):
+            raise ValueError("The leading coefficient sequence must be well defined and never take the value zero")
+        else:
+            self.__cn = cn
+
+        ## Saving the sequence of roots
+        self.__rho = rho
+        
+        ## Initializing the PolyBasis structure
+        super(RootSequenceBasis,self).__init__(X)   
+
+        ## Other cached elements
+        self.__cached_increasing = {}
+
+    @cached_method
+    def element(self, n, var_name=None):
+        r'''
+            Method to return the `n`-th element of the basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+
+            For a :class:`RootSequenceBasis` the output will be a polynomial of degree `n`.
+
+            OUTPUT:
+
+            A polynomial with variable name given by ``var_name`` and degree ``n``.
+
+            TODO: add examples
+        '''
+        if(var_name is None):
+            name = self.var_name()
+        else:
+            name = var_name
+        R = self.polynomial_ring(name)
+        x = R.gens()[0]
+
+        if(n > 0):
+            rho = self.rho; cn = self.cn
+            return cn(n=n)/cn(n=n-1)*self.element(n-1, var_name=var_name) * (x - rho(n=n))
+        elif(n == 0):
+            return self.cn(n=0)
+
+    def __repr__(self):
+        return "Factorial basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])
+
+    def _latex_(self):
+        return r"Factorial basis \left(r:%s,lc:%s\right): \left\{%s,%s,%s,\ldots\right\}" %(latex(self.__rho), latex(self.__cn), latex(self[0]), latex(self[1]), latex(self[2]))
+
+    def root_sequence(self):
+        r'''
+            Method that returns the root sequence of the polynomial basis.
+
+            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.root_sequence`
+            for a description on the output.
+
+            TODO: add examples
+        '''
+        return self.__rho
+
+    def leading_coefficient(self):
+        r'''
+            Getter for the constant coefficient of the factorial basis.
+
+            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.leading_coefficient` for further information 
+            in the description or the output.
+
+            TODO: add examples
+        '''
+        return self.__cn
+
+    def constant_coefficient(self):
+        r'''
+            Getter for the constant coefficient of the factorial basis.
+
+            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.constant_coefficient` for further information 
+            in the description or the output.
+
+            TODO: add examples
+        '''
+        cn = self.cn; rho = self.rho
+        return lambda n : cn(n=n)/cn(n=n-1)*rho(n=n)
+
+    def linear_coefficient(self):
+        r'''
+            Getter for the linear coefficient of the factorial basis.
+
+            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.linear_coefficient` for further information 
+            in the description or the output.
+            
+            This method returns the value of `a_n`.
+
+            TODO: add examples
+        '''
+        cn = self.cn
+        return lambda n : cn(n=n)/cn(n=n-1)
+
+    def increasing_polynomial(self, src, diff=None, dst=None):
+        r'''
+            Returns the increasing factorial for the factorial basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
+            in the description or the output.
+
+            INPUT:
+
+            * ``src``: value for lowest index, `n`.
+            * ``diff``: difference between `n` and the largest index, `m`. Must be a positive integer.
+            * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
+              be bigger than `n`.
+
+            TODO: add examples
+        '''
+        ## Checking the arguments
+        if(((src in ZZ) and src < 0) or (not src in self.OB())):
+            raise ValueError("The argument `src` must be a expression involving `self.n()` or a positive integer")
+        n = src
+
+        if(not diff is None):
+            if((not diff in ZZ) or diff < 0):
+                raise ValueError("The argument `diff` must be None or a positive integer")
+            else:
+
+                d = ZZ(diff); m = n + d
+        else:
+            if(n in ZZ):
+                if((not dst in ZZ) or dst < n):
+                    raise ValueError("The argument `dst` must be an integer bigger than `src`")
+                m = ZZ(dst); d = m - n
+            else:
+                d = dst-n
+                if((not d in ZZ) or d < 0):
+                    raise ValueError("The difference between `dst` and `src` must be a positive integer")
+                d = ZZ(d); m = dst
+
+        ## Building the polynomial
+        PR = self.polynomial_ring(self.var_name()); x = PR.gens()[0]
+        if(d == 0):
+            return PR.one()
+
+        if(not (n,d) in self.__cached_increasing):
+            self.__cached_increasing[(n,d)] = prod(self.bn(n=n+i) + x*self.an(n=n+i) for i in range(1,d+1))
+
+        return self.__cached_increasing[(n,d)]
+
+    @cached_method
+    def increasing_basis(self, shift):
+        r'''
+            Method to get the structure for the `n`-th increasing basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+
+            TODO: add examples
+        '''
+        ## Checking the arguments
+        if((shift in ZZ) and shift < 0):
+            raise ValueError("The argument `shift` must be a positive integer")
+        return RootSequenceBasis(lambda n : self.rho(n=n+shift), lambda n : self.cn(n=n+shift), self.var_name())
+
+    # FactorialBasis abstract method
+    @cached_method
+    def matrix_ItP(self, src, size):
+        r'''
+            Method to get the matrix for converting from the increasing basis to the power basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.matrix_ItP`.
+            
+            INPUT:
+
+            * ``src``: value for `n`.
+            * ``size``: bound on the degree for computing the matrix.
+
+            TODO: add example
+        '''
+        if(((src in ZZ) and src < 0) or (not src in self.OB())):
+            raise ValueError("The argument `src` must be a expression involving `self.n()` or a positive integer")
+        n = src
+        if(n in ZZ):
+            n =  ZZ(n); dest = QQ
+        else:
+            dest = self.OB()
+
+        if((not size in ZZ) or size <= 0):
+            raise ValueError("The argument `size` must be a positive integer")
+
+        ## Computing the matrix
+        polys = [self.increasing_polynomial(n,diff=i) for i in range(size)]
+        return Matrix(dest, [[polys[j][i] for j in range(size)] for i in range(size)])
+
+    # FactorialBasis abstract method
+    def equiv_DtC(self, bound, *coeffs):
+        r'''
+            Method to get the equivalence condition for a compatible operator.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_DtC`.
+
+            INPUT:
+
+            * ``bound``: value for the lower bound for the compatibility condition (i.e., `A`).
+            * ``coeffs``: list of coefficients in ``self.OB()`` representing the coefficients
+              `\alpha_{n,i}`, i.e., `coeffs[j] = \alpha_{n,j-A}`.
+
+            TODO: add examples
+        '''
+        ## Checking the input parameters
+        if((not bound in ZZ) or (bound < 0)):
+            raise ValueError("The argument `bound` must be a positive integer")
+        if(len(coeffs) ==  1 and (type(coeffs) in (tuple, list))):
+            coeffs = coeffs[0]
+        A = ZZ(bound); B = len(coeffs) - A - 1; n = self.n()
+
+        ## At this point we have that `coeffs` is the list of coefficients of
+        ## L(P_n)/P_{n-A} in the increasing basis starting with $n-A$.
+        ## We only need to change the basis to the Power Basis
+        new_alpha = self.matrix_ItP(n-A, A+B+1)*vector(coeffs)
+
+        return [el for el in new_alpha]
+
+    # FactorialBasis abstract method
+    def equiv_CtD(self, bound, *coeffs):
+        r'''
+            Method to get the equivalence condition for a compatible operator.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_CtD`.
 
             INPUT:
@@ -770,7 +1132,7 @@ class FallingBasis(SFactorialBasis):
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
-            This method *overrides* the corresponding method from :func:`~psbasis.factorial_basis.SFactorialBasis`.
+            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.SFactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
             In the particular case of a :class:`FallingBasis`, we had parameters `a`, `b` and `c` that defines
@@ -835,7 +1197,7 @@ class PowerBasis(FallingBasis):
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
-            This method *overrides* the corresponding method from :func:`~psbasis.factorial_basis.SFactorialBasis`.
+            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.SFactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
             In the particular case of :class:`PowerBasis`, the `n`-th increasing basis is always 

@@ -87,8 +87,6 @@ class ProductBasis(FactorialBasis):
         for endo in endos:
             self.add_endomorphism(endo)
 
-
-    # PSBasis abstract method
     @cached_method
     def element(self, n, var_name=None):
         r'''
@@ -114,6 +112,126 @@ class ProductBasis(FactorialBasis):
         k = n//F; j = n%F
 
         return self.__init*prod(factors[i].element(k+1,name) for i in range(j))*prod(factors[i].element(k,name) for i in range(j,F))
+
+    def root_sequence(self):
+        r'''
+            Method that returns the root sequence of the polynomial basis.
+
+            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`~psbasis.factorial_basis.FactorialBasis.root_sequence`
+            for a description on the output.
+
+            For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
+            extract the roots from those basis sequences.
+        '''
+        @cached_method
+        def __root_ps(n):
+            F = self.nfactors()
+            if(n in ZZ and n >= 0):
+                k = n//F; r = n%F
+            else: # symbolic input
+                n = self.OB()(n)
+                if(n.denominator() == 1):
+                    n = n.numerator().change_ring(ZZ)
+                    if(all(el%F == 0 for el in n.list()[1:])):
+                        k = n//F
+                        r = ZZ(n%F)
+                    else:
+                        raise TypeError("The input is not divisible by the number of factors")
+                else:
+                    raise TypeError("The input is not a polynomial in 'n'")
+
+            return self.factors[r].root_sequence()(n=k)
+        return __root_ps
+
+    def leading_coefficient(self):
+        r'''
+            Method that returns the root sequence of the polynomial basis.
+
+            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.leading_coefficient`
+            for a description on the output.
+
+            For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
+            extract the leading coefficient from those basis sequences.
+        '''
+        def __leading_ps(n):
+            F = self.nfactors()
+            if(n in ZZ and n >= 0):
+                k = n//F; r = n%F
+            else: # symbolic input
+                n = self.OB()(n)
+                if(n.denominator() == 1):
+                    n = n.numerator().change_ring(ZZ)
+                    if(all(el%F == 0 for el in n.list()[1:])):
+                        k = n//F
+                        r = ZZ(n%F)
+                    else:
+                        raise TypeError("The input is not divisible by the number of factors")
+                else:
+                    raise TypeError("The input is not a polynomial in 'n'")
+            
+            return prod(self.factors[i].leading_coefficient()(n=k+1) for i in range(r))*prod(self.factors[i].leading_coefficient()(n=k) for i in range(r, F))
+        
+        return __leading_ps
+
+    def linear_coefficient(self):
+        r'''
+            Method that returns the root sequence of the polynomial basis.
+
+            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`~psbasis.factorial_basis.linear_coefficient`
+            for a description on the output.
+
+            For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
+            extract the coefficient from those basis sequences.
+        '''
+        @cached_method
+        def __linear_ps(n):
+            F = self.nfactors()
+            if(n in ZZ and n >= 0):
+                k = n//F; r = n%F
+            else: # symbolic input
+                n = self.OB()(n)
+                if(n.denominator() == 1):
+                    n = n.numerator().change_ring(ZZ)
+                    if(all(el%F == 0 for el in n.list()[1:])):
+                        k = n//F
+                        r = ZZ(n%F)
+                    else:
+                        raise TypeError("The input is not divisible by the number of factors")
+                else:
+                    raise TypeError("The input is not a polynomial in 'n'")
+
+            return self.factors[r].linear_coefficient()(n=k)
+        return __linear_ps
+
+    def constant_coefficient(self):
+        r'''
+            Method that returns the root sequence of the polynomial basis.
+
+            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`~psbasis.factorial_basis.constant_coefficient`
+            for a description on the output.
+
+            For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
+            extract the coefficient from those basis sequences.
+        '''
+        @cached_method
+        def __constant_ps(n):
+            F = self.nfactors()
+            if(n in ZZ and n >= 0):
+                k = n//F; r = n%F
+            else: # symbolic input
+                n = self.OB()(n)
+                if(n.denominator() == 1):
+                    n = n.numerator().change_ring(ZZ)
+                    if(all(el%F == 0 for el in n.list()[1:])):
+                        k = n//F
+                        r = ZZ(n%F)
+                    else:
+                        raise TypeError("The input is not divisible by the number of factors")
+                else:
+                    raise TypeError("The input is not a polynomial in 'n'")
+
+            return self.factors[r].constant_coefficient()(n=k)
+        return __constant_ps
 
     @property
     def factors(self):
@@ -317,7 +435,7 @@ class ProductBasis(FactorialBasis):
         r'''
             Returns the increasing factorial for the factorial basis.
 
-            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
             in the description or the output.
 
@@ -377,7 +495,7 @@ class ProductBasis(FactorialBasis):
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
-            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
             For a :class:`ProductBasis`, the increasing basis is again a :class:`ProductBasis` of the increasing basis
@@ -406,7 +524,7 @@ class ProductBasis(FactorialBasis):
         r'''
             Method to get the matrix for converting from the increasing basis to the power basis.
 
-            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.matrix_ItP`.
 
             For a :class:`ProductBasis`, it is convenient to take the index `n = kF + j` where `F` is
@@ -594,7 +712,7 @@ class ProductBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_DtC`.
 
             For a :class:`ProductBasis`, it is convenient to take the index `n = kF + j` where `F` is
@@ -632,7 +750,7 @@ class ProductBasis(FactorialBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            This method *implements* the corresponding abstract method from :func:`~psbasis.factorial_basis.FactorialBasis`.
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_CtD`.
 
             For a ProductBasis, it is convenient to take the index `n = kF + j` where `F` is
@@ -675,32 +793,3 @@ class ProductBasis(FactorialBasis):
     def _latex_(self):
         return "".join([f._latex_() for f in self.factors])
     
-    def root_sequence(self):
-        r'''
-            Method that returns the root sequence of the polynomial basis.
-
-            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.root_sequence`
-            for a description on the output.
-
-            For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
-            extract the roots from those basis sequences.
-        '''
-        @cached_method
-        def __root_ps(n):
-            F = self.nfactors()
-            if(n in ZZ and n >= 0):
-                k = n//F; r = n%F
-            else: # symbolic input
-                n = self.OB()(n)
-                if(n.denominator() == 1):
-                    n = n.numerator().change_ring(ZZ)
-                    if(all(el%F == 0 for el in n.list()[1:])):
-                        k = n//F
-                        r = ZZ(n%F)
-                    else:
-                        raise TypeError("The input is not divisible by the number of factors")
-                else:
-                    raise TypeError("The input is not a polynomial in 'n'")
-
-            return self.factors[r].root_sequence()(k)
-        return __root_ps

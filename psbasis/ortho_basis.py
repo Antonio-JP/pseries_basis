@@ -168,7 +168,7 @@ class OrthogonalBasis(PolyBasis):
         r'''
             Method that actually builds the structure for the new basis.
 
-            This method *overrides* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
+            This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
 
             TODO: add examples
@@ -186,7 +186,7 @@ class OrthogonalBasis(PolyBasis):
         r'''
             Method that actually builds the structure for the new basis.
 
-            This method *overrides* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
+            This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
 
             TODO: add examples
@@ -289,7 +289,7 @@ class OrthogonalBasis(PolyBasis):
         r'''
             Method to get the compatibility for an operator.
 
-            This method *overrides* the corresponding abstract method from :func:`psbasis.psbasis.PSBasis`.
+            This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.get_compatibility` for further information.
 
             In a first glance, this method tries the classical compatibility using the compatibility dictionary.
