@@ -123,7 +123,6 @@ class ProductBasis(FactorialBasis):
             For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
             extract the roots from those basis sequences.
         '''
-        @cached_method
         def __root_ps(n):
             F = self.nfactors()
             if(n in ZZ and n >= 0):
@@ -183,7 +182,6 @@ class ProductBasis(FactorialBasis):
             For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
             extract the coefficient from those basis sequences.
         '''
-        @cached_method
         def __linear_ps(n):
             F = self.nfactors()
             if(n in ZZ and n >= 0):
@@ -213,7 +211,6 @@ class ProductBasis(FactorialBasis):
             For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
             extract the coefficient from those basis sequences.
         '''
-        @cached_method
         def __constant_ps(n):
             F = self.nfactors()
             if(n in ZZ and n >= 0):
