@@ -32,7 +32,9 @@ r'''
 '''
 
 ## Sage imports
-from sage.all import FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff, Expression, prod
+from sage.all import (FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff, 
+                        SR, Expression, prod, hypergeometric)
+from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
 # ore_algebra imports
@@ -166,21 +168,109 @@ class PSBasis(object):
             This method returns ``True`` or ``False`` and the quotient (if the output is hypergeometric)
             or ``None`` otherwise.
 
-            TODO: add examples
+            INPUT:
+
+            * ``element``: the object that will be checked.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = BinomialBasis(); n = B.n()
+
+            Rational functions in `n` are always hypergeometric::
+
+                sage: B.is_hypergeometric(n)
+                (True, (n + 1)/n)
+                sage: B.is_hypergeometric(n^2)
+                (True, (n^2 + 2*n + 1)/n^2)
+                sage: B.is_hypergeometric(n*(n+1))
+                (True, (n + 2)/n)
+
+            But this method accepts symbolic expressions involving the factorial or the binomial
+            method of Sage and recognize the type of sequence::
+
+                sage: B.is_hypergeometric(factorial(n))
+                (True, n + 1)
+                sage: B.is_hypergeometric(hypergeometric([1,2,3],[4,5,6],n))
+                (True, (n^2 + 5*n + 6)/(n^3 + 15*n^2 + 74*n + 120))
+
+            We can also recognize any polynomial expression of hypergeometric terms::
+
+                sage: B.is_hypergeometric(n+factorial(n))
+                (True, (n^2 + 2*n + 1)/n)
+                sage: B.is_hypergeometric(hypergeometric([1,2],[],n)*(n^2-2) + factorial(n)*(n^4-1)/(n+1))
+                (True, (2*n^6 + 6*n^5 + 2*n^4 - 6*n^3 - 7*n^2 - 9*n + 2)/(n^5 - n^4 - n^3 + n^2 - 2*n + 2))
+
+            The argument for the :sageref:`functions/sage/functions/hypergeometric` and 
+            :sageref:`functions/sage/functions/other#sage.functions.other.Function_factorial`
+            has to be exactly `n` or a simple shift. Otherwise this method returns ``False``::
+
+                sage: B.is_hypergeometric(factorial(n+1))
+                (True, n + 2)
+                sage: B.is_hypergeometric(factorial(n^2))
+                (False, None)
+                sage: B.is_hypergeometric(hypergeometric([1],[2], n+2))
+                (True, 1/(n + 4))
+                sage: B.is_hypergeometric(hypergeometric([1],[2], n^2))
+                (False, None)
+
+            TODO: add a global class sequence for the sequences and then allow P-finite sequences
+            TODO: extend this method for further hypergeometric detection (if possible)
         '''
+        from _operator import pow
+
+        # Basic case of rational functions in self.OB()
         if(element in self.OB()):
             element = self.OB()(element); n = self.n()
             return True, element(n=n+1)/element(n)
 
+        # We assume now it is a symbolic expression
+        element = SR(element)
+
+        operator = element.operator()
+        if(operator is add_vararg):
+            hypers = [self.is_hypergeometric(el) for el in element.operands()]
+            if(any(not el[0] for el in hypers)):
+                return (False, None)
+            return (True, sum([el[1] for el in hypers], 0))
+        elif(operator is mul_vararg):
+            hypers = [self.is_hypergeometric(el) for el in element.operands()]
+            if(any(not el[0] for el in hypers)):
+                return (False, None)
+            return (True, prod([el[1] for el in hypers], 1))
+        elif(operator is pow):
+            base,exponent = element.operands()
+            if(exponent in ZZ):
+                hyper, quotient = self.is_hypergeometric(base)
+                if(hyper):
+                    return (hyper, quotient**ZZ(exponent))
+                return (False, None)
+        elif(operator is hypergeometric):
+            a, b, n = element.operands()
+            # casting a and b to lists
+            a = a.operands(); b = b.operands()
+
+            if(not n in self.OB()):
+                return (False, None)
+            n = self.OB()(n)
+            if(not self.OB()(n)-self.n() in ZZ): # the index is a rational function in `n`
+                return (False, None) # TODO: check if it is extensible
+            quotient = prod(n+el for el in a)/prod(n+el for el in b+[1])
+            try:
+                return (True, self.OB()(str(quotient)))
+            except: 
+                return (False, None)
+            
+        # The operator is not a special case: we try to check by division
         n = self.n()
         quotient = element(n=n+1)/element(n=n)
         if(isinstance(quotient, Expression)):
             quotient = quotient.simplify_full()
         
         try:
-            return True, self.OB()(str(quotient))
+            return (True, self.OB()(str(quotient)))
         except:
-            return False, None
+            return (False, None)
 
     def valid_factor(self, element):
         r'''
@@ -202,8 +292,23 @@ class PSBasis(object):
 
             This method return ``True`` if the rational function has no pole nor zero on `\mathbb{N}`.
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = BinomialBasis(); n = B.n()
+                sage: B.valid_factor(n)
+                False
+                sage: B.valid_factor(n+1)
+                True
+                sage: B.valid_factor(n+1/2)
+                True
+                sage: B.valid_factor(factorial(n))
+                False
         '''
+        if(not element in self.OB()):
+            return False
+        element = self.OB()(element)
+        
         ## We check the denominator never vanishes on positive integers
         if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in element.denominator().roots()])):
             return False
