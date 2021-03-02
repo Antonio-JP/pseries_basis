@@ -304,17 +304,42 @@ class PSBasis(object):
                 True
                 sage: B.valid_factor(factorial(n))
                 False
+                sage: B.valid_factor(5)
+                True
+                sage: B.valid_factor((n+1)*(n+2))
+                True
+                sage: B.valid_factor((n+1)/n)
+                False
+                sage: B.valid_factor((n+1)/(n+2))
+                True
+
+            This allow to check if a hypergeometric element is valid as a scalar product (see emthod :func:`is_hypergeometric`)::
+
+                sage: hyper, quotient = B.is_hypergeometric(factorial(n))
+                sage: B.valid_factor(quotient)
+                True
+                sage: hyper, quotient = B.is_hypergeometric(hypergeometric([2],[3],n))
+                sage: B.valid_factor(quotient)
+                True
+                sage: hyper, quotient = B.is_hypergeometric(hypergeometric([2,6,8,4],[3,2,4,23],n))
+                sage: quotient
+                (n^2 + 14*n + 48)/(n^3 + 27*n^2 + 95*n + 69)
+                sage: B.valid_factor(quotient)
+                True
+                sage: hyper, quotient = B.is_hypergeometric(hypergeometric([-2,6],[],n))
+                sage: B.valid_factor(quotient)
+                False
         '''
         if(not element in self.OB()):
             return False
         element = self.OB()(element)
-        
+
         ## We check the denominator never vanishes on positive integers
-        if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in element.denominator().roots()])):
+        if(any((m >= 0 and m in ZZ) for m in [root[0][0] for root in element.denominator().roots()])):
             return False
 
         ## We check the numerator never vanishes on the positive integers
-        if(any((m > 0 and m in ZZ) for m in [root[0][0] for root in element.numerator().roots()])):
+        if(any((m >= 0 and m in ZZ) for m in [root[0][0] for root in element.numerator().roots()])):
             return False
             
         return True
@@ -620,7 +645,24 @@ class PSBasis(object):
             Return the key set of the dictionary of compatibilities. This set will be composed of the names of 
             the compatible operators with ``self``.
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: BinomialBasis().compatible_operators()
+                dict_keys(['x', 'E'])
+                sage: PowerBasis().compatible_operators()
+                dict_keys(['x', 'Id', 'Dx'])
+                sage: HermiteBasis().compatible_operators()
+                dict_keys(['x', 'Dx'])
+                sage: B = FallingBasis(1,2,3)
+                sage: B.compatible_operators()
+                dict_keys(['x', 'E_3'])
+                
+            This output gets updated when we add new compatibilities
+                
+                sage: B.set_compatibility('s', 1)
+                sage: B.compatible_operators()
+                dict_keys(['x', 'E_3', 's'])
         '''
         return self.__compatibility.keys()
 
@@ -639,9 +681,33 @@ class PSBasis(object):
 
             ``True`` if the givenoperator is compatible and ``False`` otherwise.
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: BinomialBasis().has_compatibility('x')
+                True
+                sage: BinomialBasis().has_compatibility('E')
+                True
+                sage: BinomialBasis().has_compatibility('Id')
+                False
+                sage: PowerBasis().has_compatibility('Id')
+                True
+                sage: HermiteBasis().has_compatibility('Dx')
+                True
+                sage: B = FallingBasis(1,2,3)
+                sage: B.has_compatibility('E')
+                False
+                sage: B.has_compatibility('E_3')
+                True
+                
+            This output gets updated when we add new compatibilities
+                
+                sage: B.has_compatibility('s')
+                False
+                sage: B.set_compatibility('s', 1)
+                sage: B.has_compatibility('s')
+                True
         '''
-        
         return isinstance(operator, str) and operator in self.__compatibility
 
     def get_compatibility(self, operator):
@@ -707,7 +773,31 @@ class PSBasis(object):
             A matrix representing the compatibility condition by sections. See :arxiv:`1804.02964v1`
             for further information. 
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = BinomialBasis()
+                sage: B.get_compatibility_sections(3, 'x')
+                [      n       0 3*n*Sni]
+                [3*n + 1       n       0]
+                [      0 3*n + 2       n]
+                sage: B.get_compatibility_sections(2, 'x')
+                [      n 2*n*Sni]
+                [2*n + 1       n]
+
+            This method returnsthe same as :func:`get_compatibility` when the number of sections is 1::
+
+                sage: B.get_compatibility_sections(1, 'x') == B.get_compatibility('x')
+                True
+
+            This method also allows as input a map representing the coefficients `\alpha_{k,i,j}` that 
+            have to be rational functions in `k` (see :func:`OB` for further information) together with 
+            the values of `A` and `B`::
+
+                sage: B.get_compatibility_sections(3, (2,5,lambda k,i,j : k-i+j))
+                [                    (n + 2)*Sni + n       (n + 2)*Sni^2 + n*Sni + n - 2       n*Sni^2 + (n - 2)*Sni + n - 4]
+                [   (n - 1)*Sn + (n + 3)*Sni + n + 1                 (n + 1)*Sni + n - 1 (n + 1)*Sni^2 + (n - 1)*Sni + n - 3]
+                [         n*Sn + (n + 4)*Sni + n + 2        (n - 2)*Sn + (n + 2)*Sni + n                       n*Sni + n - 2]
         '''
         ## Considering the case of an operator
         if(not (isinstance(operator, tuple) or isinstance(operator, list))):
@@ -1011,7 +1101,20 @@ class BruteBasis(PSBasis):
           of this basis.
         * ``degree``: indicates if it is a polynomial basis or an order basis.
 
-        TODO: add examples
+        EXAMPLES::
+
+            sage: from psbasis import *
+            sage: B = BruteBasis(lambda n : QQ[x](binomial(x,n)), True)
+            sage: B2 = BinomialBasis()
+            sage: all(B[i] == B2[i] for i in range(100))
+            True
+
+        **Be careful**: this method does not check that the lambda function induces a basis nor that 
+        the ``degree`` argument is correct::
+
+            sage: B = BruteBasis(lambda n : 0, False)
+            sage: all(B[i] == 0 for i in range(100))
+            True
     '''
     def __init__(self, elements, degree=True):
         super().__init__(degree)
@@ -1025,6 +1128,13 @@ class BruteBasis(PSBasis):
             This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
         '''
+        if(var_name is None):
+            name = 'x'
+        else:
+            name = var_name
+
+        if(self.by_degree()):
+            return self.polynomial_ring(name)(self.__get_element(n))
         return self.__get_element(n)
 
     def _basis_matrix(self, nrows, ncols):
@@ -1034,7 +1144,24 @@ class BruteBasis(PSBasis):
             This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.basis_matrix` for further information.
 
-            TODO: add examples                
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: from ajpastor.dd_functions import *
+                sage: B = BruteBasis(lambda n : BesselD(n), False)
+                sage: B2 = BruteBasis(lambda n : bessel_J(n,x), False)
+                sage: B3 = BesselBasis()
+                sage: B.basis_matrix(4,5) == B2.basis_matrix(4,5)
+                True
+                sage: B.basis_matrix(6,7)
+                [      1       0    -1/4       0    1/64       0 -1/2304]
+                [      0     1/2       0   -1/16       0   1/384       0]
+                [      0       0     1/8       0   -1/96       0  1/3072]
+                [      0       0       0    1/48       0  -1/768       0]
+                [      0       0       0       0   1/384       0 -1/7680]
+                [      0       0       0       0       0  1/3840       0]
+                sage: B3.basis_matrix(10) == B.basis_matrix(10)
+                True
         '''
         try:
             return Matrix([[self[n].sequence(k) for k in range(ncols)] for n in range(nrows)])
@@ -1194,4 +1321,4 @@ class OrderBasis(PSBasis):
     def __repr__(self):
         return "PolyBasis -- WARNING: this is an abstract class"
 
-__all__ = ["PSBasis", "PolyBasis", "OrderBasis"]
+__all__ = ["PSBasis", "BruteBasis", "PolyBasis", "OrderBasis"]
