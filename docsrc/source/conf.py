@@ -118,7 +118,7 @@ pygments_style = 'sphinx'
 pythonversion = sys.version.split(' ')[0]
 # Python and Sage trac ticket shortcuts. For example, :trac:`7549` .
 extlinks = {
-    'python': ('https://docs.python.org/release/'+pythonversion+'/%s', ''),
+    'python': ('https://docs.python.org/3/library/%s', 'Python doc: '),
     'trac': ('http://trac.sagemath.org/%s', 'trac ticket #'),
     'wiki': ('https://en.wikipedia.org/wiki/%s', 'Wikipedia: '),
     'arxiv': ('https://arxiv.org/abs/%s', 'Arxiv '),
