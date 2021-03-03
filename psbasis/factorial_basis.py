@@ -546,8 +546,14 @@ class SFactorialBasis(FactorialBasis):
 
         ## Adding the extra information
         n = self.n()
-        an = self.OB()(an(n=n)); self.__an = an
-        bn = self.OB()(bn(n=n)); self.__bn = bn
+        try:
+            an = self.OB()(an(n=n)); self.__an = an
+        except TypeError: # an is not callable
+            an = self.OB()(an); self.__an = an # original code for rational functions
+        try:
+            bn = self.OB()(bn(n=n)); self.__bn = bn
+        except TypeError: # bn is not callable
+            bn = self.OB()(bn); self.__bn = bn # original code for rational functions
 
         ## Initializing the FactorialBasis structure
         super(SFactorialBasis,self).__init__(X)

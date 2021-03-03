@@ -778,12 +778,12 @@ class PSBasis(object):
                 sage: from psbasis import *
                 sage: B = BinomialBasis()
                 sage: B.get_compatibility_sections(3, 'x')
-                [      n       0 3*n*Sni]
-                [3*n + 1       n       0]
-                [      0 3*n + 2       n]
+                [    3*n       0 3*n*Sni]
+                [3*n + 1 3*n + 1       0]
+                [      0 3*n + 2 3*n + 2]
                 sage: B.get_compatibility_sections(2, 'x')
-                [      n 2*n*Sni]
-                [2*n + 1       n]
+                [    2*n 2*n*Sni]
+                [2*n + 1 2*n + 1]
 
             This method returnsthe same as :func:`get_compatibility` when the number of sections is 1::
 
