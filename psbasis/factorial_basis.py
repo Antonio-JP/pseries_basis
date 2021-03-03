@@ -388,7 +388,7 @@ class FactorialBasis(PolyBasis):
             In particular, for a fixed `n` and `i \in \mathbb{N}`, the polynomials `Q_{n,n+i}(x)`
             are another Factorial Basis (see method :func:`increasing_basis`). This method 
             computes a matrix that represents the identity map between polynomials of degree smaller 
-            or equal to a given size from the basis $Q_{n,n+i}(x)$ and the canonical power basis.
+            or equal to a given size from the basis `Q_{n,n+i}(x)` and the canonical power basis.
 
             This is an abstract method that has to be implemented in some subclass. The input
             may depend in each subclass.
@@ -475,7 +475,7 @@ class FactorialBasis(PolyBasis):
             may depend in each subclass.
 
             OUTPUT:
-                List of coefficients of $L(P_n)/P_{n-A}$.
+                List of coefficients of `L(P_n)/P_{n-A}`.
         '''
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
 
@@ -525,7 +525,7 @@ class SFactorialBasis(FactorialBasis):
 
         .. MATH::
 
-            P_n = (a_nx + b_n)P_{n-1}
+            P_n(x) = (a_nx + b_n)P_{n-1}(x)
 
         INPUT:
         
@@ -534,7 +534,33 @@ class SFactorialBasis(FactorialBasis):
         * ``X``: the name for the operator representing the multiplication by `x`.
         * ``init``: the value of `P_0(x)`. Must be a constant.
 
-        TODO: add examples
+        EXAMPLES::
+
+            sage: from psbasis import *
+            sage: B = BinomialBasis(); n = B.n()
+            sage: B2 = SFactorialBasis(1/n, (-n+1)/n)
+            sage: all(B[i] == B2[i] for i in range(50))
+            True
+            sage: B = SFactorialBasis(n, n); x = B[1].parent().gens()[0]
+            sage: B[0]
+            1
+            sage: all(B[i] == B[i-1]*(i*x+i) for i in range(1,50))
+            True
+            sage: all(B.scalar(1/factorial(n))[i] == SFactorialBasis(1,1)[i] for i in range(10))
+            True
+            sage: SFactorialBasis(n^2/3, 1/n)
+            Factorial basis: (1, 1/3*x + 1, 4/9*x^2 + 3/2*x + 1/2, ...)
+
+        The first argument must never be zero for `n \geq 0`. Otherwise a :class:`ValueError` is raised::
+
+            sage: SFactorialBasis(n^2 - 1, 1)
+            Traceback (most recent call last):
+            ...
+            ValueError: The leading coefficient for the extra factor must always be non-zero
+            sage: SFactorialBasis(1/(n-1), 1)
+            Traceback (most recent call last):
+            ...
+            ValueError: The leading coefficient for the extra factor must always be non-zero
     '''
     def __init__(self, an, bn, X='x',init=1):
         
@@ -544,12 +570,18 @@ class SFactorialBasis(FactorialBasis):
             raise ValueError("The first polynomial must be non-zero")
         self.__init = init
 
-        ## Adding the extra information
         n = self.n()
+
+        ## Checking the argument `an`
         try:
-            an = self.OB()(an(n=n)); self.__an = an
+            an = self.OB()(an(n=n))
         except TypeError: # an is not callable
-            an = self.OB()(an); self.__an = an # original code for rational functions
+            an = self.OB()(an) # original code for rational functions
+        if(not self.valid_factor(an(n=n+1))): # an can not be zero for n >= 1
+            raise ValueError("The leading coefficient for the extra factor must always be non-zero")
+        self.__an = an
+
+        ## Checking the argument `bn`
         try:
             bn = self.OB()(bn(n=n)); self.__bn = bn
         except TypeError: # bn is not callable
@@ -873,7 +905,7 @@ class SFactorialBasis(FactorialBasis):
         A = ZZ(bound); B = len(coeffs) - A - 1; n = self.n()
 
         ## At this point we have that `coeffs` is the list of coefficients of
-        ## L(P_n)/P_{n-A} in the increasing basis starting with $n-A$.
+        ## L(P_n)/P_{n-A} in the increasing basis starting with `n-A`.
         ## We only need to change the basis to the Power Basis
         new_alpha = self.matrix_ItP(n-A, A+B+1)*vector(coeffs)
 
@@ -904,7 +936,7 @@ class SFactorialBasis(FactorialBasis):
 
         ## At this point we have that `coeffs` is the list of coefficients of
         ## L(P_n)/P_{n-A} in the power basis. If we change to the increasing
-        ## basis starting in $n-A$ then we have the $alpha_{n,i}$.
+        ## basis starting in `n-A` then we have the `alpha_{n,i}`.
         new_alpha = self.matrix_PtI(n-A, A+B+1)*vector(coeffs)
 
         return [el for el in new_alpha]
@@ -1153,7 +1185,7 @@ class RootSequenceBasis(FactorialBasis):
         A = ZZ(bound); B = len(coeffs) - A - 1; n = self.n()
 
         ## At this point we have that `coeffs` is the list of coefficients of
-        ## L(P_n)/P_{n-A} in the increasing basis starting with $n-A$.
+        ## `L(P_n)/P_{n-A}` in the increasing basis starting with `n-A`.
         ## We only need to change the basis to the Power Basis
         new_alpha = self.matrix_ItP(n-A, A+B+1)*vector(coeffs)
 
@@ -1183,8 +1215,8 @@ class RootSequenceBasis(FactorialBasis):
         A = ZZ(bound); B = len(coeffs) - A - 1; n = self.n()
 
         ## At this point we have that `coeffs` is the list of coefficients of
-        ## L(P_n)/P_{n-A} in the power basis. If we change to the increasing
-        ## basis starting in $n-A$ then we have the $alpha_{n,i}$.
+        ## `L(P_n)/P_{n-A}` in the power basis. If we change to the increasing
+        ## basis starting in `n-A` then we have the `alpha_{n,i}`.
         new_alpha = self.matrix_PtI(n-A, A+B+1)*vector(coeffs)
 
         return [el for el in new_alpha]
@@ -1294,7 +1326,7 @@ class PowerBasis(FallingBasis):
         for the power series: `1`, `(ax+b)`, `(ax+b)^2`, etc.
 
         Following the notation in :arxiv:`1804.02964v1`, this basis
-        corresponds with $\mathfrak{P}_{a,b}$. In that paper we can find that these basis
+        corresponds with `\mathfrak{P}_{a,b}`. In that paper we can find that these basis
         have compatibilities with the multiplication by `x` and with the derivation
         with respect to `x`.
 
@@ -1360,7 +1392,7 @@ class BinomialBasis(SFactorialBasis):
 
         where `a` is a natural number and `b` is a rational number.
 
-        In :arxiv:`1804.02964v1` this corresponds to $\mathfrak{C}_{a,b}$
+        In :arxiv:`1804.02964v1` this corresponds to `\mathfrak{C}_{a,b}`
         and it is compatible with the multiplication by `x` and by the shift operator
         `E: x \rightarrow x+1`.
 
@@ -1368,9 +1400,9 @@ class BinomialBasis(SFactorialBasis):
 
         * ``dilation``: the natural number corresponding to the value `a`.
         * ``shift``: the shift corresponding to the value `b`.
-        * ``X``: the name for the operator representing the multiplication by $x$. If not given, we will
+        * ``X``: the name for the operator representing the multiplication by `x`. If not given, we will
           consider `x` as default.
-        * ``E``: the name for the operator representing the shift of $x$ by `1`. If not given, we will
+        * ``E``: the name for the operator representing the shift of `x` by `1`. If not given, we will
           consider `E` as default.
     '''
     def __init__(self, dilation=1, shift=0, X='x', E='E'):
