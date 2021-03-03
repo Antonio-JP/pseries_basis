@@ -635,6 +635,8 @@ class SFactorialBasis(FactorialBasis):
             return self.element(n-1, var_name=var_name) * (an(n=n)*x + bn(n=n))
         elif(n == 0):
             return self.__init
+        else:
+            raise IndexError("The index must be a non-negative integer")
 
     def _scalar_basis(self, factor):
         r'''
@@ -687,7 +689,13 @@ class SFactorialBasis(FactorialBasis):
             This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: n = PSBasis.n(None)
+                sage: SFactorialBasis(n+1, 1/n)*factorial(n)
+                Factorial basis: (1, 2*x + 1, 12*x^2 + 8*x + 1, ...)
+                sage: 
         '''
         return SFactorialBasis(self.__an*quotient(n=self.n()-1), self.__bn*quotient(n=self.n()-1), X=self.var_name(), init=self[0]*factor(n=0))
 
@@ -1008,6 +1016,8 @@ class RootSequenceBasis(FactorialBasis):
             return cn(n=n)/cn(n=n-1)*self.element(n-1, var_name=var_name) * (x - rho(n=n-1))
         elif(n == 0):
             return self.cn(n=0)
+        else:
+            raise IndexError("The index must be a non-negative integer")
 
     def __repr__(self):
         return "Factorial basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])

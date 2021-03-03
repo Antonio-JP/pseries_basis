@@ -146,7 +146,10 @@ class BesselBasis(OrderBasis):
 
             TODO: add examples
         '''
-        return bessel_J(n,x)
+        if(n >= 0):
+            return bessel_J(n,x)
+        else:
+            raise IndexError("The index must be a non-negative integer")
 
     def __repr__(self):
         return "Bessel Basis (J_n)"

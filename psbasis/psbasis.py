@@ -1057,6 +1057,8 @@ class PSBasis(object):
         r'''
             See method :func:`element`
         '''
+        if(isinstance(n, slice)):
+            return [self[i] for i in range(n.stop)[n]]
         return self.element(n)
 
     def __mul__(self,other):

@@ -157,7 +157,9 @@ class OrthogonalBasis(PolyBasis):
         an = self.__an; bn = self.__bn; cn = self.__cn
 
         ## Basic cases
-        if(n == 0):
+        if(n < 0):
+            raise IndexError("The index must be a non-negative integer")
+        elif(n == 0):
             return self.__init
         elif(n == 1):
             return (an(n=0)*x + bn(n=0))*self.__init
