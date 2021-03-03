@@ -419,7 +419,33 @@ class FactorialBasis(PolyBasis):
 
             A matrix that convert coordinates from the canonical power basis to the requested increasing basis. 
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = BinomialBasis()
+                sage: B.matrix_PtI(3, 5)
+                [   1    3    9   27   81]
+                [   0    4   28  148  700]
+                [   0    0   20  240 1940]
+                [   0    0    0  120 2160]
+                [   0    0    0    0  840]
+                sage: B.matrix_PtI(3,5).inverse() == B.matrix_ItP(3,5)
+                True
+                sage: x = B[1].parent().gens()[0]
+
+            The columns are the coordinates of `\{1,x,x^2,\ldots\}` in the 3-rd increasing basis::
+
+                sage: 4*B.increasing_polynomial(3,1) + 3*B.increasing_polynomial(3,0) == x
+                True
+                sage: 9*B.increasing_polynomial(3,0) + 28*B.increasing_polynomial(3,1) + 20*B.increasing_polynomial(3,2) == x^2
+                True
+
+            This is equivalent to compute the basis matrix (see method :func:`~psbasis.psbasis.PSBasis.basis_matrix`) of the 
+            increasing basis (see method :func:`increasing_basis`). However, due to the different notation between these two
+            methods, the relation is with the transposed matrix::
+
+                sage: B.increasing_basis(3).basis_matrix(5).inverse().transpose() == B.matrix_PtI(3,5)
+                True
         '''
         return self.matrix_ItP(*args, **kwds).inverse()
 
@@ -519,8 +545,9 @@ class SFactorialBasis(FactorialBasis):
         self.__init = init
 
         ## Adding the extra information
-        an = self.OB()(an); self.__an = an
-        bn = self.OB()(bn); self.__bn = bn
+        n = self.n()
+        an = self.OB()(an(n=n)); self.__an = an
+        bn = self.OB()(bn(n=n)); self.__bn = bn
 
         ## Initializing the FactorialBasis structure
         super(SFactorialBasis,self).__init__(X)
