@@ -44,7 +44,7 @@ class FactorialBasis(PolyBasis):
         try:
             Sni = self.Sni(); n = self.n(); an = self.an; bn = self.bn
             self.set_compatibility(X, -bn(n=n+1)/an(n=n+1) + (1/an(n=n))*Sni)
-        except AttributeError:
+        except (AttributeError, TypeError):
             pass
 
     def _scalar_basis(self, factor):
@@ -54,7 +54,35 @@ class FactorialBasis(PolyBasis):
             This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = BinomialBasis(); n = B.n()
+                sage: f = (n^2+1)
+                sage: B2 = B.scalar(f)
+                sage: all(B[i]*f(n=i) == B2[i] for i in range(100))
+                True
+                sage: isinstance(B2, FactorialBasis)
+                True
+                
+            In fact we can check that the roots are the same and the leading coefficient is scaled::
+
+                sage: all(B.rho(n=i) == B2.rho(n=i) for i in range(100))
+                True
+                sage: all(B.cn(n=i)*f(n=i) == B2.cn(n=i) for i in range(100))
+                True
+
+            There are subclasses that overrides this method again and create their own structures of 
+            :class:`FactorialBasis`. However, :class:`~psbasis.product_basis.ProductBasis` and 
+            :class:`RootSequenceBasis` do not and always return a :class:`RootSequenceBasis`::
+
+                sage: B = ProductBasis(BinomialBasis(), PowerBasis())
+                sage: f = (n+1)
+                sage: B2 = B.scalar(f)
+                sage: all(B[i]*f(n=i) == B2[i] for i in range(100))
+                True
+                sage: isinstance(B2, RootSequenceBasis)
+                True
         '''
         return RootSequenceBasis(self.rho, lambda n : self.cn(n=n)*factor(n=n), X=self.var_name())
         
@@ -65,7 +93,34 @@ class FactorialBasis(PolyBasis):
             This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
             See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = BinomialBasis(); n = B.n()
+                sage: f = (n^2+1)*factorial(n+3)
+                sage: B2 = B.scalar(f)
+                sage: all(B[i]*f(n=i) == B2[i] for i in range(100))
+                True
+                sage: isinstance(B2, FactorialBasis)
+                True
+                
+            In fact we can check that the roots are the same and the leading coefficient is scaled::
+
+                sage: all(B.rho(n=i) == B2.rho(n=i) for i in range(100))
+                True
+                sage: all(B.cn(n=i)*f(n=i) == B2.cn(n=i) for i in range(100))
+                True
+
+            There are subclasses that overrides this method again and create their own structures of 
+            :class:`FactorialBasis`. However, :class:`~psbasis.product_basis.ProductBasis` and 
+            :class:`RootSequenceBasis` do not and always return a :class:`RootSequenceBasis`::
+
+                sage: B = ProductBasis(BinomialBasis(), PowerBasis())
+                sage: B3 = B.scalar(factorial(n))
+                sage: all(B[i]*factorial(i) == B3[i] for i in range(100))
+                True
+                sage: isinstance(B3, RootSequenceBasis)
+                True
         '''
         return RootSequenceBasis(self.rho, lambda n : self.cn(n=n)*factor(n=n), X=self.var_name())
 
@@ -255,7 +310,42 @@ class FactorialBasis(PolyBasis):
             * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
               be smaller or equal to `n-A`.
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = BinomialBasis(); n = B.n(); B.get_compatibility('x')
+                n*Sni + n
+
+            This means that for all `n`, we have that:
+
+            .. MATH::
+
+                xB_n(x) = (n+1)B_{n+1}(x) + nB_n(x).
+
+            Hence, we have that `B_m(x)` divides `xB_n(x)` for any `m \leq n`::
+
+                sage: B.compatible_division('x', 5, 2) # xB_5(x) / B_3(x)
+                1/20*x^3 - 7/20*x^2 + 3/5*x
+                sage: x = B[1].parent().gens()[0]
+                sage: all(all(x*B[i] / B[j] == B.compatible_division('x', i, dst=j) for j in range(0,i)) for i in range(50))
+                True
+            
+            We can also check other operators like the shift `x \mapsto x+1`::
+
+                sage: all(all(B[i](x=x+1) / B[j] == B.compatible_division('E', i, dst=j) for j in range(0,i-1)) for i in range(50))
+                True
+                sage: B.compatible_division('E', n, 2)                                                                                                                                                                                      
+                (1/(n^2 - n))*x^2 + ((-n + 3)/(n^2 - n))*x + (-n + 2)/(n^2 - n)
+
+            Also we can check other types of basis::
+
+                sage: PowerBasis().compatible_division('Dx', 10, 5)
+                10*x^4
+                sage: PowerBasis().compatible_division('x', 30, 10)
+                x^11
+                sage: n = PowerBasis().n()
+                sage: PowerBasis().compatible_division('x', n, 3)
+                x^4
         '''
         ## Checking the arguments
         ## Reading ``src``
@@ -274,17 +364,17 @@ class FactorialBasis(PolyBasis):
                 d = ZZ(diff); m = n - d
         else:
             if(n in ZZ):
-                if((not dst in ZZ) or dst < n-A):
-                    raise ValueError("The argument `dst` must be an integer bigger than `src`")
+                if((not dst in ZZ) or dst > n-A):
+                    raise ValueError("The argument `dst` must be an integer smaller or equal than `src`-%s" %A)
                 m = ZZ(dst); d = n - m
             else:
                 d = n-dst
-                if((not d in ZZ) or d < A):
-                    raise ValueError("The difference between `dst` and `src` must be a positive integer bigger than %s" %A)
+                if((not d in ZZ) or d > n-A):
+                    raise ValueError("The argument `dst` must be an integer smaller or equal than `src`-%s" %A)
                 d = ZZ(d); m = dst
 
         ## Computing the polynomial
-        return sum(self.compatibility_coefficient(operator, n, i-A)*self.increasing_polynomial(m, diff=i) for i in range(A+B+1))
+        return sum(self.alpha(operator, n, i)*self.increasing_polynomial(m, dst=n+i) for i in range(-A,B+1))
 
     def matrix_ItP(self, *args, **kwds):
         r'''
@@ -534,7 +624,7 @@ class SFactorialBasis(FactorialBasis):
 
             TODO: add examples
         '''
-        return SFactorialBasis(self.__an*quotient, self.__bn*quotient, X=self.var_name(), init=self[0]*factor(n=0))
+        return SFactorialBasis(self.__an*quotient(n=self.n()-1), self.__bn*quotient(n=self.n()-1), X=self.var_name(), init=self[0]*factor(n=0))
 
     def __repr__(self):
         return "Factorial basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])
@@ -850,7 +940,7 @@ class RootSequenceBasis(FactorialBasis):
 
         if(n > 0):
             rho = self.rho; cn = self.cn
-            return cn(n=n)/cn(n=n-1)*self.element(n-1, var_name=var_name) * (x - rho(n=n))
+            return cn(n=n)/cn(n=n-1)*self.element(n-1, var_name=var_name) * (x - rho(n=n-1))
         elif(n == 0):
             return self.cn(n=0)
 

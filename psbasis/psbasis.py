@@ -886,7 +886,7 @@ class PSBasis(object):
             coeff = self.OB()(compatibility.polynomial().coefficient({Sni : ind}))
             return coeff(n = pos + ind)
         elif(ind == 0):
-            return self.OB()(compatibility.polynomial().constant_coefficient())
+            return self.OB()(compatibility.polynomial().constant_coefficient())(n=pos)
         else:
             return self.OB().zero()
 
@@ -980,7 +980,7 @@ class PSBasis(object):
                 factors = [1/factor(n=ns*n+j) for j in range(ns)]
                 # weird behavior on matrices with ore algebras
                 # we build the new matrix from the coefficients
-                coeffs = comp.coefficients() # comp[i][j] == coeffs[i*ns+j]
+                coeffs = comp.dense_coefficient_list() # comp[i][j] == coeffs[i*ns+j]
                 new_basis.set_compatibility(key, Matrix([[coeffs[i*ns+j]*factors[j] for j in range(ns)] for i in range(ns)]))
             else: # usual case: compatibility with direct formula
                 A = self.A(key); B = self.B(key)
@@ -1041,7 +1041,7 @@ class PSBasis(object):
                 ns = comp.nrows()
                 # since factor is hypergeometric, the sections are hypergeometric too
                 quotients = [self.is_hypergeometric(1/factor(n=n*ns+i))[1] for i in range(ns)]
-                coeffs = comp.coefficients() # comp[i][j] == coeffs[i*ns+j]
+                coeffs = comp.dense_coefficient_list() # comp[i][j] == coeffs[i*ns+j]
                 new_coeffs = [[(1/_Q(quotient, n*ns, j))*_apply_to_hyper(coeffs[i*ns+j], quotients[j]) for j in range(ns)] for i in range(ns)]
                 new_basis.set_compatibility(key, Matrix(new_coeffs))
             else:
