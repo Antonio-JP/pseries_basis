@@ -731,7 +731,48 @@ class PSBasis(object):
             An operator in the algebra returned by :func:`OS` that represents the compatibility
             condition of ``operator`` with the basis ``self``.
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: P = PowerBasis()
+                sage: P.get_compatibility('x')
+                Sni
+                sage: P.get_compatibility('Dx')
+                (n + 1)*Sn
+                sage: P11 = PowerBasis(1,1)
+                sage: P11.get_compatibility('x')
+                Sni - 1
+                sage: P11.get_compatibility('Id')
+                1
+                sage: P11.get_compatibility('Dx')
+                (n + 1)*Sn
+                sage: B = BinomialBasis()
+                sage: B.get_compatibility('x')
+                n*Sni + n
+                sage: B.get_compatibility('E')
+                Sn + 1
+                sage: H = HermiteBasis()
+                sage: H.get_compatibility('x')
+                (n + 1)*Sn + 1/2*Sni
+                sage: H.get_compatibility('Dx')
+                (2*n + 2)*Sn
+
+            We can also use the operators from :class:`ore_algebra.OreAlgebra` to get the compatibility. Here
+            we see some examples extracted from :arxiv:`1804.02964v1`::
+
+                sage: OE.<E> = OreAlgebra(QQ[x], ('E', lambda p : p(x=x+1), lambda p : 0))
+                sage: x = B[1].parent().gens()[0]
+                sage: example4_1 = E - 3; B.get_compatibility(example4_1)
+                Sn - 2
+                sage: example4_2 = E^2 - 2*E + 1; B.get_compatibility(example4_2)
+                Sn^2
+                sage: example4_3 = E^2 - E - 1; B.get_compatibility(example4_3)
+                Sn^2 + Sn - 1
+                sage: example4_4 = E - (x+1); B.get_compatibility(example4_4)
+                Sn + (-n)*Sni - n
+                sage: example4_5 = E^3 - (x^2+6*x+10)*E^2 + (x+2)*(2*x+5)*E-(x+1)*(x+2)
+                sage: B.get_compatibility(example4_5)
+                Sn^3 + (-n^2 - 6*n - 7)*Sn^2 + (-2*n^2 - 8*n - 7)*Sn - n^2 - 2*n - 1
         '''
         if(isinstance(operator,str)):
             if(not operator in self.__compatibility):
@@ -1066,7 +1107,6 @@ class PSBasis(object):
             See method :func:`scalar`.
         '''
         try:
-            other = self.OB()(other)
             return self.scalar(other)
         except:
             return NotImplemented

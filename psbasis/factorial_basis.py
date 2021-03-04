@@ -692,10 +692,22 @@ class SFactorialBasis(FactorialBasis):
             EXAMPLES::
 
                 sage: from psbasis import *
-                sage: n = PSBasis.n(None)
-                sage: SFactorialBasis(n+1, 1/n)*factorial(n)
-                Factorial basis: (1, 2*x + 1, 12*x^2 + 8*x + 1, ...)
-                sage: 
+                sage: n = PSBasis.n(None); B = SFactorialBasis(n+1, 1/n)
+                sage: B
+                Factorial basis: (1, 2*x + 1, 6*x^2 + 4*x + 1/2, ...)
+                sage: B2 = B*factorial(n)
+                sage: B2[:10] == [B[i]*factorial(i) for i in range(10)]
+                True
+                
+            In the case of a :class:`SFactorialBasis`, we always get a new :class:`SFactorialBasis` but with the
+            values of :func:`~psbasis.factorial_basis.FactorialBasis.an` and :func:`~psbasis.factorial_basis.FactorialBasis.bn`
+            slightly changed::
+
+                sage: _,quot = B.is_hypergeometric(factorial(n))
+                sage: B2.an == B.an*quot(n=n-1)
+                True
+                sage: B2.bn == B.bn*quot(n=n-1)
+                True
         '''
         return SFactorialBasis(self.__an*quotient(n=self.n()-1), self.__bn*quotient(n=self.n()-1), X=self.var_name(), init=self[0]*factor(n=0))
 
@@ -809,7 +821,42 @@ class SFactorialBasis(FactorialBasis):
             * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
               be bigger than `n`.
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: n = PSBasis.n(None)
+                sage: B = SFactorialBasis(n, 1)
+                sage: B.increasing_polynomial(2, 3)
+                60*x^3 + 47*x^2 + 12*x + 1
+                sage: B.increasing_polynomial(2, 3) == B.increasing_polynomial(2, dst=5)
+                True
+                sage: B.increasing_polynomial(3,0)
+                1
+                sage: B.increasing_polynomial(5, 2)
+                42*x^2 + 13*x + 1
+
+            The ``diff`` argument must be non-negative, or ``dst`` must be greater or equal then ``src``::
+
+                sage: B.increasing_polynomial(2,-1)
+                Traceback (most recent call last):
+                ...
+                ValueError: The argument `diff` must be None or a positive integer
+                sage: B.increasing_polynomial(5, dst=4)
+                Traceback (most recent call last):
+                ...
+                ValueError: The argument `dst` must be an integer bigger than `src`
+
+            This method also accepts rational expressions for ``src`` and ``dst``, however their 
+            difference must be a non-negative integer::
+
+                sage: B.increasing_polynomial(n, 1)
+                (n + 1)*x + 1
+                sage: B.increasing_polynomial(n^2-3, dst=n^2)
+                (n^6 - 3*n^4 + 2*n^2)*x^3 + (3*n^4 - 6*n^2 + 2)*x^2 + (3*n^2 - 3)*x + 1
+                sage: B.increasing_polynomial(n/(n-1), dst=n)
+                Traceback (most recent call last):
+                ...
+                ValueError: The difference between `dst` and `src` must be a positive integer
         '''
         ## Checking the arguments
         if(((src in ZZ) and src < 0) or (not src in self.OB())):
@@ -853,7 +900,17 @@ class SFactorialBasis(FactorialBasis):
             This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
             See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
-            TODO: add examples
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: n = PSBasis.n(None); B = SFactorialBasis(n+1, 1/n)
+                sage: B2 = B.increasing_basis(5)
+                sage: isinstance(B2, SFactorialBasis)
+                True
+                sage: B2[:10] == [B[i+5]/B[5] for i in range(10)]
+                True
+                sage: B2[:10] == [B.increasing_polynomial(5, i) for i in range(10)]
+                True
         '''
         ## Checking the arguments
         if((shift in ZZ) and shift < 0):
@@ -871,8 +928,32 @@ class SFactorialBasis(FactorialBasis):
             See method :func:`~psbasis.factorial_basis.FactorialBasis.matrix_ItP`.
             
             INPUT:
-                - ``src``: value for `n`.
-                - ``size``: bound on the degree for computing the matrix.
+
+            * ``src``: value for `n`.
+            * ``size``: bound on the degree for computing the matrix.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: n = PSBasis.n(None); B = SFactorialBasis(n+1, 1/n)
+                sage: BinomialBasis().matrix_ItP(n,3)
+                [                         1                 -n/(n + 1)                  n/(n + 2)]
+                [                         0                  1/(n + 1) (-2*n - 1)/(n^2 + 3*n + 2)]
+                [                         0                          0          1/(n^2 + 3*n + 2)]
+                sage: B.matrix_ItP(2,6)
+                [        1       1/3      1/12      1/60     1/360    1/2520]
+                [        0         4       8/3     31/30     13/45      4/63]
+                [        0         0        20        20    317/30  2407/630]
+                [        0         0         0       120       160 11276/105]
+                [        0         0         0         0       840      1400]
+                [        0         0         0         0         0      6720]
+
+            The increasing polynomials have as coordinates in the canonical basis the columns of this matrix::
+
+                sage: B.increasing_polynomial(2,3)
+                120*x^3 + 20*x^2 + 31/30*x + 1/60
+                sage: B.increasing_polynomial(2,5)
+                6720*x^5 + 1400*x^4 + 11276/105*x^3 + 2407/630*x^2 + 4/63*x + 1/2520
         '''
         if(((src in ZZ) and src < 0) or (not src in self.OB())):
             raise ValueError("The argument `src` must be a expression involving `self.n()` or a positive integer")
@@ -1013,9 +1094,9 @@ class RootSequenceBasis(FactorialBasis):
 
         if(n > 0):
             rho = self.rho; cn = self.cn
-            return cn(n=n)/cn(n=n-1)*self.element(n-1, var_name=var_name) * (x - rho(n=n-1))
+            return R(cn(n=n)/cn(n=n-1)*self.element(n-1, var_name=var_name) * (x - rho(n=n-1)))
         elif(n == 0):
-            return self.cn(n=0)
+            return R(self.cn(n=0))
         else:
             raise IndexError("The index must be a non-negative integer")
 

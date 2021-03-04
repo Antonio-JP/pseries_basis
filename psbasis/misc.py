@@ -3,7 +3,97 @@ r'''
 '''
 
 from sage.all import ZZ, Matrix, vector
+
+from psbasis.factorial_basis import BinomialBasis
 from psbasis.product_basis import ProductBasis
+
+def DefiniteSumSolutions(operator, *input):
+    r'''
+        Petkovsek's algorithm for transforming operators into recurrence equations.
+        
+        This method is the complete execution for the algorithm **DefiniteSumSolutions** described in
+        :arxiv:`1804.02964v1`. This methods takes an operator `L` and convert the problem
+        of being solution `L \cdot y(x) = 0` to a recurrence equation assuming some hypergeometric
+        terms in the expansion.
+        
+        The operator must be a difference operator of `\mathbb{Q}[x]<E>` where `E: x \mapsto x+1`. The operator may 
+        belong to a different ring from the package *ore_algebra*, but the generator must have the 
+        behavior previously described.
+        
+        This function does not check the nature of the generator, so using this algorithm with different 
+        types of operators may lead to some inconsistent results.
+        
+        INPUT:
+
+        * ``operator``: difference operator to be transformed.
+        * ``input``: the coefficients of the binomial coefficients we assume appear in the expansion
+          of the solutions. This input can be given with the following formats:
+            - ``a_1,a_2,...,a_m,b_1,b_2,...,b_m``: an unrolled list of `2m` elements.
+            - ``[a_1,a_2,...,a_m,b_1,b_2,...,b_m]``: a compress list of `2m` elements.
+            - ``[a_1,...,a_m],[b_1,...,b_m]``: two lists of `m` elements.
+
+        OUTPUT:
+
+        An operator `\tilde{L}` such that if a sequence `(c_n)_n` satisfies `L \cdot (c_n)_n = 0` then 
+        the power series
+
+        .. MATH::
+
+            y(x) = \sum_{n \geq 0}\prod{i=1}^m c_n\binom{a_i*x+b_i}{n}
+
+        satisfies `L \cdot y(x) = 0`.
+
+        EXAMPLES::
+
+            sage: from psbasis import *
+            sage: R.<x> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))
+            sage: DefiniteSumSolutions((x+1)*E - 2*(2*x+1), 1,1,0,0)
+            Sn - 1
+            sage: example_2 = 4*(2*x+3)^2*(4*x+3)*E^2 - 2*(4*x+5)*(20*x^2+50*x+27)*E + 9*(4*x+7)*(x+1)^2
+            sage: DefiniteSumSolutions(example_2, 1,1,0,0)
+            (n + 1/2)*Sn - 1/4*n - 1/4
+    '''
+    ## Checking the input
+    if(len(input) == 1 and type(input) in (tuple, list)):
+        input = input[0]
+
+    if(len(input)%2 != 0):
+        raise TypeError("The input must be a even number of elements")
+    elif(len(input) !=  2 or any(type(el) not in (list,tuple) for el in input)):
+        m = len(input)//2
+        a = input[:m]; b = input[m:]
+    else:
+        a,b = input; m = len(a)
+    
+    if(len(a) != len(b)):
+        raise TypeError("The length of the two arguments must be exactly the same")
+        
+    if(any(el not in ZZ or el <= 0 for el in a)):
+        raise ValueError("The values for `a` must be all positive integers")
+    if(any(el not in ZZ for el in b)):
+        raise ValueError("The values for `a` must be all integers")
+        
+    ## Getting the name of the difference operator
+    E = str(operator.parent().gens()[0])
+    
+    if(m == 1): # Non-product case
+        return BinomialBasis(a[0],b[0],E=E).get_compatibility(operator)
+    
+    ## Building the appropriate ProductBasis
+    B = ProductBasis([BinomialBasis(a[i],b[i],E=E) for i in range(m)], E=E)
+    
+    ## Getting the compatibility matrix R(operator)
+    compatibility = B.get_compatibility(operator)
+    
+    ## Cleaning the appearance of Sni
+    column = [compatibility.coefficient((j,0)) for j in range(m)]
+    deg = max(el.degree(B.Sni()) for el in column)
+    column = [B.OSS()(B.reduce_SnSni(B.Sn()**deg * el)) for el in column]
+    
+    ## Extrancting the gcrd for the first column
+    result = column[0].gcrd(*column[1:])
+    
+    return result
 
 def unroll_sequence(operator, init, bound=10):
     r'''
