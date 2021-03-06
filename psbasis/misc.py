@@ -90,7 +90,7 @@ def DefiniteSumSolutions(operator, *input):
     deg = max(el.degree(B.Sni()) for el in column)
     column = [B.OSS()(B.reduce_SnSni(B.Sn()**deg * el)) for el in column]
     
-    ## Extrancting the gcrd for the first column
+    ## Extracting the gcrd for the first column
     result = column[0].gcrd(*column[1:])
     
     return result
@@ -199,7 +199,7 @@ def multiset_inclusion(l1, l2):
     '''
     return all(l1.count(el) <= l2.count(el) for el in set(l1))
 
-def guess_compatibility_E(basis, bound_roots = 50, bound_data=50):
+def guess_compatibility_E(basis, sections = None, bound_roots = 50, bound_data=50):
     ## Checking the condition on the roots
     rho = basis.root_sequence()
     r0 = rho(0); A = 0
@@ -216,9 +216,19 @@ def guess_compatibility_E(basis, bound_roots = 50, bound_data=50):
     if(any(any(el != 0 for el in M[i][:i-A]) for i in range(A,M.nrows()))):
         raise ValueError("The guessed bound is incorrect: a non-zero coefficient found")
 
-    if(isinstance(basis, ProductBasis)): # we work by sections
-        F = basis.nfactors()
-        data = [[[M[i*F+r][i*F+r-j] for i in range(M.nrows()//F)] for j in range(A+1)] for r in range(F)]
+    F = None
+    if(isinstance(basis, ProductBasis)):
+        if(sections != None and sections%basis.nfactors() != 0):
+            raise ValueError("The argument sections must be a multiple of the number of factors")
+        elif(sections != None):
+            F = sections
+        else:
+            F = basis.nfactors()
+    elif(sections != None):
+        F = sections
+
+    if(F != None): # we work by sections
+        data = [[[M[i+r][i+r-j] for i in range(j,M.nrows()-r,F)] for j in range(A+1)] for r in range(F)]
         functions = [[guess_rational_function(data[i][j], basis.OSS())(n=basis.n()/F) for j in range(len(data[i]))] for i in range(len(data))]
 
         return (A, 0, lambda k,j,i : functions[j][-i](n=k))
