@@ -69,7 +69,7 @@ class ProductBasis(FactorialBasis):
         for el in args:
             if(isinstance(el, ProductBasis)):
                 final_args += el.factors
-            elif(isinstance(el, SFactorialBasis)):
+            elif(isinstance(el, FactorialBasis)):
                 final_args += [el]
             else: 
                 raise TypeError("The structure for the polynomial basis are not valid")
@@ -81,11 +81,20 @@ class ProductBasis(FactorialBasis):
         self.__cached_increasing = {}
 
         ## Computing the new compatibility operators for this basis
-        self.set_compatibility(X, self.__compute_operator_for_X(X))
+        try:
+            self.set_compatibility(X, self.__compute_operator_for_X(X))
+        except TypeError:
+            print("Impossible to extend automatically the compatibility by X")
         for der in ders:
-            self.add_derivation(der)
+            try:
+                self.add_derivation(der)
+            except TypeError:
+                print("Impossible to extend the compatibility by %s" %der)
         for endo in endos:
-            self.add_endomorphism(endo)
+            try:
+                self.add_endomorphism(endo)
+            except TypeError:
+                print("Impossible to extend the compatibility by %s" %der)
 
     @cached_method
     def element(self, n, var_name=None):
