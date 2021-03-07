@@ -530,26 +530,36 @@ class PSBasis(object):
     def set_compatibility(self, name, trans, sub=False):
         r'''
             Method to set a new compatibility operator.
-            
-            This method sets the operator given by ``name`` the translation rule
-            given by ``trans``. The latter argument must be a compatible operator
-            in the ring :func:`~PSBasis.OS`.
-            
+
+            This method sets a new compatibility condition for an operator given 
+            by ``name``. The compatibility condition must be given as a tuple
+            `(A, B, m, \alpha_{i,j,k})` where `A` is the lower bound for the compatibility,
+            `B` is the upper bound for the compatibility and `m` is the number of sections
+            for the compatibility. In this way, we have tht the operator `L` defind by ``name``
+            satisfies:
+
+            .. MATH::
+
+                L \cdot b_{km+r} = \sum_{i=-A}^B \alpha_{r, i, k} b_{km+r+j}
+
             See :arxiv:`1804.02964v1` for further information about the
             definition of a compatible operator.
             
             INPUT:
             
             * ``name``: the operator we want to set the compatibility. It can be the
-                name for any generator in the *ore_algebra* package or the generator
-                itself.
-            * ``trans``: an operator that can be casted into the ring :func:`~PSBasis.OS`. This can
-                be also be a matrix of operators, associating then the compatibility
-                with its sections. This input can be a triplet ``(A, B, coeffs)``
-                where the values of the lower bound, the upper bound and the coefficients
-                are given. This method builds then the corresponding difference operator.
-            * ``sub`` (optional): if set to True, the compatibility rule for ``name``
-                will be updated even if the operator was already compatible.
+              name for any generator in the *ore_algebra* package or the generator
+              itself.
+            * ``trans``: a tuple ``(A, B, m, alpha)`` where ``alpha`` must be a function with 
+              three parameters:
+                * ``i``: a positive integer smaller than `m`.
+                * ``j``: an integer between `-A` and `B`.
+                * ``k``: an element of :func:`OB`.
+              This parameter can also be an operator is :func:`OS`. Then the compatibility
+              is of 1 section and we can compute explicitly the values of `A`, `B` and the
+              `\alpha_{i,j,k}`.
+            * ``sub`` (optional): if set to ``True``, the compatibility rule for ``name``
+              will be updated even if the operator was already compatible.
         '''
         name = str(name)
         
@@ -558,26 +568,26 @@ class PSBasis(object):
             return
         
         if(isinstance(trans, tuple)):
-            if(len(trans) != 3):
+            if(len(trans) != 4):
                 raise ValueError("The operator given has not the appropriate format: not a triplet")
-            A, B, coeffs = trans
-            if(len(coeffs) != A+B+1):
-                raise ValueError("The operator given has not the appropriate format: list of coefficients of wrong size")
-            Sn = self.Sn(); Sni = self.Sni(); n = self.n()
-            coeffs = [self.OB()(el) for el in coeffs]
-            trans = coeffs[A] + sum(coeffs[A-i](n=n+i)*Sn**i for i in range(1, A+1)) + sum(coeffs[A+i](n=n-i)*Sni**i for i in range(1, B+1))
-             
-        if(is_Matrix(trans)):
-            trans = Matrix([
-                [
-                    self.reduce_SnSni(self.OS()(trans.coefficient((i,j))))
-                for j in range(trans.ncols())]
-            for i in range(trans.nrows())])
-        else:
-            trans = self.reduce_SnSni(self.OS()(trans))
-            
-        self.__compatibility[name] = trans
-        
+            A, B, m, alpha = trans
+            if((not A in ZZ) or A < 0):
+                raise ValueError("The lower bound parameter is not valid: %s" %A)
+            if((not B in ZZ) or B < 0):
+                raise ValueError("The upper bound parameter is not valid: %s" %B)
+            if((not m in ZZ) or m < 1):
+                raise ValueError("The number of sections is not valid: %s" %m)
+
+            # TODO: how to check the alpha?
+            self.__compatibility[name] = (ZZ(A),ZZ(B),ZZ(m),alpha)
+        elif(trans in self.OS()):
+            trans = self.reduce_SnSni(trans); Sn = self.Sn(); Sni = self.Sni(); n = self.n()
+            A = trans.degree(Sn); B = trans.degree(Sni); trans = trans.polynomial()
+            alpha = ([self.OB()(trans.coefficient({Sn:i}))(n=n-i) for i in range(A, 0, -1)] + 
+                    [self.OB()(trans.constant_coefficient())] + 
+                    [self.OB()(trans.coefficient({Sni:i}))(n=n+i) for i in range(1, B+1)])
+            self.__compatibility[name] = (ZZ(A), ZZ(B), ZZ(1), lambda i, j, k: alpha[j+A](n=k))
+                    
     @cached_method
     def get_lower_bound(self, operator):
         r'''
@@ -599,10 +609,10 @@ class PSBasis(object):
             * The case when the compatibility rule is a matrix is not implemented.
         '''
         ## Case of the name
-        compatibility = self.get_compatibility(operator)
+        compatibility = self.recurrence(operator)
         
         if(is_Matrix(compatibility)):
-            raise NotImplementedError("The lower bound for matrix compatibilities is not implemented")
+            return self.compatibility(operator)[0]
             
         return compatibility.degree(self.Sn())
     
@@ -626,10 +636,10 @@ class PSBasis(object):
                 
             * The case when the compatibility rule is a matrix is not implemented.
         '''
-        compatibility = self.get_compatibility(operator)
+        compatibility = self.recurrence(operator)
         
         if(is_Matrix(compatibility)):
-            raise NotImplementedError("The lower bound for matrix compatibilities is not implemented")
+            return self.compatibility(operator)[0]
             
         return compatibility.degree(self.Sni())
         
@@ -638,7 +648,7 @@ class PSBasis(object):
             Method that returns a list with the compatible operators stored in the dictionary.
 
             This method allows the user to know the names of the basic compatible operators with this 
-            basis. Any polynomial built on these operators will be valid for the method :func:`get_compatibility`.
+            basis. Any polynomial built on these operators will be valid for the method :func:`recurrence`.
 
             OUTPUT:
 
@@ -710,12 +720,29 @@ class PSBasis(object):
         '''
         return isinstance(operator, str) and operator in self.__compatibility
 
-    def get_compatibility(self, operator):
+    def compatibility(self, operator):
         r'''
-            Method to get the compatibility for an operator.
+            Method to get the compatibility condition for an operator.
+
+            This method returns the tuple `(A, B, m, \alpha_{i,j,k})` that defines
+            the compatibility condition for the operator `L` defined by ``operator``.
+            this compatibility has to be stored already (see method :func:`set_compatibility`).
+
+            INPUT:
+
+            * ``operator``: string or generator of an *ore_algebra* that is compatible with ``self``.
+              If it is not a string, we cast it.
+
+            TODO: add examples
+        '''
+        return self.__compatibility[str(operator)]
+
+    def recurrence(self, operator, sections=None):
+        r'''
+            Method to get the recurrence for a compatible operator.
             
-            This method returns the compatibility of an operator showing the associated
-            sequence operator. In :arxiv:`1804.02964v1` this compatibility
+            This method returns the recurrence equation induced for a compatible operator. 
+            In :arxiv:`1804.02964v1` this compatibility
             is shown to be an algebra isomorphism, so we can compute the compatibility
             final sequence operator using the ``ore_algebra`` package and a plain 
             substitution.
@@ -725,36 +752,42 @@ class PSBasis(object):
             * ``operator``: the operator we want to get the compatibility. It has to be the
               name for any generator in an ``ore_algebra`` package or the generator
               itself.
+            * ``sections``: number of desired sections for the recurrence compatibility.
+              The output will be then a square matrix of this size. If ``None`` is given,
+              the default recurrence is returned.
 
             OUTPUT:
 
             An operator in the algebra returned by :func:`OS` that represents the compatibility
             condition of ``operator`` with the basis ``self``.
 
+            If ``sections`` is a positive integer greater than 1, then a matrix of that size
+            is returned.
+
             EXAMPLES::
 
                 sage: from psbasis import *
                 sage: P = PowerBasis()
-                sage: P.get_compatibility('x')
+                sage: P.recurrence('x')
                 Sni
-                sage: P.get_compatibility('Dx')
+                sage: P.recurrence('Dx')
                 (n + 1)*Sn
                 sage: P11 = PowerBasis(1,1)
-                sage: P11.get_compatibility('x')
+                sage: P11.recurrence('x')
                 Sni - 1
-                sage: P11.get_compatibility('Id')
+                sage: P11.recurrence('Id')
                 1
-                sage: P11.get_compatibility('Dx')
+                sage: P11.recurrence('Dx')
                 (n + 1)*Sn
                 sage: B = BinomialBasis()
-                sage: B.get_compatibility('x')
+                sage: B.recurrence('x')
                 n*Sni + n
-                sage: B.get_compatibility('E')
+                sage: B.recurrence('E')
                 Sn + 1
                 sage: H = HermiteBasis()
-                sage: H.get_compatibility('x')
+                sage: H.recurrence('x')
                 (n + 1)*Sn + 1/2*Sni
-                sage: H.get_compatibility('Dx')
+                sage: H.recurrence('Dx')
                 (2*n + 2)*Sn
 
             We can also use the operators from :class:`ore_algebra.OreAlgebra` to get the compatibility. Here
@@ -762,126 +795,116 @@ class PSBasis(object):
 
                 sage: OE.<E> = OreAlgebra(QQ[x], ('E', lambda p : p(x=x+1), lambda p : 0))
                 sage: x = B[1].parent().gens()[0]
-                sage: example4_1 = E - 3; B.get_compatibility(example4_1)
+                sage: example4_1 = E - 3; B.recurrence(example4_1)
                 Sn - 2
-                sage: example4_2 = E^2 - 2*E + 1; B.get_compatibility(example4_2)
+                sage: example4_2 = E^2 - 2*E + 1; B.recurrence(example4_2)
                 Sn^2
-                sage: example4_3 = E^2 - E - 1; B.get_compatibility(example4_3)
+                sage: example4_3 = E^2 - E - 1; B.recurrence(example4_3)
                 Sn^2 + Sn - 1
-                sage: example4_4 = E - (x+1); B.get_compatibility(example4_4)
+                sage: example4_4 = E - (x+1); B.recurrence(example4_4)
                 Sn + (-n)*Sni - n
                 sage: example4_5 = E^3 - (x^2+6*x+10)*E^2 + (x+2)*(2*x+5)*E-(x+1)*(x+2)
-                sage: B.get_compatibility(example4_5)
+                sage: B.recurrence(example4_5)
                 Sn^3 + (-n^2 - 6*n - 7)*Sn^2 + (-2*n^2 - 8*n - 7)*Sn - n^2 - 2*n - 1
         '''
-        if(isinstance(operator,str)):
-            if(not operator in self.__compatibility):
-                raise ValueError("The operator %s is not compatible with %s" %(operator,self))
-            else:
-                return self.__compatibility[operator]
-        else:
+        if(not isinstance(operator, str)): # we received the operator itself
+            ## Casting the operator to a polynomial
             try:
                 PR = operator.polynomial().parent()
                 poly = operator.polynomial()
                 poly = PR.flattening_morphism()(poly)
             except TypeError:
                 poly = operator
+            
+            ## getting the recurrence for each generator
+            recurrences = {str(v): self.recurrence(str(v)) for v in poly.variables()}
+            return self.reduce_SnSni(poly(**recurrences))
 
-            return self.reduce_SnSni(poly(**self.__compatibility))
+        ## str case: we need to get the compatibility for that operator
+        ## First we get the compatibility condition
+        A,B,m,alpha = self.compatibility(operator)
+        
+        ## Now we check the sections argument
+        if(sections != None):
+            A,B,m,alpha = self.compatibility_sections((A,B,m,alpha), sections)
+
+        ## Now we do the transformation
+        Sn = self.Sn(); Sni = self.Sni(); n = self.n()
+        def SN(index):
+            if(index == 0):
+                return 1
+            elif(index > 0):
+                return Sn**index
+            else:
+                return Sni**(-index)
+        
+        # We have to distinguish between m = 1 and m > 1
+        if(m == 1): # we return an operator
+            recurrence = sum(alpha(0,i,n-i)*SN(-i) for i in range(-A,B+1))
+            return self.reduce_SnSni(recurrence)
+        elif(m > 1):
+            return Matrix(
+                [
+                    [self.reduce_SnSni(sum(
+                        alpha(j,i,self.n()+(r-i-j)//m)*SN((r-i-j)//m)
+                        for i in range(-A,B+1) if ((r-i-j)%m == 0)
+                    )) for j in range(m)
+                    ] for r in range(m)
+                ])
+        else:
+            raise TypeError("The number of sections must be a positive integer")
 
     @cached_method
-    def get_compatibility_sections(self, size, operator):
+    def compatibility_sections(self, compatibility, sections):
         r'''
-            Compute the matrix operator for the sections of a compatibility operator.
+            Compute an extension of a compatibility for larger amount of sections.
             
-            This method computes a recurrence operator matrix for a basis
-            associated with its compatibility with an operator. Such compatibility
-            must be given as a method taking 3 parameters `k`,`j`,`i` such that:
+            This method takes a compatibility input (i.e., a compatible operator or the 
+            tuple `(A,B,m,alpha_{i,j,k})` representing the compatibility) and returns a 
+            new tuple `(A,B,M,\tilde{\alpha}_{i,j,k})` where `M` is the desired number
+            of final sections.
             
-            .. MATH::
-
-                L\cdot b_{km+j} = \sum_{i=-A}^B \alpha_{k,j,i}b_{km+j+i}
-
             INPUT:
 
-            * ``size``: the value of the section size (i.e., `m`).
-            * ``operator``: this must be either a triplet with the values `A`, `B`
-              and a function with three arguments (i,j,k) that returns the compatibility 
-              coefficients in the appropriate order or a compatible operator with this basis.
+            * ``compatibility``: here we need either an operator (or a valid input for
+              :func:`compatibility`) or a tuple with four entries `(A, B, m, \alpha_{i,j,k})`
+              where the last entry is a function that takes three arguments:
+                * ``i``: an integer from `0` up to `m-1`.
+                * ``j``: an integer from `-A` up to `B`.
+                * ``k``: an element of :func:`OB` to index the coefficient.
+            * ``sections``: the value for the new number of sections `M`.
 
             OUTPUT:
 
-            A matrix representing the compatibility condition by sections. See :arxiv:`1804.02964v1`
-            for further information. 
+            A tuple `(A,B,M,\tilde{\alpha}_{i,j,k})` representing the same compatibility
+            but for a new number of sections `M`.
 
-            EXAMPLES::
-
-                sage: from psbasis import *
-                sage: B = BinomialBasis()
-                sage: B.get_compatibility_sections(3, 'x')
-                [    3*n       0 3*n*Sni]
-                [3*n + 1 3*n + 1       0]
-                [      0 3*n + 2 3*n + 2]
-                sage: B.get_compatibility_sections(2, 'x')
-                [    2*n 2*n*Sni]
-                [2*n + 1 2*n + 1]
-
-            This method returnsthe same as :func:`get_compatibility` when the number of sections is 1::
-
-                sage: B.get_compatibility_sections(1, 'x') == B.get_compatibility('x')
-                True
-
-            This method also allows as input a map representing the coefficients `\alpha_{k,i,j}` that 
-            have to be rational functions in `k` (see :func:`OB` for further information) together with 
-            the values of `A` and `B`::
-
-                sage: B.get_compatibility_sections(3, (2,5,lambda k,i,j : k-i+j))
-                [                    (n + 2)*Sni + n       (n + 2)*Sni^2 + n*Sni + n - 2       n*Sni^2 + (n - 2)*Sni + n - 4]
-                [   (n - 1)*Sn + (n + 3)*Sni + n + 1                 (n + 1)*Sni + n - 1 (n + 1)*Sni^2 + (n - 1)*Sni + n - 3]
-                [         n*Sn + (n + 4)*Sni + n + 2        (n - 2)*Sn + (n + 2)*Sni + n                       n*Sni + n - 2]
+            TODO: add examples
         '''
         ## Considering the case of an operator
-        if(not (isinstance(operator, tuple) or isinstance(operator, list))):
-            aux = operator
-            operator = (self.A(operator),self.B(operator),lambda k,j,i : self.compatibility_coefficient(aux, k*size+j, i))
+        if(not type(operator) in (tuple, list)):
+            operator = self.compatibility(operator)
 
         ## Checking the input
-        if(len(operator) != 3):
-            raise TypeError("The input must be a valid operator or a tuple with 3 elements")
-        A,B,alpha = operator
+        if(len(operator) != 4):
+            raise TypeError("The input must a tuple with 3 elements")
+        A,B,m,alpha = operator
 
-        if(not size in ZZ or size <= 0):
-            raise ValueError("The section size must be a positive integer (got %s)" %size)
-        elif(not A in ZZ or A < 0):
+        if((not sections in ZZ) or sections <= 0):
+            raise ValueError("The number of sections must be a positive integer (got %s)" %sections)
+        elif(sections%m != 0):
+            raise ValueError("The number of sections must be a multiple of the compatibility size of the operator")
+        elif((not A in ZZ) or A < 0):
             raise ValueError("The upper bound condition is not valid")
-        elif(not B in ZZ or B < 0):
+        elif((not B in ZZ) or B < 0):
             raise ValueError("The lower bound condition is not valid")
 
-        ## Creating an auxiliary function
-        def SN(index):
-            index = ZZ(index)
-            if(index < 0):
-                return self.Sni()**(-index)
-            else:
-                return self.Sn()**index
-
-        ## Computing the operator matrix
-        M = Matrix(
-            [
-                [self.reduce_SnSni(sum(
-                    alpha(self.n()+(r-i-j)//size,j,i)*SN((r-i-j)//size) # we use exact division to avoid casting issues
-                    for i in range(-A,B+1) if ((r-i-j)%size == 0)
-                )) for j in range(size)
-                ] for r in range(size)
-            ])
-
-        ## Returning the solution
-        if(size == 1): # Case of section of size 1: we do not return a matrix
-            return M.coefficient((0,0))
-        return M
+        l = sections//m # the extension factor of the compatibility
+        new_alpha = lambda i,j,k : alpha(i%m, j, l*k + i//m)
+        return (A, B, sections, new_alpha)
     
     @cached_method
-    def compatibility_coefficient(self, operator, pos, ind):
+    def compatibility_coefficient(self, operator):
         r'''
             Method to get the compatibility coefficient.
             
@@ -912,24 +935,7 @@ class PSBasis(object):
 
             * The case when the compatibility rule is a matrix is not implemented.
         '''
-        compatibility = self.get_compatibility(operator)
-        A = self.A(operator); B = self.B(operator)
-            
-        if(is_Matrix(compatibility)):
-            raise NotImplementedError("The coefficient for matrix compatibilities is not implemented")
-        
-        if(ind < 0 and -ind <= A):
-            Sn = self.Sn()
-            coeff = self.OB()(compatibility.polynomial().coefficient({Sn : -ind}))
-            return coeff(n = pos + ind)
-        elif(ind > 0 and ind <= B):
-            Sni = self.Sni()
-            coeff = self.OB()(compatibility.polynomial().coefficient({Sni : ind}))
-            return coeff(n = pos + ind)
-        elif(ind == 0):
-            return self.OB()(compatibility.polynomial().constant_coefficient())(n=pos)
-        else:
-            return self.OB().zero()
+        return self.compatibility(operator)[3]
 
     def scalar(self, factor):
         r'''
@@ -1012,22 +1018,11 @@ class PSBasis(object):
             Method to extend compatibilities to ``new_basis`` with a rational function or a method
             that returns a rational function when feeded by `n` (see :func:`OB`)
         '''
-        n = self.n()
         compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
         for key in compatibilities:
-            comp = self.get_compatibility(key)
-            if(is_Matrix(comp)): # special case: compatibility by sections
-                ns = comp.nrows()
-                factors = [1/factor(n=ns*n+j) for j in range(ns)]
-                # weird behavior on matrices with ore algebras
-                # we build the new matrix from the coefficients
-                coeffs = comp.dense_coefficient_list() # comp[i][j] == coeffs[i*ns+j]
-                new_basis.set_compatibility(key, Matrix([[coeffs[i*ns+j]*factors[j] for j in range(ns)] for i in range(ns)]))
-            else: # usual case: compatibility with direct formula
-                A = self.A(key); B = self.B(key)
-                coeffs = [self.alpha(key, n, i)*(factor/factor(n=n+i)) for i in range(-A, B+1)]
-
-                new_basis.set_compatibility(key, (A, B, coeffs))
+            A, B, m, alpha = self.compatibility(key)
+            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*(factor(n=k*m+i)/factor(k*m+i+j))))
+            
         return
 
     def __scalar_hyper_extend_compatibilities(self, new_basis, factor, quotient):
@@ -1062,35 +1057,13 @@ class PSBasis(object):
                 return prod(q(n=n+i) for i in range(m))
             elif(m < 0):
                 return 1/prod(q(n=n+i) for i in range(m, 0))
-            return QQ(1)
-        def _apply_to_hyper(L, q):
-            Sn = self.Sn(); Sni = self.Sni()
-            A = L.degree(Sni); B = L.degree(Sn)
-            L = L.polynomial()
-            coeffs = (
-                [L.coefficient({Sni: i, Sn: 0})*Sni**i for i in range(A,0,-1)] + 
-                [L.constant_coefficient()] + 
-                [L.coefficient({Sni: 0, Sn: i})*Sn**i for i in range(1,B+1)]
-            )
-            return sum(_Q(q,self.n(),i)*coeffs[i+A] for i in range(-A,B+1))
+            return 1
 
-        n = self.n()
         compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
         for key in compatibilities:
-            comp = self.get_compatibility(key)
-            if(is_Matrix(comp)):
-                ns = comp.nrows()
-                # since factor is hypergeometric, the sections are hypergeometric too
-                quotients = [self.is_hypergeometric(1/factor(n=n*ns+i))[1] for i in range(ns)]
-                coeffs = comp.dense_coefficient_list() # comp[i][j] == coeffs[i*ns+j]
-                new_coeffs = [[(1/_Q(quotient, n*ns, j))*_apply_to_hyper(coeffs[i*ns+j], quotients[j]) for j in range(ns)] for i in range(ns)]
-                new_basis.set_compatibility(key, Matrix(new_coeffs))
-            else:
-                A = self.A(key); B = self.B(key)
-                coeffs = [self.alpha(key, n, i)/_Q(quotient,n,i) for i in range(-A, B+1)]
-
-                new_basis.set_compatibility(key, (A, B, coeffs))
-
+            A, B, m, alpha = self.compatibility(key)
+            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*_Q(quotient, k*m+i, j)))
+            
         return
 
     ### MAGIC METHODS

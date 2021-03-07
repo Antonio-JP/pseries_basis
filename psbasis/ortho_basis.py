@@ -1,5 +1,7 @@
 r'''
     Sage package for Orthogonal Series Basis.
+
+    TODO: review this file to check the compatibility with the derivative in general.
 '''
 # Sage imports
 from sage.all import cached_method, Matrix, QQ
@@ -89,7 +91,7 @@ class OrthogonalBasis(PolyBasis):
             try: # we try to get the mixed relation for the orthogonal basis
                 _, a,b,c = self.get_mixed_equation()
                 N = self.n(); Sn = self.Sn()
-                self.set_compatibility(Dx, self.reduce_SnSni(a*self.get_compatibility(X) + b + c(n=N+1)*Sn))
+                self.set_compatibility(Dx, self.reduce_SnSni(a*self.recurrence(X) + b + c(n=N+1)*Sn))
             except NotImplementedError:
                 pass # there is nothing we can do
 
@@ -287,12 +289,12 @@ class OrthogonalBasis(PolyBasis):
         raise NotImplementedError("The mixed relation is not (yet) implemented in general")
 
     @cached_method
-    def get_compatibility(self, operator):
+    def recurrence(self, operator):
         r'''
             Method to get the compatibility for an operator.
 
             This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.get_compatibility` for further information.
+            See method :func:`~psbasis.psbasis.PSBasis.recurrence` for further information.
 
             In a first glance, this method tries the classical compatibility using the compatibility dictionary.
             However, the derivation is not usually compatible with ``self``, but we may need a prefactor
@@ -305,7 +307,7 @@ class OrthogonalBasis(PolyBasis):
             TODO: add examples
         '''
         try:
-            return super(OrthogonalBasis, self).get_compatibility(operator)
+            return super(OrthogonalBasis, self).recurrence(operator)
         except:
             try:
                 poly = operator.polynomial()
@@ -315,7 +317,7 @@ class OrthogonalBasis(PolyBasis):
             if(self.__der_name in [str(el) for el in poly.variables()]):
                 R = poly.parent(); variable = R(self.__der_name); m = OrthogonalBasis._poly_degree(poly,variable)
 
-                coefficients = [self.get_compatibility(OrthogonalBasis._poly_coeff_by_dict(poly,{variable: i})) for i in range(m+1)]
+                coefficients = [self.recurrence(OrthogonalBasis._poly_coeff_by_dict(poly,{variable: i})) for i in range(m+1)]
                 monomials = [self.__compatibility_derivation(m,i) for i in range(m+1)]
 
                 return self.reduce_SnSni(sum(coefficients[i]*monomials[i] for i in range(m+1)))
@@ -431,12 +433,12 @@ class OrthogonalBasis(PolyBasis):
         if(pow_Q < pow_D):
             raise ValueError("Incompatibility found because of not valid exponents")
         if(pow_Q > pow_D):
-            return self.reduce_SnSni(self.get_compatibility(Q**(pow_Q-pow_D))*self.__compatibility_derivation(pow_D, pow_D))
+            return self.reduce_SnSni(self.recurrence(Q**(pow_Q-pow_D))*self.__compatibility_derivation(pow_D, pow_D))
         n = pow_D
         if(n > 1):
-            return self.reduce_SnSni((self.__compatibility_derivation(1,1) - (n-1)*self.get_compatibility(Q.derivative()))*self.__compatibility_derivation(n-1,n-1))
+            return self.reduce_SnSni((self.__compatibility_derivation(1,1) - (n-1)*self.recurrence(Q.derivative()))*self.__compatibility_derivation(n-1,n-1))
         if(n == 1):
-            return self.get_compatibility(self.__der_name)
+            return self.recurrence(self.__der_name)
         else: # last case is pow_Q == pow_D == 0 --> no operator
             return self.Sn().parent().one()
 

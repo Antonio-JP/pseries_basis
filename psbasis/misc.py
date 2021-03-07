@@ -77,13 +77,13 @@ def DefiniteSumSolutions(operator, *input):
     E = str(operator.parent().gens()[0])
     
     if(m == 1): # Non-product case
-        return BinomialBasis(a[0],b[0],E=E).get_compatibility(operator)
+        return BinomialBasis(a[0],b[0],E=E).recurrence(operator)
     
     ## Building the appropriate ProductBasis
     B = ProductBasis([BinomialBasis(a[i],b[i],E=E) for i in range(m)], E=E)
     
     ## Getting the compatibility matrix R(operator)
-    compatibility = B.get_compatibility(operator)
+    compatibility = B.recurrence(operator)
     
     ## Cleaning the appearance of Sni
     column = [compatibility.coefficient((j,0)) for j in range(m)]
@@ -231,7 +231,7 @@ def guess_compatibility_E(basis, sections = None, bound_roots = 50, bound_data=5
         data = [[[M[i+r][i+r-j] for i in range(j,M.nrows()-r,F)] for j in range(A+1)] for r in range(F)]
         functions = [[guess_rational_function(data[i][j], basis.OSS())(n=basis.n()/F) for j in range(len(data[i]))] for i in range(len(data))]
 
-        return (A, 0, lambda k,j,i : functions[j][-i](n=k))
+        return (A, 0, lambda i,j,k : functions[i][-j](n=k))
     else:
         data = [[M[i][i-j] for i in range(j,M.nrows())] for j in range(A+1)]
         # we guess a recurrence from the data
@@ -260,3 +260,11 @@ def guess_rational_function(data, algebra):
         raise ValueError("No rational solution found: the data does not match")
 
     return sum(sol[i]*solutions[i][0] for i in range(nsols))
+
+def check_compatibility(basis, operator, action, bound=100):
+    a,b,m,alpha = basis.compatibility(operator)
+    return all(
+        all(
+            sum(basis[k*m+r+i]*alpha(r,i,k) for i in range(-a,b+1)) == action(basis[k*m+r]) 
+            for r in range(m)) 
+        for k in range(m//a, bound))

@@ -302,7 +302,7 @@ class FactorialBasis(PolyBasis):
             INPUT:
 
             * ``operator``: the operator we want to check. See the input description
-              of method :func:`get_compatibility`. This operator has to be compatible,
+              of method :func:`recurrence`. This operator has to be compatible,
               so we can obtain the value for `A`.
             * ``src``: value for `n`.
             * ``diff``: difference between `n` and `m`. Must be a positive integer greater than
@@ -313,7 +313,7 @@ class FactorialBasis(PolyBasis):
             EXAMPLES::
 
                 sage: from psbasis import *
-                sage: B = BinomialBasis(); n = B.n(); B.get_compatibility('x')
+                sage: B = BinomialBasis(); n = B.n(); B.recurrence('x')
                 n*Sni + n
 
             This means that for all `n`, we have that:
@@ -354,7 +354,9 @@ class FactorialBasis(PolyBasis):
         n = src
 
         ## Compatibility of ``operator``
-        A = self.A(operator); B = self.B(operator)
+        A, B, m, alpha = self.compatibility(operator)
+        if(m > 1):
+            raise NotImplementedError("This method not implemented for several sections")
 
         ## Reading ``diff`` or ``dst``
         if(not diff is None):
@@ -374,7 +376,7 @@ class FactorialBasis(PolyBasis):
                 d = ZZ(d); m = dst
 
         ## Computing the polynomial
-        return sum(self.alpha(operator, n, i)*self.increasing_polynomial(m, dst=n+i) for i in range(-A,B+1))
+        return sum(alpha(0, i, n)*self.increasing_polynomial(m, dst=n+i) for i in range(-A,B+1))
 
     def matrix_ItP(self, *args, **kwds):
         r'''
@@ -657,7 +659,7 @@ class SFactorialBasis(FactorialBasis):
                 True
                 sage: B.compatible_operators() == B2.compatible_operators()
                 True
-                sage: B2.get_compatibility('E')
+                sage: B2.recurrence('E')
                 ((n^3 + 4*n^2 + 6*n + 4)/(n^3 + 3*n^2 + n + 3))*Sn + 1
 
             This scalar product also work with the other subclasses of :class:`SFactorialBasis`::
@@ -1371,7 +1373,7 @@ class FallingBasis(SFactorialBasis):
         aux_PR = self.polynomial_ring(X); x = aux_PR.gens()[0]
         aux_OE = OreAlgebra(aux_PR, (self.__E_name, lambda p : p(x=x+b), lambda p: 0))
         P = aux_OE(prod(a*x+b-c*i for i in range(-a,0)))
-        self.set_compatibility(self.__E_name, self.get_compatibility(P)*(Sn**a), True)
+        self.set_compatibility(self.__E_name, self.recurrence(P)*(Sn**a), True)
 
     @cached_method
     def increasing_basis(self, shift):

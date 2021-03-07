@@ -94,7 +94,7 @@ class ProductBasis(FactorialBasis):
             try:
                 self.add_endomorphism(endo)
             except TypeError:
-                print("Impossible to extend the compatibility by %s" %der)
+                print("Impossible to extend the compatibility by %s" %endo)
 
     @cached_method
     def element(self, n, var_name=None):
@@ -301,13 +301,14 @@ class ProductBasis(FactorialBasis):
         ccoeff = [el.constant_coefficient() for el in self.factors]
         lcoeff = [el.linear_coefficient() for el in self.factors]
 
-        def alpha(k,j,i):
-            if(i==0):
-                return -ccoeff[j](n=k+1)/lcoeff[j](n=k+1)
-            else:
-                return 1/lcoeff[j](n=k+1)
+        def alpha(i,j,k):
+            if(j==0):
+                return -ccoeff[i](n=k+1)/lcoeff[i](n=k+1)
+            elif(j==1):
+                return 1/lcoeff[i](n=k+1)
+            else: raise IndexError("Value for the index our of bound")
 
-        return self.get_compatibility_sections(m, (0,1,alpha))
+        return (0, 1, m, alpha)
 
     def add_derivation(self, name):
         r'''
@@ -351,7 +352,7 @@ class ProductBasis(FactorialBasis):
         if(not self.has_compatibility(name)):
             self.set_compatibility(name, self.__compute_operator_for_derivation(name))
 
-        return self.get_compatibility(name)
+        return self.recurrence(name)
 
     def __compute_operator_for_derivation(self, name):
         r'''
@@ -369,9 +370,10 @@ class ProductBasis(FactorialBasis):
             P = [self.OB()(self.derivation_division_polynomial(name, n, j, mA)[i]) for i in range(mA + B + 1)]
             alphas += [self.equiv_CtD(mA, j, P)]
 
-        def alpha(k,j,i):
-            return alphas[j][i+mA](n=k)
-        return self.get_compatibility_sections(self.nfactors(), (mA,B,alpha))
+        def alpha(i,j, k):
+            return alphas[i][j+mA](n=k)
+
+        return (mA, B, self.nfactors(), alpha)
 
     def add_endomorphism(self, name):
         r'''
@@ -415,7 +417,7 @@ class ProductBasis(FactorialBasis):
         if(not self.has_compatibility(name)):
             self.set_compatibility(name, self.__compute_operator_for_endomorphism(name))
 
-        return self.get_compatibility(name)
+        return self.recurrence(name)
 
     def __compute_operator_for_endomorphism(self, name):
         r'''
@@ -433,9 +435,9 @@ class ProductBasis(FactorialBasis):
             P = [self.OB()(self.endomorphism_division_polynomial(name, n, j, mA)[i]) for i in range(mA + B + 1)]
             alphas += [self.equiv_CtD(mA, j, P)]
 
-        def alpha(k,j,i):
-            return alphas[j][i+mA](n=k)
-        return self.get_compatibility_sections(self.nfactors(), (mA,B,alpha))
+        def alpha(i,j,k):
+            return alphas[i][j+mA](n=k)
+        return (mA, B, self.nfactors(), alpha)
 
     def increasing_polynomial(self, src, shift, diff=None, dst=None):
         r'''
@@ -582,7 +584,7 @@ class ProductBasis(FactorialBasis):
             INPUT:
 
             * ``operator``: the operator we want to check. See the input description
-              of method :func:`get_compatibility`. This operator has to be compatible,
+              of method :func:`recurrence`. This operator has to be compatible,
               so we can obtain the value for `A`.
             * ``src``: value for `k`.
             * ``shift``: value for `j`.
@@ -662,7 +664,7 @@ class ProductBasis(FactorialBasis):
             INPUT:
 
             * ``operator``: the operator we want to check. See the input description
-              of method :func:`get_compatibility`. This operator has to be compatible,
+              of method :func:`recurrence`. This operator has to be compatible,
               so we can obtain the value for `A`.
             * ``src``: value for `k`.
             * ``shift``: value for `j`.
