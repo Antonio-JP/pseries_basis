@@ -2,7 +2,7 @@ r'''
     Sage package for Product of Factorial Series Basis.
 '''
 # Sage imports
-from sage.all import cached_method, prod, ZZ, QQ, Matrix, vector
+from sage.all import cached_method, prod, ZZ, QQ, Matrix, vector, lcm
 
 # Local imports
 from .factorial_basis import FactorialBasis, SFactorialBasis
@@ -294,21 +294,25 @@ class ProductBasis(FactorialBasis):
         ## Checking all factors are compatible with the basis
         if(any(not el.has_compatibility(name) for el in self.factors)):
             raise TypeError("There is a factor not compatible with '%s'" %name)
-            
 
-        ## Building the elements required for the matrix
+        ## We know that the compatibilities are always (0,1)
+        comps = [factor.compatibility(name) for factor in self.factors]
+        sections = [el[2] for el in comps]; alphas = [el[3] for el in comps]
+
+        ## We make all compatibilities of the same number of sections
+        t = lcm(sections)
+        alphas = [factor.compatibility_sections(name, t)[3] for factor in self.factors]
+
         m = self.nfactors()
-        ccoeff = [el.constant_coefficient() for el in self.factors]
-        lcoeff = [el.linear_coefficient() for el in self.factors]
 
-        def alpha(i,j,k):
-            if(j==0):
-                return -ccoeff[i](n=k+1)/lcoeff[i](n=k+1)
-            elif(j==1):
-                return 1/lcoeff[i](n=k+1)
-            else: raise IndexError("Value for the index our of bound")
+        def __alpha_X(i,j,n):
+            i0 = i//m; i1 = i%m
+            i2 = i0//t; i3 = i0%t
 
-        return (0, 1, m, alpha)
+            return alphas[i1](i3, j, n+i2)
+
+        ## The final compatibility is always (0,1) and in m*t sections
+        return (0,1,m*t, __alpha_X)
 
     def add_derivation(self, name):
         r'''

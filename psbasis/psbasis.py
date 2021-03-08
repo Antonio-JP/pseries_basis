@@ -882,13 +882,13 @@ class PSBasis(object):
             TODO: add examples
         '''
         ## Considering the case of an operator
-        if(not type(operator) in (tuple, list)):
-            operator = self.compatibility(operator)
+        if(not type(compatibility) in (tuple, list)):
+            compatibility = self.compatibility(compatibility)
 
         ## Checking the input
-        if(len(operator) != 4):
+        if(len(compatibility) != 4):
             raise TypeError("The input must a tuple with 3 elements")
-        A,B,m,alpha = operator
+        A,B,m,alpha = compatibility
 
         if((not sections in ZZ) or sections <= 0):
             raise ValueError("The number of sections must be a positive integer (got %s)" %sections)
