@@ -1062,7 +1062,7 @@ class PSBasis(object):
         compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
         for key in compatibilities:
             A, B, m, alpha = self.compatibility(key)
-            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*_Q(quotient, k*m+i, j)))
+            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*_Q(1/quotient, k*m+i, j)))
             
         return
 
