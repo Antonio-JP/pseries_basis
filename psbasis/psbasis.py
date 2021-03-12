@@ -552,9 +552,11 @@ class PSBasis(object):
               itself.
             * ``trans``: a tuple ``(A, B, m, alpha)`` where ``alpha`` must be a function with 
               three parameters:
-                * ``i``: a positive integer smaller than `m`.
-                * ``j``: an integer between `-A` and `B`.
-                * ``k``: an element of :func:`OB`.
+
+                  * ``i``: a positive integer smaller than `m`.
+                  * ``j``: an integer between `-A` and `B`.
+                  * ``k``: an element of :func:`OB`.
+
               This parameter can also be an operator is :func:`OS`. Then the compatibility
               is of 1 section and we can compute explicitly the values of `A`, `B` and the
               `\alpha_{i,j,k}`.
@@ -869,9 +871,11 @@ class PSBasis(object):
             * ``compatibility``: here we need either an operator (or a valid input for
               :func:`compatibility`) or a tuple with four entries `(A, B, m, \alpha_{i,j,k})`
               where the last entry is a function that takes three arguments:
-                * ``i``: an integer from `0` up to `m-1`.
-                * ``j``: an integer from `-A` up to `B`.
-                * ``k``: an element of :func:`OB` to index the coefficient.
+
+                  * ``i``: an integer from `0` up to `m-1`.
+                  * ``j``: an integer from `-A` up to `B`.
+                  * ``k``: an element of :func:`OB` to index the coefficient.
+                  
             * ``sections``: the value for the new number of sections `M`.
 
             OUTPUT:

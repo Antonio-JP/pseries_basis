@@ -2,13 +2,755 @@ r'''
     Sage package for Product of Factorial Series Basis.
 '''
 # Sage imports
-from sage.all import cached_method, prod, ZZ, QQ, Matrix, vector, lcm
+from sage.all import cached_method, prod, ZZ, QQ, Matrix, vector, lcm, ceil
 
 # Local imports
 from .factorial_basis import FactorialBasis, SFactorialBasis
 
 
-class ProductBasis(FactorialBasis):
+class SievedBasis(FactorialBasis):
+    r'''
+        Class for a Sieved Basis.
+
+        A sieved basis is a factorial basis built from a finite set
+        of source basis `B_i = \left(P_n^{(i)}(x)\right)_n` for `i=0,\ldots,F-1`. This is built 
+        in `m` sections using a *deciding cycle*:
+
+        .. MATH::
+
+            (\sigma_0,\ldots,\sigma_{m-1})
+
+        where `\sigma_i \in \{0,\ldots,F-1\}`. We can then define the `n`-th element
+        of the basis with the following formula:
+
+        .. MATH::
+
+            Q_n(x) = \prod_{i=0}^F P_{e_i(n)}^{(i)}(x)
+
+        where the following formula stands:
+        
+        * `n = km+r`, 
+        * `S_i = \# \{ j \in \{0,\ldots,m-1\}\ :\ \sigma_j = i\}`,
+        * `e_i(n) = S_im + \#\{j \in \{0,\ldots,r\}\ :\ \sigma_j = i\}`.
+
+        If we look recursively, we can see that each element is built from the previous
+        element by increasing one of the factors one degree in the corresponding basis:
+
+        .. MATH::
+
+            Q_n(x) = Q_{n-1}(x)\frac{P_{e_{\sigma_i}(n)}^{(\sigma_i)}(x)}{P_{e_{\sigma_i}(n)-1}^{(\sigma_i)}(x)}
+
+        INPUT:
+
+        * ``factors``: the basis that build the sieved basis.
+        * ``cycle``: a tuple of length `m` indicating which factor use in each step.
+        * ``init``: value for the constant element of the basis.
+        * ``X``: name of the operator representing the multiplication by `x`.
+        * ``ends``: endomorphism which compatibility we will try to extend.
+        * ``ders``: derivations which compatibility we wil try to extend.
+
+        EXAMPLES::
+
+            sage: from psbasis import *
+            sage: B = BinomialBasis(); P = PowerBasis()
+            sage: B2 = SievedBasis([B,P], [0,1,1,0])
+            sage: B2[:6]
+            [1, x, x^2, x^3, 1/2*x^4 - 1/2*x^3, 1/6*x^5 - 1/2*x^4 + 1/3*x^3]
+
+        With this system, we can build the same basis changing the order and the values in the cycle::
+
+            sage: B3 = SievedBasis([P,B], [1,0,0,1])
+            sage: all(B3[i] == B2[i] for i in range(30))
+            True
+
+        The length of the cycle is the number of associated sections::
+
+            sage: B2.nsections()
+            4
+            sage: SievedBasis([B,B,P],[0,0,1,2,1,2]).nsections()
+            6
+
+        This basis can be use to deduce some nice recurrences for the Apery's `\zeta(2)` sequence::
+
+            sage: b1 = FallingBasis(1,0,1); b2 = FallingBasis(1,1,-1); n = b1.n()
+            sage: B = SievedBasis([b1,b2],[0,1]).scalar(1/factorial(n))
+
+        This basis ``B`` contains the elements 
+
+        .. MATH::
+
+            \begin{matrix}
+            \binom{x + n}{2n}\ \text{if }n\equiv 0\ (mod\ 2)\\
+            \binom{x + n}{2n+1}\ \text{if }n\equiv 1\ (mod\ 2)
+            \end{matrix}
+
+        We first extend the compatibility with `E: x\mapsto x+1` by guessing and then we compute the sieved basis
+        with the binomial basis with the cycle `(1,0,1)`::
+
+            sage: B.set_compatibility('E', guess_compatibility_E(B, 2))
+            sage: B2 = SievedBasis([BinomialBasis(), B], [1,0,1], ends=['E'])
+
+        Now the basis ``B2`` is formed in 3 sections by the following elements:
+
+        .. MATH::
+
+            \begin{matrix}
+                \binom{x}{n}\binom{x+n}{2n}\ \text{if }n\equiv 0\ (mod\ 3)\\
+                \binom{x}{n}\binom{x+n}{2n+1}\ \text{if }n\equiv 1\ (mod\ 3)\\
+                \binom{x}{n+1}\binom{x+n}{2n+1}\ \text{if }n\equiv 2\ (mod\ 3)
+            \end{matrix}
+
+        We can check that `B2` is compatible with the multiplication by `x` and with 
+        the endomorphism `E`::
+
+            sage: a,b,m,alpha = B2.compatibility('x')
+            sage: Matrix([[alpha(i,j,B2.n()) for j in range(-a,b+1)] for i in range(m)])
+            [      n 2*n + 1]
+            [      n   n + 1]
+            [ -n - 1 2*n + 2]
+            sage: B2.recurrence('x')
+            [      n       0 2*n*Sni]
+            [2*n + 1       n       0]
+            [      0   n + 1  -n - 1]
+            sage: a,b,m,alpha = B2.compatibility('E')
+            sage: Matrix([[alpha(i,j,B2.n()) for j in range(-a,b+1)] for i in range(m)])
+            [                      1           (4*n - 3/2)/n                     3/2                       1]
+            [    (n - 1/2)/(n + 1/2)         1/2*n/(n + 1/2) (3/2*n + 1/2)/(n + 1/2)                       1]
+            [                      0                       1       (3*n + 2)/(n + 1)                       1]
+            sage: B2.recurrence('E')                                                                                                                                                         
+            [                      Sn + 1      (3/2*n + 1/2)/(n + 1/2)                            1]
+            [    ((4*n + 5/2)/(n + 1))*Sn ((n + 1/2)/(n + 3/2))*Sn + 1            (3*n + 2)/(n + 1)]
+            [                      3/2*Sn ((1/2*n + 1/2)/(n + 3/2))*Sn                            1]
+
+        Now consider the following difference operator:
+
+        .. MATH::
+
+            L = (x+2)^2 E^2 - (11x^2+33x+25)E - (x+1)^3
+
+        This operator `L` is compàtible with the basis ``B2``. We can get then
+        the associated recurrence matrix. Taking the first column and the GCRD
+        of its elements, we can see that if a formal power series `y(x) = \sum_n y_n x^n`
+        that can be written in the form `y(x) = \sum_{n\geq 0}c_n\binom{x}{n}\binom{x+n}{2n}` satisfies
+        that
+
+        .. MATH::
+
+            (n+1)^2c_{n+1} - 2(2n+1)c_n = 0.
+
+        Doing that with the code::
+
+            sage: R.<x> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))   
+            sage: L = (x+2)^2*E^2 - (11*x^2 + 33*x+25)*E - (x+1)^2 
+            sage: M = B2.recurrence(L)
+            sage: column = [B2.remove_Sni(M.coefficient((j,0))) for j in range(M.nrows())]
+            sage: column[0].gcrd(*column[1:])
+            (n + 1)*Sn - 4*n - 2
+    '''
+    def __init__(self, factors, cycle, init=1, X='x', ends=[], ders=[]):
+        ## Checking the input
+        if(not type(factors) in (list,tuple)):
+            raise TypeError("The factors must be either a list or a tuple")
+        if(any(not isinstance(el, FactorialBasis) for el in factors)):
+            raise TypeError("All the factors has to be factorial basis")
+
+        if(not type(cycle) in (list,tuple)):
+            raise TypeError("The deciding cycle must be a list or a tuple")
+        cycle = [ZZ(el) for el in cycle]
+        if(any(el < 0 or el > len(factors) for el in cycle)):
+            raise ValueError("The deciding cycle must be composed of integers indexing the factors basis")
+
+        ## Storing the main elements
+        self.__factors = tuple(factors)
+        self.__cycle = tuple(cycle)
+
+        ## Calling the previous constructor
+        super().__init__(X)
+
+        ## Other cached elements
+        self.__init = init
+        self.__cached_increasing = {}
+
+        ## Extendeding the required operators
+        self.extend_compatibility_X()
+
+        self.__ends = []; self.__ders = []
+        for endomorphism in ends:
+            try:
+                self.extend_compatibility_E(endomorphism)
+            except (NotImplementedError):
+                pass
+        for derivation in ders:
+            try:
+                self.extend_compatibility_D(derivation)
+            except (NotImplementedError):
+                pass
+
+    def element(self, n, var_name=None):
+        r'''
+            Method to return the `n`-th element of the basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
+            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+
+            For a :class:`SievedBasis` the output will be a polynomial of degree `n`.
+
+            OUTPUT:
+
+            A polynomial with variable name given by ``var_name`` and degree ``n``.
+
+            TODO: add examples
+        '''
+        indices = [self.index(n,i) for i in range(self.nfactors())]
+        return self.__init*prod([self.factors[i].element(indices[i],var_name) for i in range(self.nfactors())])
+
+    @cached_method
+    def appear(self, i):
+        r'''
+            Return the appearances of the basis `i` in the deciding cycle.
+
+            This method computes how many times we increase the `i`-th basis
+            in each cycle of the :class:`SievedBasis`. This is equivalent to 
+            see how many times the number `i` appears on the deciding cycle (see
+            property :func:`cycle`).
+
+            INPUT:
+
+            * ``i``:index we want to check. It must be an element between `0` and
+              the number of factors of the :class:`SievedBasis` (see method :func:`nfactors`).
+
+            OUTPUT:
+
+            It returns the number of appearances of `i` in the deciding cycle.
+
+            TODO: add examples.
+        '''
+        if(not i in ZZ):
+            raise TypeError("The index must be an integer")
+        i = ZZ(i)
+        if((i < 0) or (i > self.nfactors())):
+            raise ValueError("The index must be between 0 and %d" %self.nfactors())
+        return self.cycle.count(i)
+
+    def index(self, n, i):
+        r'''
+            Returns the index of the `i`-th basis at the element `n`.
+
+            This method computes the actual index of the `i`-th basis in the
+            :class:`SievedBasis` for its `n`-th element. Recall that the
+            `n = kF + r` element of a :class:`SievedBasis` can be computed 
+            with:
+
+            .. MATH::
+
+                Q_n(x) = \prod_{i=0}^F P_{e_i(n)}^{(i)}(x)
+
+            This method returns the value of `e_i(n)`.
+
+            INPUT:
+
+            * ``n``: element of the basis we are considering. It can be an
+              expression involving `n`, but we need that ``n%self.nsections()``
+              is an integer. It can also be the tuple `(k,r)` such that `n = kF+r`.
+            * ``i``: index we want to check. It must be an element between `0` and
+              the number of factors of the :class:`SievedBasis` (see method :func:`nfactors`).
+
+            TODO: add examples
+        '''
+        ## Checking the input 'i' 
+        if(not i in ZZ):
+            raise TypeError("The index must be an integer")
+        i = ZZ(i)
+        if((i < 0) or (i >= self.nfactors())):
+            raise ValueError("The index must be between 0 and %d" %self.nfactors())
+
+        ## Checking the input 'n' 
+        if(not type(n) in (list, tuple)):
+            m,r = self.extended_quo_rem(n, self.nsections())
+        else:
+            m,r = n
+        if((not r in ZZ) or (r < 0) or (r >= self.nsections())):
+            raise ValueError("The value for 'n' must be compatible with taking module %d" %self.nsections())
+
+        r = ZZ(r)
+        s = self.cycle[:r].count(i)
+        return self.appear(i)*m + s
+
+    def extended_quo_rem(self, n, k):
+        r'''
+            Extended version of quo_rem that works also for for rational functions.
+
+            This method extends the functionality of quo_rem for rational functions and takes
+            care of the different types the input may have.
+
+            This method returns a tuple `(r,s)` such that `n = rk + s` and `s < k`.
+
+            INPUT:
+
+            * ``n``: value to compute quo_rem
+            * ``k``: integer number for computing the quo_rem
+
+            TODO: add examples
+        '''
+        ## Checking the input
+        if(not k in ZZ):
+            raise TypeError("The divisor must be an integer")
+        k = ZZ(k)
+        
+        if(n in ZZ):
+            return ZZ(n).quo_rem(k)
+        
+        elif(n in self.OB()):
+            if(n.denominator() != 1):
+                raise TypeError("The value of `n` can not be quo_rem by %d" %k)
+            n = n.numerator().change_ring(ZZ); var = self.n()
+            q = sum(n[i]//k * var**i for i in range(n.degree()+1))
+            r = sum(n[i]%k * var**i for i in range(n.degree()+1))
+
+            if(not r in ZZ):
+                raise ValueError("The quo_rem procedure fail to get a valid remainder")
+            r = ZZ(r)
+            if(r < 0): # in case Sage does something weird and return a negative remainder
+                q -= 1
+                r += k
+            return (q,r)
+        
+        raise NotImplementedError("quo_rem not implemented for %s" %type(n))
+
+    def __repr__(self):
+        return ("Sieved Basis %s of the basis:" %str(self.cycle)) + "".join(["\n\t- %s" %repr(f) for f in self.factors])
+
+    def _latex_(self):
+        return (r"\prod_{%s}" %self.cycle)  + "".join([f._latex_() for f in self.factors])
+
+    def root_sequence(self):
+        r'''
+            Method that returns the root sequence of the polynomial basis.
+
+            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.root_sequence`
+            for a description on the output.
+
+            In a sieved basis, the root sequence is a nice entanglement of the root sequences
+            given by the deciding cycle (see method :func:`index`).
+
+            TODO: add examples
+        '''
+        def _root_sb(n):
+            r = n%self.nsections()
+            factor = self.cycle[r]
+            return self.factors[factor].root_sequence()(n=self.index(n, factor))
+
+        return _root_sb
+
+    def constant_coefficient(self):
+        r'''
+            Getter for the constant coefficient of the factorial basis.
+
+            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.constant_coefficient` for further information 
+            in the description or the output.
+
+            TODO: add examples.
+        '''
+        def _const_sb(n):
+            r = n%self.nsections()
+            factor = self.cycle[r]
+            return self.factors[factor].constant_coefficient()(n=self.index(n, factor))
+        return _const_sb
+    
+    def linear_coefficient(self):
+        r'''
+            Getter for the linear coefficient of the factorial basis.
+
+            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.linear_coefficient` for further information 
+            in the description or the output.
+
+            TODO: add examples.
+        '''
+        def _lin_sb(n):
+            r = n%self.nsections()
+            factor = self.cycle[r]
+            return self.factors[factor].linear_coefficient()(n=self.index(n, factor))
+        return _lin_sb
+
+    factors = property(lambda self: self.__factors) #: property to get the factors of the :class:`SievedBasis`
+    cycle = property(lambda self: self.__cycle) #: property to get the deciding cycle of the :class:`SievedBasis`
+
+    def nfactors(self):
+        r'''
+            Method to get the number of factors of the sieved basis.
+
+            This method returns the number of factors which compose
+            this :class:`SievedBasis`.
+
+            OUTPUT:
+
+            Number of factors of this :class:`SievedBasis`.
+            
+            TODO: add examples
+        '''
+        return len(self.factors)
+
+    def nsections(self):
+        r'''
+            Method to get the number of sections of the sieved basis.
+
+            This method returns the number of elements in the deciding cycle which 
+            is the number of sections in which the :class:`SievedBasis` is divided.
+
+            OUTPUT:
+
+            Number of sections of this :class:`SievedBasis`.
+            
+            TODO: add examples
+        '''
+        return len(self.cycle)
+
+    def extend_compatibility_X(self):
+        r'''
+            Method to extend the compatibility of the multiplication by `x`.
+
+            This method computes the compatibility of a he multiplication by `x` over
+            the ring `\mathbb{K}[x]`. This operator is always compatible with all 
+            :class:`FactorialBasis`.
+
+            If this method was already called (or the compatibility was found in another way)
+            this method only returns the compatibility
+
+            OUTPUT:
+
+            The compatibility for the multiplication by `x` computed during this process.
+
+            TODO: add examples
+        '''
+        if(not self.has_compatibility(self.var_name())):
+            self.set_compatibility(self.var_name(), self._extend_compatibility_X())
+
+        return self.compatibility(self.var_name())
+
+    def extend_compatibility_E(self, name):
+        r'''
+            Method to extend the compatibility of an endomorphism.
+
+            This method computes the compatibility of an endomorphism `L` over
+            the ring `\mathbb{K}[x]`. Such derivation must be compatible with all the
+            factors on the basis.
+
+            If the operator `L` was already compatible with ``self``, this method does
+            nothing.
+
+            INPUT:
+
+            * ``name``: name of the derivation or a generator of a *ore_algebra*
+              ring of operators.
+
+            OUTPUT:
+
+            The compatibility for `L` computed during this process.
+
+            WARNING:
+
+            This method do not check whether the operator given is an endomorphism
+            or not. That remains as a user responsability.
+
+            TODO: add examples
+        '''
+        if(not (type(name) is str)):
+            name = str(name)
+
+        if(not self.has_compatibility(name)):
+            self.set_compatibility(name, self._extend_compatibility_E(name))
+            self.__ends += [name]
+
+        return self.compatibility(name)
+
+    def extend_compatibility_D(self, name):
+        r'''
+            Method to extend the compatibility of a derivation.
+
+            This method computes the compatibility of a derivation `L` over
+            the ring `\mathbb{K}[x]`. Such derivation must be compatible with all the
+            factors on the basis.
+
+            If the operator `L` was already compatible with ``self``, this method does
+            nothing.
+
+            INPUT:
+
+            * ``name``: name of the derivation or a generator of a *ore_algebra*
+              ring of operators.
+
+            OUTPUT:
+
+            The compatibility for `L` computed during this process.
+
+            WARNING:
+
+            This method do not check whether the operator given is a derivation
+            or not. That remains as a user responsability.
+
+            TODO: add examples
+        '''
+        if(not (type(name) is str)):
+            name = str(name)
+
+        if(not self.has_compatibility(name)):
+            self.set_compatibility(name, self._extend_compatibility_D(name))
+            self.__ders += [name]
+
+        return self.compatibility(name)
+
+    def _extend_compatibility_X(self):
+        r'''
+            Method that extend the compatibility of multiplication by `x`.
+
+            This method uses the information in the factor basis to extend 
+            the compatibility behavior of the multiplication by `x` to the 
+            :class:`SievedBasis`.
+
+            This method can be extended in subclasses for a different behavior.
+        '''
+        X = self.var_name(); m = self.nsections(); F = self.nfactors()
+        comps = [self.factors[i].compatibility(X) for i in range(F)]
+        t = [comps[i][2] for i in range(F)]
+        S = [self.appear(i) for i in range(F)]
+        s = lambda i,r : self.cycle[:r].count(i)        
+        alphas = [comps[i][3] for i in range(F)]
+        
+        ## Computing the optimal value for the sections
+        T = 1
+        while(any([not T*S[i]%t[i] == 0 for i in range(F)])): T += 1 # this always terminate at most with T = lcm(t_i)
+        
+        a = [T*S[i]//t[i] for i in range(F)]
+
+        def new_alphas(i,j,k):
+            i0, i1 = self.extended_quo_rem(i,m)
+            next = self.cycle[i1]
+            i2, i3 = self.extended_quo_rem(S[next]*i0 + s(next,i1), t[next])
+            return alphas[next](i3,j,a[next]*k + i2)
+        
+        return (0,1,m*T,new_alphas)
+
+    def _extend_compatibility_E(self, E):
+        r'''
+            Method that extend the compatibility of an endomorphism `E`.
+
+            This method uses the information in the factor basis to extend 
+            the compatibility behavior of an endomorphism `E` to the 
+            :class:`SievedBasis`.
+
+            This method can be extended in subclasses for a different behavior.
+
+            INPUT:
+
+            * ``E``: name of the endomorphism to extend.
+
+            OUTPUT:
+
+            A tuple `(A,B,m,\alpha_{i,k,j})` representing the compatibility of ``E``
+            with ``self``.
+        '''
+        A, m, D = self._compatible_division_E(E)
+        n = self.n()
+        B = D(0,0,n).degree()-A
+
+        alphas = []
+        for i in range(m):
+            alphas += [self.matrix_PtI(m*n-A+i,A+B+1)*vector([D(i,0,n)[j] for j in range(A+B+1)])]
+
+        return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
+
+    def _extend_compatibility_D(self, D):
+        r'''
+            Method that extend the compatibility of a derivation `D`.
+
+            This method uses the information in the factor basis to extend 
+            the compatibility behavior of a derivation `D` to the 
+            :class:`SievedBasis`.
+
+            This method can be extended in subclasses for a different behavior.
+
+            INPUT:
+
+            * ``D``: name of the derivation to extend.
+
+            OUTPUT:
+
+            A tuple `(A,B,m,\alpha_{i,k,j})` representing the compatibility of ``D``
+            with ``self``.
+        '''
+        A, m, Q = self._compatible_division_D(D)
+        n = self.n()
+        B = Q(0,0,n).degree()-A
+
+        alphas = []
+        for i in range(m):
+            alphas += [self.matrix_PtI(m*n-A+i,A+B+1)*vector([Q(i,0,n)[j] for j in range(A+B+1)])]
+
+        return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
+
+    def increasing_polynomial(self, src, diff=None, dst=None):
+        r'''
+            Returns the increasing factorial for the factorial basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
+            in the description or the output.
+
+            As a :class:`SievedBasis` is composed with several factors, we compute the difference between each element
+            in the factors and compute the corresponding product of the increasing polynomials. 
+
+            In this case, we consider the input given by `n = kF + r` where `F` is the number of sections of the 
+            :class:`SievedBasis` (see method :func:`nsections`).
+
+            INPUT:
+
+            * ``src``: either the value of `n` or a tuple with the values `(k,r)`
+            * ``diff``: difference between the index `n` and the largest index, `m`. Must be a positive integer.
+            * ``dst``: value for `m`. It could be either its value or a tuple `(t,s)` where `m = tF + s`.
+        '''
+        ## Checking the input "src"
+        if(not type(src) in (tuple, list)):
+            k,r = self.extended_quo_rem(src, self.nsections())
+            if(not r in ZZ):
+                raise ValueError("The value for the starting point must be an object where we can deduce the section")
+        else:
+            k, r = src
+
+        ## If no diff, we use dst instead to build diff
+        if(diff == None):
+            if(type(dst) in (tuple, list)):
+                dst = dst[0]*self.nsections() + dst[1]
+            diff = dst - src
+        
+        ## Now we check the value for 'diff'
+        if(not diff in ZZ):
+            raise TypeError("The value of 'diff' must be an integer")
+        diff = ZZ(diff)
+        if(diff < 0):
+            raise ValueError("The value for 'diff' must be a non-negative integer")
+        if(diff == 0):
+            return self.polynomial_ring().one()
+
+        if(not (k,r,diff) in self.__cached_increasing):
+            original_index = [self.index((k,r), i) for i in range(self.nfactors())]
+            t, s = self.extended_quo_rem(diff+r, self.nsections())
+            end_index = [self.index((k+t, s), i) for i in range(self.nfactors())]
+            self.__cached_increasing[(k,r,diff)] = prod(
+                [self.factors[i].increasing_polynomial(original_index[i],dst=end_index[i]) for i in range(self.nfactors())]
+            )
+        return self.__cached_increasing[(k,r,diff)]
+
+    @cached_method
+    def increasing_basis(self, shift):
+        r'''
+            Method to get the structure for the `n`-th increasing basis.
+
+            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
+            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+
+            For a :class:`SievedBasis`, the increasing basis is again a :class:`SievedBasis` of the increasing basis
+            of its factors. Depending on the actual shift, the increasing basis may differ. Namely, if the shift is 
+            `N = kF+j` where `F` is the number of sections of ``self`` and `B_i` are those factors, then the we can express 
+            the increasing basis as a :class:`SievedBasis` again.
+
+            INPUT:
+
+            * ``shift``: value for the starting point of the increasing basis. It can be either
+              the value for `N` or the tuple `(k,j)`.
+              
+            OUTPUT:
+
+            A :class:`SievedBasis` representing the increasing basis starting at `N`.
+
+            WARING: currently the compatibilities aer not extended to the increasing basis.
+
+            TODO: add examples
+        '''
+        ## Checking the input "src"
+        if(type(shift) in (tuple, list)):
+            N = shift[0]*self.nsections() + shift[1]
+        else:
+            N = shift
+            shift = self.extended_quo_rem(N,self.nsections())
+        
+        if((shift[1] < 0) or (shift[1] > self.nsections())):
+            raise ValueError("The input for the shift is not correct")
+
+        new_cycle = self.cycle[shift[1]:] + self.cycle[:shift[1]]
+        indices = [self.index(shift, i) for i in range(self.nfactors())]
+        new_basis = [self.factors[i].increasing_basis(indices[i]) for i in range(self.nfactors())]
+        return SievedBasis(new_basis, new_cycle, X=self.var_name())
+     
+    def compatible_division(self, operator):
+        r'''
+            Method to get the division of a polynomial by other element of the basis after an operator.
+
+            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.compatible_division`
+            for a description on the output.
+
+            For a :class:`SievedBasis`, since its elements are products of elements of other basis, we can compute this 
+            division using the information in the factors of ``self``. However, we need to know how this operator
+            acts on products distinguishing between three classes:
+
+            * **Multiplication operators**: `L(f(x)) = g(x)f(x)`.
+            * **Endomorphisms**: `L(f(x)g(x)) = L(f(x))L(g(x))`.
+            * **Derivations**: `L(f(x)g(x)) = L(f(x))g(x) + f(x)L(g(x))`.
+
+            In order to know if an operator is an *endomorphism* or a *derivation*, we check if we have extended already those 
+            compatibilities. If we do not found them, we assume they are multiplication operators.
+
+            TODO: add examples
+        '''
+        if(str(operator) in self.__ders):
+            return self._compatible_division_D(operator)
+        elif(str(operator) in self.__ends):
+            return self._compatible_division_E(operator)
+        else:
+            return self._compatible_division_X(operator)
+
+    def _compatible_division_X(self, operator):
+        r'''
+            Method o compute the compatible division for multiplication operators.
+        '''
+        raise NotImplementedError("_compatible_division_X not implemented for Sieved Basis")
+
+    def _compatible_division_D(self, operator):
+        r'''
+            Method o compute the compatible division for derivations.
+        '''
+        raise NotImplementedError("_compatible_division_D not implemented for Sieved Basis")
+
+    def _compatible_division_E(self, operator):
+        r'''
+            Method o compute the compatible division for endomorphisms.
+        '''
+        F = self.nfactors(); m = self.nsections()
+        comp_divisions = [self.factors[i].compatible_division(operator) for i in range(F)] # list with (A_i, t_i, D)
+        As = [comp_divisions[i][0] for i in range(F)]; t = [comp_divisions[i][1] for i in range(F)]
+        D = [comp_divisions[i][2] for i in range(F)]
+        S = [self.appear(i) for i in range(F)]; s = lambda i,r : self.cycle[:r].count(i)      
+
+        ## Computing the optimal value for the sections
+        T = 1
+        while(any([not T*S[i]%t[i] == 0 for i in range(F)])): T += 1 # this always terminate at most with T = lcm(t_i)
+        a = [T*S[i]//t[i] for i in range(F)]
+
+        ## Computing the lower bound for the final compatibility
+        S = [self.appear(i) for i in range(F)]; A = max(int(ceil(As[i]/S[i])) for i in range(F))
+        b = [A*S[i] - As[i] for i in range(F)]
+
+        def new_D(r,j,n):
+            if(j != 0): raise IndexError("Division not computed for more than compatibility")
+            r0, r1 = self.extended_quo_rem(r, m)
+            r2, r3 = list(zip(*[self.extended_quo_rem(S[i]*r0+s(i,r1), t[i]) for i in range(F)]))
+
+            return prod(D[i](r3[i],b[i],a[i]*n+r2[i]) for i in range(F))
+            
+        return (m*A, m*T,new_D)
+
+class ProductBasis(SievedBasis):
     r'''
         Class for Product Basis.
 
@@ -23,492 +765,107 @@ class ProductBasis(FactorialBasis):
 
         INPUT:
 
-        * ``args``: list of :class:`~psbasis.factorial_basis.FactorialBasis` to build the :class:`ProductBasis`.
-        * ``kwds``: optional parameters. The following are allowed:
-            * ``X`` or ``name``: name for the variable. 'x' is the default.
-            * ``Dx`` or ``ders`` or ``der`` or ``derivations`` or ``derivation``: name or list of names
-              for the derivations compatible with the basis.
-            * ``E`` or ``shift`` or ``sh`` or ``endo`` or ``endomorphism``: name or list of names for
-              the endomorphisms compatible with the basis.
-            * ``init``: the value of the first element of the basis. It has to be a constant element.
-              It takes the value `1` by default.
+        * ``factors``: list of :class:`~psbasis.factorial_basis.FactorialBasis` to build the :class:`ProductBasis`.
+        * ``init``: value for the constant element of the basis.
+        * ``X``: name of the operator representing the multiplication by `x`.
+        * ``ends``: endomorphism which compatibility we will try to extend.
+        * ``ders``: derivations which compatibility we wil try to extend.
 
-        REMARK:
+        EXAMPLES::
 
-        * If any factor of the basis is a :class:`ProductBasis`, we will consider its factors as normal
-          factors of this basis.
+            sage: from psbasis import *
+            sage: B1 = BinomialBasis(); B2 = PowerBasis(); B3 = FallingBasis(1,0,1)
+            sage: ProductBasis([B1,B2]).factors == (B1, B2)
+            True
+            sage: ProductBasis([B1,B2]).nfactors()
+            2
+            sage: ProductBasis([B1,B3,B2]).factors == (B1,B3,B2)
+            True
+            sage: ProductBasis([B1,B3,B2]).nfactors()
+            3
+
+        This class can be use to simplify the notation os :class:`SievedBasis`. The following example
+        illustrates how this can be used to understand better the recurrence for the Apery's `\zeta(3)`-recurrence::
+
+            sage: b1 = FallingBasis(1,0,1); b2 = FallingBasis(1,1,-1); n = b1.n()
+            sage: B = ProductBasis([b1,b2]).scalar(1/factorial(n))
+
+        This basis ``B`` contains the elements 
+
+        .. MATH::
+
+            \begin{matrix}
+            \binom{x + n}{2n}\ \text{if }n\equiv 0\ (mod\ 2)\\
+            \binom{x + n}{2n+1}\ \text{if }n\equiv 1\ (mod\ 2)
+            \end{matrix}
+
+        We first extend the compatibility with `E: x\mapsto x+1` by guessing and then we compute the product basis
+        with itself::
+
+            sage: B.set_compatibility('E', guess_compatibility_E(B, 2))
+            sage: B2 = ProductBasis([B,B], ends=['E'])
+
+        Now the basis ``B2`` is formed in 4 sections by the following elements:
+
+        .. MATH::
+
+            \begin{matrix}
+                \binom{x+n}{2n}^2\ \text{if }n\equiv 0\ (mod\ 4)\\
+                \binom{x+n}{2n}\binom{x+n}{2n+1}\ \text{if }n\equiv 1\ (mod\ 4)\\
+                \binom{x+n}{2n+1}^2\ \text{if }n\equiv 2\ (mod\ 4)\\
+                \binom{x+n+1}{2n+2}\binom{x+n}{2n+1}\ \text{if }n\equiv 3\ (mod\ 4)
+            \end{matrix}
+
+        We can check that ``B2`` is compatible with the multiplication by `x` and with 
+        the endomorphism `E`::
+
+            sage: a,b,m,alpha = B2.compatibility('x')
+            sage: Matrix([[alpha(i,j,B2.n()) for j in range(-a,b+1)] for i in range(m)])
+            [      n 2*n + 1]
+            [      n 2*n + 1]
+            [ -n - 1 2*n + 2]
+            [ -n - 1 2*n + 2]
+            sage: B2.recurrence('x')
+            [      n       0       0 2*n*Sni]
+            [2*n + 1       n       0       0]
+            [      0 2*n + 1  -n - 1       0]
+            [      0       0 2*n + 2  -n - 1]
+
+        Now consider the following difference operator:
+
+        .. MATH::
+
+            L = (x+2)^3 E^2 - (2*x + 3)(17x^2+51x+39)E + (x+1)^3
+
+        This operator `L` is compàtible with the basis ``B2``. We can get then
+        the associated recurrence matrix. Taking the first column and the GCRD
+        of its elements, we can see that if a formal power series `y(x) = \sum_n y_n x^n`
+        that can be written in the form `y(x) = \sum_{n\geq 0}c_n\binom{x+n}{2n}^2` satisfies
+        that
+
+        .. MATH::
+
+            (n+1)^2c_{n+1} - 4(2n+1)^2c_n = 0.
+
+        Doing that with the code::
+
+            sage: R.<x> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))   
+            sage: L = (x+2)^3 *E^2 - (2*x+3)*(17*x^2+51*x+39)*E+(x+1)^3
+            sage: M = B2.recurrence(L)
+            sage: column = [B2.remove_Sni(M.coefficient((j,0))) for j in range(4)]
+            sage: column[0].gcrd(*column[1:])
+            (n^2 + 2*n + 1)*Sn - 16*n^2 - 16*n - 4
     '''
-    def __init__(self, *args, **kwds):
-        ## Processing the optional parameters
-        X = kwds.get('name', kwds.get('X', 'x'))
-        ders = kwds.get('Dx', kwds.get('ders', kwds.get('der', kwds.get('derivations', kwds.get('derivation', [])))))
-        endos = kwds.get('E', kwds.get('shift', kwds.get('sh', kwds.get('endo', kwds.get('endomorphism', [])))))
-        init = kwds.get('init', 1)
-
-        if(not (type(ders) in (list,tuple))):
-            ders = [ders]
-        if(not (type(endos) in (list,tuple))):
-            endos = [endos]
-        if((not (init in self.OB().base())) or init == 0):
-            raise ValueError("The first element of the basis has to be a non-zero constant element")
-
-        ## Calling the super constructor
-        super(ProductBasis, self).__init__(X)
-
-        ## Saving the first element
-        self.__init = init
-
-        ##Checking the input
-        if(len(args) == 1 and type(args[0]) == list):
-            args = args[0]
-        if(not all(el.by_degree() for el in args)):
-            raise TypeError("All the elements in args must be PolyBasis")
-
-        ## Unrolling the inner Product Basis
-        final_args = []
-        for el in args:
-            if(isinstance(el, ProductBasis)):
-                final_args += el.factors
-            elif(isinstance(el, FactorialBasis)):
-                final_args += [el]
-            else: 
-                raise TypeError("The structure for the polynomial basis are not valid")
-
-        ## Setting the final list factors to the inner variable
-        self.__factors = final_args
-
-        ## Extra cached elements
-        self.__cached_increasing = {}
-
-        ## Computing the new compatibility operators for this basis
-        try:
-            self.set_compatibility(X, self.__compute_operator_for_X(X))
-        except TypeError:
-            print("Impossible to extend automatically the compatibility by X")
-        for der in ders:
-            try:
-                self.add_derivation(der)
-            except TypeError:
-                print("Impossible to extend the compatibility by %s" %der)
-        for endo in endos:
-            try:
-                self.add_endomorphism(endo)
-            except TypeError:
-                print("Impossible to extend the compatibility by %s" %endo)
-
-    @cached_method
-    def element(self, n, var_name=None):
-        r'''
-            Method to return the `n`-th element of the basis.
-
-            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
-
-            For a :class:`ProductBasis` the output will be a polynomial of degree `n`.
-
-            OUTPUT:
-
-            A polynomial with variable name given by ``var_name`` and degree ``n``.
-
-            TODO: add examples
-        '''
-        if(var_name is None):
-            name = self.var_name()
-        else:
-            name = var_name
-
-        F = self.nfactors(); factors = self.factors
-        k = n//F; j = n%F
-
-        return self.__init*prod(factors[i].element(k+1,name) for i in range(j))*prod(factors[i].element(k,name) for i in range(j,F))
-
-    def root_sequence(self):
-        r'''
-            Method that returns the root sequence of the polynomial basis.
-
-            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`~psbasis.factorial_basis.FactorialBasis.root_sequence`
-            for a description on the output.
-
-            For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
-            extract the roots from those basis sequences.
-        '''
-        def __root_ps(n):
-            F = self.nfactors()
-            if(n in ZZ and n >= 0):
-                k = n//F; r = n%F
-            else: # symbolic input
-                n = self.OB()(n)
-                if(n.denominator() == 1):
-                    n = n.numerator().change_ring(ZZ)
-                    if(all(el%F == 0 for el in n.list()[1:])):
-                        k = n//F
-                        r = ZZ(n%F)
-                    else:
-                        raise TypeError("The input is not divisible by the number of factors")
-                else:
-                    raise TypeError("The input is not a polynomial in 'n'")
-
-            return self.factors[r].root_sequence()(n=k)
-        return __root_ps
-
-    def leading_coefficient(self):
-        r'''
-            Method that returns the root sequence of the polynomial basis.
-
-            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.leading_coefficient`
-            for a description on the output.
-
-            For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
-            extract the leading coefficient from those basis sequences.
-        '''
-        def __leading_ps(n):
-            F = self.nfactors()
-            if(n in ZZ and n >= 0):
-                k = n//F; r = n%F
-            else: # symbolic input
-                n = self.OB()(n)
-                if(n.denominator() == 1):
-                    n = n.numerator().change_ring(ZZ)
-                    if(all(el%F == 0 for el in n.list()[1:])):
-                        k = n//F
-                        r = ZZ(n%F)
-                    else:
-                        raise TypeError("The input is not divisible by the number of factors")
-                else:
-                    raise TypeError("The input is not a polynomial in 'n'")
-            
-            return prod(self.factors[i].leading_coefficient()(n=k+1) for i in range(r))*prod(self.factors[i].leading_coefficient()(n=k) for i in range(r, F))
-        
-        return __leading_ps
-
-    def linear_coefficient(self):
-        r'''
-            Method that returns the root sequence of the polynomial basis.
-
-            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`~psbasis.factorial_basis.linear_coefficient`
-            for a description on the output.
-
-            For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
-            extract the coefficient from those basis sequences.
-        '''
-        def __linear_ps(n):
-            F = self.nfactors()
-            if(n in ZZ and n >= 0):
-                k = n//F; r = n%F
-            else: # symbolic input
-                n = self.OB()(n)
-                if(n.denominator() == 1):
-                    n = n.numerator().change_ring(ZZ)
-                    if(all(el%F == 0 for el in n.list()[1:])):
-                        k = n//F
-                        r = ZZ(n%F)
-                    else:
-                        raise TypeError("The input is not divisible by the number of factors")
-                else:
-                    raise TypeError("The input is not a polynomial in 'n'")
-
-            return self.factors[r].linear_coefficient()(n=k)
-        return __linear_ps
-
-    def constant_coefficient(self):
-        r'''
-            Method that returns the root sequence of the polynomial basis.
-
-            This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`~psbasis.factorial_basis.constant_coefficient`
-            for a description on the output.
-
-            For a :class:`ProductBasis`, since it is build as the product of several :class:`FactorialBasis` we can
-            extract the coefficient from those basis sequences.
-        '''
-        def __constant_ps(n):
-            F = self.nfactors()
-            if(n in ZZ and n >= 0):
-                k = n//F; r = n%F
-            else: # symbolic input
-                n = self.OB()(n)
-                if(n.denominator() == 1):
-                    n = n.numerator().change_ring(ZZ)
-                    if(all(el%F == 0 for el in n.list()[1:])):
-                        k = n//F
-                        r = ZZ(n%F)
-                    else:
-                        raise TypeError("The input is not divisible by the number of factors")
-                else:
-                    raise TypeError("The input is not a polynomial in 'n'")
-
-            return self.factors[r].constant_coefficient()(n=k)
-        return __constant_ps
-
-    @property
-    def factors(self):
-        r'''
-            Immutable property for the factors of ``self``
-
-            This method returns the factor basis that compose the :class:`ProductBasis`
-            represented by ``self``.
-
-            EXAMPLES::
-
-                sage: from psbasis import *
-                sage: B1 = BinomialBasis(); B2 = PowerBasis(); B3 = FallingBasis(1,0,1)
-                sage: ProductBasis(B1,B2).factors == [B1, B2]
-                True
-                sage: ProductBasis(B1,B3,B2).factors == [B1,B3,B2]
-                True
-        '''
-        return self.__factors
-
-    @cached_method
-    def nfactors(self):
-        r'''
-            Getter for the number of factors of this basis.
-
-            EXAMPLES::
-
-                sage: from psbasis import *
-                sage: B1 = BinomialBasis(); B2 = PowerBasis(); B3 = FallingBasis(1,0,1)
-                sage: ProductBasis(B1,B2).nfactors()
-                2
-                sage: ProductBasis(B1,B3,B2).nfactors()
-                3
-        '''
-        return len(self.__factors)
-
-    def __compute_operator_for_X(self, name):
-        r'''
-            Get the matrix operator for the multiplication by the variable.
-
-            This method computes the matrix of operators that represent the compatibility
-            of the multiplication by the variable in the Product Basis. This matrix has
-            as many columns and rows as factors the basis.
-
-            See :arxiv:`1804.02964v1` for further information.
-
-            INPUT:
-
-            * ``name``: name for the variable. If there is any factor which variable
-              is called differently, this method will raise an error.
-
-            TODO: add examples
-        '''
-        ## Checking all factors are compatible with the basis
-        if(any(not el.has_compatibility(name) for el in self.factors)):
-            raise TypeError("There is a factor not compatible with '%s'" %name)
-
-        ## We know that the compatibilities are always (0,1)
-        comps = [factor.compatibility(name) for factor in self.factors]
-        sections = [el[2] for el in comps]; alphas = [el[3] for el in comps]
-
-        ## We make all compatibilities of the same number of sections
-        t = lcm(sections)
-        alphas = [factor.compatibility_sections(name, t)[3] for factor in self.factors]
-
-        m = self.nfactors()
-
-        def __alpha_X(i,j,n):
-            i0 = i//m; i1 = i%m
-            i2 = i0//t; i3 = i0%t
-
-            return alphas[i1](i3, j, n+i2)
-
-        ## The final compatibility is always (0,1) and in m*t sections
-        return (0,1,m*t, __alpha_X)
-
-    def add_derivation(self, name):
-        r'''
-            Method to set the compatibility of a derivation.
-
-            This method computes the compatibility of a derivation `L` over
-            the ring `\mathbb{K}[x]`. Such derivation must be compatible with all the
-            factors on the basis.
-
-            Following the results of :arxiv:`1804.02964v1`, if `L`
-            is `(A_i,B_i)`-compatible with the `i`-th factor of ``self``, then
-            `L` is `(mA, B)`-compatible with ``self``, where `A = max(A_i)` and `B = min(B_i)`.
-
-            This method computes the matrix operator representing the compatibility
-            of `L` in as many sections as factors the basis have and add it to the
-            compatibility dictionary of this basis.
-
-            If the operator `L` was already compatible with ``self``, this method does
-            nothing.
-
-            INPUT:
-
-            * ``name``: name of the derivation or a generator of a *ore_algebra*
-              ring of operators.
-
-            OUTPUT:
-
-            A matrix representing the compatibility of `L` with ``self`` in 
-            as many sections as factors has thi basis.
-
-            WARNING:
-
-            This method do not check whether the operator given is an derivation
-            or not. That remains as a user responsability.
-
-            TODO: add examples
-        '''
-        if(not (type(name) is str)):
-            name = str(name)
-
-        if(not self.has_compatibility(name)):
-            self.set_compatibility(name, self.__compute_operator_for_derivation(name))
-
-        return self.recurrence(name)
-
-    def __compute_operator_for_derivation(self, name):
-        r'''
-            Method to get the compatibility of a derivation.
-
-            This private method actually compute the compatibility operators explained in method
-            :func:`add_derivation` for a derivation. This method assumes that ``name`` is already 
-            a string.
-        '''
-        n = self.n()
-        A = max(factor.A(name) for factor in self.factors); B = max(factor.B(name) for factor in self.factors); mA = self.nfactors()*A
-
-        alphas = []
-        for j in range(self.nfactors()):
-            P = [self.OB()(self.derivation_division_polynomial(name, n, j, mA)[i]) for i in range(mA + B + 1)]
-            alphas += [self.equiv_CtD(mA, j, P)]
-
-        def alpha(i,j, k):
-            return alphas[i][j+mA](n=k)
-
-        return (mA, B, self.nfactors(), alpha)
-
-    def add_endomorphism(self, name):
-        r'''
-            Method to set the compatibility of a derivation.
-
-            This method computes the compatibility of a derivation `L` over
-            the ring `\mathbb{K}[x]`. Such derivation must be compatible with all the
-            factors on the basis.
-
-            Following the results of :arxiv:`1804.02964v1`, if `L`
-            is `(A_i,B_i)`-compatible with the `i`-th factor of ``self``, then
-            `L` is `(mA, B)`-compatible with ``self``, where `A = max(A_i)` and `B = min(B_i)`.
-
-            This method computes the matrix operator representing the compatibility
-            of `L` in as many sections as factors the basis have and add it to the
-            compatibility dictionary of this basis.
-
-            If the operator `L` was already compatible with ``self``, this method does
-            nothing.
-
-            INPUT:
-
-            * ``name``: name of the derivation or a generator of a *ore_algebra*
-              ring of operators.
-
-            OUTPUT:
-
-            A matrix representing the compatibility of `L` with ``self`` in 
-            as many sections as factors has thi basis.
-
-            WARNING:
-
-            This method do not check whether the operator given is an endomorphism
-            or not. That remains as a user responsability.
-
-            TODO: add examples
-        '''
-        if(not (type(name) is str)):
-            name = str(name)
-
-        if(not self.has_compatibility(name)):
-            self.set_compatibility(name, self.__compute_operator_for_endomorphism(name))
-
-        return self.recurrence(name)
-
-    def __compute_operator_for_endomorphism(self, name):
-        r'''
-            Method to get the compatibility of an endomorphism.
-
-            This private method actually compute the compatibility operators explained in method
-            :func:`add_endomorphism` for an endomorphism. This method assumes that ``name`` is already 
-            a string.
-        '''
-        n = self.n()
-        A = max(factor.A(name) for factor in self.factors); B = max(factor.B(name) for factor in self.factors); mA = self.nfactors()*A
-
-        alphas = []
-        for j in range(self.nfactors()):
-            P = [self.OB()(self.endomorphism_division_polynomial(name, n, j, mA)[i]) for i in range(mA + B + 1)]
-            alphas += [self.equiv_CtD(mA, j, P)]
-
-        def alpha(i,j,k):
-            return alphas[i][j+mA](n=k)
-        return (mA, B, self.nfactors(), alpha)
-
-    def increasing_polynomial(self, src, shift, diff=None, dst=None):
-        r'''
-            Returns the increasing factorial for the factorial basis.
-
-            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
-            in the description or the output.
-
-            As a :class:`ProductBasis` have several factors, we consider its elements always indexed
-            by two elements: `(k,j) \mapsto n = kF + j`, where $F$ is the number of factors.
-
-            INPUT:
-
-            * ``src``: value for `k`.
-            * ``shift``: value for `j`, it has to be a value in `\{0,\dots,m-1\}`.
-            * ``diff``: difference between the index `n` and the largest index, `m`. Must be a positive integer.
-            * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must be bigger than `n`.
-
-            TODO: add examples
-        '''
-        ## Checking the arguments
-        if(((src in ZZ) and src < 0) or (not src in self.OB())):
-            raise ValueError("The argument `src` must be a expression involving `self.n()` or a positive integer")
-        k = src
-
-        if((not shift in ZZ) or (shift < 0) or (shift > self.nfactors()-1)):
-            raise ValueError("The argument `shift` must be an integer between 0 and %s" %self.nfactors())
-        j = ZZ(shift)
-        n = k*self.nfactors() + j
-
-        if(not diff is None):
-            if((not diff in ZZ) or diff < 0):
-                raise ValueError("The argument `diff` must be None or a positive integer")
-            else:
-                d = ZZ(diff); p = k + (d+j)//self.nfactors(); q = (d+j)%self.nfactors(); m = p*self.nfactors() + q
-        else:
-            if(n in ZZ):
-                if((not dst in ZZ) or dst < n):
-                    raise ValueError("The argument `dst` must be an integer bigger than `n`")
-                m = ZZ(dst); d = n - m; p = m//self.nfactors(); q = m%self.nfactors()
-            else:
-                d = dst-n
-                if((not d in ZZ) or d < 0):
-                    raise ValueError("The difference between `dst` and `n` must be a positive integer")
-                d = ZZ(d); p = k + (d+j)//self.nfactors(); q = (d+j)%self.nfactors(); m = dst
-
-        ## Building the polynomial
-        if(not (k,j,d) in self.__cached_increasing):
-            def decide_index(k,j,i):
-                if(i < j):
-                    return k+1
-                return k
-
-            self.__cached_increasing[(k,j,d)] = prod(
-                self.factors[i].increasing_polynomial(decide_index(k,j,i),dst=decide_index(p,q,i))
-                for i in range(self.nfactors()))
-
-        return self.__cached_increasing[(k,j,d)]
+    def __init__(self, factors, init=1, X='x', ends=[], ders=[]):
+        super(ProductBasis, self).__init__(factors, list(range(len(factors))),init,X,ends,ders)
 
     @cached_method
     def increasing_basis(self, shift):
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+            This method *overrides* the corresponding method from :class:`SievedBasis`.
+            See method :func:`~SievedBasis.increasing_basis` for further information.
 
             For a :class:`ProductBasis`, the increasing basis is again a :class:`ProductBasis` of the increasing basis
             of its factors. Depending on the actual shift, the increasing basis may differ. Namely, if the shift is 
@@ -528,276 +885,10 @@ class ProductBasis(FactorialBasis):
             raise ValueError("The argument `shift` must be a positive integer")
         F = self.nfactors(); factors = self.factors
 
-        k = shift//F; j = shift%F
-        return ProductBasis(*[factors[i].increasing_basis(k) for i in range(j, F)], *[factors[i].increasing_basis(k+1) for i in range(j)])
-
-    @cached_method
-    def matrix_ItP(self, src, shift, size):
-        r'''
-            Method to get the matrix for converting from the increasing basis to the power basis.
-
-            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.matrix_ItP`.
-
-            For a :class:`ProductBasis`, it is convenient to take the index `n = kF + j` where `F` is
-            the number of factors.
-
-            INPUT:
-
-            * ``src``: value for `k`.
-            * ``shift``: value for `j`.
-            * ``size``: bound on the degree for computing the matrix.
-        '''
-        ## Checking the arguments
-        if(((src in ZZ) and src < 0) or (not src in self.OB())):
-            raise ValueError("The argument `src` must be a expression involving `self.n()` or a positive integer")
-        k = src
-        if(k in ZZ):
-            k =  ZZ(k); dest = QQ
-        else:
-            dest = self.OB()
-
-        if((not shift in ZZ) or (shift < 0) or (shift > self.nfactors()-1)):
-            raise ValueError("The argument `shift` must be an integer between 0 and %s" %self.nfactors())
-        j = ZZ(shift)
-
-        if((not size in ZZ) or size <= 0):
-            raise ValueError("The argument `size` must be a positive integer")
-
-        ## Computing the matrix
-        polys = [self.increasing_polynomial(k,j,diff=i) for i in range(size)]
-        return Matrix(dest, [[polys[j][i] for j in range(size)] for i in range(size)])
-
-    def derivation_division_polynomial(self, operator, src, shift, diff=None, dst=None):
-        r'''
-            Method to get the division of a polynomial by other element of the basis after a derivation.
-
-            As we explained in the method :func:`~psbasis.factorial_basis.SFactorialBasis.compatible_division`,
-            for any `(A,B)`-compatible operator `L` with ``self``, we have that 
-            `P_{n-A}(x)` divides `L\cdot P_n(x)` for all `n \in \mathbb{N}` (see :arxiv:`1804.02964v1`
-            for further information).
-
-            The computation of these polynomials for :class:`ProductBasis` depends on the nature of 
-            the operator `L`. This method do the same as :func:`~psbasis.factorial_basis.SFactorialBasis.compatible_division`
-            but assuming that the operator `L` is compatible with all the factor of ``self`` and 
-            `L` is a *derivation*.
-            
-            For a :class:`ProductBasis`, it is convenient to take the index `n = kF + j` where `F` is
-            the number of factors.
-
-            INPUT:
-
-            * ``operator``: the operator we want to check. See the input description
-              of method :func:`recurrence`. This operator has to be compatible,
-              so we can obtain the value for `A`.
-            * ``src``: value for `k`.
-            * ``shift``: value for `j`.
-            * ``diff``: difference between `n` and `m`. Must be a positive integer greater than
-              the corresponding `A` value for ``operator``.
-            * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
-              be smaller or equal to `n-A`.
-
-            TODO: add examples
-        '''
-        ## Checking the arguments
-        ## Reading ``src``
-        if(((src in ZZ) and src < 0) or (not src in self.OB())):
-            raise ValueError("The argument `src` must be a expression involving `self.n()` or a positive integer")
-        k = src
-
-        ## Reading ``shift``
-        if((not shift in ZZ) or (shift < 0) or (shift > self.nfactors()-1)):
-            raise ValueError("The argument `shift` must be an integer between 0 and %s" %self.nfactors())
-        j = ZZ(shift)
-        n = k*self.nfactors() + j
-
-        ## Compatibility of ``operator``
-        A = [factor.A(operator) for factor in self.factors]; B = [factor.B(operator) for factor in self.factors]
-        A = max(A); B = min(B); mA = self.nfactors()*A
-
-        ## Reading ``diff`` or ``dst``
-        if(not diff is None):
-            if((not diff in ZZ) or diff < mA):
-                raise ValueError("The argument `diff` must be None or a positive integer")
-            else:
-                d = ZZ(diff); p = k + (d+j)//self.nfactors(); q = (d+j)%self.nfactors(); r = p*self.nfactors() + q
-        else:
-            if(n in ZZ):
-                if((not dst in ZZ) or dst < n):
-                    raise ValueError("The argument `dst` must be an integer bigger than `n`")
-                r = ZZ(dst); d = n - r; p = r//self.nfactors(); q = r%self.nfactors()
-            else:
-                d = dst-n
-                if((not d in ZZ) or d < 0):
-                    raise ValueError("The difference between `dst` and `n` must be a positive integer")
-                d = ZZ(d); p = k + (d+j)//self.nfactors(); q = (d+j)%self.nfactors(); r = dst
-
-        ## Computing the polynomial
-        def decide_index(k,j,i):
-            if(i < j):
-                return k+1
-            return k
-
-        # We apply Leibniz rule to the product and combine it using increasing basis and
-        # the method `compatible_division` for each factor of the basis.
-        return sum( # Leibniz rule
-            prod(
-                [self.factors[p].increasing_polynomial(decide_index(k,j,p)-A, A) # Increasing basis
-                for p in range(self.nfactors) if p != i],
-                self.factors[i].compatible_division(operator, decide_index(k,j,i), A)) # Starting with the derivative
-            for i in range(self.nfactors())
-            )
-
-    def endomorphism_division_polynomial(self, operator, src, shift, diff=None, dst=None):
-        r'''
-            Method to get the division of a polynomial by other element of the basis after an endomorphism.
-
-            As we explained in the method :func:`~psbasis.factorial_basis.SFactorialBasis.compatible_division`,
-            for any `(A,B)`-compatible operator `L` with ``self``, we have that 
-            `P_{n-A}(x)` divides `L\cdot P_n(x)` for all `n \in \mathbb{N}` (see :arxiv:`1804.02964v1`
-            for further information).
-
-            The computation of these polynomials for :class:`ProductBasis` depends on the nature of 
-            the operator `L`. This method do the same as :func:`~psbasis.factorial_basis.SFactorialBasis.compatible_division`
-            but assuming that the operator `L` is compatible with all the factor of ``self`` and 
-            `L` is an *endomorphism*.
-            
-            For a :class:`ProductBasis`, it is convenient to take the index `n = kF + j` where `F` is
-            the number of factors.
-
-            INPUT:
-
-            * ``operator``: the operator we want to check. See the input description
-              of method :func:`recurrence`. This operator has to be compatible,
-              so we can obtain the value for `A`.
-            * ``src``: value for `k`.
-            * ``shift``: value for `j`.
-            * ``diff``: difference between `n` and `m`. Must be a positive integer greater than
-              the corresponding `A` value for ``operator``.
-            * ``dst``: value for `m`. Only used (and required) if ``diff`` is ``None``. Must
-              be smaller or equal to `n-A`.
-
-            TODO: add examples
-        '''
-        ## Checking the arguments
-        ## Reading ``src``
-        if(((src in ZZ) and src < 0) or (not src in self.OB())):
-            raise ValueError("The argument `src` must be a expression involving `self.n()` or a positive integer")
-        k = src
-
-        ## Reading ``shift``
-        if((not shift in ZZ) or (shift < 0) or (shift > self.nfactors()-1)):
-            raise ValueError("The argument `shift` must be an integer between 0 and %s" %self.nfactors())
-        j = ZZ(shift)
-        n = k*self.nfactors() + j
-
-        ## Compatibility of ``operator``
-        A = [factor.A(operator) for factor in self.factors]; B = [factor.B(operator) for factor in self.factors]
-        A = max(A); B = min(B); mA = self.nfactors()*A
-
-        ## Reading ``diff`` or ``dst``
-        if(not diff is None):
-            if((not diff in ZZ) or diff < mA):
-                raise ValueError("The argument `diff` must be None or a positive integer")
-            else:
-                d = ZZ(diff); p = k + (d+j)//self.nfactors(); q = (d+j)%self.nfactors(); r = p*self.nfactors() + q
-        else:
-            if(n in ZZ):
-                if((not dst in ZZ) or dst < n):
-                    raise ValueError("The argument `dst` must be an integer bigger than `n`")
-                r = ZZ(dst); d = n - r; p = r//self.nfactors(); q = r%self.nfactors()
-            else:
-                d = dst-n
-                if((not d in ZZ) or d < 0):
-                    raise ValueError("The difference between `dst` and `n` must be a positive integer")
-                d = ZZ(d); p = k + (d+j)//self.nfactors(); q = (d+j)%self.nfactors(); r = dst
-
-        ## Computing the polynomial
-        def decide_index(k,j,i):
-            if(i < j):
-                return k+1
-            return k
-        return prod(self.factors[i].compatible_division(operator, decide_index(k,j,i), A) for i in range(self.nfactors()))
-
-    # FactorialBasis abstract method
-    def equiv_DtC(self, bound, shift, *coeffs):
-        r'''
-            Method to get the equivalence condition for a compatible operator.
-
-            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_DtC`.
-
-            For a :class:`ProductBasis`, it is convenient to take the index `n = kF + j` where `F` is
-            the number of factors.
-
-            INPUT:
-
-            * ``bound``: value for the lower bound for the compatibility condition (i.e, `A`).
-            * ``shift``: value for `j`.
-            * ``coeffs``: list of coefficients in representing the coefficients `\alpha_{k,j,i}`.
-
-            TODO: add examples
-        '''
-        ## Checking the input parameters
-        if((not bound in ZZ) or (bound < 0)):
-            raise ValueError("The argument `bound` must be a positive integer")
-        if(len(coeffs) ==  1 and (type(coeffs) in (tuple, list))):
-            coeffs = coeffs[0]
-        if((not shift in ZZ) or (shift < 0) or (shift > self.nfactors()-1)):
-            raise ValueError("The argument `shift` must be an integer between 0 and %s" %self.nfactors())
-        j = ZZ(shift)
-        mA = ZZ(bound); B = len(coeffs) - mA - 1; n = self.n(); m = self.nfactors()
-        A = (mA - j)//m
-        j = (mA - j)%m
-
-        ## At this point we have that `coeffs` is the list of coefficients of
-        ## L(P_n)/P_{n-A} in the increasing basis starting with $n-A$.
-        ## We only need to change the basis to the Power Basis
-        new_alpha = self.matrix_ItP(n-A, j, mA+B+1)*vector(coeffs)
-
-        return [el for el in new_alpha]
-
-    # FactorialBasis abstract method
-    def equiv_CtD(self, bound, shift, *coeffs):
-        r'''
-            Method to get the equivalence condition for a compatible operator.
-
-            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_CtD`.
-
-            For a ProductBasis, it is convenient to take the index `n = kF + j` where `F` is
-            the number of factors.
-
-            INPUT:
-
-            * ``bound``: value for the lower bound for the compatibility condition (i.e, `A`).
-            * ``shift``: value for `j`.
-            * ``coeffs``: list representing the coefficients of the polynomial `L \cdot P_n(x)/P_{n-A}(x)` in the canonical 
-              power basis.
-
-            TODO: add examples
-        '''
-        ## Checking the input parameters
-        if((not bound in ZZ) or (bound < 0)):
-            raise ValueError("The argument `bound` must be a positive integer")
-        if(len(coeffs) ==  1 and (type(coeffs) in (tuple, list))):
-            coeffs = coeffs[0]
-        if((not shift in ZZ) or (shift < 0) or (shift > self.nfactors()-1)):
-            raise ValueError("The argument `shift` must be an integer between 0 and %s" %self.nfactors())
-        j = ZZ(shift)
-        mA = ZZ(bound); B = len(coeffs) - mA - 1; n = self.n(); m = self.nfactors()
-        A = mA//m
-        j = j - mA%m
-        if(j < 0):
-            j += m
-            A += 1
-
-        ## At this point we have that `coeffs` is the list of coefficients of
-        ## L(P_n)/P_{n-A} in the power basis. If we change to the increasing
-        ## basis starting in $n-A$ then we have the $alpha_{n,i}$.
-        new_alpha = self.matrix_PtI(n-A, shift, mA+B+1)*vector(coeffs)
-
-        return [el for el in new_alpha]
+        k, j = self.extended_quo_rem(shift, F)
+        return ProductBasis(
+            [factors[i].increasing_basis(k) for i in range(j, F)]+[factors[i].increasing_basis(k+1) for i in range(j)],
+            X=self.var_name())
 
     def __repr__(self):
         return "ProductBasis" + "".join(["\n\t- %s" %repr(f) for f in self.factors])

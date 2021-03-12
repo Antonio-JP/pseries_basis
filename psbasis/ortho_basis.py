@@ -4,7 +4,7 @@ r'''
     TODO: review this file to check the compatibility with the derivative in general.
 '''
 # Sage imports
-from sage.all import cached_method, Matrix, QQ
+from sage.all import cached_method, Matrix, QQ, ZZ
 
 # Local imports
 from .psbasis import PolyBasis
@@ -159,6 +159,9 @@ class OrthogonalBasis(PolyBasis):
         an = self.__an; bn = self.__bn; cn = self.__cn
 
         ## Basic cases
+        if(not n in ZZ):
+            raise TypeError("The index must be an integer")
+        n = ZZ(n)
         if(n < 0):
             raise IndexError("The index must be a non-negative integer")
         elif(n == 0):

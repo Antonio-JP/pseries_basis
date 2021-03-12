@@ -80,7 +80,7 @@ def DefiniteSumSolutions(operator, *input):
         return BinomialBasis(a[0],b[0],E=E).recurrence(operator)
     
     ## Building the appropriate ProductBasis
-    B = ProductBasis([BinomialBasis(a[i],b[i],E=E) for i in range(m)], E=E)
+    B = ProductBasis([BinomialBasis(a[i],b[i],E=E) for i in range(m)], ends=[E])
     
     ## Getting the compatibility matrix R(operator)
     compatibility = B.recurrence(operator)
