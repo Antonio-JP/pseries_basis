@@ -582,12 +582,12 @@ class SievedBasis(FactorialBasis):
         '''
         A, m, Q = self._compatible_division_D(D)
         n = self.n()
-        B = Q(0,0,n).degree()-A
+        B = max(Q(0,0,n).degree()-A,0)
 
         alphas = []
         for i in range(m):
             alphas += [self.matrix_PtI(m*n-A+i,A+B+1)*vector([Q(i,0,n)[j] for j in range(A+B+1)])]
-
+        
         return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
 
     def increasing_polynomial(self, src, diff=None, dst=None):
@@ -720,7 +720,37 @@ class SievedBasis(FactorialBasis):
         r'''
             Method o compute the compatible division for derivations.
         '''
-        raise NotImplementedError("_compatible_division_D not implemented for Sieved Basis")
+        F = self.nfactors(); m = self.nsections()
+        comp_divisions = [self.factors[i].compatible_division(operator) for i in range(F)] # list with (A_i, t_i, D)
+        As = [comp_divisions[i][0] for i in range(F)]; t = [comp_divisions[i][1] for i in range(F)]
+        D = [comp_divisions[i][2] for i in range(F)]
+        I = [self.factors[i].increasing_polynomial for i in range(F)]
+        S = [self.appear(i) for i in range(F)]; s = lambda i,r : self.cycle[:r].count(i)
+
+        ## Computing the optimal value for the sections
+        T = 1
+        while(any([not T*S[i]%t[i] == 0 for i in range(F)])): T += 1 # this always terminate at most with T = lcm(t_i)
+        a = [T*S[i]//t[i] for i in range(F)]
+
+        ## Computing the lower bound for the final compatibility
+        S = [self.appear(i) for i in range(F)]; A = max(int(ceil(As[i]/S[i])) for i in range(F))
+        b = [A*S[i] - As[i] for i in range(F)]
+
+        def new_D(r,j,n):
+            if(j != 0): raise IndexError("Division not computed for more than compatibility")
+            r0, r1 = self.extended_quo_rem(r, m)
+            r2, r3 = list(zip(*[self.extended_quo_rem(S[i]*r0+s(i,r1), t[i]) for i in range(F)]))
+
+            return sum(
+                D[i](r3[i], b[i], a[i]*n+r2[i]) * 
+                prod(
+                    I[j]((a[j]*n+r2[j])*t[j] + r3[j] - As[j] - b[j], As[j]+b[j])
+                    for j in range(F) if i != j
+                )
+                for i in range(F)
+            )
+            
+        return (m*A, m*T,new_D)
 
     def _compatible_division_E(self, operator):
         r'''
