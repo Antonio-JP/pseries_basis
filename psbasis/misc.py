@@ -231,13 +231,13 @@ def guess_compatibility_E(basis, sections = None, bound_roots = 50, bound_data=5
         data = [[[M[i+r][i+r-j] for i in range(j,M.nrows()-r,F)] for j in range(A+1)] for r in range(F)]
         functions = [[guess_rational_function(data[i][j], basis.OSS())(n=basis.n()/F) for j in range(len(data[i]))] for i in range(len(data))]
 
-        return (A, 0, F, lambda i,j,k : functions[i][-j](n=k))
+        return (A, 0, F, lambda i,j,k : functions[i][-j](n=F*k+j))
     else:
         data = [[M[i][i-j] for i in range(j,M.nrows())] for j in range(A+1)]
         # we guess a recurrence from the data
         functions = [guess_rational_function(data[i], basis.OSS()) for i in range(len(data))]
 
-        return (A, 0, 1, lambda i, j, k : functions[::-1][j](n=k))
+        return (A, 0, 1, lambda i, j, k : functions[::-1][j](n=k+j))
         
 def guess_rational_function(data, algebra):
     # special case all zero
