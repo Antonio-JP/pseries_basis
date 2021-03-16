@@ -467,7 +467,7 @@ class FactorialBasis(PolyBasis):
         '''
         return self.matrix_ItP(src,size).inverse()
 
-    def equiv_DtC(self, *args, **kwds):
+    def equiv_DtC(self, compatibility):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
@@ -489,13 +489,42 @@ class FactorialBasis(PolyBasis):
             which transforms the definition of compatible operator to the two equivalent conditions
             explicitly.
 
-            This is an abstract method that has to be implemented in some subclass. The input
-            may depend in each subclass.
+            If we name `I_{n-A,m}(x) = P_{n-A+m}/P_{n-A}`,i.e., the `n-A`-th increasing basis of 
+            this basis (see method :func:`increasing_basis` and :func:`increasing_polynomial`) then
+            it is clear that we can write:
+
+            .. MATH::
+
+                \frac{L\cdot P_{n}(x)}{P_{n-A}(x)} = \sum_{i = -A}^B \alpha_{i}(n) \frac{P_{n+j}(x)}{P_{n-A}(x)} = 
+                \sum_{i=0}^{A+B+1} \alpha_{i-A}(n)I_{n-A,i}.
+
+            Hence the output of this method can be computed after changin coordinates from the increasing
+            basis to the canonical basis (see method :func:`matrix_ItP`).
+
+            INPUT:
+            
+            * ``compatibility``: the compatibility condition as a tuple `(A,B,m,\alpha_{i,j,k})` where
+              `A` and `B` are the compatibility bounds, `m` is the number of sections in which the 
+              compatibility is considered and `\alpha_{i,j,k} \in \mathbb{K}(k)` for `i \in \{0,\ldots,m-1\}
+              and `j \in \{-A,\ldots,B\}`.
 
             OUTPUT:
-                List of coefficients of `L(P_n)/P_{n-A}`.
+
+            A tuple of the form `(A, m, c_{i,j}(n))` where `A` is the lower bound for the compatibility
+            condition, `m` is the number of sections considered and `c_{i,j}(k)` is a function with three 
+            parameters `i \in \{0,\ldots,m-1\}`, `j \in \{0,\ldots,A+B+1}` and `k` such that, for `n = km+r`:
+
+            .. MATH::
+
+                \frac{L\cdot P_n(x)}{P_{n-A}(x)} = \sum_{j=0}^{A+B+1} c_{r,j}(k)x^j
+
+            TODO: add examples
         '''
-        raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
+        A,B,m,alpha = compatibility; n = self.n()
+        ItP = [self.matrix_ItP(m*n+i-A, A+B+1) for i in range(m)]
+        coeffs = [ItP[i]*vector([alpha(i,j,n) for j in range(-A,B+1)])for i in range(m)]
+
+        return (A, m, lambda i,j,k: coeffs[i][j](n=k))
 
     def equiv_CtD(self, *args, **kwds):
         r'''
@@ -943,36 +972,6 @@ class SFactorialBasis(FactorialBasis):
         return SFactorialBasis(self.an(n=n+shift),self.bn(n=n+shift), X=self.var_name())
 
     # FactorialBasis abstract method
-    def equiv_DtC(self, bound, *coeffs):
-        r'''
-            Method to get the equivalence condition for a compatible operator.
-
-            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_DtC`.
-
-            INPUT:
-
-            * ``bound``: value for the lower bound for the compatibility condition (i.e., `A`).
-            * ``coeffs``: list of coefficients in ``self.OB()`` representing the coefficients
-              `\alpha_{n,i}`, i.e., `coeffs[j] = \alpha_{n,j-A}`.
-
-            TODO: add examples
-        '''
-        ## Checking the input parameters
-        if((not bound in ZZ) or (bound < 0)):
-            raise ValueError("The argument `bound` must be a positive integer")
-        if(len(coeffs) ==  1 and (type(coeffs) in (tuple, list))):
-            coeffs = coeffs[0]
-        A = ZZ(bound); B = len(coeffs) - A - 1; n = self.n()
-
-        ## At this point we have that `coeffs` is the list of coefficients of
-        ## L(P_n)/P_{n-A} in the increasing basis starting with `n-A`.
-        ## We only need to change the basis to the Power Basis
-        new_alpha = self.matrix_ItP(n-A, A+B+1)*vector(coeffs)
-
-        return [el for el in new_alpha]
-
-    # FactorialBasis abstract method
     def equiv_CtD(self, bound, *coeffs):
         r'''
             Method to get the equivalence condition for a compatible operator.
@@ -1230,36 +1229,6 @@ class RootSequenceBasis(FactorialBasis):
         return Matrix(dest, [[polys[j][i] for j in range(size)] for i in range(size)])
 
     # FactorialBasis abstract method
-    def equiv_DtC(self, bound, *coeffs):
-        r'''
-            Method to get the equivalence condition for a compatible operator.
-
-            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_DtC`.
-
-            INPUT:
-
-            * ``bound``: value for the lower bound for the compatibility condition (i.e., `A`).
-            * ``coeffs``: list of coefficients in ``self.OB()`` representing the coefficients
-              `\alpha_{n,i}`, i.e., `coeffs[j] = \alpha_{n,j-A}`.
-
-            TODO: add examples
-        '''
-        ## Checking the input parameters
-        if((not bound in ZZ) or (bound < 0)):
-            raise ValueError("The argument `bound` must be a positive integer")
-        if(len(coeffs) ==  1 and (type(coeffs) in (tuple, list))):
-            coeffs = coeffs[0]
-        A = ZZ(bound); B = len(coeffs) - A - 1; n = self.n()
-
-        ## At this point we have that `coeffs` is the list of coefficients of
-        ## `L(P_n)/P_{n-A}` in the increasing basis starting with `n-A`.
-        ## We only need to change the basis to the Power Basis
-        new_alpha = self.matrix_ItP(n-A, A+B+1)*vector(coeffs)
-
-        return [el for el in new_alpha]
-
-    # FactorialBasis abstract method
     def equiv_CtD(self, bound, *coeffs):
         r'''
             Method to get the equivalence condition for a compatible operator.
@@ -1499,36 +1468,6 @@ class ScalarBasis(FactorialBasis):
         new_scale = lambda n : self.scale(shift+n)/self.scale(shift)
 
         return ScalarBasis(self.basis.increasing_basis(shift), new_scale)
-
-    # FactorialBasis abstract method
-    def equiv_DtC(self, bound, *coeffs):
-        r'''
-            Method to get the equivalence condition for a compatible operator.
-
-            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.equiv_DtC`.
-
-            INPUT:
-
-            * ``bound``: value for the lower bound for the compatibility condition (i.e., `A`).
-            * ``coeffs``: list of coefficients in ``self.OB()`` representing the coefficients
-              `\alpha_{n,i}`, i.e., `coeffs[j] = \alpha_{n,j-A}`.
-
-            TODO: add examples
-        '''
-        ## Checking the input parameters
-        if((not bound in ZZ) or (bound < 0)):
-            raise ValueError("The argument `bound` must be a positive integer")
-        if(len(coeffs) ==  1 and (type(coeffs) in (tuple, list))):
-            coeffs = coeffs[0]
-        A = ZZ(bound); B = len(coeffs) - A - 1; n = self.n()
-
-        ## At this point we have that `coeffs` is the list of coefficients of
-        ## L(P_n)/P_{n-A} in the increasing basis starting with `n-A`.
-        ## We only need to change the basis to the Power Basis
-        new_alpha = self.matrix_ItP(n-A, A+B+1)*vector(coeffs)
-
-        return [el for el in new_alpha]
 
     # FactorialBasis abstract method
     def equiv_CtD(self, bound, *coeffs):
