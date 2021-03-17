@@ -553,6 +553,8 @@ class FactorialBasis(PolyBasis):
 
             OUTPUT:
                 List of coefficients of `\alpha_{n,i}`.
+
+            TODO: continue here!!
         '''
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
 
