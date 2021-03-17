@@ -262,7 +262,10 @@ def guess_rational_function(data, algebra):
     return sum(sol[i]*solutions[i][0] for i in range(nsols))
 
 def check_compatibility(basis, operator, action, bound=100):
-    a,b,m,alpha = basis.compatibility(operator)
+    if(isinstance(operator, tuple)):
+        a,b,m,alpha = operator
+    else:
+        a,b,m,alpha = basis.compatibility(operator)
     mm = 0 if a == 0 else m//a
     return all(
         all(

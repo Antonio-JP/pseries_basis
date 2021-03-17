@@ -276,47 +276,6 @@ class SievedBasis(FactorialBasis):
         s = self.cycle[:r].count(i)
         return self.appear(i)*m + s
 
-    def extended_quo_rem(self, n, k):
-        r'''
-            Extended version of quo_rem that works also for for rational functions.
-
-            This method extends the functionality of quo_rem for rational functions and takes
-            care of the different types the input may have.
-
-            This method returns a tuple `(r,s)` such that `n = rk + s` and `s < k`.
-
-            INPUT:
-
-            * ``n``: value to compute quo_rem
-            * ``k``: integer number for computing the quo_rem
-
-            TODO: add examples
-        '''
-        ## Checking the input
-        if(not k in ZZ):
-            raise TypeError("The divisor must be an integer")
-        k = ZZ(k)
-        
-        if(n in ZZ):
-            return ZZ(n).quo_rem(k)
-        
-        elif(n in self.OB()):
-            if(n.denominator() != 1):
-                raise TypeError("The value of `n` can not be quo_rem by %d" %k)
-            n = n.numerator().change_ring(ZZ); var = self.n()
-            q = sum(n[i]//k * var**i for i in range(n.degree()+1))
-            r = sum(n[i]%k * var**i for i in range(n.degree()+1))
-
-            if(not r in ZZ):
-                raise ValueError("The quo_rem procedure fail to get a valid remainder")
-            r = ZZ(r)
-            if(r < 0): # in case Sage does something weird and return a negative remainder
-                q -= 1
-                r += k
-            return (q,r)
-        
-        raise NotImplementedError("quo_rem not implemented for %s" %type(n))
-
     def __repr__(self):
         return ("Sieved Basis %s of the basis:" %str(self.cycle)) + "".join(["\n\t- %s" %repr(f) for f in self.factors])
 

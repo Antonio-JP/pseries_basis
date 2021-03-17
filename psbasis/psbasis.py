@@ -33,12 +33,13 @@ r'''
 
 ## Sage imports
 from sage.all import (FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff, 
-                        SR, Expression, prod, hypergeometric)
+                        SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent)
 from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
 # ore_algebra imports
 from ore_algebra import OreAlgebra
+from ore_algebra.ore_operator import OreOperator
 
 ## Private module variables (static elements)
 _psbasis__OB = FractionField(PolynomialRing(QQ, ['n']))
@@ -47,6 +48,8 @@ _psbasis__OS = OreAlgebra(_psbasis__OB, ('Sn', lambda p: p(n=_psbasis__n+1), lam
 _psbasis__OSS = OreAlgebra(_psbasis__OB, ('Sn', lambda p: p(n=_psbasis__n+1), lambda p : 0))
 _psbasis__Sn = _psbasis__OS.gens()[0]
 _psbasis__Sni = _psbasis__OS.gens()[1]
+
+class NotCompatibleError(TypeError): pass
 
 class PSBasis(object):
     r'''
@@ -343,6 +346,47 @@ class PSBasis(object):
             return False
             
         return True
+
+    def extended_quo_rem(self, n, k):
+        r'''
+            Extended version of quo_rem that works also for for rational functions.
+
+            This method extends the functionality of quo_rem for rational functions and takes
+            care of the different types the input may have.
+
+            This method returns a tuple `(r,s)` such that `n = rk + s` and `s < k`.
+
+            INPUT:
+
+            * ``n``: value to compute quo_rem
+            * ``k``: integer number for computing the quo_rem
+
+            TODO: add examples
+        '''
+        ## Checking the input
+        if(not k in ZZ):
+            raise TypeError("The divisor must be an integer")
+        k = ZZ(k)
+        
+        if(n in ZZ):
+            return ZZ(n).quo_rem(k)
+        
+        elif(n in self.OB()):
+            if(n.denominator() != 1):
+                raise TypeError("The value of `n` can not be quo_rem by %d" %k)
+            n = n.numerator().change_ring(ZZ); var = self.n()
+            q = sum(n[i]//k * var**i for i in range(n.degree()+1))
+            r = sum(n[i]%k * var**i for i in range(n.degree()+1))
+
+            if(not r in ZZ):
+                raise ValueError("The quo_rem procedure fail to get a valid remainder")
+            r = ZZ(r)
+            if(r < 0): # in case Sage does something weird and return a negative remainder
+                q -= 1
+                r += k
+            return (q,r)
+        
+        raise NotImplementedError("quo_rem not implemented for %s" %type(n))
 
     ### BASIC METHODS
     def element(self, n, var_name=None):
@@ -687,7 +731,8 @@ class PSBasis(object):
             INPUT:
 
             * ``operator``: the operator we want to know if it is compatible or not.
-              It has to be the name for any generator in an ``ore_algebra``.
+              It can be a string or an object that will be transformed into a string
+              to check if the compatibility is included.
 
             OUTPUT:
 
@@ -720,7 +765,7 @@ class PSBasis(object):
                 sage: B.has_compatibility('s')
                 True
         '''
-        return isinstance(operator, str) and operator in self.__compatibility
+        return str(operator) in self.__compatibility
 
     def compatibility(self, operator):
         r'''
@@ -732,12 +777,163 @@ class PSBasis(object):
 
             INPUT:
 
-            * ``operator``: string or generator of an *ore_algebra* that is compatible with ``self``.
-              If it is not a string, we cast it.
+            * ``operator``: string or a polynomial (either a proper polynomial or an operator in an *ore_algebra*)
+              that is compatible with ``self``. If it is not a string, we cast it.
 
-            TODO: add examples
+            OUTPUT:
+
+            A compatibility tuple `(A, B, m, \alpha_{i,j}(k))` such that, for all `n = km+r` it holds:
+
+            .. MATH::
+
+                `L \cdot b_n = \sum_{j=-A, B} \alpha_{r,j}(k) b_{n+j}`.
+
+            EXAMPLES::
+
+                sage: from psbasis import *
+                sage: B = BinomialBasis(); n = B.n()
+                sage: a,b,m,alpha = B.compatibility(x)
+                sage: a,b,m
+                (0, 1, 1)
+                sage: alpha(0,0,n), alpha(0,1,n)
+                (n, n + 1)
+                sage: a,b,m,alpha = B.compatibility(x^2)
+                sage: a,b,m
+                (0, 2, 1)
+                sage: alpha(0,0,n), alpha(0,1,n), alpha(0,2,n)
+                (n^2, 2*n^2 + 3*n + 1, n^2 + 3*n + 2)
+
+            The method :func:`~psbasis.misc.check_compatibility` can check that these tuples are
+            correct for the first terms of the basis::
+
+                sage: x = B[1].parent().gens()[0]
+                sage: check_compatibility(B, B.compatibility(2*x^2 + 3), lambda p :(2*x^2 + 3)*p)
+                True
+
+            The Binomial basis is also compatible with the shift operator `E: x \mapsto x + 1`. We can 
+            also get the compatibility of that operator by name::
+
+                sage: a,b,m,alpha = B.compatibility('E')
+                sage: a,b,m
+                (1, 0, 1)
+                sage: alpha(0,-1,n), alpha(0,0,n)
+                (1, 1)
+
+            But we can also use any operator in the :class:`OreAlgebra` representing the operators
+            generated by `E` and `x`::
+
+                sage: R = QQ[x]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))
+                sage: a,b,m,alpha = B.compatibility(E)
+                sage: (a,b,m) == (1,0,1)
+                True
+                sage: alpha(0,-1,n), alpha(0,0,n)
+                (1, 1)
+                sage: a,b,m,alpha = B.compatibility(x*E + x^2 + 3)
+                sage: a,b,m
+                (1, 2, 1)
+                sage: alpha(0,-1,n), alpha(0,0,n), alpha(0,1,n), alpha(0,2,n)
+                (n - 1, n^2 + 2*n + 3, 2*n^2 + 4*n + 2, n^2 + 3*n + 2)
+                sage: check_compatibility(B, x*E + x^2 + 3, lambda p :x*p(x=x+1)+(x^2+3)*p)
+                True
+
+            This method also allows to get compatibility in different sections::
+
+                sage: P = ProductBasis([B,B], ends=['E'])
+                sage: a,b,m,alpha = P.compatibility('E')
+                sage: a,b,m
+                (2, 0, 2)
+                sage: Matrix([[alpha(i,j,n) for j in range(-a,b+1)] for i in range(m)])
+                [                1                 2                 1]
+                [        n/(n + 1) (2*n + 1)/(n + 1)                 1]
+                sage: a,b,m,alpha = P.compatibility(3)
+                sage: a,b,m
+                (0, 0, 1)
+                sage: alpha(0,0,n)
+                3
+                sage: a,b,m,alpha = P.compatibility(x*E + x^2 + 3)
+                sage: a,b,m
+                (2, 2, 2)
+                sage: Matrix([[alpha(i,j,n) for j in range(-a,b+1)] for i in range(m)])
+                [              n - 1             3*n - 2       n^2 + 3*n + 3     2*n^2 + 3*n + 1       n^2 + 2*n + 1]
+                [  (n^2 - n)/(n + 1) (3*n^2 + n)/(n + 1)       n^2 + 3*n + 4     2*n^2 + 4*n + 2       n^2 + 3*n + 2]
+                sage: check_compatibility(B, x*E + x^2 + 3, lambda p :x*p(x=x+1)+(x^2+3)*p, bound=50)
+                True
+
         '''
+        if(not str(operator) in self.__compatibility):
+            if(operator in self.OB().base_ring()):
+                self.__compatibility[str(operator)] = (0,0,1,lambda i,j,k : self.OB()(operator) if (i==j and i==0) else self.OB().zero())
+            elif(not type(operator) == str):
+                if(parent(operator) is SR):
+                    if(any(not operator.is_polynomial(v) for v in operator.variables())):
+                        raise NotCompatibleError("The symbolic expression %s can not be casted into a polynomial" %operator)
+                    operator = operator.polynomial(self.OB().base_ring())
+                elif(isinstance(operator, OreOperator)):
+                    operator = operator.polynomial()
+                
+                ## At this point, operator should be a polynomial, which have the flattening morphism
+                try: 
+                    operator = operator.parent().flattening_morphism()(operator) # case of iterated polynomial rings
+                except AttributeError: 
+                    raise NotCompatibleError("The input %s is not a polynomial" %operator)
+
+                # now the coefficients are constants
+                coeffs = operator.coefficients()
+                mons = operator.monomials()
+
+                ## NOT UNICITY IN SAGE FOR UNIVARIATE POLYNOMIALS
+                ## The order of monomials and coefficients in univariate polynomials are different. That is why
+                ## we need to consider that special case and treat it appart:
+                from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
+                if(is_PolynomialRing(operator.parent())):
+                    mons.reverse() # just inverting the order of one of the list is enough
+
+                if(len(mons) == 1): # monomial case
+                    m = mons[0]; c = coeffs[0]
+                    g = [g for g in operator.parent().gens() if g in operator.variables()]
+                    if(len(g) == 0): # the monomial 1
+                        comps = [(0,0,1,lambda i,j,k : 1)]
+                    elif(len(g) == 1): # monomial with 1 variable
+                        d = operator.degree()
+                        if(d == 1 and c == 1): # no compatibility found
+                            raise NotCompatibleError("The input %s is not compatible with this basis" %operator)
+                        comps = d*[self.compatibility(g[0])]
+                    else: # monomial with several variables 
+                        comps = [self.compatibility(v**m.degree(v)) for v in g] 
+
+                    while(len(comps) > 1):
+                        comps += [self.__prod2_case(comps.pop(), comps.pop())]
+                    
+                    A,B,m,alphas = comps[0]
+                    self.__compatibility[str(operator)] = (A,B,m,lambda i,j,k : c*alphas(i,j,k))
+                else:
+                    comps = [self.compatibility(m) for m in mons]
+                    t = lcm(comps[i][2] for i in range(len(mons)))
+                    comps = [self.compatibility_sections(m, t) for m in mons]
+                    
+                    A = max(comps[i][0] for i in range(len(mons)))
+                    B = max(comps[i][1] for i in range(len(mons)))
+                    def __sum_case(i,j,k):
+                        return sum([coeffs[l]*comps[l][3](i,j,k) if (j >= -comps[l][0] and j <= comps[l][1]) else 0 for l in range(len(mons))])
+                    self.__compatibility[str(operator)] = (A,B,t,__sum_case)
+            else:
+                raise NotCompatibleError("The operator %s is not compatible with %s" %(operator, self))
         return self.__compatibility[str(operator)]
+
+    def __prod2_case(self, comp1, comp2):
+        A1, B1, t1, alphas = comp1 # last one
+        A2, B2, t2, betas = comp2 # second last one
+        A = (A1+A2); B = (B1+B2); m = lcm(t1,t2)
+        m1 = m//t1; m2 = m//t2
+        def __aux_prod2_case(r,l,k):
+            r0,r1 = self.extended_quo_rem(r, t1)
+            r2,r3 = list(zip(*[self.extended_quo_rem(r+i, t2) for i in range(-A1,B1+1)]))
+
+            return sum(
+                alphas(r1,i,k*m1+r0)*betas(r3[i+A1],j,k*m2+r2[i+A1]) 
+                for (i,j) in cartesian_product([range(-A1,B1+1),range(-A2,B2+1)])
+                if(i+j == l))
+        return (A,B,m,__aux_prod2_case)
 
     def recurrence(self, operator, sections=None):
         r'''
@@ -809,22 +1005,32 @@ class PSBasis(object):
                 sage: B.recurrence(example4_5)
                 Sn^3 + (-n^2 - 6*n - 7)*Sn^2 + (-2*n^2 - 8*n - 7)*Sn - n^2 - 2*n - 1
         '''
-        if(not isinstance(operator, str)): # we received the operator itself
-            ## Casting the operator to a polynomial
-            try:
-                PR = operator.polynomial().parent()
-                poly = operator.polynomial()
-                poly = PR.flattening_morphism()(poly)
-            except TypeError:
-                poly = operator
+        if(not type(operator) is tuple): # the input is not a compatibility condition
+            if(isinstance(operator, str)):
+                operator = self.compatibility(operator)
+            else:
+                ## Trying to get a polynomial from the input
+                if(operator in self.OB().base_ring()):
+                    return self.OS()(operator)
+                elif(operator.parent() is SR): # case of symbolic expression
+                    if(any(not operator.is_polynomial(v) for v in operator.variables())):
+                        raise NotCompatibleError("The symbolic expression %s is not a polynomial" %operator)
+                    operator = operator.polynomial(self.OB().base_ring())
+                elif(isinstance(operator, OreOperator)): # case of ore_algebra operator
+                    operator = operator.polynomial()
+
+                try:
+                    poly = operator.parent().flattening_morphism()(operator)
+                except AttributeError: # we have no polynomial
+                    raise NotCompatibleError("The input %s is not a polynomial" %operator)
             
-            ## getting the recurrence for each generator
-            recurrences = {str(v): self.recurrence(str(v)) for v in poly.variables()}
-            return self.reduce_SnSni(poly(**recurrences))
+                ## getting the recurrence for each generator
+                recurrences = {str(v): self.recurrence(str(v)) for v in poly.variables()}
+                return self.reduce_SnSni(poly(**recurrences))
 
         ## str case: we need to get the compatibility for that operator
         ## First we get the compatibility condition
-        A,B,m,alpha = self.compatibility(operator)
+        A,B,m,alpha = operator
         
         ## Now we check the sections argument
         if(sections != None):
