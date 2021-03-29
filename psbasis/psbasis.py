@@ -947,6 +947,24 @@ class PSBasis(object):
             This method requires that the compatibility condition can be written
             with a generic formula. See method :func:`compatibility for a further
             description on compatibilities conditions and tests.
+
+            INPUT:
+
+            * ``operator``: operator `L` we want to compute the compatibility matrix.
+            * ``sections``: optional argument (``None`` by default). If different than
+              ``None``, we force that the compatibility is given in a particular number of sections.
+
+            OUTPUT:
+
+            A tuple `(A,B,M)` where `A` and `B` are the compatibility bounds (see output of 
+            :func:`compatibility`) and `M` is a matrix of size `(m\times(A+B+1))` such that
+            for all `n = km + r`:
+
+            .. MATH::
+            
+            L\cdot P_n(x) = \sum_{i=-A}^B m_{r,A+i}(k)P_{n+i}
+
+            TODO: add examples
         '''
         if(sections is None):
             a,b,m,alpha = self.compatibility(operator)
