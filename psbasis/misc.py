@@ -2,7 +2,7 @@ r'''
     Auxiliary file for extra utility methods
 '''
 
-from sage.all import ZZ, Matrix, vector
+from sage.all import ZZ, Matrix, vector, ceil
 
 from psbasis.factorial_basis import BinomialBasis
 from psbasis.product_basis import ProductBasis
@@ -266,7 +266,7 @@ def check_compatibility(basis, operator, action, bound=100):
         a,b,m,alpha = operator
     else:
         a,b,m,alpha = basis.compatibility(operator)
-    mm = 0 if a == 0 else m//a
+    mm = int(ceil(a/m))
     return all(
         all(
             sum(basis[k*m+r+i]*alpha(r,i,k) for i in range(-a,b+1)) == action(basis[k*m+r]) 
