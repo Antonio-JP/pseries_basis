@@ -3,7 +3,7 @@ r'''
 
     This module introduces the basic structures in Sage for computing with *Power
     Series Basis*. We based this work in the paper :arxiv:`1804.02964v1`
-    by M. Petkovsek, where all definitions and proofs for the algorithms here can be found.
+    by M. Petkovšek, where all definitions and proofs for the algorithms here can be found.
 
     A Power Series basis is defined as a sequence `\{f_n\}_{n\in\mathbb{N}} \subset \mathbb{K}[[x]]`
     that form a `\mathbb{K}`-basis of the whole ring of formal power series. We distinguish

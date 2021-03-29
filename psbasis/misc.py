@@ -9,7 +9,7 @@ from psbasis.product_basis import ProductBasis
 
 def DefiniteSumSolutions(operator, *input):
     r'''
-        Petkovsek's algorithm for transforming operators into recurrence equations.
+        Petkovšek's algorithm for transforming operators into recurrence equations.
         
         This method is the complete execution for the algorithm **DefiniteSumSolutions** described in
         :arxiv:`1804.02964v1`. This methods takes an operator `L` and convert the problem

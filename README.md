@@ -3,7 +3,7 @@
 
 `psbasis` is a Sage package developed in the research funded by the Austrian Science Fund  (FWF): W1214-N15, project DK15.
 
-This package allows Sage users create Power Series basis for $K[[x]]$ for a fixed field $K$. The main functionality of this package is to provide the user methods to transform difference/differential equations into recurrence relations assuming a expansion on the Power Series basis we have created. This is related with the Inverse Zeibelger Problem studied by Marko Petkovsek [in this paper](https://arxiv.org/abs/1804.02964).
+This package allows Sage users create Power Series basis for $K[[x]]$ for a fixed field $K$. The main functionality of this package is to provide the user methods to transform difference/differential equations into recurrence relations assuming a expansion on the Power Series basis we have created. This is related with the Inverse Zeibelger Problem studied by Marko Petkovšek [in this paper](https://arxiv.org/abs/1804.02964).
 
 This is a experimenting package and it is not intended to be pushed into any Sage distribution. 
 
