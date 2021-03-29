@@ -580,7 +580,7 @@ class FactorialBasis(PolyBasis):
         if(not type(division) in (tuple, list)):
             raise TypeError("The division condition must be given in the proper format")
 
-        A,B,m,c = compatibility; n = self.n()
+        A,B,m,c = division; n = self.n()
         PtI = [self.matrix_PtI(m*n+i-A, A+B+1) for i in range(m)]
         coeffs = [PtI[i]*vector([c(i,j,n) for j in range(0,A+B+1)])for i in range(m)]
 
