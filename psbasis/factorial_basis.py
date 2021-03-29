@@ -1503,7 +1503,7 @@ class FallingBasis(SFactorialBasis):
             return r"\left\{(%s)^{\overline{n}}\right\}_{n \geq 0}" %self.element(1)
         elif(c == 1):
             return r"\left\{(%s)^{\underline{n}}\right\}_{n \geq 0}" %self.element(1)
-        return r"\left\{(%s)^{\underline{n}_%s}\right\}_{n \geq 0}" %(a*x, b)
+        return r"\left\{(%s)^{\underline{n}_{(%s)}}\right\}_{n \geq 0}" %(a*x+b, c)
 
 class PowerBasis(FallingBasis):
     r'''
