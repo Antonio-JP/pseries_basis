@@ -842,7 +842,7 @@ class PSBasis(object):
                 sage: a,b,m,alpha = P.compatibility('E')
                 sage: a,b,m
                 (2, 0, 2)
-                sage: Matrix([[alpha(i,j,n) for j in range(-a,b+1)] for i in range(m)])
+                sage: P.compatibility_matrix('E')[-1]
                 [                1                 2                 1]
                 [        n/(n + 1) (2*n + 1)/(n + 1)                 1]
                 sage: a,b,m,alpha = P.compatibility(3)
@@ -853,7 +853,7 @@ class PSBasis(object):
                 sage: a,b,m,alpha = P.compatibility(x*E + x^2 + 3)
                 sage: a,b,m
                 (2, 2, 2)
-                sage: Matrix([[alpha(i,j,n) for j in range(-a,b+1)] for i in range(m)])
+                sage: P.compatibility_matrix(x*E + x^2 + 3)[-1]
                 [              n - 1             3*n - 2       n^2 + 3*n + 3     2*n^2 + 3*n + 1       n^2 + 2*n + 1]
                 [  (n^2 - n)/(n + 1) (3*n^2 + n)/(n + 1)       n^2 + 3*n + 4     2*n^2 + 4*n + 2       n^2 + 3*n + 2]
                 sage: check_compatibility(B, x*E + x^2 + 3, lambda p :x*p(x=x+1)+(x^2+3)*p, bound=50)
@@ -934,6 +934,27 @@ class PSBasis(object):
                 for (i,j) in cartesian_product([range(-A1,B1+1),range(-A2,B2+1)])
                 if(i+j == l))
         return (A,B,m,__aux_prod2_case)
+
+    def compatibility_matrix(self, operator, sections=None):
+        r'''
+            Method to get the compatibility condition in matrix form
+
+            This method is equivalent to the method :func:`compatibility`
+            but instead of returning the coefficients `\alpha_{i,j}(n)` in 
+            a method format, it plugs the value `n` and builds a matrix
+            of size `i\times j`.
+
+            This method requires that the compatibility condition can be written
+            with a generic formula. See method :func:`compatibility for a further
+            description on compatibilities conditions and tests.
+        '''
+        if(sections is None):
+            a,b,m,alpha = self.compatibility(operator)
+        else:
+            a,b,m,alpha = self.compatibility_sections(operator, sections)
+            
+        return (a,b,Matrix([[alpha(i,j,self.n()) for j in range(-a,b+1)] for i in range(m)]))
+
 
     def recurrence(self, operator, sections=None):
         r'''
@@ -1119,31 +1140,24 @@ class PSBasis(object):
             Method to get the compatibility coefficient.
             
             Following :arxiv:`1804.02964v1`, an operator `L` is
-            `(A,B)`-compatible if there are some `\alpha_{n,i}` such that for all `n`
+            `(A,B)`-compatible if there are some `\alpha_{n,i}` such that for all `n = kr + j`
 
             .. MATH::
 
-                L \cdot b_n = \sum_{i=-A}^B \alpha_{n,i}b_{n+i}.
+                L \cdot b_n = \sum_{i=-A}^B \alpha_{r,i}(k)b_{n+i}.
             
-            This method returns, for the given operator, the value `\alpha_{n,i}`
+            This method returns, for the given operator, a function with 3 parameters
+            `(i,j,n)` representing the element `\alpha_{i,j}(n)`.
             
             INPUT:
 
             * ``operator``: the operator we want to get the compatibility. It can be the
               name for any generator in an ``ore_algebra`` or the generator itself.
-            * ``pos``: position of the compatibility. This is the `n` in the
-              definition of compatibility. 
-            * ``ind``: index of the compatibility coefficient. This is the index `i` in the 
-              definition of compatibility. If it is out of range, `0` is returned.
                 
             OUTPUT:
 
-            The coefficient `\alpha_{n,i}` for the operator in ``operator`` where `n` is 
-            given by ``pos`` and `i` is given by ``ind``.
-
-            WARNING:
-
-            * The case when the compatibility rule is a matrix is not implemented.
+            The coefficients `\alpha_{i,j}(n)` for the operator in ``operator`` as a function
+            with three parameters `(i,j,n)`.
         '''
         return self.compatibility(operator)[3]
 
@@ -1299,6 +1313,15 @@ class PSBasis(object):
             See method :func:`scalar`.
         '''
         return self.__mul__(other)
+
+    def __truediv__(self,other):
+        r'''
+            See method :func:`scalar`.
+        '''
+        try:
+            return self.scalar(1/other)
+        except:
+            return NotImplemented
     
     ### MAGIC REPRESENTATION METHODS
     def __repr__(self):
