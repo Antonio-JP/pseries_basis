@@ -161,7 +161,7 @@ def GeneralizedBinomial(a,b,c,m,r):
     ## Basis for the roots on the second factor:
     F2 = [FallingBasis(a, c+i, -b) for i in range(1, b+1)]
     
-    basis = ProductBasis(F1 + F2).scalar(a^r/factorial(r+n))
+    basis = ProductBasis(F1 + F2).scalar((a**r)/factorial(r+n))
     x = basis[1].parent().gens()[0]
     
     if(r == 0):
@@ -169,7 +169,7 @@ def GeneralizedBinomial(a,b,c,m,r):
         assert(check_compatibility(basis, guessed_compatibility, lambda p: p(x=x+1/a)))
         basis.set_compatibility('Et', guessed_compatibility)
         APR = PolynomialRing(QQ, 'Et'); Et = APR.gens()[0]
-        basis.set_compatibility('E', basis.compatibility(Et^a))
+        basis.set_compatibility('E', basis.compatibility((Et**a)))
         
     return basis
 
