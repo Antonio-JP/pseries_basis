@@ -87,7 +87,7 @@ class SievedBasis(FactorialBasis):
         We first extend the compatibility with `E: x\mapsto x+1` by guessing and then we compute the sieved basis
         with the binomial basis with the cycle `(1,0,1)`::
 
-            sage: B.set_compatibility('E', guess_compatibility_E(B, 2))
+            sage: B.set_compatibility('E', guess_compatibility_E(B, sections=2))
             sage: B2 = SievedBasis([BinomialBasis(), B], [1,0,1], ends=['E'])
 
         Now the basis ``B2`` is formed in 3 sections by the following elements:
@@ -791,7 +791,7 @@ class ProductBasis(SievedBasis):
         We first extend the compatibility with `E: x\mapsto x+1` by guessing and then we compute the product basis
         with itself::
 
-            sage: B.set_compatibility('E', guess_compatibility_E(B, 2))
+            sage: B.set_compatibility('E', guess_compatibility_E(B, sections=2))
             sage: B2 = ProductBasis([B,B], ends=['E'])
 
         Now the basis ``B2`` is formed in 4 sections by the following elements:

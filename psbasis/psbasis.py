@@ -712,13 +712,13 @@ class PSBasis(object):
                 dict_keys(['x', 'Dx'])
                 sage: B = FallingBasis(1,2,3)
                 sage: B.compatible_operators()
-                dict_keys(['x', 'E_3'])
+                dict_keys(['x', 'E'])
                 
             This output gets updated when we add new compatibilities
                 
                 sage: B.set_compatibility('s', 1)
                 sage: B.compatible_operators()
-                dict_keys(['x', 'E_3', 's'])
+                dict_keys(['x', 'E', 's'])
         '''
         return self.__compatibility.keys()
 
@@ -753,8 +753,6 @@ class PSBasis(object):
                 True
                 sage: B = FallingBasis(1,2,3)
                 sage: B.has_compatibility('E')
-                False
-                sage: B.has_compatibility('E_3')
                 True
                 
             This output gets updated when we add new compatibilities
