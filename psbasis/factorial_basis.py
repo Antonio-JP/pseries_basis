@@ -1479,6 +1479,21 @@ class FallingBasis(SFactorialBasis):
 
         return FallingBasis(self.__a, self.__b - shift*self.__c, self.__c, self.var_name(),self.__E_name)
 
+    def shift(self):
+        r'''
+            Method that returns the action of the compatible shift over the main variable.
+
+            Any :class:`FallingFactorial` is compatible with a shift `E` that maps `x \mapsto x+ \alpha`
+            and generates all possible compatible shifts with ``self``. This method returns the 
+            action of the value `x+\alpha` associated with this basis.
+
+            OUTPUT:
+
+            The action of the main shift over the main variable.
+        '''
+        x = self[1].parent().gens()[0]
+        return x+self.__c/self.__a
+
     def __repr__(self):
         a = self.__a; b = self.__b; c = self.__c
         if(c == -1):
