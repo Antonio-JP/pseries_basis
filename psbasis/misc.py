@@ -2,9 +2,10 @@ r'''
     Auxiliary file for extra utility methods
 '''
 
-from sage.all import ZZ, Matrix, vector, ceil
+from sage.all import ZZ, Matrix, vector, ceil, factorial, PolynomialRing, QQ
 
-from psbasis.factorial_basis import BinomialBasis
+from psbasis.psbasis import PSBasis
+from psbasis.factorial_basis import FallingBasis,BinomialBasis
 from psbasis.product_basis import SievedBasis, ProductBasis
 
 def DefiniteSumSolutions(operator, *input):
@@ -94,6 +95,83 @@ def DefiniteSumSolutions(operator, *input):
     result = column[0].gcrd(*column[1:])
     
     return result
+
+def GeneralizedBinomial(a,b,c,m,r):
+    r'''
+        Method to get a basis which includes the general binomial coefficients.
+        
+        The binomial coefficients of shape
+        
+        .. MATH::
+        
+            \binom{ax+bn+c}{mn+r}
+            
+        can be (as a sequence of `n`) polynomials when `c \in \mathbb{Z}`, `a,b,m,r \in \mathbb{N}` with `a, m > 0`
+        and `b \leq m`. However these polynomials have degree `nm`, so they do not form a basis of \mathbb{K}[[x]]. 
+        This method creates a factorial basis as a :class:`ProductBasis` that contains the specified binomial coefficients
+        in the corresponding positions of the sequence. The intermediate steps are a possible extension to obtain
+        every `m` steps all the necessary roots.
+        
+        Moreover, when `r=0`, this basis are naturally `(b+1, 0)`-compatible with the shift `\tilde{E}: x\mapsto x+(1/a)`.
+        This method includes that compatibility in the basis after computing it with a guessing procedure (see 
+        :func:`guess_compatibility_E` for further information). Then we also include the compatibility with the classical
+        shift `E: x\mapsto x+1` using the compatibility with `\tilde{E}`.
+        
+        INPUT:
+        
+        * ``a``: value for the parameter `a`. It must be a positive integer.
+        * ``b``: value for the parameter `b`. It must be a non-negative integer smaller or equal to ``m``.
+        * ``c``: value for the parameter `c`. It must be an integer.
+        * ``m``: value for the parameter `m`. It must be a positive integer.
+        * ``r``: value for the parameter `r`. It must be a non-negative integer.
+        
+        OUTPUT:
+        
+        A :class:`FactorialBasis` such that the `nm`-th term is of the form
+        
+        .. MATH::
+        
+            \binom{ax+bn+c}{mn+r}.
+            
+        If `r = 0`, this basis will have included the compatibility with the usual shift `E: x\mapsto x+1` with name "E"
+        and also the compatibility with the *minimal* shift `\tilde{E}: x \mapsto x + 1/a` with name "Et".
+        
+        TODO: add tests
+    '''
+    ## Checking the inputs
+    if(any(not el in ZZ for el in (a,b,c,m,r))):
+        raise TypeError("The coefficients must always be integers")
+    if(any(not el >= 0 for el in (b,r))):
+        raise ValueError("The coefficients 'b', and 'r' must be non-negative integers")
+    if(any(not el > 0 for el in (a,m))):
+        raise ValueError("The coefficients 'a' and 'm' must be positive integers")
+    if(b > m):
+        raise ValueError("The coefficient 'b' must be at most 'm'")
+        
+    ## Special case of binomial basis
+    # TODO: check whether we can add the `r!=0` to the original BinomialBasis
+    # TODO: check whether we can add the `b!=0` to the original BinomialBasis
+    if(m == 1 and b == 0 and r == 0):
+        return BinomialBasis(a,c) 
+    
+    n = PSBasis.n(None)
+    
+    ## Basis for the roots on the first factor:
+    F1 = [FallingBasis(a, c-r-i, (m-b)) for i in range(m-b)]
+    ## Basis for the roots on the second factor:
+    F2 = [FallingBasis(a, c+i, -b) for i in range(1, b+1)]
+    
+    basis = ProductBasis(F1 + F2).scalar(a^r/factorial(r+n))
+    x = basis[1].parent().gens()[0]
+    
+    if(r == 0):
+        guessed_compatibility = guess_compatibility_E(basis, shift=1/a, sections=m)
+        assert(check_compatibility(basis, guessed_compatibility, lambda p: p(x=x+1/a)))
+        basis.set_compatibility('Et', guessed_compatibility)
+        APR = PolynomialRing(QQ, 'Et'); Et = APR.gens()[0]
+        basis.set_compatibility('E', basis.compatibility(Et^a))
+        
+    return basis
 
 def unroll_sequence(operator, init, bound=10):
     r'''
