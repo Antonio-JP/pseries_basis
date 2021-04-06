@@ -199,7 +199,7 @@ def multiset_inclusion(l1, l2):
     '''
     return all(l1.count(el) <= l2.count(el) for el in set(l1))
 
-def guess_compatibility_E(basis, shift = 1, sections = None, bound_roots = 50, bound_data = 50):
+def guess_compatibility_E(basis, shift = 1, sections = None, A = None, bound_roots = 50, bound_data = 50):
     r'''
         Method to guess the compatibility of a shift with a basis.
 
@@ -213,6 +213,7 @@ def guess_compatibility_E(basis, shift = 1, sections = None, bound_roots = 50, b
         * ``shift``: value that is added to `x` with the shift we want to guess (i.e., `E(x) = x+\alpha` where
           `\alpha` is the value of ``shift``.
         * ``sections``: number of desired section in the compatibility condition.
+        * ``A``: vale for the compatibility bound `A`. If non is given, we guess a possible choice.
         * ``bound_roots``: bound for checking that the root characterization holds for ``basis``.
         * ``bound_data``: amount of data we compute i order to do the guessing.
 
@@ -236,15 +237,17 @@ def guess_compatibility_E(basis, shift = 1, sections = None, bound_roots = 50, b
         F = sections
 
     ## Getting a value for the value of A in the compatibility
-    rho = basis.root_sequence()
-    r0 = [rho(i)+shift for i in range(F)]
-    r1 = [rho(i) for i in range(F)]; A = F
-    
+    if(A is None):
+        rho = basis.root_sequence()
+        r0 = [rho(i)+shift for i in range(F)]
+        r1 = [rho(i) for i in range(F)]; A = F
+        
 
-    while(not multiset_inclusion(r0, r1)): r1 += [rho(len(r1))]
-    A = max(r1.index(r0[i]) - i for i in range(len(r0)))
+        while(not multiset_inclusion(r0, r1)): r1 += [rho(len(r1))]
+        A = max(r1.index(r0[i]) - i for i in range(len(r0)))
 
-    if(not all(multiset_inclusion([rho(i)+1 for i in range(k)], [rho(i) for i in range(k+A)]) for k in range(bound_roots))):
+    ## We check that root condition holds up to a bound
+    if(not all(multiset_inclusion([rho(i)+shift for i in range(k)], [rho(i) for i in range(k+A)]) for k in range(bound_roots))):
         raise TypeError("The roots condition does not hold up to %d" %bound_roots)
 
     x = basis[1].parent().gens()[0]
