@@ -199,24 +199,32 @@ def multiset_inclusion(l1, l2):
     '''
     return all(l1.count(el) <= l2.count(el) for el in set(l1))
 
-def guess_compatibility_E(basis, sections = None, bound_roots = 50, bound_data=50):
-    ## Checking the condition on the roots
-    rho = basis.root_sequence()
-    r0 = rho(0); A = 0
+def guess_compatibility_E(basis, shift = 1, sections = None, bound_roots = 50, bound_data = 50):
+    r'''
+        Method to guess the compatibility of a shift with a basis.
 
-    while(r0+1 != rho(A)): A += 1
+        This method use ``ore_algebra`` package to guess a possible compatibility condition
+        for a shift with a basis. This uses the generalization of Proposition 3 in :arxiv:`1804.02964v1`
+        to characterize the compatibility of a shift with a factorial basis.
 
-    if(not all(multiset_inclusion([rho(i)+1 for i in range(k)], [rho(i) for i in range(k+A)]) for k in range(bound_roots))):
-        raise TypeError("The roots condition does not hold up to %d" %bound_roots)
+        INPUT:
 
-    x = basis[1].parent().gens()[0]
-    actual_data_bound = bound_data+bound_roots
-    M = Matrix([list(basis[i](x=x+1))+(actual_data_bound-i-1)*[0] for i in range(actual_data_bound)])*basis.basis_matrix(actual_data_bound).inverse()
-    # the rows of M have all the coordinates of basis[i](x+1) in term of basis itself
-    if(any(any(el != 0 for el in M[i][:i-A]) for i in range(A,M.nrows()))):
-        raise ValueError("The guessed bound is incorrect: a non-zero coefficient found")
+        * ``basis``: a :class:`~psbasis.factorial_basis.FactorialBasis` to guess the compatibility.
+        * ``shift``: value that is added to `x` with the shift we want to guess (i.e., `E(x) = x+\alpha` where
+          `\alpha` is the value of ``shift``.
+        * ``sections``: number of desired section in the compatibility condition.
+        * ``bound_roots``: bound for checking that the root characterization holds for ``basis``.
+        * ``bound_data``: amount of data we compute i order to do the guessing.
 
-    F = None
+        OUTPUT:
+
+        A guessed compatibility condition `(A,B,m,\alpha_{i,j}(n))` for ``basis`` and the shift
+        operator `E: x \mapsto x+\alpha`.
+
+        TODO: add examples?
+    '''
+    ## Cheking the input for the sections
+    F = 1
     if(isinstance(basis, ProductBasis)):
         if(sections != None and sections%basis.nfactors() != 0):
             raise ValueError("The argument sections must be a multiple of the number of factors")
@@ -227,17 +235,33 @@ def guess_compatibility_E(basis, sections = None, bound_roots = 50, bound_data=5
     elif(sections != None):
         F = sections
 
-    if(F != None): # we work by sections
-        data = [[[M[i+r][i+r-j] for i in range(j,M.nrows()-r,F)] for j in range(A+1)] for r in range(F)]
-        functions = [[guess_rational_function(data[i][j], basis.OSS())(n=basis.n()/F) for j in range(len(data[i]))] for i in range(len(data))]
+    ## Getting a value for the value of A in the compatibility
+    rho = basis.root_sequence()
+    r0 = [rho(i)+shift for i in range(F)]
+    r1 = [rho(i) for i in range(F)]; A = 0
 
-        return (A, 0, F, lambda i,j,k : functions[i][-j](n=F*k+j))
-    else:
-        data = [[M[i][i-j] for i in range(j,M.nrows())] for j in range(A+1)]
-        # we guess a recurrence from the data
-        functions = [guess_rational_function(data[i], basis.OSS()) for i in range(len(data))]
+    while(not multiset_inclusion(r0, r1)): 
+        A += 1
+        r1 += [rho(A+F)]
 
-        return (A, 0, 1, lambda i, j, k : functions[::-1][j](n=k+j))
+    if(not all(multiset_inclusion([rho(i)+1 for i in range(k)], [rho(i) for i in range(k+A)]) for k in range(bound_roots))):
+        raise TypeError("The roots condition does not hold up to %d" %bound_roots)
+
+    x = basis[1].parent().gens()[0]
+    actual_data_bound = bound_data+bound_roots
+    M = Matrix([list(basis[i](x=x+shift))+(actual_data_bound-i-1)*[0] for i in range(actual_data_bound)])*basis.basis_matrix(actual_data_bound).inverse()
+    # the rows of M have all the coordinates of basis[i](x+1) in term of basis itself
+    if(any(any(el != 0 for el in M[i][:i-A]) for i in range(A,M.nrows()))):
+        raise ValueError("The guessed bound is incorrect: a non-zero coefficient found")
+
+    ## Arranging the data appropriately
+    data = [[[M[i+r][i+r-j] for i in range(j,M.nrows()-r,F)] for j in range(A+1)] for r in range(F)]
+    ## guessing he functions
+    functions = [[guess_rational_function(data[i][j], basis.OSS())(n=basis.n()/F) for j in range(len(data[i]))] for i in range(len(data))]
+
+    ## returning the compatibility tuple
+    return (A, 0, F, lambda i,j,k : functions[i][-j](n=F*k+j))
+    
         
 def guess_rational_function(data, algebra):
     # special case all zero
