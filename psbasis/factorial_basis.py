@@ -1428,7 +1428,8 @@ class FallingBasis(SFactorialBasis):
 
         Following the notation in :arxiv:`1804.02964v1`, these basis
         have compatibilities with the multiplication by `x` and with the isomorphism
-        `E_c: x \mapsto x+c`.
+        `E: x \mapsto x+\frac{c}{a}`. All other compatible shifts (i.e., 
+        maps `E_{\alpha}: x \mapsto x+\alpha)` are just powers of `E`.
 
         INPUT:
 
@@ -1437,10 +1438,10 @@ class FallingBasis(SFactorialBasis):
         * ``decay``: the value for `c`
         * ``X``: the name for the operator representing the multiplication by `x`. If not given, we will
           consider `x` as default.
-        * ``E``: the name for the operator representing the shift of `x` by `c`. If not given, we will consider
-          "Id" if `c = 0`, "E" if `c = 1` and "E_c" otherwise by default.
+        * ``E``: the name for the operator representing the shift of `x` by `c/a`. If not given, we will 
+          consider "E" as default.
 
-        TODO add examples
+        TODO check the compatibility with shifts using the roots. Is there a generator of all compatibilities?
     '''
     def __init__(self, dilation, shift, decay, X='x', E=None):
         if(not dilation in ZZ or dilation <= 0):
@@ -1450,24 +1451,14 @@ class FallingBasis(SFactorialBasis):
         self.__b = shift; b = self.__b
         self.__c = decay; c = self.__c
 
-        if(E is None):
-            if(c == 0):
-                self.__E_name = "Id"
-            if(c == 1):
-                self.__E_name = "E"
-            else:
-                self.__E_name = "E_%s" %abs(QQ(c))
-        else:
-            self.__E_name = E
+        self.__E_name = E if E != None else 'E'
 
         n = self.n()
         super(FallingBasis, self).__init__(a, b-c*(n-1), X)
 
-        Sn = self.Sn()
-        aux_PR = self.polynomial_ring(X); x = aux_PR.gens()[0]
-        aux_OE = OreAlgebra(aux_PR, (self.__E_name, lambda p : p(x=x+b), lambda p: 0))
-        P = aux_OE(prod(a*x+b-c*i for i in range(-a,0)))
-        self.set_compatibility(self.__E_name, self.recurrence(P)*(Sn**a), True)
+        Sn = self.Sn(); x = self[1].parent().gens()[0]
+        P = a*x+b+c
+        self.set_compatibility(self.__E_name, self.recurrence(P)*Sn, True)
 
     @cached_method
     def increasing_basis(self, shift):
