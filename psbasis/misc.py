@@ -5,7 +5,7 @@ r'''
 from sage.all import ZZ, Matrix, vector, ceil
 
 from psbasis.factorial_basis import BinomialBasis
-from psbasis.product_basis import ProductBasis
+from psbasis.product_basis import SievedBasis, ProductBasis
 
 def DefiniteSumSolutions(operator, *input):
     r'''
@@ -225,24 +225,24 @@ def guess_compatibility_E(basis, shift = 1, sections = None, bound_roots = 50, b
     '''
     ## Cheking the input for the sections
     F = 1
-    if(isinstance(basis, ProductBasis)):
-        if(sections != None and sections%basis.nfactors() != 0):
+    if(isinstance(basis, SievedBasis)):
+        if(sections != None and sections%basis.nsections() != 0):
             raise ValueError("The argument sections must be a multiple of the number of factors")
         elif(sections != None):
             F = sections
         else:
-            F = basis.nfactors()
+            F = basis.nsections()
     elif(sections != None):
         F = sections
 
     ## Getting a value for the value of A in the compatibility
     rho = basis.root_sequence()
     r0 = [rho(i)+shift for i in range(F)]
-    r1 = [rho(i) for i in range(F)]; A = 0
+    r1 = [rho(i) for i in range(F)]; A = F
+    
 
-    while(not multiset_inclusion(r0, r1)): 
-        A += 1
-        r1 += [rho(A+F)]
+    while(not multiset_inclusion(r0, r1)): r1 += [rho(len(r1))]
+    A = max(r1.index(r0[i]) - i for i in range(len(r0)))
 
     if(not all(multiset_inclusion([rho(i)+1 for i in range(k)], [rho(i) for i in range(k+A)]) for k in range(bound_roots))):
         raise TypeError("The roots condition does not hold up to %d" %bound_roots)
