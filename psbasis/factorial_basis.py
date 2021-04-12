@@ -1596,7 +1596,7 @@ class BinomialBasis(SFactorialBasis):
         * ``X``: the name for the operator representing the multiplication by `x`. If not given, we will
           consider `x` as default.
         * ``E``: the name for the operator representing the shift of `x` by `1`. If not given, we will
-          consider `E` as default.
+          consider `E` as default. The operator of shift by `1/a` will be named by adding a `t` to the name.
     '''
     def __init__(self, dilation=1, shift=0, X='x', E='E'):
         if(not dilation in ZZ or dilation <= 0):
@@ -1609,7 +1609,10 @@ class BinomialBasis(SFactorialBasis):
         super(BinomialBasis, self).__init__(a/n, (b-n + 1)/n, X)
 
         Sn = self.Sn()
-        self.set_compatibility(E, sum(binomial(a, i)*Sn**i for i in range(a+1)))
+        ## Adding the compatibility by $x \mapsto x+1/a$:
+        self.set_compatibility(E+'t', Sn+1)
+        ## Adding the compatibility by $x \mapsto x+1$ (simply powering the previous compatibility)
+        self.set_compatibility(E, (Sn+1)**a)
 
     def __repr__(self):
         x = self.polynomial_ring(self.var_name()).gens()[0]
