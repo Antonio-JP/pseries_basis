@@ -33,7 +33,8 @@ r'''
 
 ## Sage imports
 from sage.all import (FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff, 
-                        SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent)
+                        SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
+                        block_matrix)
 from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
@@ -1098,6 +1099,83 @@ class PSBasis(object):
                 ])
         else:
             raise TypeError("The number of sections must be a positive integer")
+
+    def system(self, operator, sections=None):
+        r'''
+            Method to get a first order recurrence system associated with an operator.
+
+            Using the method :func:`recurrence`, we can obtain a matrix `R(L)` of linear recurrence operators
+            such that, for any solution to `L\cdot y = 0` where `y = \sum_{n\geq 0} c_n b_n` (where `b_n` are
+            the elements of this basis), then:
+
+            .. MATH::
+
+                R(L) \begin{pmatrix}c_{km}\\c_{km+1}\\\vdots\\c_{km+m-1}\end{pmatrix} = 0.
+
+            This is a linear system of recurrence equations involving the sections of `(c_n)_n`. Hence, 
+            we ca obtain a first order recurrence equation associated with this system. This method
+            computes (if possible) a matrix `A` with size `pm` such that
+
+            .. MATH::
+
+                A \begin{pmatrix}c_{km}\\c_{km+1}\\vdots\\c_{(k+p)m+m-1\end{pmatrix} = 
+                \begin{pmatrix}c_{km+1}\\c_{km+2}\\vdots\\c_{(k+p)m+m\end{pmatrix}
+
+            The study of this system may help understanding the final interlacing solution to the original
+            equation `L\cdot y = 0`.
+
+            INPUT:
+
+            Same input as the method :func:`recurrence`.
+
+            OUTPUT:
+
+            The matrix `A` described above.
+
+            TODO: add examples and tests.
+        '''
+        Sn = self.Sn(); Sni = self.Sni()
+        R = self.recurrence(operator, sections)
+        m = R.ncols()
+        ## R is now the recursion matrix of size ``sections x sections``.
+        ## We extract the matrices depending on the coefficient of the corresponding `Sn` and `Sni`
+        dSn = 0
+        dSni = 0
+        for i in range(m):
+            for j in range(m):
+                el = R.coefficient((i,j))
+                if(dSn < el.degree(Sn)):
+                    dSn = el.degree(Sn)
+                if(dSni < el.degree(Sni)):
+                    dSni = el.degree(Sni)
+        matrices = {}
+
+        from sage.rings.polynomial.polydict import ETuple #pylint: disable=no-name-in-module
+        for k in range(dSn+1): # getting the positive shift matrices
+            matrices[k] = Matrix(self.OB(), 
+            [[R.coefficient((i,j)).dict().get(ETuple((k,0)), 0) for j in range(m)] 
+            for i in range(m)])
+        for k in range(1, dSni+1): # getting the negative shift matrices
+            matrices[-k] = Matrix(self.OB(), 
+            [[R.coefficient((i,j)).dict().get(ETuple((0,k)), 0) for j in range(m)] 
+            for i in range(m)])
+
+        matrices = [matrices[i] for i in range(-dSni, dSn+1)] # putting matrices in list format
+
+        ## Removing the Sni factor
+        n = self.n()
+        matrices = [Matrix(self.OB(), [[el(n=n+dSni) for el in row] for row in matrix]) for matrix in matrices]
+
+        ## Checking invertibility of leading coefficient
+        if(matrices[-1].determinant() == 0):
+            raise ValueError("The leading matrix is not invertible")
+        inverse_lc = matrices[-1].inverse()
+        matrices = [inverse_lc*el for el in matrices]
+        rows = []
+        for i in range(len(matrices)-2):
+            rows += [(i+1)*[0] + [1] + (len(matrices)-i-3)*[0]]
+        rows += [-matrices[:-1]]
+        return block_matrix(self.OB(), rows)
 
     @cached_method
     def compatibility_sections(self, compatibility, sections):
