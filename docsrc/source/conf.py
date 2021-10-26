@@ -15,8 +15,8 @@
 # General information about the project.
 project = u"Inverse Zeibelger Problem: Power Series basis for Sage"
 copyright = u'2019'
-package_name = 'psbasis'
-package_folder = "../../psbasis"
+package_name = 'pseries_basis'
+package_folder = "../../pseries_basis"
 authors = u"Antonio Jimenez-Pastor"
 
 import sys

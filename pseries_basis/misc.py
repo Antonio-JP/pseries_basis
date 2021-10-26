@@ -4,9 +4,9 @@ r'''
 
 from sage.all import ZZ, Matrix, vector, ceil, factorial, PolynomialRing, QQ
 
-from psbasis.psbasis import PSBasis
-from psbasis.factorial_basis import FallingBasis,BinomialBasis
-from psbasis.product_basis import SievedBasis, ProductBasis
+from pseries_basis.psbasis import PSBasis
+from pseries_basis.factorial_basis import FallingBasis,BinomialBasis
+from pseries_basis.product_basis import SievedBasis, ProductBasis
 
 def DefiniteSumSolutions(operator, *input):
     r'''
@@ -46,7 +46,7 @@ def DefiniteSumSolutions(operator, *input):
 
         EXAMPLES::
 
-            sage: from psbasis import *
+            sage: from pseries_basis import *
             sage: R.<x> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))
             sage: DefiniteSumSolutions((x+1)*E - 2*(2*x+1), 1,1,0,0)
             Sn - 1
@@ -211,7 +211,7 @@ def unroll_sequence(operator, init, bound=10):
 
 def compute_in_basis(basis, sequence, section=1, shift=0, bound=10):
     r'''
-        This method takes a :class:`PSBasis` and a sequence and computes
+        This method takes a :class:`pseries_basis.psbasis.PSBasis` and a sequence and computes
         the expansion of that sequence in the usual power basis up to 
         a bound.
 
@@ -244,7 +244,7 @@ def compute_in_basis(basis, sequence, section=1, shift=0, bound=10):
 
 def unroll_in_basis(basis, operator, init, section=1, shift=0, bound=10):
     r'''
-        This method takes a :class:`PSBasis` and a sequence in form of P-finite
+        This method takes a :class:`pseries_basis.psbasis.PSBasis` and a sequence in form of P-finite
         recurrence (with initial data) and compute the expansion in the usual power 
         basis up to a bound.
 
@@ -287,7 +287,7 @@ def guess_compatibility_E(basis, shift = 1, sections = None, A = None, bound_roo
 
         INPUT:
 
-        * ``basis``: a :class:`~psbasis.factorial_basis.FactorialBasis` to guess the compatibility.
+        * ``basis``: a :class:`~pseries_basis.factorial_basis.FactorialBasis` to guess the compatibility.
         * ``shift``: value that is added to `x` with the shift we want to guess (i.e., `E(x) = x+\alpha` where
           `\alpha` is the value of ``shift``.
         * ``sections``: number of desired section in the compatibility condition.

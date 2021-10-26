@@ -3,7 +3,7 @@
 Product Basis: combining Factorial basis
 ======================================================
 
-.. automodule:: psbasis.product_basis
+.. automodule:: pseries_basis.product_basis
    :members:
    :undoc-members:
    :show-inheritance:

@@ -24,11 +24,11 @@ r'''
 
     EXAMPLES::
 
-        sage: from psbasis import *
+        sage: from pseries_basis import *
 
     This package includes no example since all the structures it offers are abstract, so they should
-    never be instancaited. For particular examples and test, look to the modules :mod:`~psbasis.factorial_basis`
-    and :mod:`~psbasis.product_basis`.
+    never be instancaited. For particular examples and test, look to the modules :mod:`~pseries_basis.factorial_basis`
+    and :mod:`~pseries_basis.product_basis`.
 '''
 
 ## Sage imports
@@ -78,7 +78,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = PSBasis() # illegal building, do not use in general
                 sage: B.OB()
                 Fraction Field of Univariate Polynomial Ring in n over Rational Field
@@ -91,7 +91,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = PSBasis() # illegal building, do not use in general
                 sage: B.n()
                 n
@@ -107,7 +107,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = PSBasis() # illegal building, do not use in general
                 sage: B.OS()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
@@ -121,7 +121,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = PSBasis() # illegal building, do not use in general
                 sage: B.OSS()
                 Univariate Ore algebra in Sn over Fraction Field of Univariate Polynomial Ring in n over Rational Field
@@ -136,7 +136,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = PSBasis() # illegal building, do not use in general
                 sage: B.Sn()
                 Sn
@@ -153,7 +153,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = PSBasis() # illegal building, do not use in general
                 sage: B.Sni()
                 Sni
@@ -178,7 +178,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = BinomialBasis(); n = B.n()
 
             Rational functions in `n` are always hypergeometric::
@@ -298,7 +298,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = BinomialBasis(); n = B.n()
                 sage: B.valid_factor(n)
                 False
@@ -479,7 +479,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = PSBasis() # illegal build just for examples
                 sage: Sn = B.Sn(); Sni = B.Sni()
                 sage: Sn*Sni
@@ -546,7 +546,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = PSBasis() # do not do this in your code
                 sage: Sn = B.Sn(); Sni = B.Sni()
                 sage: B.remove_Sni(Sni)
@@ -704,7 +704,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: BinomialBasis().compatible_operators()
                 dict_keys(['x', 'E'])
                 sage: PowerBasis().compatible_operators()
@@ -741,7 +741,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: BinomialBasis().has_compatibility('x')
                 True
                 sage: BinomialBasis().has_compatibility('E')
@@ -789,7 +789,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = BinomialBasis(); n = B.n()
                 sage: a,b,m,alpha = B.compatibility(x)
                 sage: a,b,m
@@ -802,7 +802,7 @@ class PSBasis(object):
                 sage: alpha(0,0,n), alpha(0,1,n), alpha(0,2,n)
                 (n^2, 2*n^2 + 3*n + 1, n^2 + 3*n + 2)
 
-            The method :func:`~psbasis.misc.check_compatibility` can check that these tuples are
+            The method :func:`~pseries_basis.misc.check_compatibility` can check that these tuples are
             correct for the first terms of the basis::
 
                 sage: x = B[1].parent().gens()[0]
@@ -1002,7 +1002,7 @@ class PSBasis(object):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: P = PowerBasis()
                 sage: P.recurrence('x')
                 Sni
@@ -1311,7 +1311,7 @@ class PSBasis(object):
         '''
         return BruteBasis(lambda n : self.element(n)*factor(n=n), self.by_degree())
 
-    def _scalar_hypergeometric(self, factor, quotient):
+    def _scalar_hypergeometric(self, factor, quotient): #pylint: disable=unused-argument
         r'''
             Method that actually builds the structure for the new basis.
 
@@ -1343,7 +1343,7 @@ class PSBasis(object):
             
         return
 
-    def __scalar_hyper_extend_compatibilities(self, new_basis, factor, quotient):
+    def __scalar_hyper_extend_compatibilities(self, new_basis, factor, quotient): #pylint: disable=unused-argument
         r'''
             Method to extend compatibilities to ``new_basis`` with a rational function or a method
             that returns a rational function when feeded by `n` (see :func:`OB`).
@@ -1445,7 +1445,7 @@ class BruteBasis(PSBasis):
 
         EXAMPLES::
 
-            sage: from psbasis import *
+            sage: from pseries_basis import *
             sage: B = BruteBasis(lambda n : QQ[x](binomial(x,n)), True)
             sage: B2 = BinomialBasis()
             sage: all(B[i] == B2[i] for i in range(100))
@@ -1467,8 +1467,8 @@ class BruteBasis(PSBasis):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.element` for further information.
         '''
         if(var_name is None):
             name = 'x'
@@ -1483,12 +1483,12 @@ class BruteBasis(PSBasis):
         r'''
             Method to get a matrix representation of the basis.
             
-            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.basis_matrix` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.basis_matrix` for further information.
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: from ajpastor.dd_functions import *
                 sage: B = BruteBasis(lambda n : BesselD(n), False)
                 sage: B2 = BruteBasis(lambda n : bessel_J(n,x), False)
@@ -1536,8 +1536,8 @@ class PolyBasis(PSBasis):
         r'''
             Method to get a matrix representation of the basis.
             
-            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.basis_matrix` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.basis_matrix` for further information.
 
             In particular for a :class:`PolyBasis`, the elements `P_n(x)` have degree `n` for each
             value of `n \in \mathbb{N}`. This means that we can write:
@@ -1562,7 +1562,7 @@ class PolyBasis(PSBasis):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = BinomialBasis()
                 sage: B.basis_matrix(5,5)
                 [    1     0     0     0     0]
@@ -1618,8 +1618,8 @@ class OrderBasis(PSBasis):
         r'''
             Method to get a matrix representation of the basis.
             
-            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.basis_matrix` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.basis_matrix` for further information.
             
             In an order basis, the `n`-th element of the basis is always a formal power series
             of order `n`. Hence, we can consider the infinite matrix where the coefficient
@@ -1637,7 +1637,7 @@ class OrderBasis(PSBasis):
 
             EXAMPLES::
 
-                sage: from psbasis import *
+                sage: from pseries_basis import *
                 sage: B = FunctionalBasis(sin(x))
                 sage: B.basis_matrix(5,5)
                 [   1    0    0    0    0]

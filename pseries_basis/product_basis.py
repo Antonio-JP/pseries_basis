@@ -2,10 +2,10 @@ r'''
     Sage package for Product of Factorial Series Basis.
 '''
 # Sage imports
-from sage.all import cached_method, prod, ZZ, QQ, Matrix, vector, lcm, ceil
+from sage.all import cached_method, prod, ZZ, vector, ceil
 
 # Local imports
-from .factorial_basis import FactorialBasis, SFactorialBasis
+from .factorial_basis import FactorialBasis
 
 
 class SievedBasis(FactorialBasis):
@@ -51,7 +51,7 @@ class SievedBasis(FactorialBasis):
 
         EXAMPLES::
 
-            sage: from psbasis import *
+            sage: from pseries_basis import *
             sage: B = BinomialBasis(); P = PowerBasis()
             sage: B2 = SievedBasis([B,P], [0,1,1,0])
             sage: B2[:6]
@@ -190,8 +190,8 @@ class SievedBasis(FactorialBasis):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.element` for further information.
 
             For a :class:`SievedBasis` the output will be a polynomial of degree `n`.
 
@@ -305,8 +305,8 @@ class SievedBasis(FactorialBasis):
         r'''
             Getter for the constant coefficient of the factorial basis.
 
-            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.constant_coefficient` for further information 
+            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.constant_coefficient` for further information 
             in the description or the output.
 
             TODO: add examples.
@@ -321,8 +321,8 @@ class SievedBasis(FactorialBasis):
         r'''
             Getter for the linear coefficient of the factorial basis.
 
-            This method *overrides* the corresponding method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.linear_coefficient` for further information 
+            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.linear_coefficient` for further information 
             in the description or the output.
 
             TODO: add examples.
@@ -553,8 +553,8 @@ class SievedBasis(FactorialBasis):
         r'''
             Returns the increasing factorial for the factorial basis.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
             in the description or the output.
 
             As a :class:`SievedBasis` is composed with several factors, we compute the difference between each element
@@ -606,8 +606,8 @@ class SievedBasis(FactorialBasis):
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.factorial_basis.FactorialBasis`.
-            See method :func:`~psbasis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
             For a :class:`SievedBasis`, the increasing basis is again a :class:`SievedBasis` of the increasing basis
             of its factors. Depending on the actual shift, the increasing basis may differ. Namely, if the shift is 
@@ -754,7 +754,7 @@ class ProductBasis(SievedBasis):
 
         INPUT:
 
-        * ``factors``: list of :class:`~psbasis.factorial_basis.FactorialBasis` to build the :class:`ProductBasis`.
+        * ``factors``: list of :class:`~pseries_basis.factorial_basis.FactorialBasis` to build the :class:`ProductBasis`.
         * ``init``: value for the constant element of the basis.
         * ``X``: name of the operator representing the multiplication by `x`.
         * ``ends``: endomorphism which compatibility we will try to extend.
@@ -762,7 +762,7 @@ class ProductBasis(SievedBasis):
 
         EXAMPLES::
 
-            sage: from psbasis import *
+            sage: from pseries_basis import *
             sage: B1 = BinomialBasis(); B2 = PowerBasis(); B3 = FallingBasis(1,0,1)
             sage: ProductBasis([B1,B2]).factors == (B1, B2)
             True

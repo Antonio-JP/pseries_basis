@@ -139,8 +139,8 @@ class OrthogonalBasis(PolyBasis):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.element` for further information.
 
             For a :class:`OrthogonalBasis` the output will be a polynomial of degree `n`.
 
@@ -175,8 +175,8 @@ class OrthogonalBasis(PolyBasis):
         r'''
             Method that actually builds the structure for the new basis.
 
-            This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
+            This method *overrides* the corresponding abstract method from :class:`pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.scalar` for further information.
 
             TODO: add examples
         '''
@@ -193,8 +193,8 @@ class OrthogonalBasis(PolyBasis):
         r'''
             Method that actually builds the structure for the new basis.
 
-            This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.scalar` for further information.
+            This method *overrides* the corresponding abstract method from :class:`pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.scalar` for further information.
 
             TODO: add examples
         '''
@@ -296,8 +296,8 @@ class OrthogonalBasis(PolyBasis):
         r'''
             Method to get the compatibility for an operator.
 
-            This method *overrides* the corresponding abstract method from :class:`psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.recurrence` for further information.
+            This method *overrides* the corresponding abstract method from :class:`pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.recurrence` for further information.
 
             In a first glance, this method tries the classical compatibility using the compatibility dictionary.
             However, the derivation is not usually compatible with ``self``, but we may need a prefactor
@@ -401,7 +401,7 @@ class OrthogonalBasis(PolyBasis):
 
             OUTPUT:
 
-            An difference operator (see :func:`~psbasis.psbasis.PSBasis.OS`) that represents
+            An difference operator (see :func:`~pseries_basis.psbasis.PSBasis.OS`) that represents
             the compatibility of the derivation with this basis.
         '''
         raise NotImplementedError("The general first compatibility with derivation is not implemented")
@@ -427,7 +427,7 @@ class OrthogonalBasis(PolyBasis):
 
             OUTPUT:
 
-            A difference operator (see :func:`~psbasis.psbasis.PSBasis.OS`) that represents the compatibility
+            A difference operator (see :func:`~pseries_basis.psbasis.PSBasis.OS`) that represents the compatibility
             of `Q(x)^d\partial^k` with the orthogonal basis.
 
             TODO: add examples
@@ -473,7 +473,7 @@ class JacobiBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`psbasis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, alpha, beta, X='x', Dx='Dx'):
         if(not alpha in QQ or alpha <= -1):
@@ -497,8 +497,8 @@ class JacobiBasis(OrthogonalBasis):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *overrides* the corresponding method from :class:`~psbasis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~psbasis.ortho_basis.OrthogonalBasis.element` for further information.
+            This method *overrides* the corresponding method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis.element` for further information.
 
             This method takes into consideration special cases of the Jacobi polynomial basis, when the 
             coefficients create non-standard behaviors (namely, for `n = 1` when `\alpha + \beta = 0` or 
@@ -521,8 +521,8 @@ class JacobiBasis(OrthogonalBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~psbasis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
         a = self.__alpha; b = self.__beta
@@ -571,7 +571,7 @@ class GegenbauerBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`psbasis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, lambd, X='x', Dx='Dx'):
         if(not lambd in QQ or lambd <= -1/2 or lambd == 0):
@@ -588,8 +588,8 @@ class GegenbauerBasis(OrthogonalBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~psbasis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
         a = self.__lambda
@@ -635,7 +635,7 @@ class LegendreBasis(JacobiBasis):
 
         List of abstract methods:
 
-        * :func:`psbasis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, X='x', Dx='Dx'):
         super(LegendreBasis, self).__init__(0,0,X,Dx)
@@ -644,8 +644,8 @@ class LegendreBasis(JacobiBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *overrides* the corresponding method from :class:`~psbasis.ortho_basis.JacobiBasis`.
-            See method :func:`~psbasis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *overrides* the corresponding method from :class:`~pseries_basis.ortho_basis.JacobiBasis`.
+            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
         return self.reduce_SnSni((n*(n-1)/(2*n-1))*Sni - ((n+1)*(n+2)/(2*n+3))*Sn)
@@ -682,7 +682,7 @@ class TChebyshevBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`psbasis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, X='x', Dx='Dx'):
         super(TChebyshevBasis, self).__init__(lambda n: 1 if n == 0 else 2,0,1,X,Dx)
@@ -691,8 +691,8 @@ class TChebyshevBasis(OrthogonalBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~psbasis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
         return self.reduce_SnSni(((n-1)/2)*Sni - ((n+1)/2)*Sn)
@@ -729,7 +729,7 @@ class UChebyshevBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`psbasis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, X='x', Dx='Dx'):
         super(UChebyshevBasis, self).__init__(2,0,1,X,Dx)
@@ -738,8 +738,8 @@ class UChebyshevBasis(OrthogonalBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~psbasis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
         return self.reduce_SnSni(((3*n-1)/2)*Sni + ((n+1)/2)*Sn)
@@ -773,7 +773,7 @@ class LaguerreBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`psbasis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, alpha, X='x', Dx='Dx'):
         if(alpha < -1):
@@ -787,8 +787,8 @@ class LaguerreBasis(OrthogonalBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~psbasis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n()
         return self.reduce_SnSni(n*Sni - (n+self.alpha+1))
@@ -821,7 +821,7 @@ class HermiteBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`psbasis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
     def __init__(self, X='x', Dx='Dx'):
@@ -834,8 +834,8 @@ class HermiteBasis(OrthogonalBasis):
         r'''
             Name of the compatible derivation with this basis.
 
-            This method *overrides* the corresponding method from :class:`~psbasis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~psbasis.ortho_basis.OrthogonalBasis.derivation_name` for further information.
+            This method *overrides* the corresponding method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis.derivation_name` for further information.
         '''
         return self._OrthogonalBasis__der_name # pylint: disable=no-member
 
@@ -867,7 +867,7 @@ class HermitePBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`psbasis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
     def __init__(self, X='x', Dx='Dx'):
@@ -880,8 +880,8 @@ class HermitePBasis(OrthogonalBasis):
         r'''
             Name of the compatible derivation with this basis.
 
-            This method *overrides* the corresponding method from :class:`~psbasis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~psbasis.ortho_basis.OrthogonalBasis.derivation_name` for further information.
+            This method *overrides* the corresponding method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis.derivation_name` for further information.
         '''
         return self._OrthogonalBasis__der_name # pylint: disable=no-member
 

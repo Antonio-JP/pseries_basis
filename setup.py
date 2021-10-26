@@ -10,7 +10,7 @@ def readfile(filename):
         return f.read()
     
 setup(
-    name = "psbasis",
+    name = "pseries_basis",
     version = readfile("VERSION").strip(), # the VERSION file is shared with the documentation
     description='A Sage package for Power Series basis (Inverse Zeibelger problem)',
     # long_description = readfile("README.txt"), # get the long description from the README
@@ -34,7 +34,7 @@ setup(
       'Programming Language :: Python :: 3.8.5',
     ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords = "holonomic SageMath sequence power-series",
-    packages = ["psbasis"],
+    packages = ["pseries_basis"],
     setup_requires   = [],
     install_requires = ['sphinx', 'ore_algebra @ git+https://github.com/mkauers/ore_algebra.git'],
 )

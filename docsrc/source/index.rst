@@ -2,11 +2,11 @@
 Inverse Zeibelger Problem
 =============================
 
-This is the documentation for the package ``psbasis``.
+This is the documentation for the package ``pseries_basis``.
 
 The main package of this project is the package , you need to import it:: 
 
-    from psbasis import *
+    from pseries_basis import *
 
 This package allows the user to create and manipulate basis for a
 power series ring, and provides methods to compute recurrence equations
@@ -25,10 +25,10 @@ Sequences
 .. toctree::
    :maxdepth: 1
 
-   psbasis/psbasis
-   psbasis/factorial_basis
-   psbasis/product_basis
-   psbasis/ortho_basis
+   pseries_basis/psbasis
+   pseries_basis/factorial_basis
+   pseries_basis/product_basis
+   pseries_basis/ortho_basis
 
 
 Indices and Tables

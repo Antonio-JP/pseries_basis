@@ -3,7 +3,7 @@
 Power Series basis: basic structure and functionality
 ======================================================
 
-.. automodule:: psbasis.psbasis
+.. automodule:: pseries_basis.psbasis
    :members:
    :undoc-members:
    :show-inheritance:

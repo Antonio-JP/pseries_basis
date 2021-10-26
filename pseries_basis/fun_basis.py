@@ -43,8 +43,8 @@ class FunctionalBasis(OrderBasis):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.element` for further information.
 
             This method removes the optional argument of but adds a new argument for getting 
             a symbolic representation as a polynomial in the function or the real object.
@@ -133,8 +133,8 @@ class BesselBasis(OrderBasis):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *implements* the corresponding abstract method from :class:`~psbasis.psbasis.PSBasis`.
-            See method :func:`~psbasis.psbasis.PSBasis.element` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.element` for further information.
 
             This method removes the optional argument of variable name. 
 

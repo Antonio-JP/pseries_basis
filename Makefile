@@ -30,7 +30,7 @@ develop:
 	$(SAGE) -pip install --upgrade -e .
 
 test: install
-	$(SAGE) -t --force-lib psbasis
+	$(SAGE) -t --force-lib pseries_basis
 
 coverage:
 	$(SAGE) -coverage $(PACKAGE)/*
