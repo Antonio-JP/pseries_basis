@@ -945,7 +945,7 @@ class PSBasis(object):
             of size `i\times j`.
 
             This method requires that the compatibility condition can be written
-            with a generic formula. See method :func:`compatibility for a further
+            with a generic formula. See method :func:`compatibility` for a further
             description on compatibilities conditions and tests.
 
             INPUT:
