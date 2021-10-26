@@ -140,6 +140,7 @@ class SievedBasis(FactorialBasis):
 
         Doing that with the code::
 
+            sage: from ore_algebra import OreAlgebra
             sage: R.<x> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))   
             sage: L = (x+2)^2*E^2 - (11*x^2 + 33*x+25)*E - (x+1)^2 
             sage: M = B2.recurrence(L)
@@ -838,6 +839,7 @@ class ProductBasis(SievedBasis):
 
         Doing that with the code::
 
+            sage: from ore_algebra import OreAlgebra
             sage: R.<x> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))   
             sage: L = (x+2)^3 *E^2 - (2*x+3)*(17*x^2+51*x+39)*E+(x+1)^3
             sage: M = B2.recurrence(L)

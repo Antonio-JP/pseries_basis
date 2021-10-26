@@ -47,6 +47,7 @@ def DefiniteSumSolutions(operator, *input):
         EXAMPLES::
 
             sage: from pseries_basis import *
+            sage: from ore_algebra import OreAlgebra
             sage: R.<x> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))
             sage: DefiniteSumSolutions((x+1)*E - 2*(2*x+1), 1,1,0,0)
             Sn - 1
