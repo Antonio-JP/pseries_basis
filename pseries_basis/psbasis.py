@@ -1040,10 +1040,10 @@ class PSBasis(object):
                 sage: example4_3 = E^2 - E - 1; B.recurrence(example4_3)
                 Sn^2 + Sn - 1
                 sage: example4_4 = E - (x+1); B.recurrence(example4_4)
-                Sn + (-n)*Sni - n
+                Sn + (-n)*Sni + (-n)
                 sage: example4_5 = E^3 - (x^2+6*x+10)*E^2 + (x+2)*(2*x+5)*E-(x+1)*(x+2)
                 sage: B.recurrence(example4_5)
-                Sn^3 + (-n^2 - 6*n - 7)*Sn^2 + (-2*n^2 - 8*n - 7)*Sn - n^2 - 2*n - 1
+                Sn^3 + (-n^2 - 6*n - 7)*Sn^2 + (-2*n^2 - 8*n - 7)*Sn + (-n^2 - 2*n - 1)
         '''
         if(not type(operator) is tuple): # the input is not a compatibility condition
             if(isinstance(operator, str)):

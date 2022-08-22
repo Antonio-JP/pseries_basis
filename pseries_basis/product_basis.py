@@ -109,18 +109,18 @@ class SievedBasis(FactorialBasis):
             [      n   n + 1]
             [ -n - 1 2*n + 2]
             sage: B2.recurrence('x')
-            [      n       0 2*n*Sni]
-            [2*n + 1       n       0]
-            [      0   n + 1  -n - 1]
+            [        n         0 (2*n)*Sni]
+            [(2*n + 1)         n         0]
+            [        0   (n + 1)  (-n - 1)]
             sage: a,b,m,alpha = B2.compatibility('E')
             sage: Matrix([[alpha(i,j,B2.n()) for j in range(-a,b+1)] for i in range(m)])
             [                      1           (4*n - 3/2)/n                     3/2                       1]
             [    (n - 1/2)/(n + 1/2)         1/2*n/(n + 1/2) (3/2*n + 1/2)/(n + 1/2)                       1]
             [                      0                       1       (3*n + 2)/(n + 1)                       1]
             sage: B2.recurrence('E')                                                                                                                                                         
-            [                      Sn + 1      (3/2*n + 1/2)/(n + 1/2)                            1]
-            [    ((4*n + 5/2)/(n + 1))*Sn ((n + 1/2)/(n + 3/2))*Sn + 1            (3*n + 2)/(n + 1)]
-            [                      3/2*Sn ((1/2*n + 1/2)/(n + 3/2))*Sn                            1]
+            [                    Sn + 1        (3*n + 1)/(2*n + 1)                          1]
+            [    (8*n + 5)/(2*n + 2)*Sn (2*n + 1)/(2*n + 3)*Sn + 1          (3*n + 2)/(n + 1)]
+            [                    3/2*Sn       (n + 1)/(2*n + 3)*Sn                          1]
 
         Now consider the following difference operator:
 
@@ -816,10 +816,10 @@ class ProductBasis(SievedBasis):
             [ -n - 1 2*n + 2]
             [ -n - 1 2*n + 2]
             sage: B2.recurrence('x')
-            [      n       0       0 2*n*Sni]
-            [2*n + 1       n       0       0]
-            [      0 2*n + 1  -n - 1       0]
-            [      0       0 2*n + 2  -n - 1]
+            [        n         0         0 (2*n)*Sni]
+            [(2*n + 1)         n         0         0]
+            [        0 (2*n + 1)  (-n - 1)         0]
+            [        0         0 (2*n + 2)  (-n - 1)]
 
         Now consider the following difference operator:
 

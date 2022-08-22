@@ -738,7 +738,7 @@ class SFactorialBasis(FactorialBasis):
                 sage: B.compatible_operators() == B2.compatible_operators()
                 True
                 sage: B2.recurrence('E')
-                ((n^3 + 4*n^2 + 6*n + 4)/(n^3 + 3*n^2 + n + 3))*Sn + 1
+                (n^3 + 4*n^2 + 6*n + 4)/(n^3 + 3*n^2 + n + 3)*Sn + 1
 
             This scalar product also work with the other subclasses of :class:`SFactorialBasis`::
 
