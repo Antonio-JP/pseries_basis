@@ -14,12 +14,12 @@ jobs:
       image: sagemath/sagemath:latest
       options: --user root
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Installing git and dependencies
       run: |
-        apt-get -qq update \
-        && apt-get -qq install -y --no-install-recommends git apt-transport-https ca-certificates \
-        && apt-get -qq clean
+        sudo DEBIAN_FRONTEND=noninteractive apt-get update
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git apt-transport-https ca-certificates \
+        sudo DEBIAN_FRONTEND=noninteractive apt-get clean
     - name: Install package
       run: |
         sage -pip install --upgrade .
