@@ -9,9 +9,9 @@ on:
 jobs:
   build:
     
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     container: 
-      image: sagemath/sagemath:latest
+      image: sagemath/sagemath:9.5
       options: --user root
     steps:
     - uses: actions/checkout@v2
