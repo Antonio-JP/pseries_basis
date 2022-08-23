@@ -19,21 +19,17 @@ Let $\mathbb{K}$ be a computable field and consider $\mathbb{K}[[x]]$ its ring o
 
 Solving this problem is equivalent to find an operator $L$ acting only on $x$ and a function $G(x,n)$ (called a _certificate_) such that:
 
-    $$L \cdot F(x,n) = G(x, n+1) - G(x,n),$$
+$$L \cdot F(x,n) = G(x, n+1) - G(x,n),$$
 
 since once we have this _telescoping equation_ for $F(x,n)$ we can then sum-up w.r.t. $n$ obtaining the equation
 
-```math
-    L \cdot \sum_n F(x,n) = 0.
-```
+$$L \cdot \sum_n F(x,n) = 0.$$
 
 There are many studies with respect to this problem and, in fact, it has been solved in many cases. This package, however, tries to solved a somehow _inverse_ problem:
 
 **Problem:** let $L$ be a linear operator and $K(x,n)$ be a kernel. Compute a new operator $\tilde{L}$ such that for any solution of the form $f(x) = \sum_n a_nK(x,n)$ to $L \cdot f(x) = 0$, we have 
 
-```math
-    \tilde{L} \cdot a_n = 0.
-```
+$$\tilde{L} \cdot a_n = 0.$$
 
 This is a partial solution to the more general case of **Inverse Zeilberger Problem**:
 
