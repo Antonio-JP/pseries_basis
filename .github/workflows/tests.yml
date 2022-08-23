@@ -15,15 +15,6 @@ jobs:
       options: --user root
     steps:
     - uses: actions/checkout@v2
-    - name: Installing git and dependencies
-      run: |
-        sudo add-apt-repository -remove http://security.ubuntu.com/ubuntu impish
-        sudo add-apt-repository -remove http://archive.ubuntu.com/ubuntu impish-security
-        sudo add-apt-repository --remove http://archive.ubuntu.com/ubuntu impish-updates
-        sudo add-apt-repository --remove http://archive.ubuntu.com/ubuntu impish-backports
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates
-        sudo apt-get clean
     - name: Install package
       run: |
         sage -pip install --upgrade .
