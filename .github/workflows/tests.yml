@@ -17,11 +17,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: Installing git and dependencies
       run: |
-        sudo add-apt-repository --remove http://security.ubuntu.com/ubuntu impish
-        sudo add-apt-repository --remove http://security.ubuntu.com/ubuntu impish-security
-        sudo add-apt-repository --remove http://security.ubuntu.com/ubuntu impish-updates
-        sudo add-apt-repository --remove http://security.ubuntu.com/ubuntu impish-backports
-        sudo DEBIAN_FRONTEND=noninteractive apt-get update
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git apt-transport-https ca-certificates \
         sudo DEBIAN_FRONTEND=noninteractive apt-get clean
     - name: Install package
