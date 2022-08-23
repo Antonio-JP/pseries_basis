@@ -15,6 +15,9 @@ jobs:
       options: --user root
     steps:
     - uses: actions/checkout@v2
+    - name: Installing git and dependencies
+      run: |
+        sudo apt-get install -y --no-install-recommends git apt-transport-https # ca-certificates
     - name: Install package
       run: |
         sage -pip install --upgrade .
