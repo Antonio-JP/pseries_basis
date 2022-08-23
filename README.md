@@ -19,9 +19,8 @@ Let $\mathbb{K}$ be a computable field and consider $\mathbb{K}[[x]]$ its ring o
 
 Solving this problem is equivalent to find an operator $L$ acting only on $x$ and a function $G(x,n)$ (called a _certificate_) such that:
 
-```math
-L \cdot F(x,n) = G(x, n+1) - G(x,n),
-```
+    $$L \cdot F(x,n) = G(x, n+1) - G(x,n),$$
+
 since once we have this _telescoping equation_ for $F(x,n)$ we can then sum-up w.r.t. $n$ obtaining the equation
 
 ```math
