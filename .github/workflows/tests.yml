@@ -11,7 +11,7 @@ jobs:
     
     runs-on: ubuntu-latest
     container: 
-      image: sagemath/sagemath:latest
+      image: sagemath/sagemath-dev:develop
       options: --user root
     steps:
     - uses: actions/checkout@v2
