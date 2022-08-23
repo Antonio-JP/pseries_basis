@@ -17,6 +17,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Installing git and dependencies
       run: |
+        lsb_release -a 
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates
         sudo apt-get clean
