@@ -11,12 +11,13 @@ jobs:
     
     runs-on: ubuntu-latest
     container: 
-      image: sagemath/sagemath:9.3.beta8
+      image: sagemath/sagemath:latest
       options: --user root
     steps:
     - uses: actions/checkout@v2
     - name: Installing git and dependencies
       run: |
+        sudo apt dist-upgrade
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates
         sudo apt-get clean
