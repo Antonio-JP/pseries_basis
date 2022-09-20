@@ -42,6 +42,9 @@ from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 from ore_algebra import OreAlgebra
 from ore_algebra.ore_operator import OreOperator
 
+# imports from this package
+from .ore import is_recurrence_algebra, eval_ore_operator
+
 ## Private module variables (static elements)
 _psbasis__OB = FractionField(PolynomialRing(QQ, ['n']))
 _psbasis__n = _psbasis__OB.gens()[0]
@@ -448,6 +451,37 @@ class PSBasis(object):
         return self._basis_matrix(nrows, nrows)
 
     def _basis_matrix(self, nrows, ncols):
+        r'''
+            Method that actually computes the matrix for basis.
+
+            In this method we have guaranteed that the arguments are positive integers.
+        '''
+        raise NotImplementedError("Method element must be implemented in each subclass of polynomial_basis")
+
+    def eval_matrix(self, nrows, ncols=None):
+        r'''
+            Method to get a matrix representation of the basis.
+
+            This method returns a matrix `M = (m_{i,j})` with ``nrows`` rows and
+            ``ncols`` columns such that `m_{i,j} = f_i(j)`, where `f_i(x)` is 
+            the `i`-th element of ``self`` represented in the power-basis.
+
+            INPUT:
+
+            * ``nrows``: number of rows of the final matrix
+            * ``ncols``: number of columns of the final matrix. If ``None`` is given, we
+                will automatically return the square matrix with size given by ``nrows``.
+        '''
+        ## Checking the arguments
+        if(not ((nrows in ZZ) and nrows > 0)):
+            raise ValueError("The number of rows must be a positive integer")
+        if(not ncols is None):
+            if(not ((ncols in ZZ) and ncols > 0)):
+                raise ValueError("The number of columns must be a positive integer")
+            return self._eval_matrix(nrows, ncols)
+        return self._eval_matrix(nrows, nrows)
+
+    def _eval_matrix(self, nrows, ncols):
         r'''
             Method that actually computes the matrix for basis.
 
@@ -973,7 +1007,6 @@ class PSBasis(object):
             
         return (a,b,Matrix([[alpha(i,j,self.n()) for j in range(-a,b+1)] for i in range(m)]))
 
-
     def recurrence(self, operator, sections=None):
         r'''
             Method to get the recurrence for a compatible operator.
@@ -1101,6 +1134,41 @@ class PSBasis(object):
                 ])
         else:
             raise TypeError("The number of sections must be a positive integer")
+
+    def recurrence_orig(self, operator):
+        r'''
+            Method to get the recurrence for a compatible operator.
+
+            This method computes a recurrence operator assocaited with a compatible operator with this basis
+            (see :func:`recurrence`). There are cases where the original operator was also a recurrence
+            operator. In these cases, we are able to repeat the process of compatibility over and over.
+
+            This method transforms the output of :func:`recurrence` so this iterative behavior can be done.
+
+            INPUT:
+
+            * ``operator``: the linear recurrence to check for compatibility.
+
+            OUTPUT: 
+
+            A new operator in the same ring as ``operator`` representing the associated recurrence with the 
+            compatibility conditions w.r.t. ``self``.
+
+            EXAMPLES:
+
+            TODO: Add examples and tests for this method
+        '''
+        if not is_recurrence_algebra(operator.parent()):
+            raise TypeError("The iterative construction only valid for linear recurrences")
+
+        comp = self.recurrence(operator)
+        if is_Matrix(comp):
+            # TODO: check whether this make sense or not
+            raise NotImplementedError("The compatibility has sections. Unable to go back to original ring")
+
+        E = operator.parent().gens()[0]
+        x = operator.parent().base().gens()[0]
+        return eval_ore_operator(self.remove_Sni(comp), operator.parent(), Sn = E, n = x, Sni = 1)
 
     def system(self, operator, sections=None):
         r'''
@@ -1602,6 +1670,111 @@ class PolyBasis(PSBasis):
         '''
         return Matrix([[self[n][k] for k in range(ncols)] for n in range(nrows)])
     
+    def _eval_matrix(self, nrows, ncols):
+        r'''
+            Method to get a matrix representation of the basis.
+            
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
+            See method :func:`~pseries_basis.psbasis.PSBasis.eval_matrix` for further information.
+
+            In particular for a :class:`PolyBasis`, the position `(i,j)` of this evaluation matrix is the evaluation of 
+            the `i`-th polynomial at value `j`:
+
+            .. MATH::
+
+                \begin{pmatrix}
+                    P_0(0) & P_0(1) & P_0(2) & P_0(3) & \ldots\\
+                    P_1(0) & P_1(1) & P_1(2) & P_1(3) & \ldots\\
+                    P_2(0) & P_2(1) & P_2(2) & P_2(3) & \ldots\\
+                    P_3(0) & P_3(1) & P_3(2) & P_3(3) & \ldots\\
+                    \vdots&\vdots&\vdots&\vdots&\ddots
+                \end{pmatrix}
+
+            This matrix can (sometimes) be used for changing the coordinates of a sequence between the canonical 
+            basis and the represented bases. These bases (where this transformation can be performed) are called 
+            quasi-triangular bases (see method :func:`is_quasi_triangular`).
+
+            EXAMPLES::
+
+                sage: from pseries_basis import *
+                sage: B = BinomialBasis()
+                sage: B.basis_matrix(5,5)
+                [1 1 1 1 1]
+                [0 1 2 3 4]
+                [0 0 1 3 6]
+                [0 0 0 1 4]
+                [0 0 0 0 1]
+                sage: B.basis_matrix(7,3)
+                [1 1 1]
+                [0 1 2]
+                [0 0 1]
+                [0 0 0]
+                [0 0 0]
+                [0 0 0]
+                [0 0 0]
+                sage: H = HermiteBasis()
+                sage: H.basis_matrix(5,5)
+                [   1    1    1    1    1]
+                [   0    2    4    6    8]
+                [  -2    2   14   34   62]
+                [   0   -4   40  180  464]
+                [  12  -20   76  876 3340]
+                sage: P = PowerBasis(1,1)
+                sage: P.basis_matrix(5,5)
+                [  1   1   1   1   1]
+                [  1   2   3   4   5]
+                [  1   4   9  16  25]
+                [  1   8  27  64 125]
+                [  1  16  81 256 625]
+        '''
+        return Matrix([[self[n](k) for k in range(ncols)] for n in range(nrows)])
+    
+    def is_quasi_triangular(self):
+        r'''
+            Method to check whether a basis is quasi-triangular or not.
+
+            A polynomial basis is called *quasi-triangula* if there is a strictly monotonic function 
+            `f: \mathbb{N} \rightarrow \mathbb{N}` such that
+
+            * For all `k, n \in \mathbb{N}`, ``self[k](n) = 0``.
+            * For all `n \in \mathbb{N}`, ``self[f(n)](n) != 0``.
+
+            This, in particular, means that the natural numbers are (eventually) always root for the elements
+            of ``self``.
+        '''
+        return False
+
+    def convert_initial_terms(self, sequence, size):
+        r'''
+            Method that converts a sequence in the canonical basis to its representation by ``self``.
+
+            This method takes a sequence represented in the cannonical basis of `\mathbb{K}^\mathbb{N}`
+            and returns its first terms represented by ``self``. This means, if we have a sequence 
+            `(a_n)_n`, and we write it as:
+
+            .. MATH::
+
+                a_n = \sum_k c_k P_k(n),
+
+            where `P_k(n)` is the `k`-th element if this basis, then this method will return the 
+            sequence `(c_0, \ldots, c_s)` where `s`is given in ``size``.
+
+            This only works when a basis is quasi-triangular (see method :func:`is_quasi_triangular`).
+
+            INPUT: 
+
+            * ``sequence``: an indexable object with the information about the sequence `a_n`.
+            * ``size``: number of elements we want of the new representation (i.e., the value `s`).
+
+            OUTPUT:
+
+            The values of `c_0, \ldots, c_s`.
+        '''
+        if not self.is_quasi_triangular():
+            raise TypeError("Transformation sequences can only be computed for quasi-triangular basis")
+
+        # now we are guarantee the matrix will have appropriate shape
+
     def __repr__(self):
         return "PolyBasis -- WARNING: this is an abstract class"
 
