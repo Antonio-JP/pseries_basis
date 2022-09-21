@@ -34,7 +34,7 @@ r'''
 ## Sage imports
 from sage.all import (FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff, 
                         SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
-                        block_matrix)
+                        block_matrix, vector)
 from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
@@ -457,6 +457,41 @@ class PSBasis(object):
             In this method we have guaranteed that the arguments are positive integers.
         '''
         raise NotImplementedError("Method element must be implemented in each subclass of polynomial_basis")
+
+    def convert_cannonical(self, sequence, size):
+        r'''
+            Matrix to convert a sequence by this basis in the cannonical basis of `\mathbb{K}[[x]]`.
+
+            Let `y(x) = \sum_n y_n x^n` be a formal power series. Since ``self`` represents another 
+            basis of the formal power series ring, then `y(x)` can be expressed in terms of the elements
+            of ``self``, i.e., `y(x) = \sum_n c_n P_n` where `P_n` is the `n`-th term of this basis.
+
+            This method allows to obtain the first terms of this expansion (as many as given in ``size``) 
+            for the formal power series `y(x)` where the first elements are given by ``sequence``. 
+
+            Using the basis matrix `M` (see :func:`basis_matrix`), this computation is straightforward, since
+
+            .. MATH::
+
+                y = c M.
+
+            INPUT:
+
+            * ``sequence``: indexable object with *enough* information to compute the result, representing the first
+              terms of the sequence `(y_0, y_1, \ldots)`.
+            * ``size``: numbert of elements of the sequence `(c_0, c_1,\ldots)` computed in this method.
+
+            OUTPUT:
+
+            The tuple `(c_0, \ldots, c_{k})` where `k` is given by ``size-1``.
+
+            TODO: add Examples and tests
+        '''
+        if not (self.by_degree() or self.by_order()): 
+            raise ValueError("We require a Polynomial or an Order basis to convert through the cannonical basis.")
+
+        M = self.basis_matrix(size)
+        return M.solve_left(vector(sequence[:size])) # the solution is guaranteed to be unique
 
     def eval_matrix(self, nrows, ncols=None):
         r'''
