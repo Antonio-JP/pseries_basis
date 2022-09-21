@@ -15,7 +15,7 @@ from sage.databases.oeis import OEISSequence
 
 from ore_algebra.ore_operator import OreOperator
 
-from pseries_basis.sequences import LambdaSequence, Sequence
+from pseries_basis.sequences import LambdaSequence
 
 from .ore import poly_decomp, get_recurrence_algebra
 

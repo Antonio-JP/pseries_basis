@@ -163,6 +163,8 @@ class OreSequence(Sequence):
 
         These sequences are always defined with a linear operator acting (somehow) on the 
         sequences and some initial onditions. 
+
+        TODO: Implement or use other class for this idea
     '''
     pass
 
