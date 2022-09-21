@@ -40,14 +40,38 @@ def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E") -> OreAlg
         * ``name_x``: string with the name of the inner variable.
         * ``name_shift``: string with the name of the shift operator for the algebra.
 
+        
+    '''
+    if not (name_x, name_shift) in __CACHE_REC_ALGEBRAS:
+        PR = PolynomialRing(QQ, name_x); x = PR.gens()[0]
+        OE = OreAlgebra(PR, (name_shift, lambda p : p(x=x+1), lambda _ : 0)); E = OE.gens()[0]
+        __CACHE_REC_ALGEBRAS[(name_x, name_shift)] = (OE, (x,E)) 
+    
+    return __CACHE_REC_ALGEBRAS[(name_x, name_shift)]
+
+__CACHE_DER_ALGEBRAS = {}
+def get_differential_algebra(name_x : str = "x", name_der : str = "Dx") -> OreAlgebra:
+    r'''
+        Method to get always the same ore algebra
+
+        This method unifies the access for OreAlgebra to get the recurrence shift operator
+        `x \mapsto x+1`. The method allows to provide the names for the inner variable `x` 
+        and the shift operator.
+
+        INPUT:
+
+        * ``name_x``: string with the name of the inner variable.
+        * ``name_shift``: string with the name of the shift operator for the algebra.
+
         A recurrence algebra for which the two generators can be extract by 
         ``x = *.base().gens()[0]`` and ``E = *.gens()[0]``.
     '''
-    if not (name_x, name_shift) in __CACHE_REC_ALGEBRAS:
-        PR = PolynomialRing(QQ, name_x).fraction_field(); x = PR.gens()[0]
-        __CACHE_REC_ALGEBRAS[(name_x, name_shift)] = OreAlgebra(PR, (name_shift, lambda p : p(x=x+1), lambda p : 0))
+    if not (name_x, name_der) in __CACHE_DER_ALGEBRAS:
+        PR = PolynomialRing(QQ, name_x); x = PR.gens()[0]
+        OD = OreAlgebra(PR, (name_der, lambda p : p, lambda p : p.derivative(x))); D = OD.gens()[0]
+        __CACHE_DER_ALGEBRAS[(name_x, name_der)] = (OD, (x, D))
     
-    return __CACHE_REC_ALGEBRAS[(name_x, name_shift)]
+    return __CACHE_DER_ALGEBRAS[(name_x, name_der)]
 
 #############################################################################################
 ###
@@ -154,7 +178,7 @@ def solution(operator, init, check_init=True) -> Sequence:
             coeffs = operator.polynomial().coefficients(False)
             lc = coeffs.pop()
             return -sum(__aux_sol(n-d+i)*coeffs[i](n-d) for i in range(operator.order()))/lc(n-d)
-    return __aux_sol
+    return LambdaSequence(__aux_sol, QQ)
 
 class OreSequence(Sequence):
     r'''
