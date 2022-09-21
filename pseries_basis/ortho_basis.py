@@ -4,7 +4,9 @@ r'''
     TODO: review this file to check the compatibility with the derivative in general.
 '''
 # Sage imports
-from sage.all import cached_method, Matrix, QQ, ZZ
+from sage.all import cached_method, Matrix, QQ, ZZ, lcm
+
+from pseries_basis.ore import poly_decomp
 
 # Local imports
 from .psbasis import PolyBasis
@@ -292,7 +294,7 @@ class OrthogonalBasis(PolyBasis):
         raise NotImplementedError("The mixed relation is not (yet) implemented in general")
 
     @cached_method
-    def recurrence(self, operator):
+    def recurrence(self, operator, cleaned=False):
         r'''
             Method to get the compatibility for an operator.
 
@@ -310,7 +312,7 @@ class OrthogonalBasis(PolyBasis):
             TODO: add examples
         '''
         try:
-            return super(OrthogonalBasis, self).recurrence(operator)
+            return super(OrthogonalBasis, self).recurrence(operator, cleaned=cleaned)
         except:
             try:
                 poly = operator.polynomial()
@@ -323,7 +325,15 @@ class OrthogonalBasis(PolyBasis):
                 coefficients = [self.recurrence(OrthogonalBasis._poly_coeff_by_dict(poly,{variable: i})) for i in range(m+1)]
                 monomials = [self.__compatibility_derivation(m,i) for i in range(m+1)]
 
-                return self.reduce_SnSni(sum(coefficients[i]*monomials[i] for i in range(m+1)))
+                output = self.reduce_SnSni(sum(coefficients[i]*monomials[i] for i in range(m+1)))
+                if cleaned:
+                    output = self.remove_Sni(output) # we remove the inverse shift
+                    # we clean denominators
+                    _, coeffs = poly_decomp(output.polynomial())
+                    to_mult = lcm([el.denominator() for el in coeffs])
+                    output = (to_mult * output).change_ring(self.OS().base().base())
+                
+                return output
 
             raise TypeError("The operator %s is not compatible with %s" %(operator, self))
 

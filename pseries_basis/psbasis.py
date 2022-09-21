@@ -43,7 +43,7 @@ from ore_algebra import OreAlgebra
 from ore_algebra.ore_operator import OreOperator
 
 # imports from this package
-from .ore import is_recurrence_algebra, eval_ore_operator
+from .ore import is_recurrence_algebra, eval_ore_operator, poly_decomp
 
 ## Private module variables (static elements)
 _psbasis__OB = FractionField(PolynomialRing(QQ, ['n']))
@@ -1042,7 +1042,7 @@ class PSBasis(object):
             
         return (a,b,Matrix([[alpha(i,j,self.n()) for j in range(-a,b+1)] for i in range(m)]))
 
-    def recurrence(self, operator, sections=None):
+    def recurrence(self, operator, sections=None, cleaned=False):
         r'''
             Method to get the recurrence for a compatible operator.
             
@@ -1113,62 +1113,73 @@ class PSBasis(object):
                 sage: B.recurrence(example4_5)
                 Sn^3 + (-n^2 - 6*n - 7)*Sn^2 + (-2*n^2 - 8*n - 7)*Sn + (-n^2 - 2*n - 1)
         '''
-        if(not type(operator) is tuple): # the input is not a compatibility condition
-            if(isinstance(operator, str)):
+        if not isinstance(operator, (tuple, str)): # the input is a polynomial
+            ## Trying to get a polynomial from the input
+            if(operator in self.OB().base_ring()):
+                return self.OS()(operator)
+            elif(operator.parent() is SR): # case of symbolic expression
+                if(any(not operator.is_polynomial(v) for v in operator.variables())):
+                    raise NotCompatibleError("The symbolic expression %s is not a polynomial" %operator)
+                operator = operator.polynomial(self.OB().base_ring())
+            elif(isinstance(operator, OreOperator)): # case of ore_algebra operator
+                operator = operator.polynomial()
+
+            try:
+                poly = operator.parent().flattening_morphism()(operator)
+            except AttributeError: # we have no polynomial
+                raise NotCompatibleError("The input %s is not a polynomial" %operator)
+        
+            ## getting the recurrence for each generator
+            recurrences = {str(v): self.recurrence(str(v), sections) for v in poly.variables()}
+            output = self.reduce_SnSni(poly(**recurrences))
+        else: # the input is a name or a compatibility condition
+            if(isinstance(operator, str)): # getting the compatibility condition for the str case
                 operator = self.compatibility(operator)
-            else:
-                ## Trying to get a polynomial from the input
-                if(operator in self.OB().base_ring()):
-                    return self.OS()(operator)
-                elif(operator.parent() is SR): # case of symbolic expression
-                    if(any(not operator.is_polynomial(v) for v in operator.variables())):
-                        raise NotCompatibleError("The symbolic expression %s is not a polynomial" %operator)
-                    operator = operator.polynomial(self.OB().base_ring())
-                elif(isinstance(operator, OreOperator)): # case of ore_algebra operator
-                    operator = operator.polynomial()
-
-                try:
-                    poly = operator.parent().flattening_morphism()(operator)
-                except AttributeError: # we have no polynomial
-                    raise NotCompatibleError("The input %s is not a polynomial" %operator)
+         
+            A,B,m,alpha = operator
             
-                ## getting the recurrence for each generator
-                recurrences = {str(v): self.recurrence(str(v)) for v in poly.variables()}
-                return self.reduce_SnSni(poly(**recurrences))
+            ## Now we check the sections argument
+            if(sections != None):
+                A,B,m,alpha = self.compatibility_sections((A,B,m,alpha), sections)
 
-        ## str case: we need to get the compatibility for that operator
-        ## First we get the compatibility condition
-        A,B,m,alpha = operator
-        
-        ## Now we check the sections argument
-        if(sections != None):
-            A,B,m,alpha = self.compatibility_sections((A,B,m,alpha), sections)
-
-        ## Now we do the transformation
-        Sn = self.Sn(); Sni = self.Sni(); n = self.n()
-        def SN(index):
-            if(index == 0):
-                return 1
-            elif(index > 0):
-                return Sn**index
+            ## Now we do the transformation
+            Sn = self.Sn(); Sni = self.Sni(); n = self.n()
+            def SN(index):
+                if(index == 0):
+                    return 1
+                elif(index > 0):
+                    return Sn**index
+                else:
+                    return Sni**(-index)
+            
+            # We have to distinguish between m = 1 and m > 1
+            if(m == 1): # we return an operator
+                recurrence = sum(alpha(0,i,n-i)*SN(-i) for i in range(-A,B+1))
+                output = self.reduce_SnSni(recurrence)
+            elif(m > 1):
+                output = Matrix(
+                    [
+                        [self.reduce_SnSni(sum(
+                            alpha(j,i,self.n()+(r-i-j)//m)*SN((r-i-j)//m)
+                            for i in range(-A,B+1) if ((r-i-j)%m == 0)
+                        )) for j in range(m)
+                        ] for r in range(m)
+                    ])
             else:
-                return Sni**(-index)
-        
-        # We have to distinguish between m = 1 and m > 1
-        if(m == 1): # we return an operator
-            recurrence = sum(alpha(0,i,n-i)*SN(-i) for i in range(-A,B+1))
-            return self.reduce_SnSni(recurrence)
-        elif(m > 1):
-            return Matrix(
-                [
-                    [self.reduce_SnSni(sum(
-                        alpha(j,i,self.n()+(r-i-j)//m)*SN((r-i-j)//m)
-                        for i in range(-A,B+1) if ((r-i-j)%m == 0)
-                    )) for j in range(m)
-                    ] for r in range(m)
-                ])
-        else:
-            raise TypeError("The number of sections must be a positive integer")
+                raise TypeError("The number of sections must be a positive integer")
+
+        ## Cleaning the output if required
+        if cleaned:
+            if is_Matrix(output): # case for several sections
+                pass # TODO: implement this simplification --> remove Sni for rows and also denominators for rows
+            else: # case with one operator
+                output = self.remove_Sni(output) # we remove the inverse shift
+                # we clean denominators
+                _, coeffs = poly_decomp(output.polynomial())
+                to_mult = lcm([el.denominator() for el in coeffs])
+                output = (to_mult * output).change_ring(self.OS().base().base())
+
+        return output
 
     def recurrence_orig(self, operator):
         r'''
