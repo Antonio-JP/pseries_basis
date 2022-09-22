@@ -277,7 +277,7 @@ class FactorialBasis(PolyBasis):
         r'''
             Method to get the division of a polynomial by other element of the basis after an operator.
 
-            It was proven in :arxiv:`1804.02964v1` that if `L` is an `(A,B)`-compatible operator
+            It was proven in :arxiv:`2202.05550` that if `L` is an `(A,B)`-compatible operator
             with a factorial basis, then for any `n \in \mathbb{N}`, we have
 
             .. MATH::
@@ -451,11 +451,11 @@ class FactorialBasis(PolyBasis):
                 sage: 9*B.increasing_polynomial(3,0) + 28*B.increasing_polynomial(3,1) + 20*B.increasing_polynomial(3,2) == x^2
                 True
 
-            This is equivalent to compute the basis matrix (see method :func:`~pseries_basis.psbasis.PSBasis.basis_matrix`) of the 
+            This is equivalent to compute the basis matrix (see method :func:`~pseries_basis.psbasis.PSBasis.functional_matrix`) of the 
             increasing basis (see method :func:`increasing_basis`). However, due to the different notation between these two
             methods, the relation is with the transposed matrix::
 
-                sage: B.increasing_basis(3).basis_matrix(5).inverse().transpose() == B.matrix_PtI(3,5)
+                sage: B.increasing_basis(3).functional_matrix(5).inverse().transpose() == B.matrix_PtI(3,5)
                 True
         '''
         return self.matrix_ItP(src,size).inverse()
@@ -464,7 +464,7 @@ class FactorialBasis(PolyBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
+            Following the notation and ideas of :arxiv:`2202.05550`, there is an
             equivalent condition to be a compatible operator. Namely, and operator is compatible
             by definition if it expands:
 
@@ -527,7 +527,7 @@ class FactorialBasis(PolyBasis):
         r'''
             Method to get the equivalence condition for a compatible operator.
 
-            Following the notation and ideas of :arxiv:`1804.02964v1`, there is an
+            Following the notation and ideas of :arxiv:`2202.05550`, there is an
             equivalent condition to be a compatible operator. Namely, and operator is compatible
             by definition if it expands:
 
@@ -1423,7 +1423,7 @@ class FallingBasis(SFactorialBasis):
         :class:`PowerBasis`) and in the case of `a=1`, `b = 0` and `c = \pm 1` we have the falling (or
         raising) factorial basis.
 
-        Following the notation in :arxiv:`1804.02964v1`, these basis
+        Following the notation in :arxiv:`2202.05550`, these basis
         have compatibilities with the multiplication by `x` and with the isomorphism
         `E: x \mapsto x+\frac{c}{a}`. All other compatible shifts (i.e., 
         maps `E_{\alpha}: x \mapsto x+\alpha)` are just powers of `E`.
@@ -1515,7 +1515,7 @@ class PowerBasis(FallingBasis):
         This class represents the :class:`FactorialBasis` formed by the simplest basis
         for the power series: `1`, `(ax+b)`, `(ax+b)^2`, etc.
 
-        Following the notation in :arxiv:`1804.02964v1`, this basis
+        Following the notation in :arxiv:`2202.05550`, this basis
         corresponds with `\mathfrak{P}_{a,b}`. In that paper we can find that these basis
         have compatibilities with the multiplication by `x` and with the derivation
         with respect to `x`.
@@ -1582,7 +1582,7 @@ class BinomialBasis(SFactorialBasis):
 
         where `a` is a natural number and `b` is a rational number.
 
-        In :arxiv:`1804.02964v1` this corresponds to `\mathfrak{C}_{a,b}`
+        In :arxiv:`2202.05550` this corresponds to `\mathfrak{C}_{a,b}`
         and it is compatible with the multiplication by `x` and by the shift operator
         `E: x \rightarrow x+1`.
 

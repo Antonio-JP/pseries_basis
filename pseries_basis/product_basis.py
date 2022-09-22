@@ -751,7 +751,7 @@ class ProductBasis(SievedBasis):
 
             Q_n(x) = \prod_{i=1}^{j}P_{k+1}^{(j)}(x)\prod_{i=j+1}^{m}P_{k}^{(j)}(x).
 
-        See the paper :arxiv:`1804.02964v1` for further information.
+        See the paper :arxiv:`2202.05550` for further information.
 
         INPUT:
 

@@ -2,7 +2,7 @@ r'''
     Sage package for Power Series Basis.
 
     This module introduces the basic structures in Sage for computing with *Power
-    Series Basis*. We based this work in the paper :arxiv:`1804.02964v1`
+    Series Basis*. We based this work in the paper :arxiv:`2202.05550`
     by M. Petkovšek, where all definitions and proofs for the algorithms here can be found.
 
     A Power Series basis is defined as a sequence `\{f_n\}_{n\in\mathbb{N}} \subset \mathbb{K}[[x]]`
@@ -68,7 +68,7 @@ class PSBasis(object):
         List of abstract methods:
 
         * :func:`~PSBasis.element`.
-        * :func:`~PSBasis._basis_matrix`.
+        * :func:`~PSBasis._functional_matrix`.
     '''
     def __init__(self, degree=True):
         self.__degree = degree
@@ -427,13 +427,28 @@ class PSBasis(object):
         '''
         return (not self.__degree)
 
-    def basis_matrix(self, nrows, ncols=None):
+    def functional_matrix(self, nrows, ncols=None):
         r'''
             Method to get a matrix representation of the basis.
 
-            This method returns a matrix `M = (m_{i,j})` with ``nrows`` rows and
+            This method returns a matrix `\tilde{M} = (m_{i,j})` with ``nrows`` rows and
             ``ncols`` columns such that `m_{i,j} = [x^j]f_i(x)`, where `f_i(x)` is 
             the `i`-th element of ``self``.
+
+            This is the upper-left part of the matrix `M` that represent, by rows,
+            the elements of this basis in terms of the canonical basis of the formal
+            power series ring (`\{1,x,x^2,\ldots\}`). Hence, if we have an element 
+            `y(x) \in \mathbb{K}[[x]]` with:
+
+            .. MATH::
+
+                y(x) = \sum_{n\geq 0} y_n x^n = \sum_{n\geq 0} c_n f_n(x),
+
+            then the infinite vectors `\mathbf{y}` and `\mathbf{c}` satisfies:
+
+            .. MATH::
+
+                \mathbf{y} = \mathbf{c} M
 
             INPUT:
 
@@ -447,29 +462,47 @@ class PSBasis(object):
         if(not ncols is None):
             if(not ((ncols in ZZ) and ncols > 0)):
                 raise ValueError("The number of columns must be a positive integer")
-            return self._basis_matrix(nrows, ncols)
-        return self._basis_matrix(nrows, nrows)
+            return self._functional_matrix(nrows, ncols)
+        return self._functional_matrix(nrows, nrows)
 
-    def _basis_matrix(self, nrows, ncols):
+    def _functional_matrix(self, nrows, ncols):
         r'''
-            Method that actually computes the matrix for basis.
+            Method that actually computes the functional matrix for basis.
 
             In this method we have guaranteed that the arguments are positive integers.
         '''
-        raise NotImplementedError("Method element must be implemented in each subclass of polynomial_basis")
+        raise NotImplementedError("Method _functional_matrix must be implemented in each subclass of polynomial_basis")
 
-    def convert_cannonical(self, sequence, size):
+    def is_quasi_func_triangular(self):
         r'''
-            Matrix to convert a sequence by this basis in the cannonical basis of `\mathbb{K}[[x]]`.
+            Method to check whether a basis is quasi-triangular or not as a functional basis.
 
-            Let `y(x) = \sum_n y_n x^n` be a formal power series. Since ``self`` represents another 
+            A basis `\mathcal{B} = \{f_n(x)\}_n` is a functional *quasi-triangular* if its 
+            functional matrix representation `M = \left(m_{n,k}\right)_{n,k \geq 0}` (see 
+            :func:`functional_matrix`) is *quasi-upper triangular*, i.e.,
+            there is a strictly monotonic function `I: \mathbb{N} \rightarrow \mathbb{N}` such that
+
+            * For all `k \in \mathbb{N}`, and `m > I(k)`, `m_{n,k} =0`, i.e., `x^k` divides `f_n(x)`.
+            * For all `k \in \mathbb{N}`, `m_{I(k),k} \neq 0`, i.e., `x^k` does not divide `f_{I(k)}(x)`.
+
+            This property will allow to transform the initial conditions from the canonical basis
+            of formal power series (`\{1,x,x^2,\ldots\}`) to the initial conditions of the expansion
+            over ``self``.
+        '''
+        return False
+
+    def functional_to_self(self, sequence, size):
+        r'''
+            Matrix to convert a sequence from the canonical basis of `\mathbb{K}[[x]]` to ``self``.
+
+            Let `y(x) = \sum_{n\geq 0} y_n x^n` be a formal power series. Since ``self`` represents another 
             basis of the formal power series ring, then `y(x)` can be expressed in terms of the elements
-            of ``self``, i.e., `y(x) = \sum_n c_n P_n` where `P_n` is the `n`-th term of this basis.
+            of ``self``, i.e., `y(x) = \sum_{n\geq 0} c_n f_n(x)` where `f_n(x)` is the `n`-th term of this basis.
 
             This method allows to obtain the first terms of this expansion (as many as given in ``size``) 
             for the formal power series `y(x)` where the first elements are given by ``sequence``. 
 
-            Using the basis matrix `M` (see :func:`basis_matrix`), this computation is straightforward, since
+            Using the basis matrix `M` (see :func:`functional_matrix`), this computation is straightforward, since
 
             .. MATH::
 
@@ -479,7 +512,7 @@ class PSBasis(object):
 
             * ``sequence``: indexable object with *enough* information to compute the result, representing the first
               terms of the sequence `(y_0, y_1, \ldots)`.
-            * ``size``: numbert of elements of the sequence `(c_0, c_1,\ldots)` computed in this method.
+            * ``size``: number of elements of the sequence `(c_0, c_1,\ldots)` computed in this method.
 
             OUTPUT:
 
@@ -487,25 +520,39 @@ class PSBasis(object):
 
             TODO: add Examples and tests
         '''
-        if not (self.by_degree() or self.by_order()): 
-            raise ValueError("We require a Polynomial or an Order basis to convert through the cannonical basis.")
+        if not (self.is_quasi_func_triangular()): 
+            raise ValueError("We require 'functional_matrix' to be quasi-upper triangular.")
 
-        M = self.basis_matrix(size)
-        return M.solve_left(vector(sequence[:size])) # the solution is guaranteed to be unique
+        # TODO: implement the generic case when the matrix is not strictly triangular
 
-    def eval_matrix(self, nrows, ncols=None):
+    def evaluation_matrix(self, nrows, ncols=None):
         r'''
             Method to get a matrix representation of the basis.
 
-            This method returns a matrix `M = (m_{i,j})` with ``nrows`` rows and
+            This method returns a matrix `\tilde{M} = (m_{i,j})` with ``nrows`` rows and
             ``ncols`` columns such that `m_{i,j} = f_i(j)`, where `f_i(x)` is 
-            the `i`-th element of ``self`` represented in the power-basis.
+            the `i`-th element of ``self``.
+
+            This is the upper-left part of the matrix `M` that represent, by rows,
+            the images of this basis in the natural numbers. This is specially useful when
+            considering recurrences since, if we have an element 
+            `y(x) \in \mathbb{K}[[x]]` with `y(n) = y_n` and:
+
+            .. MATH::
+
+                y(x) = \sum_{n\geq 0} c_n f_n(x),
+
+            then the infinite vectors `\mathbf{y}` and `\mathbf{c}` satisfies:
+
+            .. MATH::
+
+                \mathbf{y} = \mathbf{c} M
 
             INPUT:
 
             * ``nrows``: number of rows of the final matrix
             * ``ncols``: number of columns of the final matrix. If ``None`` is given, we
-                will automatically return the square matrix with size given by ``nrows``.
+              will automatically return the square matrix with size given by ``nrows``.
         '''
         ## Checking the arguments
         if(not ((nrows in ZZ) and nrows > 0)):
@@ -513,16 +560,65 @@ class PSBasis(object):
         if(not ncols is None):
             if(not ((ncols in ZZ) and ncols > 0)):
                 raise ValueError("The number of columns must be a positive integer")
-            return self._eval_matrix(nrows, ncols)
-        return self._eval_matrix(nrows, nrows)
+            return self._evaluation_matrix(nrows, ncols)
+        return self._evaluation_matrix(nrows, nrows)
 
-    def _eval_matrix(self, nrows, ncols):
+    def _evaluation_matrix(self, nrows, ncols):
         r'''
             Method that actually computes the matrix for basis.
 
             In this method we have guaranteed that the arguments are positive integers.
         '''
-        raise NotImplementedError("Method element must be implemented in each subclass of polynomial_basis")
+        raise NotImplementedError("Method _evaluation_matrix must be implemented in each subclass of polynomial_basis")
+
+    def is_quasi_eval_triangular(self):
+        r'''
+            Method to check whether a basis is quasi-triangular or not as an evaluation basis.
+
+            A basis `\mathcal{B} = \{f_n(x)\}_n` is an evaluation *quasi-triangular* if its 
+            evaluation matrix representation `M = \left(m_{n,k}\right)_{n,k \geq 0}` (see 
+            :func:`evaluation_matrix`) is *quasi-upper triangular*, i.e.,
+            there is a strictly monotonic function `I: \mathbb{N} \rightarrow \mathbb{N}` such that
+
+            * For all `k \in \mathbb{N}`, and `m > I(k)`, `m_{n,k} =0`, i.e., `k` is a zero of `f_n(x)`.
+            * For all `k \in \mathbb{N}`, `m_{I(k),k} \neq 0`, i.e., `k` is not a zero of `f_{I(k)}(x)`.
+
+            This property will allow to transform the initial conditions from a recurrence defined 
+            by the evaluation at the natural numbers to the initial conditions of the expansion
+            over ``self``.
+
+            in :arxiv:
+        '''
+        return False
+
+    def evaluation_to_self(self, sequence, size):
+        r'''
+            Method that converts a sequence in the canonical basis to its representation by ``self``.
+
+            This method takes a sequence represented in the cannonical basis of `\mathbb{K}^\mathbb{N}`
+            and returns its first terms represented by ``self``. This means, if we have a sequence 
+            `(a_n)_n`, and we write it as:
+
+            .. MATH::
+
+                a_n = \sum_k c_k P_k(n),
+
+            where `P_k(n)` is the `k`-th element if this basis, then this method will return the 
+            sequence `(c_0, \ldots, c_s)` where `s`is given in ``size``.
+
+            This only works when a basis is quasi-triangular (see method :func:`is_quasi_eval_triangular`).
+
+            INPUT: 
+
+            * ``sequence``: an indexable object with the information about the sequence `a_n`.
+            * ``size``: number of elements we want of the new representation (i.e., the value `s`).
+
+            OUTPUT:
+
+            The values of `c_0, \ldots, c_s`.
+        '''
+        if not self.is_quasi_eval_triangular():
+            raise TypeError("Transformation sequences can only be computed for quasi-triangular basis")
 
     ### AUXILIARY METHODS
     def reduce_SnSni(self,operator):
@@ -656,7 +752,7 @@ class PSBasis(object):
 
                 L \cdot b_{km+r} = \sum_{i=-A}^B \alpha_{r, i, k} b_{km+r+j}
 
-            See :arxiv:`1804.02964v1` for further information about the
+            See :arxiv:`2202.05550` for further information about the
             definition of a compatible operator.
             
             INPUT:
@@ -711,7 +807,7 @@ class PSBasis(object):
             
             This method returns the minimal index for the compatibility property
             for a particular operator. In the notation of the paper
-            :arxiv:`1804.02964v1`, for a `(A,B)`-compatible operator,
+            :arxiv:`2202.05550`, for a `(A,B)`-compatible operator,
             this lower bound corresponds to the value of `A`.
             
             INPUT:
@@ -739,7 +835,7 @@ class PSBasis(object):
             
             This method returns the maximal index for the compatibility property
             for a particular operator. In the notation of the paper
-            :arxiv:`1804.02964v1`, for a `(A,B)`-compatible operator,
+            :arxiv:`2202.05550`, for a `(A,B)`-compatible operator,
             this lower bound corresponds to the value of `B`.
             
             INPUT:
@@ -1047,7 +1143,7 @@ class PSBasis(object):
             Method to get the recurrence for a compatible operator.
             
             This method returns the recurrence equation induced for a compatible operator. 
-            In :arxiv:`1804.02964v1` this compatibility
+            In :arxiv:`2202.05550` this compatibility
             is shown to be an algebra isomorphism, so we can compute the compatibility
             final sequence operator using the ``ore_algebra`` package and a plain 
             substitution.
@@ -1096,7 +1192,7 @@ class PSBasis(object):
                 (2*n + 2)*Sn
 
             We can also use the operators from :class:`ore_algebra.OreAlgebra` to get the compatibility. Here
-            we see some examples extracted from :arxiv:`1804.02964v1`::
+            we see some examples extracted from :arxiv:`2202.05550`::
 
                 sage: from ore_algebra import OreAlgebra
                 sage: OE.<E> = OreAlgebra(QQ[x], ('E', lambda p : p(x=x+1), lambda p : 0))
@@ -1349,7 +1445,7 @@ class PSBasis(object):
         r'''
             Method to get the compatibility coefficient.
             
-            Following :arxiv:`1804.02964v1`, an operator `L` is
+            Following :arxiv:`2202.05550`, an operator `L` is
             `(A,B)`-compatible if there are some `\alpha_{n,i}` such that for all `n = kr + j`
 
             .. MATH::
@@ -1543,9 +1639,9 @@ class PSBasis(object):
         return "PSBasis -- WARNING: this is an abstract class"
     
     ### OTHER ALIASES FOR METHODS
-    A = get_lower_bound #: alias for the method :func:`get_lower_bound`, according to notation in :arxiv:`1804.02964v1`
-    B = get_upper_bound #: alias for the method :func:`get_upper_bound`, according to notation in :arxiv:`1804.02964v1`
-    alpha = compatibility_coefficient #: alias for the method :func:`compatibility_coefficient`, according to notation in :arxiv:`1804.02964v1`
+    A = get_lower_bound #: alias for the method :func:`get_lower_bound`, according to notation in :arxiv:`2202.05550`
+    B = get_upper_bound #: alias for the method :func:`get_upper_bound`, according to notation in :arxiv:`2202.05550`
+    alpha = compatibility_coefficient #: alias for the method :func:`compatibility_coefficient`, according to notation in :arxiv:`2202.05550`
 
 class BruteBasis(PSBasis):
     r'''
@@ -1600,12 +1696,12 @@ class BruteBasis(PSBasis):
             return self.polynomial_ring(name)(self.__get_element(n))
         return self.__get_element(n)
 
-    def _basis_matrix(self, nrows, ncols):
+    def _functional_matrix(self, nrows, ncols):
         r'''
             Method to get a matrix representation of the basis.
             
             This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.basis_matrix` for further information.
+            See method :func:`~pseries_basis.psbasis.PSBasis.functional_matrix` for further information.
 
             EXAMPLES::
 
@@ -1614,16 +1710,16 @@ class BruteBasis(PSBasis):
                 sage: B = BruteBasis(lambda n : BesselD(n), False)
                 sage: B2 = BruteBasis(lambda n : bessel_J(n,x), False)
                 sage: B3 = BesselBasis()
-                sage: B.basis_matrix(4,5) == B2.basis_matrix(4,5)
+                sage: B.functional_matrix(4,5) == B2.functional_matrix(4,5)
                 True
-                sage: B.basis_matrix(6,7)
+                sage: B.functional_matrix(6,7)
                 [      1       0    -1/4       0    1/64       0 -1/2304]
                 [      0     1/2       0   -1/16       0   1/384       0]
                 [      0       0     1/8       0   -1/96       0  1/3072]
                 [      0       0       0    1/48       0  -1/768       0]
                 [      0       0       0       0   1/384       0 -1/7680]
                 [      0       0       0       0       0  1/3840       0]
-                sage: B3.basis_matrix(10) == B.basis_matrix(10)
+                sage: B3.functional_matrix(10) == B.functional_matrix(10)
                 True
         '''
         try:
@@ -1653,12 +1749,12 @@ class PolyBasis(PSBasis):
     def __init__(self):
         super(PolyBasis,self).__init__(True)
 
-    def _basis_matrix(self, nrows, ncols):
+    def _functional_matrix(self, nrows, ncols):
         r'''
             Method to get a matrix representation of the basis.
             
             This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.basis_matrix` for further information.
+            See method :func:`~pseries_basis.psbasis.PSBasis.functional_matrix` for further information.
 
             In particular for a :class:`PolyBasis`, the elements `P_n(x)` have degree `n` for each
             value of `n \in \mathbb{N}`. This means that we can write:
@@ -1685,13 +1781,13 @@ class PolyBasis(PSBasis):
 
                 sage: from pseries_basis import *
                 sage: B = BinomialBasis()
-                sage: B.basis_matrix(5,5)
+                sage: B.functional_matrix(5,5)
                 [    1     0     0     0     0]
                 [    0     1     0     0     0]
                 [    0  -1/2   1/2     0     0]
                 [    0   1/3  -1/2   1/6     0]
                 [    0  -1/4 11/24  -1/4  1/24]
-                sage: B.basis_matrix(7,3)
+                sage: B.functional_matrix(7,3)
                 [      1       0       0]
                 [      0       1       0]
                 [      0    -1/2     1/2]
@@ -1700,14 +1796,14 @@ class PolyBasis(PSBasis):
                 [      0     1/5   -5/12]
                 [      0    -1/6 137/360]
                 sage: H = HermiteBasis()
-                sage: H.basis_matrix(5,5)
+                sage: H.functional_matrix(5,5)
                 [  1   0   0   0   0]
                 [  0   2   0   0   0]
                 [ -2   0   4   0   0]
                 [  0 -12   0   8   0]
                 [ 12   0 -48   0  16]
                 sage: P = PowerBasis(1,1)
-                sage: P.basis_matrix(5,5)
+                sage: P.functional_matrix(5,5)
                 [1 0 0 0 0]
                 [1 1 0 0 0]
                 [1 2 1 0 0]
@@ -1716,12 +1812,12 @@ class PolyBasis(PSBasis):
         '''
         return Matrix([[self[n][k] for k in range(ncols)] for n in range(nrows)])
     
-    def _eval_matrix(self, nrows, ncols):
+    def _evaluation_matrix(self, nrows, ncols):
         r'''
             Method to get a matrix representation of the basis.
             
             This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.eval_matrix` for further information.
+            See method :func:`~pseries_basis.psbasis.PSBasis.evaluation_matrix` for further information.
 
             In particular for a :class:`PolyBasis`, the position `(i,j)` of this evaluation matrix is the evaluation of 
             the `i`-th polynomial at value `j`:
@@ -1738,19 +1834,19 @@ class PolyBasis(PSBasis):
 
             This matrix can (sometimes) be used for changing the coordinates of a sequence between the canonical 
             basis and the represented bases. These bases (where this transformation can be performed) are called 
-            quasi-triangular bases (see method :func:`is_quasi_triangular`).
+            quasi-triangular bases (see method :func:`is_quasi_eval_triangular`).
 
             EXAMPLES::
 
                 sage: from pseries_basis import *
                 sage: B = BinomialBasis()
-                sage: B.basis_matrix(5,5)
+                sage: B.functional_matrix(5,5)
                 [1 1 1 1 1]
                 [0 1 2 3 4]
                 [0 0 1 3 6]
                 [0 0 0 1 4]
                 [0 0 0 0 1]
-                sage: B.basis_matrix(7,3)
+                sage: B.functional_matrix(7,3)
                 [1 1 1]
                 [0 1 2]
                 [0 0 1]
@@ -1759,14 +1855,14 @@ class PolyBasis(PSBasis):
                 [0 0 0]
                 [0 0 0]
                 sage: H = HermiteBasis()
-                sage: H.basis_matrix(5,5)
+                sage: H.functional_matrix(5,5)
                 [   1    1    1    1    1]
                 [   0    2    4    6    8]
                 [  -2    2   14   34   62]
                 [   0   -4   40  180  464]
                 [  12  -20   76  876 3340]
                 sage: P = PowerBasis(1,1)
-                sage: P.basis_matrix(5,5)
+                sage: P.functional_matrix(5,5)
                 [  1   1   1   1   1]
                 [  1   2   3   4   5]
                 [  1   4   9  16  25]
@@ -1774,52 +1870,6 @@ class PolyBasis(PSBasis):
                 [  1  16  81 256 625]
         '''
         return Matrix([[self[n](k) for k in range(ncols)] for n in range(nrows)])
-    
-    def is_quasi_triangular(self):
-        r'''
-            Method to check whether a basis is quasi-triangular or not.
-
-            A polynomial basis is called *quasi-triangula* if there is a strictly monotonic function 
-            `f: \mathbb{N} \rightarrow \mathbb{N}` such that
-
-            * For all `k, n \in \mathbb{N}`, ``self[k](n) = 0``.
-            * For all `n \in \mathbb{N}`, ``self[f(n)](n) != 0``.
-
-            This, in particular, means that the natural numbers are (eventually) always root for the elements
-            of ``self``.
-        '''
-        return False
-
-    def convert_initial_terms(self, sequence, size):
-        r'''
-            Method that converts a sequence in the canonical basis to its representation by ``self``.
-
-            This method takes a sequence represented in the cannonical basis of `\mathbb{K}^\mathbb{N}`
-            and returns its first terms represented by ``self``. This means, if we have a sequence 
-            `(a_n)_n`, and we write it as:
-
-            .. MATH::
-
-                a_n = \sum_k c_k P_k(n),
-
-            where `P_k(n)` is the `k`-th element if this basis, then this method will return the 
-            sequence `(c_0, \ldots, c_s)` where `s`is given in ``size``.
-
-            This only works when a basis is quasi-triangular (see method :func:`is_quasi_triangular`).
-
-            INPUT: 
-
-            * ``sequence``: an indexable object with the information about the sequence `a_n`.
-            * ``size``: number of elements we want of the new representation (i.e., the value `s`).
-
-            OUTPUT:
-
-            The values of `c_0, \ldots, c_s`.
-        '''
-        if not self.is_quasi_triangular():
-            raise TypeError("Transformation sequences can only be computed for quasi-triangular basis")
-
-        # now we are guarantee the matrix will have appropriate shape
 
     def __repr__(self):
         return "PolyBasis -- WARNING: this is an abstract class"
@@ -1840,12 +1890,12 @@ class OrderBasis(PSBasis):
     def __init__(self):
         super(OrderBasis,self).__init__(False)
 
-    def _basis_matrix(self, nrows, ncols):
+    def _functional_matrix(self, nrows, ncols):
         r'''
             Method to get a matrix representation of the basis.
             
             This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.basis_matrix` for further information.
+            See method :func:`~pseries_basis.psbasis.PSBasis.functional_matrix` for further information.
             
             In an order basis, the `n`-th element of the basis is always a formal power series
             of order `n`. Hence, we can consider the infinite matrix where the coefficient
@@ -1865,18 +1915,18 @@ class OrderBasis(PSBasis):
 
                 sage: from pseries_basis import *
                 sage: B = FunctionalBasis(sin(x))
-                sage: B.basis_matrix(5,5)
+                sage: B.functional_matrix(5,5)
                 [   1    0    0    0    0]
                 [   0    1    0 -1/6    0]
                 [   0    0    1    0 -1/3]
                 [   0    0    0    1    0]
                 [   0    0    0    0    1]
-                sage: ExponentialBasis().basis_matrix(4,7)
+                sage: ExponentialBasis().functional_matrix(4,7)
                 [     1      0      0      0      0      0      0]
                 [     0      1    1/2    1/6   1/24  1/120  1/720]
                 [     0      0      1      1   7/12    1/4 31/360]
                 [     0      0      0      1    3/2    5/4    3/4]
-                sage: BesselBasis().basis_matrix(3,6)
+                sage: BesselBasis().functional_matrix(3,6)
                 [    1     0  -1/4     0  1/64     0]
                 [    0   1/2     0 -1/16     0 1/384]
                 [    0     0   1/8     0 -1/96     0]

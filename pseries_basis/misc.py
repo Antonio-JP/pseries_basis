@@ -14,7 +14,7 @@ def DefiniteSumSolutions(operator, *input):
         Petkovšek's algorithm for transforming operators into recurrence equations.
         
         This method is the complete execution for the algorithm **DefiniteSumSolutions** described in
-        :arxiv:`1804.02964v1`. This methods takes an operator `L` and convert the problem
+        :arxiv:`2202.05550`. This methods takes an operator `L` and convert the problem
         of being solution `L \cdot y(x) = 0` to a recurrence equation assuming some hypergeometric
         terms in the expansion.
         
@@ -285,7 +285,7 @@ def guess_compatibility_E(basis, shift = 1, sections = None, A = None, bound_roo
         Method to guess the compatibility of a shift with a basis.
 
         This method use ``ore_algebra`` package to guess a possible compatibility condition
-        for a shift with a basis. This uses the generalization of Proposition 3 in :arxiv:`1804.02964v1`
+        for a shift with a basis. This uses the generalization of Proposition 3 in :arxiv:`2202.05550`
         to characterize the compatibility of a shift with a factorial basis.
 
         INPUT:
@@ -333,7 +333,7 @@ def guess_compatibility_E(basis, shift = 1, sections = None, A = None, bound_roo
 
     x = basis[1].parent().gens()[0]
     actual_data_bound = bound_data+bound_roots
-    M = Matrix([list(basis[i](x=x+shift))+(actual_data_bound-i-1)*[0] for i in range(actual_data_bound)])*basis.basis_matrix(actual_data_bound).inverse()
+    M = Matrix([list(basis[i](x=x+shift))+(actual_data_bound-i-1)*[0] for i in range(actual_data_bound)])*basis.functional_matrix(actual_data_bound).inverse()
     # the rows of M have all the coordinates of basis[i](x+1) in term of basis itself
     if(any(any(el != 0 for el in M[i][:i-A]) for i in range(A,M.nrows()))):
         raise ValueError("The guessed bound is incorrect: a non-zero coefficient found")
