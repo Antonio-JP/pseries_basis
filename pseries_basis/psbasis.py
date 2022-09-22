@@ -27,7 +27,7 @@ r'''
         sage: from pseries_basis import *
 
     This package includes no example since all the structures it offers are abstract, so they should
-    never be instancaited. For particular examples and test, look to the modules :mod:`~pseries_basis.factorial_basis`
+    never be instantiated. For particular examples and test, look to the modules :mod:`~pseries_basis.factorial_basis`
     and :mod:`~pseries_basis.product_basis`.
 '''
 
