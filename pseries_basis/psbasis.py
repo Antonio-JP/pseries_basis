@@ -523,7 +523,10 @@ class PSBasis(object):
         if not (self.is_quasi_func_triangular()): 
             raise ValueError("We require 'functional_matrix' to be quasi-upper triangular.")
 
-        # TODO: implement the generic case when the matrix is not strictly triangular
+        M = self.functional_matrix(size)
+        if M.is_triangular("upper"):
+            return tuple([el for el in M.solve_left(vector(sequence[:size]))])
+        raise NotImplementedError("The pure quasi-triangular case not implemented yet.")
 
     def evaluation_matrix(self, nrows, ncols=None):
         r'''
@@ -587,38 +590,46 @@ class PSBasis(object):
             by the evaluation at the natural numbers to the initial conditions of the expansion
             over ``self``.
 
-            in :arxiv:
+            In :arxiv:`2202.05550`, this concept is equivalent to the definition of a *quasi-triangular* basis
+            in the case of factorial bases.
         '''
         return False
 
     def evaluation_to_self(self, sequence, size):
         r'''
-            Method that converts a sequence in the canonical basis to its representation by ``self``.
+            Matrix to convert a sequence from the evaluation basis of `\mathbb{K}[[x]]` to ``self``.
 
-            This method takes a sequence represented in the cannonical basis of `\mathbb{K}^\mathbb{N}`
-            and returns its first terms represented by ``self``. This means, if we have a sequence 
-            `(a_n)_n`, and we write it as:
+            Let `y(x) = \sum_{n\geq 0} c_n f_n(x)` be a formal power series where `f_n(x)` is the `n`-th term of this basis.
+            If well defined, the values `y_n = y(n)` defined a new sequence of numbers.
+
+            This method allows to obtain the first terms of the `\mathbf{c}` expansion (as many as given in ``size``) 
+            for the formal power series `y(x)` where the first evaluations `y_n` are given by ``sequence``. 
+
+            Using the evaluation matrix `M` (see :func:`evaluation_matrix`), this computation is straightforward, since
 
             .. MATH::
 
-                a_n = \sum_k c_k P_k(n),
+                y = c M.
 
-            where `P_k(n)` is the `k`-th element if this basis, then this method will return the 
-            sequence `(c_0, \ldots, c_s)` where `s`is given in ``size``.
+            INPUT:
 
-            This only works when a basis is quasi-triangular (see method :func:`is_quasi_eval_triangular`).
-
-            INPUT: 
-
-            * ``sequence``: an indexable object with the information about the sequence `a_n`.
-            * ``size``: number of elements we want of the new representation (i.e., the value `s`).
+            * ``sequence``: indexable object with *enough* information to compute the result, representing the first
+              terms of the sequence `(y_0, y_1, \ldots)`.
+            * ``size``: number of elements of the sequence `(c_0, c_1,\ldots)` computed in this method.
 
             OUTPUT:
 
-            The values of `c_0, \ldots, c_s`.
+            The tuple `(c_0, \ldots, c_{k})` where `k` is given by ``size-1``.
+
+            TODO: add Examples and tests
         '''
-        if not self.is_quasi_eval_triangular():
-            raise TypeError("Transformation sequences can only be computed for quasi-triangular basis")
+        if not (self.is_quasi_func_triangular()): 
+            raise ValueError("We require 'functional_matrix' to be quasi-upper triangular.")
+
+        M = self.functional_matrix(size)
+        if M.is_triangular("upper"):
+            return tuple([el for el in M.solve_left(vector(sequence[:size]))])
+        raise NotImplementedError("The pure quasi-triangular case not implemented yet.")
 
     ### AUXILIARY METHODS
     def reduce_SnSni(self,operator):
