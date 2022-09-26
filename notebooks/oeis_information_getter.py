@@ -36,12 +36,11 @@ def search_dfinite_order(min_order, min_results = 5, i = 0):
                 raise KeyboardInterrupt("No more D-finite sequences")
             
             # fitering out the non-desired results
-            sequences = [seq for seq in sequences if seq.is_dfinite()] # filtering results we can extract the recurrence
-            sequences = [seq for seq in sequences if seq.order() >= min_order] # filtering results that have to low order
-
             for seq in sequences:
-                results.append(seq)
-                bar()
+                if seq.is_dfinite():
+                    if seq.order() >= min_order:
+                        results.append(seq)
+                        bar()
             shift += 1
     return results, shift
 
@@ -96,10 +95,10 @@ def explore_sequence(sequence, ring, first_bases, second_bases, bound_guess=100)
     return result
 
 if __name__=="__main__": # Main part of the script
-    first_bases = []
-    second_bases = []
+    first_bases = [BinomialBasis()]
+    second_bases = [BinomialBasis()]
     min_order = 3
-    results_search = 50
+    results_search = 10
     shift = 0
     # Treating the arguments
     while(True):
