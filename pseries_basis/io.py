@@ -10,14 +10,14 @@ import logging
 import re
 from functools import lru_cache
 
-from sage.all import ZZ, var
+from sage.all import ZZ, var, lcm
 from sage.databases.oeis import OEISSequence
 
 from ore_algebra.ore_operator import OreOperator
 
 from pseries_basis.sequences import LambdaSequence
 
-from .ore import poly_decomp, get_recurrence_algebra
+from .ore import poly_decomp, get_recurrence_algebra, solution, required_init
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class EnhOEISSequence(OEISSequence):
                 # removing the first part until "recurrence: "
                 start_pos = formula.find("ecurrence: ") + len("ecurrence: ")
                 # getting the part of the formula unitl a "with" a "." or the end of the line
-                end_pos = self.__find_several_first(formula, ".", " with", start = start_pos)
+                end_pos = self.__find_several_first(formula, ".", " with", ",", start = start_pos)
                 end_pos = len(formula) if end_pos < 0 else end_pos
                 formula = formula[start_pos:end_pos+1]
 
@@ -104,7 +104,7 @@ class EnhOEISSequence(OEISSequence):
                 else:
                     logger.info(f"dfinite_recurrence: no valid arguments in the formula")
             except Exception as e:
-                logger.error(f"dfinite_recurrence: Unexpected error {e}")
+                logger.info(f"dfinite_recurrence: Unexpected error {e}")
         logger.info(f"dfinite_recurrence: no recurrence operator found for OEIS sequence {self.id()}")
         return None
 
@@ -118,6 +118,9 @@ class EnhOEISSequence(OEISSequence):
 
     @property
     def sequence(self):
+        if self.is_dfinite():
+            d = required_init(self.dfinite_recurrence())
+            return solution(self.dfinite_recurrence(),self.first_terms(d+1))
         return LambdaSequence(lambda n : self.first_terms(n+1)[-1], ZZ)
 
     def __find_several_first(self, string, *to_find, start=0):
@@ -131,7 +134,7 @@ class EnhOEISSequence(OEISSequence):
         return min(pos)
 
     def __extract_recurrence(self, formula, neg_order):
-        OE = get_recurrence_algebra('x', 'E')
+        OE, _ = get_recurrence_algebra('x', 'E')
         parts = [el.strip() for el in formula.split(".")[0].split(",")]
         # substitution reg
         regs = [(r"a\(n\+(\d+)\)", r"E**(\1 + "+str(neg_order)+")"),
@@ -152,7 +155,11 @@ class EnhOEISSequence(OEISSequence):
                     rhs = __apply_iterative(regs, rhs)
                     rhs = rhs.replace("n", f"(x+{neg_order})")
                 
-                    return OE(lhs) - OE(rhs)#, inits
+                    output = OE(lhs) - OE(rhs)
+                    _, coeffs = poly_decomp(output.polynomial())
+                    cleaned_denom = lcm([el.denominator() for el in coeffs])
+                    return get_recurrence_algebra('x','E', rational=False)[0](cleaned_denom * output)
+
                 except:
                     logger.info(f"extract_recurrence: Can not convert this: {part} (({lhs} ||| {rhs}))")
                     pass
