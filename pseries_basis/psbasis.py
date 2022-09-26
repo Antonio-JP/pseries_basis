@@ -1196,21 +1196,20 @@ class PSBasis(object):
                 (2*n + 2)*Sn
 
             We can also use the operators from :class:`ore_algebra.OreAlgebra` to get the compatibility. Here
-            we see some examples extracted from :arxiv:`2202.05550`::
+            we see some examples extracted from Example 25 in :arxiv:`2202.05550`::
 
-                sage: from ore_algebra import OreAlgebra
-                sage: OE.<E> = OreAlgebra(QQ[x], ('E', lambda p : p(x=x+1), lambda p : 0))
-                sage: x = B[1].parent().gens()[0]
-                sage: example4_1 = E - 3; B.recurrence(example4_1)
+                sage: from pseries_basis.ore import get_recurrence_algebra
+                sage: OE, (x,E) = get_recurrence_algebra("x", "E", rational=False)
+                sage: example25_1 = E - 3; B.recurrence(example25_1)
                 Sn - 2
-                sage: example4_2 = E^2 - 2*E + 1; B.recurrence(example4_2)
+                sage: example25_2 = E^2 - 2*E + 1; B.recurrence(example25_2)
                 Sn^2
-                sage: example4_3 = E^2 - E - 1; B.recurrence(example4_3)
+                sage: example25_3 = E^2 - E - 1; B.recurrence(example25_3)
                 Sn^2 + Sn - 1
-                sage: example4_4 = E - (x+1); B.recurrence(example4_4)
+                sage: example25_4 = E - (x+1); B.recurrence(example25_4)
                 Sn + (-n)*Sni + (-n)
-                sage: example4_5 = E^3 - (x^2+6*x+10)*E^2 + (x+2)*(2*x+5)*E-(x+1)*(x+2)
-                sage: B.recurrence(example4_5)
+                sage: example25_5 = E^3 - (x^2+6*x+10)*E^2 + (x+2)*(2*x+5)*E-(x+1)*(x+2)
+                sage: B.recurrence(example25_5)
                 Sn^3 + (-n^2 - 6*n - 7)*Sn^2 + (-2*n^2 - 8*n - 7)*Sn + (-n^2 - 2*n - 1)
         '''
         if not isinstance(operator, (tuple, str)): # the input is a polynomial
@@ -1307,14 +1306,14 @@ class PSBasis(object):
         if not is_recurrence_algebra(operator.parent()):
             raise TypeError("The iterative construction only valid for linear recurrences")
 
-        comp = self.recurrence(operator)
+        comp = self.recurrence(operator, cleaned=True)
         if is_Matrix(comp):
             # TODO: check whether this make sense or not
             raise NotImplementedError("The compatibility has sections. Unable to go back to original ring")
 
         E = operator.parent().gens()[0]
         x = operator.parent().base().gens()[0]
-        return eval_ore_operator(self.remove_Sni(comp), operator.parent(), Sn = E, n = x, Sni = 1)
+        return eval_ore_operator(comp, operator.parent(), Sn = E, n = x, Sni = 1)
 
     def system(self, operator, sections=None):
         r'''
@@ -1844,13 +1843,13 @@ class PolyBasis(PSBasis):
 
                 sage: from pseries_basis import *
                 sage: B = BinomialBasis()
-                sage: B.functional_matrix(5,5)
+                sage: B.evaluation_matrix(5,5)
                 [1 1 1 1 1]
                 [0 1 2 3 4]
                 [0 0 1 3 6]
                 [0 0 0 1 4]
                 [0 0 0 0 1]
-                sage: B.functional_matrix(7,3)
+                sage: B.evaluation_matrix(7,3)
                 [1 1 1]
                 [0 1 2]
                 [0 0 1]
@@ -1859,14 +1858,14 @@ class PolyBasis(PSBasis):
                 [0 0 0]
                 [0 0 0]
                 sage: H = HermiteBasis()
-                sage: H.functional_matrix(5,5)
+                sage: H.evaluation_matrix(5,5)
                 [   1    1    1    1    1]
                 [   0    2    4    6    8]
                 [  -2    2   14   34   62]
                 [   0   -4   40  180  464]
                 [  12  -20   76  876 3340]
                 sage: P = PowerBasis(1,1)
-                sage: P.functional_matrix(5,5)
+                sage: P.evaluation_matrix(5,5)
                 [  1   1   1   1   1]
                 [  1   2   3   4   5]
                 [  1   4   9  16  25]
