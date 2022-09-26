@@ -10,24 +10,114 @@ r'''
 '''
 
 from functools import lru_cache
-from .sequences import Sequence, LambdaSequence
+from typing import Any
 
-from ore_algebra import OreAlgebra
+from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
 
 from sage.all import QQ, ZZ, prod, PolynomialRing
-from sage.rings.polynomial.polynomial_element import is_MPolynomialRing, is_PolynomialRing
+from sage.rings.polynomial.polynomial_ring import PolynomialRing_general, is_PolynomialRing
+from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
+
+from .sequences import Sequence, LambdaSequence
 
 #############################################################################################
 ###
 ### METHODS TO CATEGORIZE ORE ALGEBRAS
 ###
 #############################################################################################
-def is_recurrence_algebra(_: OreAlgebra) -> bool:
-    return False
+def is_recurrence_algebra(algebra: OreAlgebra_generic) -> bool:
+    r'''
+        Method to check whether an :class:`OreAlgebra_generic` has the first operator a shift operator.
+    '''
+    return algebra.is_S() != False
+
+def is_double_recurrence_algebra(algebra: OreAlgebra_generic) -> bool:
+    r'''
+        Method to check whether if an :class:`OreAlbegra_generic` is a double directional operator ring.
+
+        This method will take a :class:`OreAlgebra_generic` and will check whether it is a recurrence algebra with 
+        two difference operators that are the inverse of each other. For doing so, we only need to consider its 
+        effect over the generator of the inner ring.
+    '''
+    # we have exactly 2 generators
+    if algebra.ngens() != 2:
+        return False
+    # at least one is the recurrence operator
+    if all(not algebra.is_S(i) for i in [0,1]):
+        return False
+    
+    # they are the inverse of each other
+    O, OI = algebra.gens()
+    return all((OI*O*v).coefficients() == [v] for v in algebra.base().base().gens())
+
+def is_differential_algebra(algebra: OreAlgebra_generic) -> bool:
+    r'''
+        Method to check whether an :class:`OreAlgebra_generic` has the first operator a differential operator.
+    '''
+    return algebra.is_D() != False
+
+def is_based_polynomial(algebra: OreAlgebra_generic) -> bool:
+    r'''
+        Method to check whether an :class:`OreAlgebra_generic` has the base ring as a polynomial ring.
+    '''
+    return any(is_poly(algebra.base()) for is_poly in (is_PolynomialRing, is_MPolynomialRing))
+
+def is_based_field(algebra: OreAlgebra_generic) -> bool:
+    r'''
+        Method to check whether an :class:`OreAlgebra_generic` has the base ring as a polynomial ring.
+    '''
+    return algebra.base().is_field() and (algebra.base().base_ring() != algebra.base())
+
+#############################################################################################
+###
+### METHODS TO CREATE ORE ALGEBRAS
+###
+#############################################################################################
+__CACHE_POLY_ALGEBRAS = {}
+def get_polynomial_algebra(name_x: str = "x") -> "tuple[OreAlgebra_generic, Any]":
+    r'''
+        Method to get always the same Polynomial Ring
+
+        This methods unifies the creation of polynomial rings for their use in the package
+        :mod:`ore_algebra`, so there is less problems when comparing variables generated 
+        in these polynomial rings.
+
+        INPUT:
+
+        * ``name_x``: string with the name of the variable for the polynomial ring.
+
+        OUTPUT:
+
+        A tuple `(R, x)` where `R = \mathbb{Q}[x]`.
+    '''
+    if not name_x in __CACHE_POLY_ALGEBRAS:
+        Px = PolynomialRing(QQ, name_x); x = Px('x')
+        __CACHE_POLY_ALGEBRAS[name_x] = (Px, x)
+    
+    return __CACHE_POLY_ALGEBRAS[name_x]
+
+def get_rational_algebra(name_x: str = "x") -> "tuple[OreAlgebra_generic, Any]":
+    r'''
+        Method to get always the same fraction field of a Polynomial Ring
+
+        This methods unifies the creation of field of rational functions for their use in the package
+        :mod:`ore_algebra`, so there is less problems when comparing variables generated 
+        in these polynomial rings.
+
+        INPUT:
+
+        * ``name_x``: string with the name of the variable for the polynomial ring.
+
+        OUTPUT:
+
+        A tuple `(R, x)` where `R = \mathbb{Q}(x)`.
+    '''
+    R, x = get_polynomial_algebra(name_x)
+    return (R.fraction_field(), x)
 
 __CACHE_REC_ALGEBRAS = {}
-def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E") -> OreAlgebra:
+def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True) -> "tuple[OreAlgebra_generic, tuple[Any, Any]]":
     r'''
         Method to get always the same ore algebra
 
@@ -39,39 +129,77 @@ def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E") -> OreAlg
 
         * ``name_x``: string with the name of the inner variable.
         * ``name_shift``: string with the name of the shift operator for the algebra.
+        * ``rational``: boolean (``True`` by default) deciding whether the base ring is 
+          the field of rational functions or a polynomial ring.
 
-        
+        OUTPUT:
+
+        A tuple `(A, (x, E))` where `A` is the corresponding recurrence algebra, `x` is the 
+        variable of the inner variable and `E` the recurrence operator with `E(x) = x+1`.
     '''
-    if not (name_x, name_shift) in __CACHE_REC_ALGEBRAS:
-        PR = PolynomialRing(QQ, name_x); x = PR.gens()[0]
+    if not (name_x, name_shift, rational) in __CACHE_REC_ALGEBRAS:
+        PR, x = get_rational_algebra(name_x) if rational else get_polynomial_algebra(name_x)
         OE = OreAlgebra(PR, (name_shift, lambda p : p(x=x+1), lambda _ : 0)); E = OE.gens()[0]
-        __CACHE_REC_ALGEBRAS[(name_x, name_shift)] = (OE, (x,E)) 
+        __CACHE_REC_ALGEBRAS[(name_x, name_shift, rational)] = (OE, (x,E)) 
     
-    return __CACHE_REC_ALGEBRAS[(name_x, name_shift)]
+    return __CACHE_REC_ALGEBRAS[(name_x, name_shift, rational)]
+
+__CACHE_DREC_ALGEBRAS = {}
+def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True) -> "tuple[OreAlgebra_generic, tuple[Any, Any, Any]]":
+    r'''
+        Method to get always the same ore algebra
+
+        This method unifies the access for OreAlgebra to get the recurrence shift operator
+        `x \mapsto x+1` and its inverse in an :class:`OreAlgebra_generic`. The method allows to provide the names for the inner variable `x` 
+        and the shift operator. The inverse shift will be named by adding an `i` to the name of the shift.
+
+        INPUT:
+
+        * ``name_x``: string with the name of the inner variable.
+        * ``name_shift``: string with the name of the shift operator for the algebra.
+        * ``rational``: boolean (``True`` by default) deciding whether the base ring is 
+          the field of rational functions or a polynomial ring.
+
+        OUTPUT:
+
+        A tuple `(A, (x, E, Ei))` where `A` is the corresponding recurrence algebra, `x` is the 
+        variable of the inner variable and `E` the recurrence operator with `E(x) = x+1` and 
+        `Ei` is the inverse recurrence operator, i.e., `Ei(x) = x-1`.
+    '''
+    if not (name_x, name_shift, rational) in __CACHE_DREC_ALGEBRAS:
+        PR, x = get_rational_algebra(name_x) if rational else get_polynomial_algebra(name_x)
+        OE = OreAlgebra(PR, [(name_shift, lambda p : p(x=x+1), lambda _ : 0), (name_shift+"i", lambda p : p(x=x-1), lambda _ : 0)]); E, Ei = OE.gens()
+        __CACHE_DREC_ALGEBRAS[(name_x, name_shift, rational)] = (OE, (x,E,Ei)) 
+    
+    return __CACHE_DREC_ALGEBRAS[(name_x, name_shift)]
 
 __CACHE_DER_ALGEBRAS = {}
-def get_differential_algebra(name_x : str = "x", name_der : str = "Dx") -> OreAlgebra:
+def get_differential_algebra(name_x : str = "x", name_der : str = "Dx", rational : bool = True) -> "tuple[OreAlgebra_generic, tuple[Any, Any]]":
     r'''
         Method to get always the same ore algebra
 
-        This method unifies the access for OreAlgebra to get the recurrence shift operator
-        `x \mapsto x+1`. The method allows to provide the names for the inner variable `x` 
-        and the shift operator.
+        This method unifies the access for OreAlgebra to get the derivation operator
+        `D(f(x)) = f'(x)`. The method allows to provide the names for the inner variable `x` 
+        and the given derivation.
 
         INPUT:
 
         * ``name_x``: string with the name of the inner variable.
-        * ``name_shift``: string with the name of the shift operator for the algebra.
+        * ``name_der``: string with the name of the derivation for the algebra.
+        * ``rational``: boolean (``True`` by default) deciding whether the base ring is 
+          the field of rational functions or a polynomial ring.
+        
+        OUTPUT:
 
-        A recurrence algebra for which the two generators can be extract by 
-        ``x = *.base().gens()[0]`` and ``E = *.gens()[0]``.
+        A tuple `(A, (x, D))` where `A` is the corresponding recurrence algebra, `x` is the 
+        variable of the inner variable and `D` the recurrence operator with `D(x) = 1`.
     '''
-    if not (name_x, name_der) in __CACHE_DER_ALGEBRAS:
-        PR = PolynomialRing(QQ, name_x); x = PR.gens()[0]
+    if not (name_x, name_der, rational) in __CACHE_DER_ALGEBRAS:
+        PR, x = get_rational_algebra(name_x) if rational else get_polynomial_algebra(name_x)
         OD = OreAlgebra(PR, (name_der, lambda p : p, lambda p : p.derivative(x))); D = OD.gens()[0]
-        __CACHE_DER_ALGEBRAS[(name_x, name_der)] = (OD, (x, D))
+        __CACHE_DER_ALGEBRAS[(name_x, name_der, rational)] = (OD, (x, D))
     
-    return __CACHE_DER_ALGEBRAS[(name_x, name_der)]
+    return __CACHE_DER_ALGEBRAS[(name_x, name_der, rational)]
 
 #############################################################################################
 ###

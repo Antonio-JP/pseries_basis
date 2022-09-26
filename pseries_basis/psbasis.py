@@ -32,26 +32,19 @@ r'''
 '''
 
 ## Sage imports
-from sage.all import (FractionField, PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff, 
+from sage.all import (PolynomialRing, ZZ, Matrix, cached_method, latex, factorial, diff, 
                         SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
                         block_matrix, vector)
 from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
 # ore_algebra imports
-from ore_algebra import OreAlgebra
 from ore_algebra.ore_operator import OreOperator
 
 # imports from this package
-from .ore import is_recurrence_algebra, eval_ore_operator, poly_decomp
+from .ore import (get_double_recurrence_algebra, is_recurrence_algebra, eval_ore_operator, poly_decomp, 
+                    get_rational_algebra, get_recurrence_algebra)
 
-## Private module variables (static elements)
-_psbasis__OB = FractionField(PolynomialRing(QQ, ['n']))
-_psbasis__n = _psbasis__OB.gens()[0]
-_psbasis__OS = OreAlgebra(_psbasis__OB, ('Sn', lambda p: p(n=_psbasis__n+1), lambda p : 0), ('Sni', lambda p : p(n=_psbasis__n-1), lambda p : 0))
-_psbasis__OSS = OreAlgebra(_psbasis__OB, ('Sn', lambda p: p(n=_psbasis__n+1), lambda p : 0))
-_psbasis__Sn = _psbasis__OS.gens()[0]
-_psbasis__Sni = _psbasis__OS.gens()[1]
 
 class NotCompatibleError(TypeError): pass
 
@@ -86,7 +79,7 @@ class PSBasis(object):
                 sage: B.OB()
                 Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return _psbasis__OB
+        return get_rational_algebra('n')[0]
 
     def n(self):
         r'''
@@ -101,7 +94,7 @@ class PSBasis(object):
                 sage: B.n().parent()
                 Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return _psbasis__n
+        return get_rational_algebra('n')[1]
 
     def OS(self):
         r'''
@@ -115,7 +108,7 @@ class PSBasis(object):
                 sage: B.OS()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return _psbasis__OS
+        return get_double_recurrence_algebra("n", "Sn", rational=True)[0]
 
     def OSS(self):
         r'''
@@ -129,7 +122,7 @@ class PSBasis(object):
                 sage: B.OSS()
                 Univariate Ore algebra in Sn over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return _psbasis__OSS
+        return get_recurrence_algebra("n", "Sn", rational=True)[0]
 
     def Sn(self):
         r'''
@@ -146,7 +139,7 @@ class PSBasis(object):
                 sage: B.Sn().parent()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return _psbasis__Sn
+        return get_double_recurrence_algebra("n", "Sn")[1][1]
 
     def Sni(self):
         r'''
@@ -163,7 +156,7 @@ class PSBasis(object):
                 sage: B.Sni().parent()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return _psbasis__Sni
+        return get_double_recurrence_algebra("n", "Sn")[1][2]
     
     def is_hypergeometric(self, element):
         r'''
