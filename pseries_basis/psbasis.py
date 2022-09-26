@@ -139,7 +139,7 @@ class PSBasis(object):
                 sage: B.Sn().parent()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_double_recurrence_algebra("n", "Sn")[1][1]
+        return get_double_recurrence_algebra("n", "Sn", rational=True)[1][1]
 
     def Sni(self):
         r'''
