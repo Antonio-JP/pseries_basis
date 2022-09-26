@@ -26,6 +26,10 @@ Sequences
    pseries_basis/factorial_basis
    pseries_basis/product_basis
    pseries_basis/ortho_basis
+   pseries_basis/misc
+   pseries_basis/ore
+   pseries_basis/sequences
+   pseries_basis/io
 
 
 Indices and Tables

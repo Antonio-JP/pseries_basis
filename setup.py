@@ -17,21 +17,21 @@ setup(
     # For a Markdown README replace the above line by the following two lines:
     long_description = readfile("README.md"),
     long_description_content_type="text/markdown",
-    #url='https://www.dk-compmath.jku.at/Members/antonio/sage-package-dd_functions',
+    url='https://github.com/Antonio-JP/pseries_basis',
     author = "Antonio Jimenez-Pastor",
-    author_email = "ajpastor@risc.uni-linz.ac.at",
+    author_email = "ajpa@cs.aau.dk",
     license = "GPLv3+", # See LICENCE file
     classifiers=[
       # How mature is this project? Common values are
       #   3 - Alpha
       #   4 - Beta
       #   5 - Production/Stable
-      'Development Status :: 3 - Alpha',
+      'Development Status :: 3 - Beta',
       'Intended Audience :: Science/Research',
       'Topic :: Software Development :: Build Tools',
       'Topic :: Scientific/Engineering :: Mathematics',
       'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-      'Programming Language :: Python :: 3.8.5',
+      'Programming Language :: Python :: 3.8.10',
     ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords = "holonomic SageMath sequence power-series",
     packages = ["pseries_basis"],

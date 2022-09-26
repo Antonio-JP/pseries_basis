@@ -30,9 +30,9 @@ def DefiniteSumSolutions(operator, *input):
         * ``operator``: difference operator to be transformed.
         * ``input``: the coefficients of the binomial coefficients we assume appear in the expansion
           of the solutions. This input can be given with the following formats:
-            - ``a_1,a_2,...,a_m,b_1,b_2,...,b_m``: an unrolled list of `2m` elements.
-            - ``[a_1,a_2,...,a_m,b_1,b_2,...,b_m]``: a compress list of `2m` elements.
-            - ``[a_1,...,a_m],[b_1,...,b_m]``: two lists of `m` elements.
+          - ``a_1,a_2,...,a_m,b_1,b_2,...,b_m``: an unrolled list of `2m` elements.
+          - ``[a_1,a_2,...,a_m,b_1,b_2,...,b_m]``: a compress list of `2m` elements.
+          - ``[a_1,...,a_m],[b_1,...,b_m]``: two lists of `m` elements.
 
         OUTPUT:
 

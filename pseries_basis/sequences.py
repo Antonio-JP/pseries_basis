@@ -21,7 +21,11 @@ class Sequence(metaclass=ABCMeta):
         self.__universe = universe
 
     @property
-    def universe(self): return self.__universe
+    def universe(self): 
+        r'''
+            Attribute with the common parent for all the elements of this sequence
+        '''
+        return self.__universe
 
     def __getitem__(self, key):
         if isinstance(key, (tuple, list)):
