@@ -92,7 +92,7 @@ def get_polynomial_algebra(name_x: str = "x") -> "tuple[OreAlgebra_generic, Any]
         A tuple `(R, x)` where `R = \mathbb{Q}[x]`.
     '''
     if not name_x in __CACHE_POLY_ALGEBRAS:
-        Px = PolynomialRing(QQ, name_x); x = Px('x')
+        Px = PolynomialRing(QQ, name_x); x = Px(name_x)
         __CACHE_POLY_ALGEBRAS[name_x] = (Px, x)
     
     return __CACHE_POLY_ALGEBRAS[name_x]
@@ -114,7 +114,7 @@ def get_rational_algebra(name_x: str = "x") -> "tuple[OreAlgebra_generic, Any]":
         A tuple `(R, x)` where `R = \mathbb{Q}(x)`.
     '''
     R, x = get_polynomial_algebra(name_x)
-    return (R.fraction_field(), x)
+    return (R.fraction_field(), R.fraction_field()(x))
 
 __CACHE_REC_ALGEBRAS = {}
 def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True) -> "tuple[OreAlgebra_generic, tuple[Any, Any]]":
@@ -168,10 +168,10 @@ def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", ra
     '''
     if not (name_x, name_shift, rational) in __CACHE_DREC_ALGEBRAS:
         PR, x = get_rational_algebra(name_x) if rational else get_polynomial_algebra(name_x)
-        OE = OreAlgebra(PR, [(name_shift, lambda p : p(x=x+1), lambda _ : 0), (name_shift+"i", lambda p : p(x=x-1), lambda _ : 0)]); E, Ei = OE.gens()
+        OE = OreAlgebra(PR, (name_shift, lambda p : p(x=x+1), lambda _ : 0), (name_shift+"i", lambda p : p(x=x-1), lambda _ : 0)); E, Ei = OE.gens()
         __CACHE_DREC_ALGEBRAS[(name_x, name_shift, rational)] = (OE, (x,E,Ei)) 
     
-    return __CACHE_DREC_ALGEBRAS[(name_x, name_shift)]
+    return __CACHE_DREC_ALGEBRAS[(name_x, name_shift, rational)]
 
 __CACHE_DER_ALGEBRAS = {}
 def get_differential_algebra(name_x : str = "x", name_der : str = "Dx", rational : bool = True) -> "tuple[OreAlgebra_generic, tuple[Any, Any]]":
