@@ -10,13 +10,13 @@ r'''
 '''
 
 from functools import lru_cache
-from typing import Any
+from typing import Any # pylint: disable=unused-import
 
 from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
 
 from sage.all import QQ, ZZ, prod, PolynomialRing
-from sage.rings.polynomial.polynomial_ring import PolynomialRing_general, is_PolynomialRing
+from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 
 from .sequences import Sequence, LambdaSequence
@@ -139,7 +139,7 @@ def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational 
     '''
     if not (name_x, name_shift, rational) in __CACHE_REC_ALGEBRAS:
         PR, x = get_rational_algebra(name_x) if rational else get_polynomial_algebra(name_x)
-        OE = OreAlgebra(PR, (name_shift, lambda p : p(x=x+1), lambda _ : 0)); E = OE.gens()[0]
+        OE = OreAlgebra(PR, (name_shift, lambda p : p(**{str(x) : x+1}), lambda _ : 0)); E = OE.gens()[0]
         __CACHE_REC_ALGEBRAS[(name_x, name_shift, rational)] = (OE, (x,E)) 
     
     return __CACHE_REC_ALGEBRAS[(name_x, name_shift, rational)]
@@ -168,7 +168,7 @@ def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", ra
     '''
     if not (name_x, name_shift, rational) in __CACHE_DREC_ALGEBRAS:
         PR, x = get_rational_algebra(name_x) if rational else get_polynomial_algebra(name_x)
-        OE = OreAlgebra(PR, (name_shift, lambda p : p(x=x+1), lambda _ : 0), (name_shift+"i", lambda p : p(x=x-1), lambda _ : 0)); E, Ei = OE.gens()
+        OE = OreAlgebra(PR, (name_shift, lambda p : p(**{str(x) : x+1}), lambda _ : 0), (name_shift+"i", lambda p : p(**{str(x) : x-1}), lambda _ : 0)); E, Ei = OE.gens()
         __CACHE_DREC_ALGEBRAS[(name_x, name_shift, rational)] = (OE, (x,E,Ei)) 
     
     return __CACHE_DREC_ALGEBRAS[(name_x, name_shift, rational)]
