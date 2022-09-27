@@ -26,7 +26,6 @@ def search_dfinite_order(min_order, min_results = 5, i = 0):
         * ``min_results``: minimal number of elements that will be returned.
         * ``i``: original shift in the search of OEIS sequences.
     '''
-    import re
     shift = i+1
     results = []
     with alive_bar(int(min_results), title="Searching examples...", force_tty=True) as bar:
@@ -94,21 +93,86 @@ def explore_sequence(sequence, ring, first_bases, second_bases, bound_guess=100)
         return result[(first_bases[0], second_bases[0])]
     return result
 
+def print_help():
+    r'''Print the help for the script'''
+    pass
+
 if __name__=="__main__": # Main part of the script
-    first_bases = [BinomialBasis()]
-    second_bases = [BinomialBasis()]
-    min_order = 3
+    first_bases = []
+    second_bases = []
+    min_order = 2
     results_search = 10
     shift = 0
+    path = "./example_double_sum"
     # Treating the arguments
+    import sys, os
+
+    i = 1
+    nargv = len(sys.argv)
+    while i < nargv:
+        if sys.argv[i] in ("-mo", "--mo", "-min_order", "--min_order", "-order", "--order"): # modify min_order
+            proc = int(sys.argv[i+1])
+            if not proc >= 2:
+                print("Error in argument 'min_order': must be a positive integer greater than 1")
+                sys.exit(1)
+            min_order = proc
+            i += 2
+        elif sys.argv[i] in ("-rs", "--rs", "-result_search", "--result_search", "-search", "--search"): # modify result_search
+            proc = int(sys.argv[i+1])
+            if not proc >= 1:
+                print("Error in argument 'result_search': must be a positive integer")
+                sys.exit(1)
+            result_search = proc
+            i += 2
+        elif sys.argv[i] in ("-s", "--s", "-shift", "--shift"): # modify shift
+            proc = int(sys.argv[i+1])
+            if not proc >= 0:
+                print("Error in argument 'shift': must be a positive integer")
+                sys.exit(1)
+            shift = proc
+            i += 2
+        elif sys.argv[i] in ("-p", "--p", "-path", "--path"): # modify path
+            proc = sys.argv[i+1]
+            if not os.path.isdir(proc):
+                print("Error in argument 'path': must be a valid path")
+                sys.exit(1)
+            first_bases.append(proc)
+            i += 2
+        elif sys.argv[i] in ("-af", "--af", "-add_first", "--add_first", "-first", "--first"): # add first basis
+            proc = eval(sys.argv[i+1])
+            if not isinstance(proc, PSBasis):
+                print("Error in argument 'add_first': must be a PSBasis")
+                sys.exit(1)
+            path = proc
+            i += 2
+        elif sys.argv[i] in ("-as", "--as", "-add_second", "--add_second", "-second", "--second"): # add second_basis
+            proc = eval(sys.argv[i+1])
+            if not isinstance(proc, PSBasis):
+                print("Error in argument 'add_second': must be a PSBasis")
+                sys.exit(1)
+            second_bases.append(proc)
+            i += 2
+        else: ## error in arguments --> print help and exit
+            print_help()
+            sys.exit(0)
+
+    ## Default values for the bases
+    if len(first_bases) == 0:
+        first_bases = [BinomialBasis()]
+    if len(second_bases) == 0:
+        second_bases = [BinomialBasis()]
+
+    # Main loops
     while(True):
         try:
             dfinite, shift = search_dfinite_order(min_order,min_results=results_search,i=shift)
             
+            explored = []
             with alive_bar(len(dfinite), title="Exploring examples...", force_tty=True) as bar:
-                for el in dfinite:
-                    explored = [(seq,explore_sequence(seq.sequence(), seq.dfinite_recurrence().parent(), first_bases, second_bases)) for seq in dfinite]
+                for seq in dfinite:
+                    explored.append((seq,explore_sequence(seq.sequence, seq.dfinite_recurrence().parent(), first_bases, second_bases)))
                     bar()
+
             with_oeis = []
             with alive_bar(len(dfinite), title="Checking if new is in OEIS...", force_tty=True) as bar:
                 for seq,data in explored:
@@ -122,7 +186,7 @@ if __name__=="__main__": # Main part of the script
                                 with_oeis.append((seq,k,[el.id() for el in ass_seqs]))
                                 
             print("Saving succesful explroed examples")
-            with open("./example_double_sum/explored.txt", "w+") as exp_file:
+            with open(f"{path}/explored.txt", "w+") as exp_file:
                 for seq, data in explored:
                     exp_file.write(f"{seq.id()}\n")
                     if not isinstance(data, dict):
@@ -130,7 +194,7 @@ if __name__=="__main__": # Main part of the script
                     
                     to_print = "\t".join([f"({k[0]},{k[1]}) ---> [{v[1]}; {v[0][:required_init(v[1])+1]}]\n" for (k,v) in data.items()])
                     exp_file.write(to_print)
-            with open("./example_double_sum/with_oeis.txt", "w+") as oeis_file:
+            with open(f"{path}/with_oeis.txt", "w+") as oeis_file:
                 for seq, bases, ass_seqs in with_oeis:
                     oeis_file.write(f"{seq.id()} -- ({bases[0]},{bases[1]}) --> {ass_seqs}\n")
             
