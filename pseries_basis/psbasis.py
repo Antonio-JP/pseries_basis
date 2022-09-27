@@ -616,10 +616,10 @@ class PSBasis(object):
 
             TODO: add Examples and tests
         '''
-        if not (self.is_quasi_func_triangular()): 
-            raise ValueError("We require 'functional_matrix' to be quasi-upper triangular.")
+        if not (self.is_quasi_eval_triangular()): 
+            raise ValueError("We require 'evaluation_matrix' to be quasi-upper triangular.")
 
-        M = self.functional_matrix(size)
+        M = self.evaluation_matrix(size)
         if M.is_triangular("upper"):
             return tuple([el for el in M.solve_left(vector(sequence[:size]))])
         raise NotImplementedError("The pure quasi-triangular case not implemented yet.")
