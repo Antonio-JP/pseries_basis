@@ -1939,6 +1939,9 @@ class OrderBasis(PSBasis):
         except AttributeError:
             return Matrix([[diff(self[n], k)(x=0)/factorial(k) for k in range(ncols)] for n in range(nrows)])
     
+    def is_quasi_func_triangular(self):
+        return True
+
     def __repr__(self):
         return "PolyBasis -- WARNING: this is an abstract class"
 

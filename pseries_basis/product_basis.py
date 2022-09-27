@@ -740,6 +740,11 @@ class SievedBasis(FactorialBasis):
             
         return (m*A, m*T,new_D)
 
+    def is_quasi_func_triangular(self):
+        return all(basis.is_quasi_func_triangular() for basis in self.factors)
+    def is_quasi_eval_triangular(self):
+        return all(basis.is_quasi_eval_triangular() for basis in self.factors)
+
 class ProductBasis(SievedBasis):
     r'''
         Class for Product Basis.
