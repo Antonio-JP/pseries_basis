@@ -85,26 +85,27 @@ class EnhOEISSequence(OEISSequence):
             try:
                 # removing the first part until "recurrence: "
                 start_pos = formula.find("ecurrence: ") + len("ecurrence: ")
-                # getting the part of the formula unitl a "with" a "." or the end of the line
-                end_pos = self.__find_several_first(formula, ".", " with", ",", start = start_pos)
-                end_pos = len(formula) if end_pos < 0 else end_pos
-                formula = formula[start_pos:end_pos+1]
-
-                # we compute the orders appearing in the recurrence
-                n = var('n')
-                arguments = [eval(el)-n for el in re.findall(r"a\(([^\)]*)\)", formula)]
-                arguments = [ZZ(el) for el in arguments if el in ZZ]
-
-                if(len(arguments) > 0): # it is a recurrence equation and not only initial conditions
-                    neg_order = -min(0, min(arguments))
-                    operator = self.__extract_recurrence(formula, neg_order)
-                    if operator != None:
-                        logger.info(f"dfinite_recurrence: found a recurrence operator for OEIS sequence {self.id()}")
-                        return operator
+                # getting the part of the formula until a "with" a "." or the end of the line
+                operator = self.__analyze_formula(formula, start_pos)
+                if operator != None:
+                    logger.info(f"dfinite_recurrence: found a recurrence operator for OEIS sequence {self.id()}")
+                    return operator
                 else:
                     logger.info(f"dfinite_recurrence: no valid arguments in the formula")
             except Exception as e:
                 logger.info(f"dfinite_recurrence: Unexpected error {e}")
+        logger.info(f"dfinite_recurrence: no recurrence operator found for OEIS sequence {self.id()} with the string 'recurrence'")
+        for formula in self.formulas(): # trying to find a plain formula
+            try:
+                operator = self.__analyze_formula(formula, 0)
+                if operator != None:
+                    logger.info(f"dfinite_recurrence: found a recurrence operator for OEIS sequence {self.id()}")
+                    return operator
+                else:
+                    logger.info(f"dfinite_recurrence: no valid arguments in the formula")
+            except Exception as e:
+                logger.info(f"dfinite_recurrence: Unexpected error {e}")
+
         logger.info(f"dfinite_recurrence: no recurrence operator found for OEIS sequence {self.id()}")
         return None
 
@@ -118,10 +119,25 @@ class EnhOEISSequence(OEISSequence):
 
     @property
     def sequence(self):
+        off = self.offsets()[0]
         if self.is_dfinite():
             d = required_init(self.dfinite_recurrence())
-            return solution(self.dfinite_recurrence(),self.first_terms(d+1))
-        return LambdaSequence(lambda n : self.first_terms(n+1)[-1], ZZ)
+            return solution(self.dfinite_recurrence(),tuple(off*[0] + list(self.first_terms(d+1))))
+        return LambdaSequence(lambda n : self.first_terms(n+1-off)[-1] if n >= off else None, ZZ)
+
+    def check_consistency(self, bound=10):
+        r'''
+            Method to check the consistency between the generated sequence and the terms in the OEIS database
+
+            The offset of the sequences in OEIS may disturb the recurrence equations, hence, we need that
+            the corresponding elements of the generated sequence coincide with the terms of the sequence in OEIS.
+
+            If this method return ``False``, it means we need to improve the attribute :func:`sequence`.
+        '''
+        if(self.is_dfinite()):
+            off = self.offsets()[0]
+            return tuple(self.sequence[off:off+bound]) == self.first_terms(bound)
+        return True
 
     def __find_several_first(self, string, *to_find, start=0):
         r'''
@@ -132,6 +148,24 @@ class EnhOEISSequence(OEISSequence):
         if len(pos) == 0:
             return -1
         return min(pos)
+
+    def __analyze_formula(self, formula, start_pos):
+        n = var('n')
+        # getting the part of the formula until a "with" a "." or the end of the line
+        end_pos = self.__find_several_first(formula, ".", " with", ",", start = start_pos)
+        end_pos = len(formula) if end_pos < 0 else end_pos
+        formula = formula[start_pos:end_pos+1]
+
+        # we compute the orders appearing in the recurrence
+        arguments = [eval(el)-n for el in re.findall(r"a\(([^\)]*)\)", formula)]
+        arguments = [ZZ(el) for el in arguments if el in ZZ]
+
+        if(len(arguments) > 0): # it is a recurrence equation and not only initial conditions
+            neg_order = -min(0, min(arguments))
+            return self.__extract_recurrence(formula, neg_order)
+        else:
+            logger.info(f"dfinite_recurrence: no valid arguments in the formula")
+        return None
 
     def __extract_recurrence(self, formula, neg_order):
         OE, _ = get_recurrence_algebra('x', 'E')
