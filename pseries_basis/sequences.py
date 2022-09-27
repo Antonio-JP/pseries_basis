@@ -106,6 +106,13 @@ class LambdaSequence(Sequence):
         universe = pushout(self.universe, other.universe)
         return LambdaSequence(lambda n : self[n] + other[n], universe)
 
+    def __sub__(self, other):
+        if not isinstance(other, Sequence):
+            return NotImplemented
+
+        universe = pushout(self.universe, other.universe)
+        return LambdaSequence(lambda n : self[n] - other[n], universe)
+
     def __mul__(self, other):
         if isinstance(other, Sequence):
             universe = pushout(self.universe, other.universe)
@@ -123,6 +130,8 @@ class LambdaSequence(Sequence):
     # reverse arithmethic methods
     def __radd__(self, other):
         return self.__add__(other)
+    def __rsub__(self, other):
+        return self.__sub__(other)
     def __rmul__(self, other):
         return self.__mul__(other)
 
