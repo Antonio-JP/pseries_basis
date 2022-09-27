@@ -1404,7 +1404,12 @@ class ScalarBasis(FactorialBasis):
         new_scale = lambda n : self.scale(shift+n)/self.scale(shift)
 
         return ScalarBasis(self.basis.increasing_basis(shift), new_scale)
-        
+
+    def is_quasi_eval_triangular(self):
+        return self.basis.is_quasi_eval_triangular()
+
+    def is_quasi_func_triangular(self):
+        return self.basis.is_quasi_func_triangular()   
 ###############################################################
 ### EXAMPLES OF PARTICULAR FACTORIAL BASIS
 ###############################################################
@@ -1569,6 +1574,9 @@ class PowerBasis(FallingBasis):
         else:
             return r"\left\{(%s)^n\right\}_{n \geq 0}" %self.element(1)
 
+    def is_quasi_func_triangular(self):
+        return self.shift == 0
+
 class BinomialBasis(SFactorialBasis):
     r'''
         Class for the generic binomial basis.
@@ -1597,7 +1605,7 @@ class BinomialBasis(SFactorialBasis):
     '''
     def __init__(self, dilation=1, shift=0, X='x', E='E'):
         if(not dilation in ZZ or dilation <= 0):
-            raise ValueError("The dilation of the basis ust be a natural number")
+            raise ValueError("The dilation of the basis must be a natural number")
         dilation = ZZ(dilation); shift = self.OB().base()(shift)
         self.__a = dilation; a = self.__a
         self.__b = shift; b = self.__b
@@ -1618,3 +1626,6 @@ class BinomialBasis(SFactorialBasis):
     def _latex_(self):
         x = self.polynomial_ring(self.var_name()).gens()[0]
         return r"\left\{\binom{%s}{n}\right\}_{n\geq 0}" %(self.__a*x+self.__b)
+
+    def is_quasi_eval_triangular(self):
+        return self.__b in ZZ and self.__b >= 0
