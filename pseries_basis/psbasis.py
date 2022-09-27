@@ -1229,7 +1229,12 @@ class PSBasis(object):
                     base_ring = operator.parent().base().base_ring()
                     rec_coeffs = {str(v): self.recurrence(str(v), sections) for v in operator.parent().base().gens()}
                     if is_based_field(operator.parent()):
-                        coeffs = [c.numerator()(**rec_coeffs)*(1/self.OS().base()(str(c.denominator()(**rec_coeffs)))) for c in coeffs]            
+                        if any(is_Matrix(v) for v in rec_coeffs.values()):
+                            if any(not c.denominator() in self.OS().base().base_ring() for c in coeffs):
+                                raise NotCompatibleError("Compatibility by sections when having denominators")
+                            coeffs = [(1/self.OS().base().base_ring()(str(c.denominator()))) * c.numerator()(**rec_coeffs) for c in coeffs]
+                        else:
+                            coeffs = [c.numerator()(**rec_coeffs)*(1/self.OS().base()(str(c.denominator()(**rec_coeffs)))) for c in coeffs]            
                     else:
                         coeffs = [c(**rec_coeffs) for c in coeffs]
                 else:
