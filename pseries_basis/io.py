@@ -83,8 +83,10 @@ class EnhOEISSequence(OEISSequence):
         formulas = [el for el in self.formulas() if el.find("ecurrence") >= 0]
         for formula in formulas:
             try:
-                # removing the first part until "recurrence: "
-                start_pos = formula.find("ecurrence: ") + len("ecurrence: ")
+                # removing the first part until "recurrence"
+                start_pos = formula.find("ecurrence") + len("ecurrence")
+                if formula[start_pos] in (":"): # removing possible connectors like ":".
+                    start_pos += 1
                 # getting the part of the formula until a "with" a "." or the end of the line
                 operator = self.__analyze_formula(formula, start_pos)
                 if operator != None:
@@ -152,9 +154,9 @@ class EnhOEISSequence(OEISSequence):
     def __analyze_formula(self, formula, start_pos):
         n = var('n')
         # getting the part of the formula until a "with" a "." or the end of the line
-        end_pos = self.__find_several_first(formula, ".", " with", ",", start = start_pos)
+        end_pos = self.__find_several_first(formula, ".", " with", ",", "[", start = start_pos)
         end_pos = len(formula) if end_pos < 0 else end_pos
-        formula = formula[start_pos:end_pos+1]
+        formula = formula[start_pos:end_pos]
 
         # we compute the orders appearing in the recurrence
         arguments = [eval(el)-n for el in re.findall(r"a\(([^\)]*)\)", formula)]
