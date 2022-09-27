@@ -184,9 +184,10 @@ if __name__=="__main__": # Main part of the script
                             ass_seqs = oeis(v[0][:10])
                             if len(ass_seqs) > 0:
                                 with_oeis.append((seq,k,[el.id() for el in ass_seqs]))
+                    bar()
                                 
-            print("Saving succesful explroed examples")
-            with open(f"{path}/explored.txt", "w+") as exp_file:
+            print("Saving succesful explored examples...")
+            with open(f"{path}/explored.txt", "a") as exp_file:
                 for seq, data in explored:
                     exp_file.write(f"{seq.id()}\n")
                     if not isinstance(data, dict):
@@ -194,9 +195,10 @@ if __name__=="__main__": # Main part of the script
                     
                     to_print = "\t".join([f"({k[0]},{k[1]}) ---> [{v[1]}; {v[0][:required_init(v[1])+1]}]\n" for (k,v) in data.items()])
                     exp_file.write(to_print)
-            with open(f"{path}/with_oeis.txt", "w+") as oeis_file:
+            with open(f"{path}/with_oeis.txt", "a") as oeis_file:
                 for seq, bases, ass_seqs in with_oeis:
                     oeis_file.write(f"{seq.id()} -- ({bases[0]},{bases[1]}) --> {ass_seqs}\n")
+            print("Finished iteration!")
             
         except KeyboardInterrupt:
             break
