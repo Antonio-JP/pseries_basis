@@ -42,7 +42,7 @@ from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 from ore_algebra.ore_operator import OreOperator
 
 # imports from this package
-from .ore import (get_double_recurrence_algebra, is_recurrence_algebra, eval_ore_operator, poly_decomp, 
+from .ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, eval_ore_operator, poly_decomp, 
                     get_rational_algebra, get_recurrence_algebra)
 
 
@@ -1220,17 +1220,33 @@ class PSBasis(object):
                 if(any(not operator.is_polynomial(v) for v in operator.variables())):
                     raise NotCompatibleError("The symbolic expression %s is not a polynomial" %operator)
                 operator = operator.polynomial(self.OB().base_ring())
+                recurrences = {str(v): self.recurrence(str(v), sections) for v in poly.variables()}
+                output = self.reduce_SnSni(poly(**recurrences))
             elif(isinstance(operator, OreOperator)): # case of ore_algebra operator
-                operator = operator.polynomial()
-
-            try:
-                poly = operator.parent().flattening_morphism()(operator)
-            except AttributeError: # we have no polynomial
-                raise NotCompatibleError("The input %s is not a polynomial" %operator)
-        
-            ## getting the recurrence for each generator
-            recurrences = {str(v): self.recurrence(str(v), sections) for v in poly.variables()}
-            output = self.reduce_SnSni(poly(**recurrences))
+                mons, coeffs = poly_decomp(operator.polynomial())
+                # checking the type of coefficients and computing the final coefficients
+                if operator.parent().base().gens()[0] != 1:
+                    base_ring = operator.parent().base().base_ring()
+                    rec_coeffs = {str(v): self.recurrence(str(v), sections) for v in operator.parent().base().gens()}
+                    if is_based_field(operator.parent()):
+                        coeffs = [c.numerator()(**rec_coeffs)*(1/self.OS().base()(str(c.denominator()(**rec_coeffs)))) for c in coeffs]            
+                    else:
+                        coeffs = [c(**rec_coeffs) for c in coeffs]
+                else:
+                    base_ring = operator.parent().base()
+                # computing the monomials
+                rec_mons = {str(v): self.recurrence(str(v), sections) for v in operator.parent().gens()}
+                mons = [m.change_ring(base_ring)(**rec_mons) for m in mons]
+                # computing the final recurrence operator
+                output = self.reduce_SnSni(sum(coeffs[i]*mons[i] for i in range(len(mons))))
+            else:
+                try:
+                    poly = operator.parent().flattening_morphism()(operator)
+                except AttributeError: # we have no polynomial
+                    raise NotCompatibleError("The input %s is not a polynomial" %operator)
+                ## getting the recurrence for each generator
+                recurrences = {str(v): self.recurrence(str(v), sections) for v in poly.variables()}
+                output = self.reduce_SnSni(poly(**recurrences))
         else: # the input is a name or a compatibility condition
             if(isinstance(operator, str)): # getting the compatibility condition for the str case
                 operator = self.compatibility(operator)
