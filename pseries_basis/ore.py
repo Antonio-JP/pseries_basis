@@ -15,7 +15,7 @@ from typing import Any # pylint: disable=unused-import
 from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
 
-from sage.all import QQ, ZZ, prod, PolynomialRing
+from sage.all import QQ, ZZ, prod, PolynomialRing, lcm
 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 
@@ -245,7 +245,12 @@ def required_init(operator) -> int:
         a solution to the recurrence operator. This method computes the maximal index we need to compute
         in order to have a fully defined sequence.
     '''
-    return max(-min([0]+[el[0]-1 for el in operator.polynomial().lc().roots() if el[0] in ZZ]), operator.order())
+    if is_based_field(operator.parent()): # rational function case
+        _, coeffs = poly_decomp(operator.polynomial())
+        to_check = lcm([el.denominator() for el in coeffs] + [operator.polynomial().lc().numerator()])
+    elif is_based_polynomial(operator.parent()):
+        to_check = operator.polynomial().lc()
+    return max(-min([0]+[el[0]-1 for el in to_check.roots() if el[0] in ZZ]), operator.order())
 
 def eval_ore_operator(operator, ring=None,**values):
     r'''
