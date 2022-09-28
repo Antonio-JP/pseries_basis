@@ -1221,7 +1221,7 @@ class PSBasis(object):
                     raise NotCompatibleError("The symbolic expression %s is not a polynomial" %operator)
                 operator = operator.polynomial(self.OB().base_ring())
                 recurrences = {str(v): self.recurrence(str(v), sections) for v in operator.variables()}
-                output = self.reduce_SnSni(poly(**recurrences))
+                output = self.reduce_SnSni(operator(**recurrences))
             elif(isinstance(operator, OreOperator)): # case of ore_algebra operator
                 mons, coeffs = poly_decomp(operator.polynomial())
                 # checking the type of coefficients and computing the final coefficients
