@@ -8,20 +8,13 @@ on:
 
 jobs:
   build:
-    
     runs-on: ubuntu-latest
     container: 
       image: sagemath/sagemath:latest
       options: --user root
     steps:
-    - uses: actions/checkout@v2
-    - name: Installing git and dependencies
-      run: |
-        sudo apt dist-upgrade
-        sudo cat /etc/lsb-release
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates
-        sudo apt-get clean
+    - uses: actions/checkout@v3
+    - uses: py-actions/py-dependency-install@v3
     - name: Install package
       run: |
         sage -pip install --upgrade .
