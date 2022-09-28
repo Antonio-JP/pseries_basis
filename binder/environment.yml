@@ -21,3 +21,4 @@ dependencies:
   - pip:
     - git+https://github.com/mkauers/ore_algebra.git
     - git+https://github.com/Antonio-JP/dd_functions.git
+    - git+https://github.com/Antonio-JP/pseries_basis.git@v0.3
