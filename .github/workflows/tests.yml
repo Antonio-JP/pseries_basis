@@ -13,10 +13,15 @@ jobs:
       image: sagemath/sagemath:latest
       options: --user root
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v3'
+    - name: Installing git and dependencies
+      run: |
+        sage -sh -c "sudo apt-get update"
+        sage -sh -c "sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates"
+        sage -sh -c "sudo apt-get clean"
     - name: Install package
       run: |
-        sage -pip install -r requirements.txt --upgrade .
+        sage -pip install --upgrade .
     - name: Running sage tests
       run: |
         sage -t pseries_basis
