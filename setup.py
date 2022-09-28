@@ -36,8 +36,7 @@ setup(
     keywords = "holonomic SageMath sequence power-series",
     packages = ["pseries_basis"],
     setup_requires   = [],
-    install_requires = ['sphinx', 
-                        'ore_algebra @ git+https://github.com/mkauers/ore_algebra.git',
+    install_requires = ['ore_algebra @ git+https://github.com/mkauers/ore_algebra.git',
                         'dd_functions @ git+https://github.com/Antonio-JP/dd_functions.git'],
 )
     
