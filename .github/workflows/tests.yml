@@ -8,17 +8,18 @@ on:
 
 jobs:
   build:
+    
     runs-on: ubuntu-latest
     container: 
-      image: sagemath/sagemath:latest
+      image: sagemath/sagemath-dev:develop
       options: --user root
     steps:
     - uses: actions/checkout@v3
     - name: Installing git and dependencies
       run: |
-        sage -sh -c "sudo apt-get update"
-        sage -sh -c "sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates"
-        sage -sh -c "sudo apt-get clean"
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates
+        sudo apt-get clean
     - name: Install package
       run: |
         sage -pip install --upgrade .
