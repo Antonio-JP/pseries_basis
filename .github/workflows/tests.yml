@@ -13,7 +13,7 @@ jobs:
       image: sagemath/sagemath:latest
       options: --user root
     steps:
-    - uses: actions/checkout@v3'
+    - uses: actions/checkout@v3
     - name: Installing git and dependencies
       run: |
         sage -sh -c "sudo apt-get update"
