@@ -8,13 +8,12 @@ on:
 
 
 jobs:
-  defaults:
+  # Job for lint the repository
+  linting:    
     runs-on: ubuntu-latest
     container: 
         image: sagemath/sagemath:9.3.beta8
         options: --user root
-  # Job for lint the repository
-  linting:    
     steps:
     - uses: actions/checkout@v3
     - name: Installing git and dependencies
@@ -43,6 +42,10 @@ jobs:
 
   # Job for running the automatic tests in Sagemath
   testing:
+    runs-on: ubuntu-latest
+    container: 
+        image: sagemath/sagemath:9.3.beta8
+        options: --user root
     steps:
     - uses: actions/checkout@v3
     - name: Installing git and dependencies
