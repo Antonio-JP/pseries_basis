@@ -13,11 +13,10 @@ jobs:
       image: sagemath/sagemath:latest
       options: --user root
     steps:
-    - uses: actions/checkout@v3
-    - uses: py-actions/py-dependency-install@v3
+    - uses: actions/checkout@v3'
     - name: Install package
       run: |
-        sage -pip install --upgrade .
+        sage -pip install -r requirements.txt --upgrade .
     - name: Running sage tests
       run: |
         sage -t pseries_basis
