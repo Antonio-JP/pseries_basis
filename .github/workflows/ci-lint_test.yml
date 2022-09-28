@@ -6,13 +6,13 @@ on:
   pull_request:
     branches: [ master ]
 
-defaults:
-  runs-on: ubuntu-latest
-  container: 
-      image: sagemath/sagemath:9.3.beta8
-      options: --user root
 
 jobs:
+  defaults:
+    runs-on: ubuntu-latest
+    container: 
+        image: sagemath/sagemath:9.3.beta8
+        options: --user root
   # Job for lint the repository
   linting:    
     steps:
