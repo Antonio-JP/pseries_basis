@@ -9,7 +9,7 @@ r'''
     module within the package :mod:`pseries_basis`.
 '''
 
-from functools import lru_cache
+from functools import cache
 from typing import Any # pylint: disable=unused-import
 
 from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
@@ -301,7 +301,7 @@ def solution(operator, init, check_init=True) -> Sequence:
         raise ValueError(f"More data ({required}) is needed")
         
     from_init = required if check_init else len(init)
-    @lru_cache
+    @cache
     def __aux_sol(n):
         if n < 0:
             return 0

@@ -9,7 +9,7 @@ r'''
     in a generic fashion.
 '''
 from abc import ABCMeta, abstractmethod
-from functools import lru_cache
+from functools import cache
 
 from sage.categories.pushout import CoercionException, pushout
 
@@ -92,7 +92,7 @@ class LambdaSequence(Sequence):
 
         self.__func = func
 
-    @lru_cache
+    @cache
     def element(self, index : int):
         if self.universe is None: # we allow None universe
             return self.__func(index)

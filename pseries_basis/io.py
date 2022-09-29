@@ -8,7 +8,7 @@ r'''
 
 import logging
 import re
-from functools import lru_cache
+from functools import cache
 
 from sage.all import ZZ, var, lcm
 from sage.databases.oeis import OEISSequence
@@ -62,14 +62,14 @@ class EnhOEISSequence(OEISSequence):
             ident = ident.id()
         return super(EnhOEISSequence, cls).__classcall__(cls, ident)
 
-    @lru_cache
+    @cache
     def is_dfinite(self):
         r'''
             Method to check whether a sequence is D-finite or not.
         '''
         return not (self.dfinite_recurrence() is None)
 
-    @lru_cache
+    @cache
     def dfinite_recurrence(self):
         r'''
             Method to compute a difference D-finite recurrence for an OEIS Sequence

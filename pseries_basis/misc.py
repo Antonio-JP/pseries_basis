@@ -2,7 +2,7 @@ r'''
     Auxiliary file for extra utility methods
 '''
 
-from functools import lru_cache
+from functools import cache
 from sage.all import ZZ, Matrix, vector, ceil, factorial, PolynomialRing, QQ
 
 from pseries_basis.psbasis import PSBasis
@@ -98,7 +98,7 @@ def DefiniteSumSolutions(operator, *input):
     
     return result
 
-@lru_cache
+@cache
 def GeneralizedBinomial(a,b,c,m,r):
     r'''
         Method to get a basis which includes the general binomial coefficients.
