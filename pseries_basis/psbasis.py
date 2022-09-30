@@ -1320,7 +1320,9 @@ class PSBasis(object):
             A new operator in the same ring as ``operator`` representing the associated recurrence with the 
             compatibility conditions w.r.t. ``self``.
 
-            EXAMPLES:
+            EXAMPLES::
+
+                sage: from pseries_basis import *
 
             TODO: Add examples and tests for this method
         '''
