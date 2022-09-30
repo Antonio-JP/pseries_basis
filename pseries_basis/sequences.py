@@ -76,7 +76,7 @@ class LambdaSequence(Sequence):
         * ``func``: a callable that defines the sequence as their output with natural input.
         * ``universe``: a parent structure where all the elements of the sequence will be (a specific casting is performed)
 
-        EXAMPLES:
+        EXAMPLES::
 
             sage: from pseries_basis.sequences import LambdaSequence
             sage: C = LambdaSequence(lambda n : catalan_number(n), ZZ)
