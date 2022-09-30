@@ -60,6 +60,15 @@ with respect to the package <code class="xref py py-mod docutils literal notrans
 <li><p><code class="docutils literal notranslate"><span class="pre">ident</span></code>: either a string with the A identifier of the sequence or a <code class="xref py py-class docutils literal notranslate"><span class="pre">OEISSequence</span></code>.</p></li>
 </ul>
 <dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.io.EnhOEISSequence.check_consistency">
+<span class="sig-name descname"><span class="pre">check_consistency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.io.EnhOEISSequence.check_consistency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check the consistency between the generated sequence and the terms in the OEIS database</p>
+<p>The offset of the sequences in OEIS may disturb the recurrence equations, hence, we need that
+the corresponding elements of the generated sequence coincide with the terms of the sequence in OEIS.</p>
+<p>If this method return <code class="docutils literal notranslate"><span class="pre">False</span></code>, it means we need to improve the attribute <a class="reference internal" href="#pseries_basis.io.EnhOEISSequence.sequence" title="pseries_basis.io.EnhOEISSequence.sequence"><code class="xref py py-func docutils literal notranslate"><span class="pre">sequence()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pseries_basis.io.EnhOEISSequence.dfinite_recurrence">
 <span class="sig-name descname"><span class="pre">dfinite_recurrence</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.io.EnhOEISSequence.dfinite_recurrence" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to compute a difference D-finite recurrence for an OEIS Sequence</p>
