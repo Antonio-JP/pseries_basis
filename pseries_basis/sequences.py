@@ -9,7 +9,10 @@ r'''
     in a generic fashion.
 '''
 from abc import ABCMeta, abstractmethod
-from functools import cache
+try: # python 3.9 or higher
+    from functools import cache
+except ImportError: #python 3.8 or lower
+    from functools import lru_cache as cache
 
 from sage.categories.pushout import CoercionException, pushout
 

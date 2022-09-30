@@ -2,7 +2,10 @@ r'''
     Auxiliary file for extra utility methods
 '''
 
-from functools import cache
+try: # python 3.9 or higher
+    from functools import cache
+except ImportError: #python 3.8 or lower
+    from functools import lru_cache as cache
 from sage.all import ZZ, Matrix, vector, ceil, factorial, PolynomialRing, QQ
 
 from pseries_basis.psbasis import PSBasis
