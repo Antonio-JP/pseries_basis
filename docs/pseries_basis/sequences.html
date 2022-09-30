@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Interface for Sequences &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3 documentation</title>
+    <title>Interface for Sequences &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="ore.html" title="Access and communication with ore_algebra"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Interface for Sequences</a></li> 
       </ul>
     </div>  
@@ -68,19 +68,19 @@ their use.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">universe</span></code>: a parent structure where all the elements of the sequence will be (a specific casting is performed)</p></li>
 </ul>
 <p>EXAMPLES:</p>
-<blockquote>
-<div><p>sage: from pseries_basis.sequences import LambdaSequence
-sage: C = LambdaSequence(lambda n : catalan_number(n), ZZ)
-sage: C[:10]
-[1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862]
-sage: (3*C)[:5]
-[3, 3, 6, 15, 42]
-sage: (C + C)[:5]
-[2, 2, 4, 10, 28]
-sage: F = LambdaSequence(fibonacci, ZZ)
-sage: F[:10]
-[0, 1, 1, 2, 3, 5, 8, 13, 21, 34]</p>
-</div></blockquote>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis.sequences</span> <span class="kn">import</span> <span class="n">LambdaSequence</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">C</span> <span class="o">=</span> <span class="n">LambdaSequence</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span> <span class="p">:</span> <span class="n">catalan_number</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">ZZ</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">C</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">42</span><span class="p">,</span> <span class="mi">132</span><span class="p">,</span> <span class="mi">429</span><span class="p">,</span> <span class="mi">1430</span><span class="p">,</span> <span class="mi">4862</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">C</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">42</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">C</span> <span class="o">+</span> <span class="n">C</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">28</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">F</span> <span class="o">=</span> <span class="n">LambdaSequence</span><span class="p">(</span><span class="n">fibonacci</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">F</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">34</span><span class="p">]</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="pseries_basis.sequences.LambdaSequence.element">
 <span class="sig-name descname"><span class="pre">element</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.LambdaSequence.element" title="Permalink to this definition">¶</a></dt>
@@ -170,7 +170,7 @@ sequence is exactly zero.</p>
         <li class="right" >
           <a href="ore.html" title="Access and communication with ore_algebra"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Interface for Sequences</a></li> 
       </ul>
     </div>
