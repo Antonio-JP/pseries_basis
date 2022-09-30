@@ -11,7 +11,7 @@ This package is based on the work of the following research articles:
 - _License_: GNU Public License v3.0
 - _Home page_: https://github.com/Antonio-JP/pseries_basis
 - _Documenation_: https://antonio-jp.github.io/pseries_basis/
-- _Online demo_: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Antonio-JP/pseries_basis.git/master?filepath=demo_explanation.ipynb)
+- _Online demo_: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Antonio-JP/pseries_basis/master?labpath=notebooks%2Fpaper_examples.ipynb)
 
 ## **Main use-case**
 
