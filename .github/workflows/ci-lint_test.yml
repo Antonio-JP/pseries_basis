@@ -1,4 +1,4 @@
-name: Pylint
+name: CI-Actions
 
 on:
   push:
@@ -6,20 +6,21 @@ on:
   pull_request:
     branches: [ master ]
 
+
 jobs:
-  build:
-    
+  # Job for lint the repository
+  linting:    
     runs-on: ubuntu-latest
     container: 
-      image: sagemath/sagemath:latest
-      options: --user root
+        image: sagemath/sagemath:9.3.beta8
+        options: --user root
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
     - name: Installing git and dependencies
       run: |
-        apt-get -qq update \
-        && apt-get -qq install -y --no-install-recommends git apt-transport-https ca-certificates \
-        && apt-get -qq clean
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates
+        sudo apt-get clean
     - name: Install package
       run: |
         sage -pip install --upgrade .
@@ -38,3 +39,23 @@ jobs:
         E1132,E1133,E1134,E1135,E1136,E1137,E1138,E1139,E1200,E1201,E1205,E1206,E1300,E1301,E1302,\
         E1303,E1304,E1305,E1306,E1310,E1700,E1701,unused-import,unused-argument \
         --msg-template='{line},{column},{category},{symbol}:{msg}' --reports=n --output-format=text
+
+  # Job for running the automatic tests in Sagemath
+  testing:
+    runs-on: ubuntu-latest
+    container: 
+        image: sagemath/sagemath:9.3.beta8
+        options: --user root
+    steps:
+    - uses: actions/checkout@v3
+    - name: Installing git and dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates
+        sudo apt-get clean
+    - name: Install package
+      run: |
+        sage -pip install --upgrade .
+    - name: Running sage tests
+      run: |
+        sage -t pseries_basis

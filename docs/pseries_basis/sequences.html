@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Interface for Sequences &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Interface with other platforms" href="io.html" />
+    <link rel="prev" title="Access and communication with ore_algebra" href="ore.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="io.html" title="Interface with other platforms"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ore.html" title="Access and communication with ore_algebra"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Interface for Sequences</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-pseries_basis.sequences">
+<span id="interface-for-sequences"></span><h1>Interface for Sequences<a class="headerlink" href="#module-pseries_basis.sequences" title="Permalink to this headline">¶</a></h1>
+<p>Module containing methods, strucutres and functions related with Sequences.</p>
+<p>A sequence is a function <span class="math notranslate nohighlight">\(f: \mathbb{N} \rightarrow \mathbb{K}\)</span> where the space <span class="math notranslate nohighlight">\(\mathbb{K}\)</span> is 
+called the <em>universe</em> of the sequence. The package <code class="xref py py-mod docutils literal notranslate"><span class="pre">pseries_basis</span></code> is oriented towards 
+formal power series, which are equivalent to sequences.</p>
+<p>This module will create a framework for the whole package to manage, access and manipulate sequences
+in a generic fashion.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.sequences.LambdaSequence">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.</span></span><span class="sig-name descname"><span class="pre">LambdaSequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.LambdaSequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.sequences.Sequence" title="pseries_basis.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.sequences.Sequence</span></code></a></p>
+<p>Simplest implementation of <a class="reference internal" href="#pseries_basis.sequences.Sequence" title="pseries_basis.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>.</p>
+<p>This class computes a sequence by calling a function with some integer coefficient. It does not check whether this 
+defining function will always work. This class implements some basic arithmetic for sequences, simplifying 
+their use.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">func</span></code>: a callable that defines the sequence as their output with natural input.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">universe</span></code>: a parent structure where all the elements of the sequence will be (a specific casting is performed)</p></li>
+</ul>
+<p>EXAMPLES:</p>
+<blockquote>
+<div><p>sage: from pseries_basis.sequences import LambdaSequence
+sage: C = LambdaSequence(lambda n : catalan_number(n), ZZ)
+sage: C[:10]
+[1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862]
+sage: (3*C)[:5]
+[3, 3, 6, 15, 42]
+sage: (C + C)[:5]
+[2, 2, 4, 10, 28]
+sage: F = LambdaSequence(fibonacci, ZZ)
+sage: F[:10]
+[0, 1, 1, 2, 3, 5, 8, 13, 21, 34]</p>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.LambdaSequence.element">
+<span class="sig-name descname"><span class="pre">element</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.LambdaSequence.element" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.sequences.Sequence">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.</span></span><span class="sig-name descname"><span class="pre">Sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">universe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.Sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Main calss for sequences. It defines a universe for its elements and a general interface to access the sequence.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.Sequence.almost_zero">
+<span class="sig-name descname"><span class="pre">almost_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.Sequence.almost_zero" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that checks if a sequence is zero at the beginning.</p>
+<p>This method receives a number of elements to be checked and then it proceeds to check if all the first 
+elements of the sequence are equal to zero. This is helpful in some sequence to guarantee that the whole 
+sequence is exactly zero.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.Sequence.element">
+<span class="sig-name descname"><span class="pre">element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.Sequence.element" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.sequences.Sequence.universe">
+<span class="sig-name descname"><span class="pre">universe</span></span><a class="headerlink" href="#pseries_basis.sequences.Sequence.universe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attribute with the common parent for all the elements of this sequence</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="ore.html"
+                          title="previous chapter">Access and communication with <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code></a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="io.html"
+                          title="next chapter">Interface with other platforms</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/pseries_basis/sequences.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="io.html" title="Interface with other platforms"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ore.html" title="Access and communication with ore_algebra"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Interface for Sequences</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

@@ -4,7 +4,9 @@ r'''
     TODO: review this file to check the compatibility with the derivative in general.
 '''
 # Sage imports
-from sage.all import cached_method, Matrix, QQ, ZZ
+from sage.all import cached_method, Matrix, QQ, ZZ, lcm
+
+from pseries_basis.ore import poly_decomp
 
 # Local imports
 from .psbasis import PolyBasis
@@ -292,7 +294,7 @@ class OrthogonalBasis(PolyBasis):
         raise NotImplementedError("The mixed relation is not (yet) implemented in general")
 
     @cached_method
-    def recurrence(self, operator):
+    def recurrence(self, operator, cleaned=False):
         r'''
             Method to get the compatibility for an operator.
 
@@ -310,7 +312,7 @@ class OrthogonalBasis(PolyBasis):
             TODO: add examples
         '''
         try:
-            return super(OrthogonalBasis, self).recurrence(operator)
+            return super(OrthogonalBasis, self).recurrence(operator, cleaned=cleaned)
         except:
             try:
                 poly = operator.polynomial()
@@ -323,7 +325,15 @@ class OrthogonalBasis(PolyBasis):
                 coefficients = [self.recurrence(OrthogonalBasis._poly_coeff_by_dict(poly,{variable: i})) for i in range(m+1)]
                 monomials = [self.__compatibility_derivation(m,i) for i in range(m+1)]
 
-                return self.reduce_SnSni(sum(coefficients[i]*monomials[i] for i in range(m+1)))
+                output = self.reduce_SnSni(sum(coefficients[i]*monomials[i] for i in range(m+1)))
+                if cleaned:
+                    output = self.remove_Sni(output) # we remove the inverse shift
+                    # we clean denominators
+                    _, coeffs = poly_decomp(output.polynomial())
+                    to_mult = lcm([el.denominator() for el in coeffs])
+                    output = (to_mult * output).change_ring(self.OS().base().base())
+                
+                return output
 
             raise TypeError("The operator %s is not compatible with %s" %(operator, self))
 
@@ -456,7 +466,7 @@ class JacobiBasis(OrthogonalBasis):
         with some fixed parameters `\alpha, \beta`, which are a class of orthogonal polynomials
         with weight function `(1-x)^\alpha (1+x)^\beta`.
 
-        Following the notation in :arxiv:`1804.02964v1`, we can find that
+        Following the notation in :arxiv:`2202.05550`, we can find that
         this basis has compatibilities with the multiplication by `x` and the derivation
         `(1-x^2)\partial_x`.
 
@@ -555,7 +565,7 @@ class GegenbauerBasis(OrthogonalBasis):
         Gegenbauer polynomials are (up to scale) a special case of Jacobi polynomials
         with parameters `\alpha = \beta = \lambda - 1/2`.
 
-        Following the notation in :arxiv:`1804.02964v1`, we can find that
+        Following the notation in :arxiv:`2202.05550`, we can find that
         this basis has compatibilities with the multiplication by `x` and the 
         differential operator `(1-x^2)\partial_x`.
 
@@ -620,7 +630,7 @@ class LegendreBasis(JacobiBasis):
         Legendre polynomials are a special case of Jacobi polynomials
         with parameters `\alpha = \beta = 0`.
 
-        Following the notation in :arxiv:`1804.02964v1`, we can find that
+        Following the notation in :arxiv:`2202.05550`, we can find that
         this basis has compatibilities with the multiplication by `x` and 
         the differential operator `(1-x^2)\partial_x`.
 
@@ -667,7 +677,7 @@ class TChebyshevBasis(OrthogonalBasis):
 
             `T_{n+1} = (2-\delta_{n,0})xT_n - T_{n-1}`
 
-        Following the notation in :arxiv:`1804.02964v1`, we can find that
+        Following the notation in :arxiv:`2202.05550`, we can find that
         this basis has compatibilities with the multiplication by `x` and with the
         differential operator `(1-x^2)\partial_x`.
 
@@ -714,7 +724,7 @@ class UChebyshevBasis(OrthogonalBasis):
 
             `U_{n+1} = 2xU_n - U_{n-1}`
 
-        Following the notation in :arxiv:`1804.02964v1`, we can find that
+        Following the notation in :arxiv:`2202.05550`, we can find that
         this basis has compatibilities with the multiplication by `x` and with the
         differential operator `(1-x^2)\partial_x`.
 
@@ -757,7 +767,7 @@ class LaguerreBasis(OrthogonalBasis):
         This class represents the :class:`OrthogonalBasis` formed by the set of Laguerre polynomials
         parametrized by `\alpha`, which are a class of orthogonal polynomials with weight function `e^{-x}x^{\alpha}`.
 
-        Following the notation in :arxiv:`1804.02964v1`, we can find that
+        Following the notation in :arxiv:`2202.05550`, we can find that
         this basis has compatibilities with the multiplication by `x` and with the Euler
         differential operator (i.e., `x\partial_x`).
 
@@ -806,7 +816,7 @@ class HermiteBasis(OrthogonalBasis):
         This class represents the :class:`OrthogonalBasis` formed by the set of Hermite polynomials
         which are a class of orthogonal polynomials with weight function `e^{-x^2}`.
 
-        Following the notation in :arxiv:`1804.02964v1`, we can find that
+        Following the notation in :arxiv:`2202.05550`, we can find that
         this basis has compatibilities with the multiplication by `x` and with the derivation
         w.r.t. `x`.
 
@@ -852,7 +862,7 @@ class HermitePBasis(OrthogonalBasis):
         This class represents the :class:`OrthogonalBasis` formed by the set of probabilistic Hermite polynomials
         which are a class of orthogonal polynomials with weight function `e^{-x^2/2}`.
 
-        Following the notation in :arxiv:`1804.02964v1`, we can find that
+        Following the notation in :arxiv:`2202.05550`, we can find that
         this basis has compatibilities with the multiplication by `x` and with the derivation
         w.r.t. `x`.
 

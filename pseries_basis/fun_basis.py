@@ -81,7 +81,7 @@ class ExponentialBasis(FunctionalBasis):
         of the exponential function `f(x) = exp(x)-1`. The minus one only shows up
         because `f(x)` must have order 0.
 
-        Following the notation in :arxiv:`1804.02964v1`, we can find that
+        Following the notation in :arxiv:`2202.05550`, we can find that
         this basis has compatibilities with the multiplication by `exp(x)` and the
         derivation operator
 

@@ -109,18 +109,18 @@ class SievedBasis(FactorialBasis):
             [      n   n + 1]
             [ -n - 1 2*n + 2]
             sage: B2.recurrence('x')
-            [      n       0 2*n*Sni]
-            [2*n + 1       n       0]
-            [      0   n + 1  -n - 1]
+            [        n         0 (2*n)*Sni]
+            [(2*n + 1)         n         0]
+            [        0   (n + 1)  (-n - 1)]
             sage: a,b,m,alpha = B2.compatibility('E')
             sage: Matrix([[alpha(i,j,B2.n()) for j in range(-a,b+1)] for i in range(m)])
             [                      1           (4*n - 3/2)/n                     3/2                       1]
             [    (n - 1/2)/(n + 1/2)         1/2*n/(n + 1/2) (3/2*n + 1/2)/(n + 1/2)                       1]
             [                      0                       1       (3*n + 2)/(n + 1)                       1]
             sage: B2.recurrence('E')                                                                                                                                                         
-            [                      Sn + 1      (3/2*n + 1/2)/(n + 1/2)                            1]
-            [    ((4*n + 5/2)/(n + 1))*Sn ((n + 1/2)/(n + 3/2))*Sn + 1            (3*n + 2)/(n + 1)]
-            [                      3/2*Sn ((1/2*n + 1/2)/(n + 3/2))*Sn                            1]
+            [                    Sn + 1        (3*n + 1)/(2*n + 1)                          1]
+            [    (8*n + 5)/(2*n + 2)*Sn (2*n + 1)/(2*n + 3)*Sn + 1          (3*n + 2)/(n + 1)]
+            [                    3/2*Sn       (n + 1)/(2*n + 3)*Sn                          1]
 
         Now consider the following difference operator:
 
@@ -740,6 +740,11 @@ class SievedBasis(FactorialBasis):
             
         return (m*A, m*T,new_D)
 
+    def is_quasi_func_triangular(self):
+        return all(basis.is_quasi_func_triangular() for basis in self.factors)
+    def is_quasi_eval_triangular(self):
+        return all(basis.is_quasi_eval_triangular() for basis in self.factors)
+
 class ProductBasis(SievedBasis):
     r'''
         Class for Product Basis.
@@ -751,7 +756,7 @@ class ProductBasis(SievedBasis):
 
             Q_n(x) = \prod_{i=1}^{j}P_{k+1}^{(j)}(x)\prod_{i=j+1}^{m}P_{k}^{(j)}(x).
 
-        See the paper :arxiv:`1804.02964v1` for further information.
+        See the paper :arxiv:`2202.05550` for further information.
 
         INPUT:
 
@@ -816,10 +821,10 @@ class ProductBasis(SievedBasis):
             [ -n - 1 2*n + 2]
             [ -n - 1 2*n + 2]
             sage: B2.recurrence('x')
-            [      n       0       0 2*n*Sni]
-            [2*n + 1       n       0       0]
-            [      0 2*n + 1  -n - 1       0]
-            [      0       0 2*n + 2  -n - 1]
+            [        n         0         0 (2*n)*Sni]
+            [(2*n + 1)         n         0         0]
+            [        0 (2*n + 1)  (-n - 1)         0]
+            [        0         0 (2*n + 2)  (-n - 1)]
 
         Now consider the following difference operator:
 

@@ -42,7 +42,7 @@
 <span id="power-series-basis-basic-structure-and-functionality"></span><h1>Power Series basis: basic structure and functionality<a class="headerlink" href="#module-pseries_basis.psbasis" title="Permalink to this headline">¶</a></h1>
 <p>Sage package for Power Series Basis.</p>
 <p>This module introduces the basic structures in Sage for computing with <em>Power
-Series Basis</em>. We based this work in the paper <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>
+Series Basis</em>. We based this work in the paper <a class="reference external" href="https://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>
 by M. Petkovšek, where all definitions and proofs for the algorithms here can be found.</p>
 <p>A Power Series basis is defined as a sequence <span class="math notranslate nohighlight">\(\{f_n\}_{n\in\mathbb{N}} \subset \mathbb{K}[[x]]\)</span>
 that form a <span class="math notranslate nohighlight">\(\mathbb{K}\)</span>-basis of the whole ring of formal power series. We distinguish
@@ -76,18 +76,18 @@ have a common implementation for particular basis.</p>
 <p>List of abstract methods:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="#pseries_basis.psbasis.PSBasis.element" title="pseries_basis.psbasis.PSBasis.element"><code class="xref py py-func docutils literal notranslate"><span class="pre">element()</span></code></a>.</p></li>
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_basis_matrix()</span></code>.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_functional_matrix()</span></code>.</p></li>
 </ul>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.A">
 <span class="sig-name descname"><span class="pre">A</span></span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.A" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.get_lower_bound" title="pseries_basis.psbasis.PSBasis.get_lower_bound"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_lower_bound()</span></code></a>, according to notation in <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a></p>
+<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.get_lower_bound" title="pseries_basis.psbasis.PSBasis.get_lower_bound"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_lower_bound()</span></code></a>, according to notation in <a class="reference external" href="https://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a></p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.B">
 <span class="sig-name descname"><span class="pre">B</span></span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.B" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.get_upper_bound" title="pseries_basis.psbasis.PSBasis.get_upper_bound"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_upper_bound()</span></code></a>, according to notation in <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a></p>
+<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.get_upper_bound" title="pseries_basis.psbasis.PSBasis.get_upper_bound"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_upper_bound()</span></code></a>, according to notation in <a class="reference external" href="https://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a></p>
 </dd></dl>
 
 <dl class="py method">
@@ -166,12 +166,12 @@ over the rational functions in <span class="math notranslate nohighlight">\(n\)<
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.alpha">
 <span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.alpha" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.compatibility_coefficient" title="pseries_basis.psbasis.PSBasis.compatibility_coefficient"><code class="xref py py-func docutils literal notranslate"><span class="pre">compatibility_coefficient()</span></code></a>, according to notation in <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a></p>
+<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.compatibility_coefficient" title="pseries_basis.psbasis.PSBasis.compatibility_coefficient"><code class="xref py py-func docutils literal notranslate"><span class="pre">compatibility_coefficient()</span></code></a>, according to notation in <a class="reference external" href="https://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a></p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.basis_matrix">
-<span class="sig-name descname"><span class="pre">basis_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nrows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.basis_matrix" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.functional_matrix">
+<span class="sig-name descname"><span class="pre">functional_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nrows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.functional_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to get a matrix representation of the basis.</p>
 <p>This method returns a matrix <span class="math notranslate nohighlight">\(M = (m_{i,j})\)</span> with <code class="docutils literal notranslate"><span class="pre">nrows</span></code> rows and
 <code class="docutils literal notranslate"><span class="pre">ncols</span></code> columns such that <span class="math notranslate nohighlight">\(m_{i,j} = [x^j]f_i(x)\)</span>, where <span class="math notranslate nohighlight">\(f_i(x)\)</span> is 
@@ -292,7 +292,7 @@ generated by <span class="math notranslate nohighlight">\(E\)</span> and <span c
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.compatibility_coefficient">
 <span class="sig-name descname"><span class="pre">compatibility_coefficient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.compatibility_coefficient" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to get the compatibility coefficient.</p>
-<p>Following <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>, an operator <span class="math notranslate nohighlight">\(L\)</span> is
+<p>Following <a class="reference external" href="https://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, an operator <span class="math notranslate nohighlight">\(L\)</span> is
 <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible if there are some <span class="math notranslate nohighlight">\(\alpha_{n,i}\)</span> such that for all <span class="math notranslate nohighlight">\(n = kr + j\)</span></p>
 <div class="math notranslate nohighlight">
 \[L \cdot b_n = \sum_{i=-A}^B \alpha_{r,i}(k)b_{n+i}.\]</div>
@@ -431,7 +431,7 @@ care of the different types the input may have.</p>
 <dd><p>Method to get the lower bound compatibility for an operator.</p>
 <p>This method returns the minimal index for the compatibility property
 for a particular operator. In the notation of the paper
-<a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>, for a <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible operator,
+<a class="reference external" href="https://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, for a <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible operator,
 this lower bound corresponds to the value of <span class="math notranslate nohighlight">\(A\)</span>.</p>
 <p>INPUT:</p>
 <ul class="simple">
@@ -451,7 +451,7 @@ itself.</p></li>
 <dd><p>Method to get the upper bound compatibility for an operator.</p>
 <p>This method returns the maximal index for the compatibility property
 for a particular operator. In the notation of the paper
-<a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>, for a <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible operator,
+<a class="reference external" href="https://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, for a <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible operator,
 this lower bound corresponds to the value of <span class="math notranslate nohighlight">\(B\)</span>.</p>
 <p>INPUT:</p>
 <ul class="simple">
@@ -591,7 +591,7 @@ with coefficients in the field given by default by <a class="reference internal"
 <span class="sig-name descname"><span class="pre">recurrence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sections</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.recurrence" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to get the recurrence for a compatible operator.</p>
 <p>This method returns the recurrence equation induced for a compatible operator. 
-In <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a> this compatibility
+In <a class="reference external" href="https://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a> this compatibility
 is shown to be an algebra isomorphism, so we can compute the compatibility
 final sequence operator using the <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code> package and a plain 
 substitution.</p>
@@ -636,7 +636,7 @@ is returned.</p>
 </pre></div>
 </div>
 <p>We can also use the operators from <code class="xref py py-class docutils literal notranslate"><span class="pre">ore_algebra.OreAlgebra</span></code> to get the compatibility. Here
-we see some examples extracted from <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>:</p>
+we see some examples extracted from <a class="reference external" href="https://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">ore_algebra</span> <span class="k">import</span> <span class="n">OreAlgebra</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">OE</span><span class="o">.&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">OreAlgebra</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">))</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">x</span> <span class="o">=</span> <span class="n">B</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">gens</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
@@ -754,7 +754,7 @@ for the compatibility. In this way, we have tht the operator <span class="math n
 satisfies:</p>
 <div class="math notranslate nohighlight">
 \[L \cdot b_{km+r} = \sum_{i=-A}^B \alpha_{r, i, k} b_{km+r+j}\]</div>
-<p>See <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a> for further information about the
+<p>See <a class="reference external" href="https://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a> for further information about the
 definition of a compatible operator.</p>
 <p>INPUT:</p>
 <ul>

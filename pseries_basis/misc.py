@@ -2,7 +2,10 @@ r'''
     Auxiliary file for extra utility methods
 '''
 
-from functools import lru_cache
+try: # python 3.9 or higher
+    from functools import cache
+except ImportError: #python 3.8 or lower
+    from functools import lru_cache as cache
 from sage.all import ZZ, Matrix, vector, ceil, factorial, PolynomialRing, QQ
 
 from pseries_basis.psbasis import PSBasis
@@ -14,7 +17,7 @@ def DefiniteSumSolutions(operator, *input):
         Petkovšek's algorithm for transforming operators into recurrence equations.
         
         This method is the complete execution for the algorithm **DefiniteSumSolutions** described in
-        :arxiv:`1804.02964v1`. This methods takes an operator `L` and convert the problem
+        :arxiv:`2202.05550`. This methods takes an operator `L` and convert the problem
         of being solution `L \cdot y(x) = 0` to a recurrence equation assuming some hypergeometric
         terms in the expansion.
         
@@ -30,9 +33,9 @@ def DefiniteSumSolutions(operator, *input):
         * ``operator``: difference operator to be transformed.
         * ``input``: the coefficients of the binomial coefficients we assume appear in the expansion
           of the solutions. This input can be given with the following formats:
-            - ``a_1,a_2,...,a_m,b_1,b_2,...,b_m``: an unrolled list of `2m` elements.
-            - ``[a_1,a_2,...,a_m,b_1,b_2,...,b_m]``: a compress list of `2m` elements.
-            - ``[a_1,...,a_m],[b_1,...,b_m]``: two lists of `m` elements.
+          - ``a_1,a_2,...,a_m,b_1,b_2,...,b_m``: an unrolled list of `2m` elements.
+          - ``[a_1,a_2,...,a_m,b_1,b_2,...,b_m]``: a compress list of `2m` elements.
+          - ``[a_1,...,a_m],[b_1,...,b_m]``: two lists of `m` elements.
 
         OUTPUT:
 
@@ -98,7 +101,7 @@ def DefiniteSumSolutions(operator, *input):
     
     return result
 
-@lru_cache
+@cache
 def GeneralizedBinomial(a,b,c,m,r):
     r'''
         Method to get a basis which includes the general binomial coefficients.
@@ -285,7 +288,7 @@ def guess_compatibility_E(basis, shift = 1, sections = None, A = None, bound_roo
         Method to guess the compatibility of a shift with a basis.
 
         This method use ``ore_algebra`` package to guess a possible compatibility condition
-        for a shift with a basis. This uses the generalization of Proposition 3 in :arxiv:`1804.02964v1`
+        for a shift with a basis. This uses the generalization of Proposition 3 in :arxiv:`2202.05550`
         to characterize the compatibility of a shift with a factorial basis.
 
         INPUT:
@@ -333,7 +336,7 @@ def guess_compatibility_E(basis, shift = 1, sections = None, A = None, bound_roo
 
     x = basis[1].parent().gens()[0]
     actual_data_bound = bound_data+bound_roots
-    M = Matrix([list(basis[i](x=x+shift))+(actual_data_bound-i-1)*[0] for i in range(actual_data_bound)])*basis.basis_matrix(actual_data_bound).inverse()
+    M = Matrix([list(basis[i](x=x+shift))+(actual_data_bound-i-1)*[0] for i in range(actual_data_bound)])*basis.functional_matrix(actual_data_bound).inverse()
     # the rows of M have all the coordinates of basis[i](x+1) in term of basis itself
     if(any(any(el != 0 for el in M[i][:i-A]) for i in range(A,M.nrows()))):
         raise ValueError("The guessed bound is incorrect: a non-zero coefficient found")

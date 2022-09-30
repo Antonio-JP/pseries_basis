@@ -1,0 +1,278 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Auxiliary and utility functionalities &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Access and communication with ore_algebra" href="ore.html" />
+    <link rel="prev" title="Orthogonal Polynomials: second order Polynomial Basis" href="ortho_basis.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ore.html" title="Access and communication with ore_algebra"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ortho_basis.html" title="Orthogonal Polynomials: second order Polynomial Basis"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Auxiliary and utility functionalities</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-pseries_basis.misc">
+<span id="auxiliary-and-utility-functionalities"></span><h1>Auxiliary and utility functionalities<a class="headerlink" href="#module-pseries_basis.misc" title="Permalink to this headline">¶</a></h1>
+<p>Auxiliary file for extra utility methods</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.DefiniteSumSolutions">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.</span></span><span class="sig-name descname"><span class="pre">DefiniteSumSolutions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.DefiniteSumSolutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Petkovšek’s algorithm for transforming operators into recurrence equations.</p>
+<p>This method is the complete execution for the algorithm <strong>DefiniteSumSolutions</strong> described in
+<a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>. This methods takes an operator <span class="math notranslate nohighlight">\(L\)</span> and convert the problem
+of being solution <span class="math notranslate nohighlight">\(L \cdot y(x) = 0\)</span> to a recurrence equation assuming some hypergeometric
+terms in the expansion.</p>
+<p>The operator must be a difference operator of <span class="math notranslate nohighlight">\(\mathbb{Q}[x]&lt;E&gt;\)</span> where <span class="math notranslate nohighlight">\(E: x \mapsto x+1\)</span>. The operator may 
+belong to a different ring from the package <em>ore_algebra</em>, but the generator must have the 
+behavior previously described.</p>
+<p>This function does not check the nature of the generator, so using this algorithm with different 
+types of operators may lead to some inconsistent results.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">operator</span></code>: difference operator to be transformed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">input</span></code>: the coefficients of the binomial coefficients we assume appear in the expansion
+of the solutions. This input can be given with the following formats:
+- <code class="docutils literal notranslate"><span class="pre">a_1,a_2,...,a_m,b_1,b_2,...,b_m</span></code>: an unrolled list of <span class="math notranslate nohighlight">\(2m\)</span> elements.
+- <code class="docutils literal notranslate"><span class="pre">[a_1,a_2,...,a_m,b_1,b_2,...,b_m]</span></code>: a compress list of <span class="math notranslate nohighlight">\(2m\)</span> elements.
+- <code class="docutils literal notranslate"><span class="pre">[a_1,...,a_m],[b_1,...,b_m]</span></code>: two lists of <span class="math notranslate nohighlight">\(m\)</span> elements.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>An operator <span class="math notranslate nohighlight">\(\tilde{L}\)</span> such that if a sequence <span class="math notranslate nohighlight">\((c_n)_n\)</span> satisfies <span class="math notranslate nohighlight">\(L \cdot (c_n)_n = 0\)</span> then 
+the power series</p>
+<div class="math notranslate nohighlight">
+\[y(x) = \sum_{n \geq 0}\prod{i=1}^m c_n\binom{a_i*x+b_i}{n}\]</div>
+<p>satisfies <span class="math notranslate nohighlight">\(L \cdot y(x) = 0\)</span>.</p>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">ore_algebra</span> <span class="kn">import</span> <span class="n">OreAlgebra</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">R</span><span class="o">.&lt;</span><span class="n">x</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">QQ</span><span class="p">[];</span> <span class="n">OE</span><span class="o">.&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">OreAlgebra</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">))</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">DefiniteSumSolutions</span><span class="p">((</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">E</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">Sn</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">example_2</span> <span class="o">=</span> <span class="mi">4</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">5</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">20</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="o">+</span><span class="mi">50</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">27</span><span class="p">)</span><span class="o">*</span><span class="n">E</span> <span class="o">+</span> <span class="mi">9</span><span class="o">*</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">7</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">DefiniteSumSolutions</span><span class="p">(</span><span class="n">example_2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+<span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">Sn</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.GeneralizedBinomial">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.</span></span><span class="sig-name descname"><span class="pre">GeneralizedBinomial</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.GeneralizedBinomial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get a basis which includes the general binomial coefficients.</p>
+<p>The binomial coefficients of shape</p>
+<div class="math notranslate nohighlight">
+\[\binom{ax+bn+c}{mn+r}\]</div>
+<p>can be (as a sequence of <span class="math notranslate nohighlight">\(n\)</span>) polynomials when <span class="math notranslate nohighlight">\(c \in \mathbb{Z}\)</span>, <span class="math notranslate nohighlight">\(a,b,m,r \in \mathbb{N}\)</span> with <span class="math notranslate nohighlight">\(a, m &gt; 0\)</span>
+and <span class="math notranslate nohighlight">\(b \leq m\)</span>. However these polynomials have degree <span class="math notranslate nohighlight">\(nm\)</span>, so they do not form a basis of mathbb{K}[[x]]. 
+This method creates a factorial basis as a <code class="xref py py-class docutils literal notranslate"><span class="pre">ProductBasis</span></code> that contains the specified binomial coefficients
+in the corresponding positions of the sequence. The intermediate steps are a possible extension to obtain
+every <span class="math notranslate nohighlight">\(m\)</span> steps all the necessary roots.</p>
+<p>Moreover, when <span class="math notranslate nohighlight">\(r=0\)</span>, this basis are naturally <span class="math notranslate nohighlight">\((b+1, 0)\)</span>-compatible with the shift <span class="math notranslate nohighlight">\(\tilde{E}: x\mapsto x+(1/a)\)</span>.
+This method includes that compatibility in the basis after computing it with a guessing procedure (see 
+<a class="reference internal" href="#pseries_basis.misc.guess_compatibility_E" title="pseries_basis.misc.guess_compatibility_E"><code class="xref py py-func docutils literal notranslate"><span class="pre">guess_compatibility_E()</span></code></a> for further information). Then we also include the compatibility with the classical
+shift <span class="math notranslate nohighlight">\(E: x\mapsto x+1\)</span> using the compatibility with <span class="math notranslate nohighlight">\(\tilde{E}\)</span>.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">a</span></code>: value for the parameter <span class="math notranslate nohighlight">\(a\)</span>. It must be a positive integer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">b</span></code>: value for the parameter <span class="math notranslate nohighlight">\(b\)</span>. It must be a non-negative integer smaller or equal to <code class="docutils literal notranslate"><span class="pre">m</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">c</span></code>: value for the parameter <span class="math notranslate nohighlight">\(c\)</span>. It must be an integer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">m</span></code>: value for the parameter <span class="math notranslate nohighlight">\(m\)</span>. It must be a positive integer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">r</span></code>: value for the parameter <span class="math notranslate nohighlight">\(r\)</span>. It must be a non-negative integer.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code> such that the <span class="math notranslate nohighlight">\(nm\)</span>-th term is of the form</p>
+<div class="math notranslate nohighlight">
+\[\binom{ax+bn+c}{mn+r}.\]</div>
+<p>If <span class="math notranslate nohighlight">\(r = 0\)</span>, this basis will have included the compatibility with the usual shift <span class="math notranslate nohighlight">\(E: x\mapsto x+1\)</span> with name “E”
+and also the compatibility with the <em>minimal</em> shift <span class="math notranslate nohighlight">\(\tilde{E}: x \mapsto x + 1/a\)</span> with name “Et”.</p>
+<p>TODO: add tests</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.check_compatibility">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.</span></span><span class="sig-name descname"><span class="pre">check_compatibility</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.check_compatibility" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.compute_in_basis">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.</span></span><span class="sig-name descname"><span class="pre">compute_in_basis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">section</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.compute_in_basis" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method takes a <a class="reference internal" href="psbasis.html#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.psbasis.PSBasis</span></code></a> and a sequence and computes
+the expansion of that sequence in the usual power basis up to 
+a bound.</p>
+<p>If the sequence is given as a list, the bound may not be reached if not enough
+data is provide.</p>
+<p>We take only the elements in the basis that are in the <span class="math notranslate nohighlight">\(j\)</span>-th <span class="math notranslate nohighlight">\(F\)</span>-section
+of the basis, i.e., elements of the shape <span class="math notranslate nohighlight">\(b_{kF+j}\)</span>. By default, the parameters
+<code class="docutils literal notranslate"><span class="pre">section</span></code> and <code class="docutils literal notranslate"><span class="pre">shift</span></code> are prepared to consider the whole basis.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.guess_compatibility_E">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.</span></span><span class="sig-name descname"><span class="pre">guess_compatibility_E</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sections</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bound_roots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bound_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.guess_compatibility_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to guess the compatibility of a shift with a basis.</p>
+<p>This method use <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code> package to guess a possible compatibility condition
+for a shift with a basis. This uses the generalization of Proposition 3 in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>
+to characterize the compatibility of a shift with a factorial basis.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">basis</span></code>: a <a class="reference internal" href="factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis" title="pseries_basis.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code></a> to guess the compatibility.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shift</span></code>: value that is added to <span class="math notranslate nohighlight">\(x\)</span> with the shift we want to guess (i.e., <span class="math notranslate nohighlight">\(E(x) = x+\alpha\)</span> where
+<span class="math notranslate nohighlight">\(\alpha\)</span> is the value of <code class="docutils literal notranslate"><span class="pre">shift</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sections</span></code>: number of desired section in the compatibility condition.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">A</span></code>: vale for the compatibility bound <span class="math notranslate nohighlight">\(A\)</span>. If non is given, we guess a possible choice.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bound_roots</span></code>: bound for checking that the root characterization holds for <code class="docutils literal notranslate"><span class="pre">basis</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bound_data</span></code>: amount of data we compute i order to do the guessing.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>A guessed compatibility condition <span class="math notranslate nohighlight">\((A,B,m,\alpha_{i,j}(n))\)</span> for <code class="docutils literal notranslate"><span class="pre">basis</span></code> and the shift
+operator <span class="math notranslate nohighlight">\(E: x \mapsto x+\alpha\)</span>.</p>
+<p>TODO: add examples?</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.guess_rational_function">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.</span></span><span class="sig-name descname"><span class="pre">guess_rational_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algebra</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.guess_rational_function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.multiset_inclusion">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.</span></span><span class="sig-name descname"><span class="pre">multiset_inclusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.multiset_inclusion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check that the list <code class="docutils literal notranslate"><span class="pre">l1</span></code> is completely included in <code class="docutils literal notranslate"><span class="pre">l2</span></code>.</p>
+<p>This method checks the multiset inclusion between two lists. This means that 
+all the elements appear in the second list at least the same amount of times as 
+in the first list.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">l1</span></code>: the multiset to be checked</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">l2</span></code>: the multiset where we will check</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p><code class="docutils literal notranslate"><span class="pre">True</span></code> if all elements in <code class="docutils literal notranslate"><span class="pre">l1</span></code> can be found in <code class="docutils literal notranslate"><span class="pre">l2</span></code>, <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.unroll_in_basis">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.</span></span><span class="sig-name descname"><span class="pre">unroll_in_basis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">section</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.unroll_in_basis" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method takes a <a class="reference internal" href="psbasis.html#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.psbasis.PSBasis</span></code></a> and a sequence in form of P-finite
+recurrence (with initial data) and compute the expansion in the usual power 
+basis up to a bound.</p>
+<p>This method is equivalent to <a class="reference internal" href="#pseries_basis.misc.compute_in_basis" title="pseries_basis.misc.compute_in_basis"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_in_basis()</span></code></a>, but the sequence is 
+not in list format or in a function but in a P-finite representation, that
+can be unrolled using the method <a class="reference internal" href="#pseries_basis.misc.unroll_sequence" title="pseries_basis.misc.unroll_sequence"><code class="xref py py-func docutils literal notranslate"><span class="pre">unroll_sequence()</span></code></a>.</p>
+<p>We take only the elements in the basis that are in the <span class="math notranslate nohighlight">\(j\)</span>-th <span class="math notranslate nohighlight">\(F\)</span>-section
+of the basis, i.e., elements of the shape <span class="math notranslate nohighlight">\(b_{kF+j}\)</span>. By default, the parameters
+<code class="docutils literal notranslate"><span class="pre">section</span></code> and <code class="docutils literal notranslate"><span class="pre">shift</span></code> are prepared to consider the whole basis.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.unroll_sequence">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.</span></span><span class="sig-name descname"><span class="pre">unroll_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.unroll_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method takes an operator of the shape</p>
+<div class="math notranslate nohighlight">
+\[\]</div>
+<p>p_d(n)S_n^d + ldots p_1(n)S_n + p_0(n)</p>
+<p>and some initial values given by <code class="docutils literal notranslate"><span class="pre">init</span></code> and unrolls
+the sequence defined by that operator equal to zero
+and the initial values up to some bound.</p>
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="ortho_basis.html"
+                          title="previous chapter">Orthogonal Polynomials: second order Polynomial Basis</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="ore.html"
+                          title="next chapter">Access and communication with <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code></a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/pseries_basis/misc.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ore.html" title="Access and communication with ore_algebra"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ortho_basis.html" title="Orthogonal Polynomials: second order Polynomial Basis"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Auxiliary and utility functionalities</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

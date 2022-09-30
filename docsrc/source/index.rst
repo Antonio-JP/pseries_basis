@@ -13,9 +13,6 @@ power series ring, and provides methods to compute recurrence equations
 for solutions of difference/differential equations within the ring
 of formal power series.
 
-This package synergies pretty naturally with other packages from the author 
-and with the package ``ore_algebra`` from M. Kauers et. al.
-
 This work is licensed under a `Creative Commons Attribution-Share Alike
 3.0 License <https://creativecommons.org/licenses/by-sa/3.0/>`_.
 
@@ -29,6 +26,10 @@ Sequences
    pseries_basis/factorial_basis
    pseries_basis/product_basis
    pseries_basis/ortho_basis
+   pseries_basis/misc
+   pseries_basis/ore
+   pseries_basis/sequences
+   pseries_basis/io
 
 
 Indices and Tables
