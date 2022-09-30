@@ -229,12 +229,21 @@ def apply_operator_to_seq(operator : OreOperator, sequence : Sequence) -> Sequen
     if len(operator.parent().gens()) > 1:
         raise TypeError("Only ore operators with 1 generator are allowed: we assume is the natural shift")
     coefficients = operator.coefficients(sparse=False)
-    # univariate polynomial base
-    if is_PolynomialRing(operator.parent().base()):
+    
+    E = operator.parent().gens()[0]
+    v = None
+
+    for el in operator.parent().base().gens(): # looking for the variable where the shift acts
+        if E*el != el*E:
+            v = el
+            break
+
+    # found the shift variable
+    if v != None:
         v = operator.parent().base().gens()[0]
         R = operator.parent().base().base()
         gen = lambda i : sum(coefficients[j](**{str(v):i})*sequence[i+j] for j in range(len(coefficients)))
-    else: # we assume they are all constants
+    else: # all the base ring are constants
         R = operator.parent().base()
         gen = lambda i : sum(coefficients[j]*sequence[i+j] for j in range(len(coefficients)))
     
