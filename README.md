@@ -38,7 +38,7 @@ This is a partial solution to the more general case of **Inverse Zeilberger Prob
 ## **Installation**
 
 This package can be installed, used, modified and distributed freely under the conditions of the 
-[GNU General Public License v3](https://www.gnu.org/licenses/gpl-3.0.html) (see the file [LICENSE](https://github.com/Antonio-JP/dd_functions/blob/master/LICENSE)).
+[GNU General Public License v3](https://www.gnu.org/licenses/gpl-3.0.html) (see the file [LICENSE](https://github.com/Antonio-JP/pseries_basis/blob/master/LICENSE)).
 
 There are two different ways of installing the package into your SageMath distribution:
 
@@ -60,7 +60,7 @@ Another option to install this package is to use the pip functionality within Sa
 
 To install it via pip, run the following in a terminal where ``sage`` can be executed:
 ```
-    sage -pip install [--user] git+https://github.com/Antonio-JP/dd_functions.git
+    sage -pip install [--user] git+https://github.com/Antonio-JP/pseries_basis.git
 ```
 
 The optional argument _--user_ allows to install the package just for the current user instead of a global installation.
