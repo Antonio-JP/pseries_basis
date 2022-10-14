@@ -82,7 +82,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(ZZ) # illegal building, do not use in general
                 sage: B.OB()
                 Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
@@ -95,7 +95,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(ZZ) # illegal building, do not use in general
                 sage: B.n()
                 n
                 sage: B.n().parent()
@@ -111,7 +111,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(ZZ) # illegal building, do not use in general
                 sage: B.OS()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
@@ -125,7 +125,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(ZZ) # illegal building, do not use in general
                 sage: B.OSS()
                 Univariate Ore algebra in Sn over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
@@ -140,7 +140,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(ZZ) # illegal building, do not use in general
                 sage: B.Sn()
                 Sn
                 sage: B.Sn().parent()
@@ -157,7 +157,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(ZZ) # illegal building, do not use in general
                 sage: B.Sni()
                 Sni
                 sage: B.Sni().parent()
@@ -672,7 +672,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal build just for examples
+                sage: B = PSBasis(ZZ) # illegal build just for examples
                 sage: Sn = B.Sn(); Sni = B.Sni()
                 sage: Sn*Sni
                 Sn*Sni
@@ -739,7 +739,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # do not do this in your code
+                sage: B = PSBasis(ZZ) # do not do this in your code
                 sage: Sn = B.Sn(); Sni = B.Sni()
                 sage: B.remove_Sni(Sni)
                 1
@@ -1685,12 +1685,16 @@ class BruteBasis(PSBasis):
 
         * ``elements``: function or lambda method that takes one parameter `n` and return the `n`-th element
           of this basis.
+        * ``base``: base domain for the sequences this basis represents.
+        * ``universe``: domain where the elements of the bais will be represented.
         * ``degree``: indicates if it is a polynomial basis or an order basis.
+        * ``var_name``: (only used if ``universe`` is None and ``degree`` is True) provides a name for the main variable
+          of the polynomials that compose this basis.
 
         EXAMPLES::
 
             sage: from pseries_basis import *
-            sage: B = BruteBasis(lambda n : QQ[x](binomial(x,n)), True)
+            sage: B = BruteBasis(lambda n : binomial(x,n), QQ, degree=True)
             sage: B2 = BinomialBasis()
             sage: all(B[i] == B2[i] for i in range(100))
             True
@@ -1698,7 +1702,7 @@ class BruteBasis(PSBasis):
         **Be careful**: this method does not check that the lambda function induces a basis nor that 
         the ``degree`` argument is correct::
 
-            sage: B = BruteBasis(lambda n : 0, False)
+            sage: B = BruteBasis(lambda n : 0, ZZ, ZZ, False)
             sage: all(B[i] == 0 for i in range(100))
             True
     '''
