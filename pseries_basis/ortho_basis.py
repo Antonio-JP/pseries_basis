@@ -156,7 +156,7 @@ class OrthogonalBasis(PolyBasis):
             name = self.__var_name
         else:
             name = var_name
-        R = self.polynomial_ring(name)
+        R = self.universe
         x = R.gens()[0]
         an = self.__an; bn = self.__bn; cn = self.__cn
 
@@ -243,7 +243,7 @@ class OrthogonalBasis(PolyBasis):
             name = self.__var_name
         else:
             name = var_name
-        R = self.polynomial_ring(name)
+        R = self.universe
         x = R.gens()[0]
 
         rows = []; n = 0
@@ -521,7 +521,7 @@ class JacobiBasis(OrthogonalBasis):
                 name = self.var_name()
             else:
                 name = var_name
-            R = self.polynomial_ring(name); x = R.gens()[0]
+            R = self.universe; x = R.gens()[0]
             a0 = (self.__alpha + self.__beta)/2 + 1; b0 = (self.__alpha - self.__beta)/2
             return a0*x + b0
 

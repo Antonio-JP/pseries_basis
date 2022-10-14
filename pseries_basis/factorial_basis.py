@@ -668,7 +668,7 @@ class SFactorialBasis(FactorialBasis):
         self.__cached_increasing = {}
 
     @cached_method
-    def element(self, n, var_name=None):
+    def element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -703,16 +703,12 @@ class SFactorialBasis(FactorialBasis):
         if(n < 0):
             raise IndexError("A SFactorialBasis is only defined for non-negative integers")
 
-        if(var_name is None):
-            name = self.var_name()
-        else:
-            name = var_name
-        R = self.polynomial_ring(name)
+        R = self.universe
         x = R.gens()[0]
 
         if(n > 0):
             an = self.__an; bn = self.__bn
-            return self.element(n-1, var_name=var_name) * (an(n=n)*x + bn(n=n))
+            return self.element(n-1) * (an(n=n)*x + bn(n=n))
         elif(n == 0):
             return self.__init
         else:
@@ -961,7 +957,7 @@ class SFactorialBasis(FactorialBasis):
                 d = ZZ(d); m = dst
 
         ## Building the polynomial
-        PR = self.polynomial_ring(self.var_name()); x = PR.gens()[0]
+        PR = self.universe; x = PR.gens()[0]
         if(d == 0):
             return PR.one()
 
@@ -1038,7 +1034,7 @@ class RootSequenceBasis(FactorialBasis):
         self.__cached_increasing = {}
 
     @cached_method
-    def element(self, n, var_name=None):
+    def element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -1058,16 +1054,13 @@ class RootSequenceBasis(FactorialBasis):
         n = ZZ(n)
         if(n < 0):
             raise IndexError("A RootSequenceBasis is only defined for non-negative integers")
-        if(var_name is None):
-            name = self.var_name()
-        else:
-            name = var_name
-        R = self.polynomial_ring(name)
+
+        R = self.universe
         x = R.gens()[0]
 
         if(n > 0):
             rho = self.rho; cn = self.cn
-            return R(cn(n=n)/cn(n=n-1)*self.element(n-1, var_name=var_name) * (x - rho(n=n-1)))
+            return R(cn(n=n)/cn(n=n-1)*self.element(n-1) * (x - rho(n=n-1)))
         elif(n == 0):
             return R(self.cn(n=0))
         else:
@@ -1170,7 +1163,7 @@ class RootSequenceBasis(FactorialBasis):
                 d = ZZ(d); m = dst
 
         ## Building the polynomial
-        PR = self.polynomial_ring(self.var_name()); x = PR.gens()[0]
+        PR = self.universe; x = PR.gens()[0]
         if(d == 0):
             return PR.one()
 
@@ -1371,7 +1364,7 @@ class ScalarBasis(FactorialBasis):
                 d = ZZ(d); m = dst
 
         ## Building the polynomial
-        PR = self.polynomial_ring(self.var_name())
+        PR = self.universe
         if(d == 0):
             return PR.one()
 
@@ -1506,7 +1499,7 @@ class FallingBasis(SFactorialBasis):
 
     def _latex_(self):
         a = self.__a; b = self.__b; c = self.__c
-        x = self.polynomial_ring(self.var_name()).gens()[0]
+        x = self.universe.gens()[0]
         if(c == -1):
             return r"\left\{(%s)^{\overline{n}}\right\}_{n \geq 0}" %self.element(1)
         elif(c == 1):
@@ -1620,11 +1613,11 @@ class BinomialBasis(SFactorialBasis):
         self.set_compatibility(E, (Sn+1)**a)
 
     def __repr__(self):
-        x = self.polynomial_ring(self.var_name()).gens()[0]
+        x = self.universe.gens()[0]
         return "Binomial basis (%s) choose n" %(self.__a*x + self.__b)
 
     def _latex_(self):
-        x = self.polynomial_ring(self.var_name()).gens()[0]
+        x = self.universe.gens()[0]
         return r"\left\{\binom{%s}{n}\right\}_{n\geq 0}" %(self.__a*x+self.__b)
 
     def is_quasi_eval_triangular(self):

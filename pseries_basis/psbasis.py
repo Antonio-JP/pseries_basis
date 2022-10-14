@@ -752,15 +752,6 @@ class PSBasis(Sequence):
         d = operator.degree(Sni)
         return self.OSS()(self.reduce_SnSni((Sn**d)*operator))
     
-    def polynomial_ring(self,var_name='x'):
-        r'''
-            Method to create a polynomial ring.
-
-            This method creates a polynomial ring with a given variable name
-            with coefficients in the field given by default by :func:`OB`.
-        '''
-        return PolynomialRing(self.OB().base(), [var_name])
-    
     ### COMPATIBILITY RELATED METHODS
     def set_compatibility(self, name, trans, sub=False):
         r'''
@@ -1740,7 +1731,7 @@ class BruteBasis(PSBasis):
             name = var_name
 
         if(self.by_degree()):
-            return self.polynomial_ring(name)(self.__get_element(n))
+            return self.universe(self.__get_element(n))
         return self.__get_element(n)
 
     def _functional_matrix(self, nrows, ncols):

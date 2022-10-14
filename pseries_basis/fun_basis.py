@@ -55,14 +55,14 @@ class FunctionalBasis(OrderBasis):
 
             A formal power series of order ``n``.
 
-            TODO: add examples
+            TODO: FIX THIS METHOD
         '''
-        if(not real):
-            R = self.polynomial_ring(self.__fun_name)
-            f = R.gens()[0]
-            return f**n
-        else:
-            return self.__function**n
+        #if(not real):
+            # R = self.polynomial_ring(self.__fun_name)
+            # f = R.gens()[0]
+            # return f**n
+        #else:
+        return self.__function**n
 
     def __repr__(self):
         return "Functional Power Basis (%s)" %(self.__fun_name)

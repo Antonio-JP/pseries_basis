@@ -591,7 +591,7 @@ class SievedBasis(FactorialBasis):
         if(diff < 0):
             raise ValueError("The value for 'diff' must be a non-negative integer")
         if(diff == 0):
-            return self.polynomial_ring().one()
+            return self.universe.one()
 
         if(not (k,r,diff) in self.__cached_increasing):
             original_index = [self.index((k,r), i) for i in range(self.nfactors())]
