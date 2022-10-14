@@ -15,20 +15,26 @@ except ImportError: #python 3.8 or lower
     from functools import lru_cache as cache
 
 ## Sage imports
+from sage.categories.cartesian_product import cartesian_product
 from sage.categories.homset import Hom
 from sage.categories.pushout import CoercionException, pushout
 from sage.categories.morphism import SetMorphism
 from sage.categories.sets_cat import Sets
 from sage.rings.semirings.non_negative_integer_semiring import NN
+from sage.structure.element import parent
 from sage.symbolic.ring import SR
 
 class Sequence(SetMorphism):
     r'''
         Main calss for sequences. It defines a universe for its elements and a general interface to access the sequence.
     '''
-    def __init__(self, universe):
+    def __init__(self, universe, dim : int =1):
         self.__universe = universe
-        super().__init__(Hom(NN,universe,Sets()), lambda n : self.element(n))
+        self.__dim = dim
+        if dim == 1:
+            super().__init__(Hom(NN,universe,Sets()), lambda n : self.element(n))
+        else:
+            super().__init__(Hom(cartesian_product(dim*[NN]), universe, Sets()), lambda n : self.element(*n))
 
     @property
     def universe(self): 
@@ -36,6 +42,13 @@ class Sequence(SetMorphism):
             Attribute with the common parent for all the elements of this sequence
         '''
         return self.__universe
+
+    @property
+    def dim(self):
+        r'''
+            Attribute with the number of variables for the sequence.
+        '''
+        return self.__dim
 
     def __getitem__(self, key):
         if isinstance(key, (tuple, list)):
@@ -53,10 +66,10 @@ class Sequence(SetMorphism):
             return res
         return self.element(key)
 
-    def __call__(self, input):
-        return self.element(input)
+    def __call__(self, *input):
+        return self.element(*input)
 
-    def element(self, index : int):
+    def element(self, *indices : int):
         raise NotImplementedError("Method 'element' not implemented")
 
     def almost_zero(self, order=10):
@@ -134,15 +147,15 @@ class LambdaSequence(Sequence):
             sage: F[:10]
             [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
     '''
-    def __init__(self, func, universe, allow_symb = False):
-        super().__init__(universe)
+    def __init__(self, func, universe, dim = 1, allow_symb = False):
+        super().__init__(universe, dim=dim)
 
         self.__func = func
         self.__alls = allow_symb
 
     @cache
-    def element(self, index : int):
-        output = self.__func(index)
+    def element(self, *indices : int):
+        output = self.__func(*indices)
         if self.universe is None: # we allow None universe
             return output
         elif self.__alls and (not output in self.universe) and (output in SR):
@@ -152,32 +165,33 @@ class LambdaSequence(Sequence):
 
     # basic arithmethic methods
     def __add__(self, other):
-        if not isinstance(other, Sequence):
+        if not isinstance(other, Sequence) or self.dim != other.dim:
             return NotImplemented
 
         universe = pushout(self.universe, other.universe)
-        return LambdaSequence(lambda n : self[n] + other[n], universe)
+        return LambdaSequence(lambda *n : self(*n) + other(*n), universe, dim = self.dim)
 
     def __sub__(self, other):
-        if not isinstance(other, Sequence):
+        if not isinstance(other, Sequence) or self.dim != other.dim:
             return NotImplemented
 
         universe = pushout(self.universe, other.universe)
-        return LambdaSequence(lambda n : self[n] - other[n], universe)
+        return LambdaSequence(lambda *n : self(*n) - other(*n), universe, dim = self.dim)
 
     def __mul__(self, other):
-        if isinstance(other, Sequence):
+        if isinstance(other, Sequence) and self.dim == other.dim:
             universe = pushout(self.universe, other.universe)
-            return LambdaSequence(lambda n : self[n] * other[n], universe)
-        else:
+            return LambdaSequence(lambda *n : self(*n) * other(*n), universe, dim = self.dim)
+        elif not isinstance(other, Sequence):
             try:
-                universe = pushout(self.universe, other.parent())
-                return LambdaSequence(lambda n : self[n] * other, universe)
-            except (AttributeError,CoercionException):
+                universe = pushout(self.universe, parent(other))
+                return LambdaSequence(lambda *n : self(*n) * other, universe, dim = self.dim)
+            except CoercionException:
                 return NotImplemented
+        return NotImplemented
         
     def __neg__(self):
-        return LambdaSequence(lambda n : -self[n], self.universe)
+        return LambdaSequence(lambda *n : -self(*n), self.universe, dim = self.dim)
         
     # reverse arithmethic methods
     def __radd__(self, other):
@@ -191,7 +205,6 @@ class LambdaSequence(Sequence):
     def __eq__(self, other):
         if not isinstance(other, LambdaSequence):
             return False
-
         return self.__func == other.__func
     
     def __hash__(self):
