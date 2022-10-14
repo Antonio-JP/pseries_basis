@@ -27,8 +27,8 @@ r'''
         sage: from pseries_basis import *
 
     This package includes no example since all the structures it offers are abstract, so they should
-    never be instantiated. For particular examples and test, look to the modules :mod:`~pseries_basis.factorial_basis`
-    and :mod:`~pseries_basis.product_basis`.
+    never be instantiated. For particular examples and test, look to the modules :mod:`~pseries_basis.factorial.factorial_basis`
+    and :mod:`~pseries_basis.factorial.product_basis`.
 '''
 
 ## Sage imports
@@ -985,7 +985,7 @@ class PSBasis(Sequence):
                 sage: alpha(0,0,n), alpha(0,1,n), alpha(0,2,n)
                 (n^2, 2*n^2 + 3*n + 1, n^2 + 3*n + 2)
 
-            The method :func:`~pseries_basis.misc.check_compatibility` can check that these tuples are
+            The method :func:`~pseries_basis.misc.misc.check_compatibility` can check that these tuples are
             correct for the first terms of the basis::
 
                 sage: x = B[1].parent().gens()[0]
@@ -1212,7 +1212,7 @@ class PSBasis(Sequence):
             We can also use the operators from :class:`ore_algebra.OreAlgebra` to get the compatibility. Here
             we see some examples extracted from Example 25 in :arxiv:`2202.05550`::
 
-                sage: from pseries_basis.ore import get_recurrence_algebra
+                sage: from pseries_basis.misc.ore import get_recurrence_algebra
                 sage: OE, (x,E) = get_recurrence_algebra("x", "E", rational=False)
                 sage: example25_1 = E - 3; B.recurrence(example25_1)
                 Sn - 2
@@ -1715,8 +1715,8 @@ class BruteBasis(PSBasis):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.sequences.Sequence`.
-            See method :func:`~pseries_basis.sequences.element` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.misc.sequences.Sequence`.
+            See method :func:`~pseries_basis.misc.sequences.element` for further information.
         '''
         output = self.__get_element(n)
 
