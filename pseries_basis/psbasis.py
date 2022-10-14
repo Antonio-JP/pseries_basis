@@ -43,9 +43,9 @@ from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 from ore_algebra.ore_operator import OreOperator
 
 # imports from this package
-from .ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, eval_ore_operator, poly_decomp, 
+from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, eval_ore_operator, poly_decomp, 
                     get_rational_algebra, get_recurrence_algebra)
-from .sequences import LambdaSequence, Sequence
+from .misc.sequences import LambdaSequence, Sequence
 
 
 class NotCompatibleError(TypeError): pass

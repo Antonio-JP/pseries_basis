@@ -6,7 +6,7 @@ from sage.all import cached_method, Integer, bessel_J, exp
 from sage.all_cmdline import x
 
 # Local imports
-from .psbasis import OrderBasis
+from ..psbasis import OrderBasis
 
 class FunctionalBasis(OrderBasis):
     r'''
