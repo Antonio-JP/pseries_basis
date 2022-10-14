@@ -6,10 +6,9 @@ r'''
 # Sage imports
 from sage.all import cached_method, Matrix, QQ, ZZ, lcm
 
-from pseries_basis.ore import poly_decomp
-
 # Local imports
-from .psbasis import PolyBasis
+from ..misc.ore import poly_decomp
+from ..psbasis import PolyBasis
 
 class OrthogonalBasis(PolyBasis):
     r'''
@@ -483,7 +482,7 @@ class JacobiBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, alpha, beta, X='x', Dx='Dx'):
         if(not alpha in QQ or alpha <= -1):
@@ -507,8 +506,8 @@ class JacobiBasis(OrthogonalBasis):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis.element` for further information.
+            This method *overrides* the corresponding method from :class:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.element` for further information.
 
             This method takes into consideration special cases of the Jacobi polynomial basis, when the 
             coefficients create non-standard behaviors (namely, for `n = 1` when `\alpha + \beta = 0` or 
@@ -531,8 +530,8 @@ class JacobiBasis(OrthogonalBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
         a = self.__alpha; b = self.__beta
@@ -581,7 +580,7 @@ class GegenbauerBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, lambd, X='x', Dx='Dx'):
         if(not lambd in QQ or lambd <= -1/2 or lambd == 0):
@@ -598,8 +597,8 @@ class GegenbauerBasis(OrthogonalBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
         a = self.__lambda
@@ -645,7 +644,7 @@ class LegendreBasis(JacobiBasis):
 
         List of abstract methods:
 
-        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, X='x', Dx='Dx'):
         super(LegendreBasis, self).__init__(0,0,X,Dx)
@@ -654,8 +653,8 @@ class LegendreBasis(JacobiBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.ortho_basis.JacobiBasis`.
-            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *overrides* the corresponding method from :class:`~pseries_basis.orthogonal.ortho_basis.JacobiBasis`.
+            See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
         return self.reduce_SnSni((n*(n-1)/(2*n-1))*Sni - ((n+1)*(n+2)/(2*n+3))*Sn)
@@ -692,7 +691,7 @@ class TChebyshevBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, X='x', Dx='Dx'):
         super(TChebyshevBasis, self).__init__(lambda n: 1 if n == 0 else 2,0,1,X,Dx)
@@ -701,8 +700,8 @@ class TChebyshevBasis(OrthogonalBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
         return self.reduce_SnSni(((n-1)/2)*Sni - ((n+1)/2)*Sn)
@@ -739,7 +738,7 @@ class UChebyshevBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, X='x', Dx='Dx'):
         super(UChebyshevBasis, self).__init__(2,0,1,X,Dx)
@@ -748,8 +747,8 @@ class UChebyshevBasis(OrthogonalBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
         return self.reduce_SnSni(((3*n-1)/2)*Sni + ((n+1)/2)*Sn)
@@ -783,7 +782,7 @@ class LaguerreBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, alpha, X='x', Dx='Dx'):
         if(alpha < -1):
@@ -797,8 +796,8 @@ class LaguerreBasis(OrthogonalBasis):
         r'''
             Method to get compatibility with the associated derivation.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n()
         return self.reduce_SnSni(n*Sni - (n+self.alpha+1))
@@ -831,7 +830,7 @@ class HermiteBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
     def __init__(self, X='x', Dx='Dx'):
@@ -844,8 +843,8 @@ class HermiteBasis(OrthogonalBasis):
         r'''
             Name of the compatible derivation with this basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis.derivation_name` for further information.
+            This method *overrides* the corresponding method from :class:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name` for further information.
         '''
         return self._OrthogonalBasis__der_name # pylint: disable=no-member
 
@@ -877,7 +876,7 @@ class HermitePBasis(OrthogonalBasis):
 
         List of abstract methods:
 
-        * :func:`pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation`.
+        * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
     def __init__(self, X='x', Dx='Dx'):
@@ -890,8 +889,8 @@ class HermitePBasis(OrthogonalBasis):
         r'''
             Name of the compatible derivation with this basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.ortho_basis.OrthogonalBasis`.
-            See method :func:`~pseries_basis.ortho_basis.OrthogonalBasis.derivation_name` for further information.
+            This method *overrides* the corresponding method from :class:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis`.
+            See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name` for further information.
         '''
         return self._OrthogonalBasis__der_name # pylint: disable=no-member
 
@@ -900,3 +899,5 @@ class HermitePBasis(OrthogonalBasis):
 
     def _latex_(self):
         return r"\left\{He_n(%s)\right\}_{n \geq 0}" %self.var_name()
+
+__all__ = ["OrthogonalBasis", "JacobiBasis", "GegenbauerBasis", "LegendreBasis", "TChebyshevBasis", "UChebyshevBasis", "LaguerreBasis", "HermiteBasis", "HermitePBasis"]

@@ -363,3 +363,5 @@ def poly_decomp(polynomial):
     else:
         raise TypeError("The input must be a polynomial")
     return monomials, coefficients
+
+__all__ = ["solution", "OreSequence"]

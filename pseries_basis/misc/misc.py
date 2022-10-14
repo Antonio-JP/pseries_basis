@@ -8,9 +8,9 @@ except ImportError: #python 3.8 or lower
     from functools import lru_cache as cache
 from sage.all import ZZ, Matrix, vector, ceil, factorial, PolynomialRing, QQ
 
-from pseries_basis.psbasis import PSBasis
-from pseries_basis.factorial_basis import FallingBasis,BinomialBasis
-from pseries_basis.product_basis import SievedBasis, ProductBasis
+from ..psbasis import PSBasis
+from ..factorial.factorial_basis import FallingBasis,BinomialBasis
+from ..factorial.product_basis import SievedBasis, ProductBasis
 
 def DefiniteSumSolutions(operator, *input):
     r'''
@@ -349,7 +349,6 @@ def guess_compatibility_E(basis, shift = 1, sections = None, A = None, bound_roo
     ## returning the compatibility tuple
     return (A, 0, F, lambda i,j,k : functions[i][-j](n=F*k+j))
     
-        
 def guess_rational_function(data, algebra):
     # special case all zero
     if(all(el == 0 for el in data)):
@@ -383,3 +382,5 @@ def check_compatibility(basis, operator, action, bound=100):
             sum(basis[k*m+r+i]*alpha(r,i,k) for i in range(-a,b+1)) == action(basis[k*m+r]) 
             for r in range(m)) 
         for k in range(mm, bound))
+
+__all__ = ["DefiniteSumSolutions","GeneralizedBinomial","check_compatibility"]

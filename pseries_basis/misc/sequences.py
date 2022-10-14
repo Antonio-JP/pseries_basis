@@ -102,7 +102,7 @@ class Sequence(SetMorphism):
 
             EXAMPLES::
 
-                sage: from pseries_basis.sequences import *
+                sage: from pseries_basis.misc.sequences import *
                 sage: def fib(n): return 1 if n == 0 else (1 if n==1 else fib(n-1) + fib(n-2))
                 sage: Fib = LambdaSequence(fib, ZZ)
                 sage: Fac = LambdaSequence(lambda n : factorial(n), ZZ)
@@ -159,7 +159,7 @@ class LambdaSequence(Sequence):
 
         EXAMPLES::
 
-            sage: from pseries_basis.sequences import LambdaSequence
+            sage: from pseries_basis.misc.sequences import LambdaSequence
             sage: C = LambdaSequence(lambda n : catalan_number(n), ZZ)
             sage: C[:10]
             [1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862]
@@ -233,3 +233,5 @@ class LambdaSequence(Sequence):
     
     def __hash__(self):
         return hash(self.__func)
+
+__all__ = ["Sequence", "LambdaSequence"]

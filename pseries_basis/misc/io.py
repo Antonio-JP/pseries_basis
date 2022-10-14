@@ -18,9 +18,8 @@ from sage.databases.oeis import OEISSequence
 
 from ore_algebra.ore_operator import OreOperator
 
-from pseries_basis.misc import LambdaSequence
-
 from .ore import poly_decomp, get_recurrence_algebra, solution, required_init
+from .sequences import LambdaSequence
 
 logger = logging.getLogger(__name__)
 
@@ -204,3 +203,4 @@ class EnhOEISSequence(OEISSequence):
                     pass
         return None
     
+__all__ = ["operator2file", "EnhOEISSequence"]

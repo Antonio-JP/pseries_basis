@@ -156,3 +156,5 @@ class BesselBasis(OrderBasis):
 
     def _latex_(self):
         return r"\left\{J_n(x)\right\}_{n \geq 0}"
+
+__all__ = ["FunctionalBasis", "ExponentialBasis", "BesselBasis"]

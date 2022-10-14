@@ -5,7 +5,7 @@ r'''
 from sage.all import prod, vector, ZZ, cached_method, QQ, Matrix, latex
 
 # Local imports
-from .psbasis import PolyBasis
+from ..psbasis import PolyBasis
 
 class FactorialBasis(PolyBasis):
     r'''
@@ -718,7 +718,7 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method that actually builds the structure for the new basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
+            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
             See method :func:`~pseries_basis.psbasis.PSBasis.scalar` for further information.
 
             EXAMPLES::
@@ -776,7 +776,7 @@ class SFactorialBasis(FactorialBasis):
                 True
                 
             In the case of a :class:`SFactorialBasis`, we always get a new :class:`SFactorialBasis` but with the
-            values of :func:`~pseries_basis.factorial_basis.FactorialBasis.an` and :func:`~pseries_basis.factorial_basis.FactorialBasis.bn`
+            values of :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.an` and :func:`~pseries_basis.factorial_basis.FactorialBasis.bn`
             slightly changed::
 
                 sage: _,quot = B.is_hypergeometric(factorial(n))
@@ -826,8 +826,8 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Getter for the constant coefficient of the factorial basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.constant_coefficient` for further information 
+            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.constant_coefficient` for further information 
             in the description or the output.
 
             EXAMPLES::
@@ -855,8 +855,8 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Getter for the linear coefficient of the factorial basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.linear_coefficient` for further information 
+            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.linear_coefficient` for further information 
             in the description or the output.
             
             This method returns the value of `a_n`.
@@ -886,8 +886,8 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Returns the increasing factorial for the factorial basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
             in the description or the output.
 
             INPUT:
@@ -973,8 +973,8 @@ class SFactorialBasis(FactorialBasis):
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
             EXAMPLES::
 
@@ -1087,8 +1087,8 @@ class RootSequenceBasis(FactorialBasis):
         r'''
             Getter for the constant coefficient of the factorial basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.leading_coefficient` for further information 
+            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.leading_coefficient` for further information 
             in the description or the output.
 
             TODO: add examples
@@ -1099,8 +1099,8 @@ class RootSequenceBasis(FactorialBasis):
         r'''
             Getter for the constant coefficient of the factorial basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.constant_coefficient` for further information 
+            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.constant_coefficient` for further information 
             in the description or the output.
 
             TODO: add examples
@@ -1112,8 +1112,8 @@ class RootSequenceBasis(FactorialBasis):
         r'''
             Getter for the linear coefficient of the factorial basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.linear_coefficient` for further information 
+            This method *overrides* the corresponding method from :class:`~factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.linear_coefficient` for further information 
             in the description or the output.
             
             This method returns the value of `a_n`.
@@ -1127,8 +1127,8 @@ class RootSequenceBasis(FactorialBasis):
         r'''
             Returns the increasing factorial for the factorial basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
             in the description or the output.
 
             INPUT:
@@ -1177,8 +1177,8 @@ class RootSequenceBasis(FactorialBasis):
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
             TODO: add examples
         '''
@@ -1283,8 +1283,8 @@ class ScalarBasis(FactorialBasis):
         r'''
             Getter for the constant coefficient of the factorial basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.constant_coefficient` for further information 
+            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.constant_coefficient` for further information 
             in the description or the output.
 
             In a :class:`ScalarBasis` this value is proportional to the original value, since:
@@ -1301,8 +1301,8 @@ class ScalarBasis(FactorialBasis):
         r'''
             Getter for the linear coefficient of the factorial basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.linear_coefficient` for further information 
+            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.linear_coefficient` for further information 
             in the description or the output.
             
             In a :class:`ScalarBasis` this value is proportional to the original value, since:
@@ -1320,8 +1320,8 @@ class ScalarBasis(FactorialBasis):
         r'''
             Returns the increasing factorial for the factorial basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
             in the description or the output.
 
             For a :class:`ScalarBasis`, this polynomial can be computed using the increasing polynomial
@@ -1381,8 +1381,8 @@ class ScalarBasis(FactorialBasis):
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial_basis.FactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
             For a :class:`ScalarBasis`, this is again a :class:`ScalarBasis` where the scaling factor is the shifted 
             version of the original scaling divided by the element of the original shift:
@@ -1460,8 +1460,8 @@ class FallingBasis(SFactorialBasis):
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.SFactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial.factorial_basis.SFactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
             In the particular case of a :class:`FallingBasis`, we had parameters `a`, `b` and `c` that defines
             the leading coefficients, the shift and the dilation of the falling basis. Hence the `N`-th increasing
@@ -1540,8 +1540,8 @@ class PowerBasis(FallingBasis):
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
-            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial_basis.SFactorialBasis`.
-            See method :func:`~pseries_basis.factorial_basis.FactorialBasis.increasing_basis` for further information.
+            This method *overrides* the corresponding method from :class:`~pseries_basis.factorial.factorial_basis.SFactorialBasis`.
+            See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
             In the particular case of :class:`PowerBasis`, the `n`-th increasing basis is always 
             equal to itself.
@@ -1622,3 +1622,5 @@ class BinomialBasis(SFactorialBasis):
 
     def is_quasi_eval_triangular(self):
         return self.__b in ZZ and self.__b >= 0
+
+__all__ = ["FactorialBasis", "SFactorialBasis", "RootSequenceBasis", "ScalarBasis", "FallingBasis", "PowerBasis", "BinomialBasis"]
