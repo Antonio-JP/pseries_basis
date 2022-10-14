@@ -119,6 +119,30 @@ class Sequence(SetMorphism):
         '''
         return self[:order] == other[:order]
 
+    def subsequence(self, *vals : int):
+        r'''
+            Method to obtain a subsequence when having multiple arguments.
+
+            When we have a sequence `f: \mathbb{N}^k \rightarrow R`, we can fix the first 
+            arguments `(a_1,\ldots, a_t)` and build a new sequence by:
+
+            .. MATH::
+
+                \tilde{f}(n_1,\ldots, n_{k-t}) = f(a_1,\ldots,a_t,n_1,\ldots,n_{k-t})
+
+            This method build the corresponding subsequence for the given values in ``vals``.
+            If the number of values is more than the number of inputs, then we return the value
+            of the sequence at the given position.
+
+            REMARK: this method always return a :class:`LambdaSequence`, which is the simplest implementation
+            of a sequence and do not rely in any firther classes. If a different behavior is wanted, a subclass
+            of :class:`Sequence`must override this method.
+        '''
+        if len(vals) >= self.dim:
+            return self.element(*vals[:self.dim])
+        else:
+            return LambdaSequence(lambda *n: self.element(*vals, *n), self.universe, dim=self.dim-len(vals), allow_symb=True)
+
 class LambdaSequence(Sequence):
     r'''
         Simplest implementation of :class:`Sequence`.
