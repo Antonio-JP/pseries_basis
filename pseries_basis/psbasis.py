@@ -32,9 +32,10 @@ r'''
 '''
 
 ## Sage imports
-from sage.all import (PolynomialRing, ZZ, Matrix, cached_method, latex, factorial, diff, 
+from sage.all import (PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff, 
                         SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
                         block_matrix, vector)
+from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
 from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
@@ -44,7 +45,7 @@ from ore_algebra.ore_operator import OreOperator
 # imports from this package
 from .ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, eval_ore_operator, poly_decomp, 
                     get_rational_algebra, get_recurrence_algebra)
-from .sequences import Sequence
+from .sequences import LambdaSequence, Sequence
 
 
 class NotCompatibleError(TypeError): pass
@@ -64,12 +65,13 @@ class PSBasis(Sequence):
         * :func:`~PSBasis.element`.
         * :func:`~PSBasis._functional_matrix`.
     '''
-    def __init__(self, universe, degree=True, var_name=None):
+    def __init__(self, base, universe=None, degree=True, var_name=None):
         self.__degree = degree
-        self.__base_universe = universe
+        self.__base = base
         self.__compatibility = {}
         
-        universe = PolynomialRing(self.__base_universe, 'x' if var_name is None else var_name) if degree else None
+        if universe == None and degree is True:
+            universe = PolynomialRing(self.__base, 'x' if var_name is None else var_name)
         super().__init__(universe, 1)
 
     ### Getters from the module variable as objects of the class
@@ -392,8 +394,8 @@ class PSBasis(Sequence):
 
     ### BASIC METHODS
     @property
-    def base_universe(self):
-        return self.__base_universe
+    def base(self):
+        return self.__base
 
     def by_degree(self):
         r'''
@@ -1700,60 +1702,40 @@ class BruteBasis(PSBasis):
             sage: all(B[i] == 0 for i in range(100))
             True
     '''
-    def __init__(self, elements, degree=True):
-        super().__init__(degree)
+    def __init__(self, elements, base, universe=None, degree=True, var_name=None):
+        super().__init__(base, universe, degree, var_name)
         self.__get_element = elements
 
     @cached_method
-    def element(self, n, var_name=None):
+    def element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.element` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.sequences.Sequence`.
+            See method :func:`~pseries_basis.sequences.element` for further information.
         '''
-        if(var_name is None):
-            name = 'x'
+        output = self.__get_element(n)
+
+        return output if self.universe is None else self.universe(output)
+
+    def functional_seq(self) -> Sequence:
+        if is_PolynomialRing(self.universe):
+            return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
+        elif self.universe is SR:
+            return LambdaSequence(lambda k,n: self(k).taylor(self(k).variables()[0], 0, n).polynomial(self.base)[k], self.base, 2, False)
         else:
-            name = var_name
+            return LambdaSequence(lambda k,n : self(k).derivative(times=n)(0)/factorial(n), self.base, 2, False)
 
-        if(self.by_degree()):
-            return self.universe(self.__get_element(n))
-        return self.__get_element(n)
-
-    def _functional_matrix(self, nrows, ncols):
-        r'''
-            Method to get a matrix representation of the basis.
-            
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.functional_matrix` for further information.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: from ajpastor.dd_functions import *
-                sage: B = BruteBasis(lambda n : BesselD(n), False)
-                sage: B2 = BruteBasis(lambda n : bessel_J(n,x), False)
-                sage: B3 = BesselBasis()
-                sage: B.functional_matrix(4,5) == B2.functional_matrix(4,5)
-                True
-                sage: B.functional_matrix(6,7)
-                [      1       0    -1/4       0    1/64       0 -1/2304]
-                [      0     1/2       0   -1/16       0   1/384       0]
-                [      0       0     1/8       0   -1/96       0  1/3072]
-                [      0       0       0    1/48       0  -1/768       0]
-                [      0       0       0       0   1/384       0 -1/7680]
-                [      0       0       0       0       0  1/3840       0]
-                sage: B3.functional_matrix(10) == B.functional_matrix(10)
-                True
-        '''
-        try:
-            return Matrix([[self[n].sequence(k) for k in range(ncols)] for n in range(nrows)])
-        except AttributeError:
-            return Matrix([[diff(self[n], k)(x=0)/factorial(k) for k in range(ncols)] for n in range(nrows)])
+    def evaluation_seq(self) -> Sequence:
+        if is_PolynomialRing(self.universe):
+            return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
+        elif self.universe is SR:
+            return LambdaSequence(lambda k,n: self(k)(**{str(self(k).variables()[0]) : n}), self.base, 2, False)
+        else:
+            return LambdaSequence(lambda k,n : self(k)(n), self.base, 2, False)
 
     def __repr__(self):
-        return "Brute basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])
+        return f"Brute basis: ({self[0]}, {self[1]}, {self[2]}, ...)"
 
     def _latex_(self):
         return r"Brute basis: \left(%s, %s, %s, \ldots\right)" %(latex(self[0]), latex(self[1]), latex(self[2]))
@@ -1771,130 +1753,14 @@ class PolyBasis(PSBasis):
 
         * :func:`PSBasis.element`.
     '''
-    def __init__(self):
-        super(PolyBasis,self).__init__(True)
+    def __init__(self, base=QQ, var_name=None):
+        super(PolyBasis,self).__init__(base, None, True, var_name)
 
-    def _functional_matrix(self, nrows, ncols):
-        r'''
-            Method to get a matrix representation of the basis.
-            
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.functional_matrix` for further information.
+    def functional_seq(self) -> Sequence:
+        return LambdaSequence(lambda k,n : self[k][n], self.base, 2, False)
 
-            In particular for a :class:`PolyBasis`, the elements `P_n(x)` have degree `n` for each
-            value of `n \in \mathbb{N}`. This means that we can write:
-
-            .. MATH::
-
-                P_n(x) = \sum_{k=0}^n a_{n,k} x^k
-
-            And by taking `a_{n,k} = 0` for all `k > 0`, we can build the matrix 
-            `M = \left(a_{n,k}\right)_{n,k \geq 0}` with the following shape:
-
-            .. MATH::
-
-                \begin{pmatrix}P_0(x)\\P_1(x)\\P_2(x)\\P_3(x)\\\vdots\end{pmatrix} = 
-                \begin{pmatrix}
-                    a_{0,0} & 0 & 0 & 0 & \ldots\\
-                    a_{1,0} & a_{1,1} & 0 & 0 & \ldots\\
-                    a_{2,0} & a_{2,1} & a_{2,2} & 0 & \ldots\\
-                    a_{3,0} & a_{3,1} & a_{3,2} & a_{3,3} & \ldots\\
-                    \vdots&\vdots&\vdots&\vdots&\ddots
-                \end{pmatrix} \begin{pmatrix}1\\x\\x^2\\x^3\\\vdots\end{pmatrix}
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = BinomialBasis()
-                sage: B.functional_matrix(5,5)
-                [    1     0     0     0     0]
-                [    0     1     0     0     0]
-                [    0  -1/2   1/2     0     0]
-                [    0   1/3  -1/2   1/6     0]
-                [    0  -1/4 11/24  -1/4  1/24]
-                sage: B.functional_matrix(7,3)
-                [      1       0       0]
-                [      0       1       0]
-                [      0    -1/2     1/2]
-                [      0     1/3    -1/2]
-                [      0    -1/4   11/24]
-                [      0     1/5   -5/12]
-                [      0    -1/6 137/360]
-                sage: H = HermiteBasis()
-                sage: H.functional_matrix(5,5)
-                [  1   0   0   0   0]
-                [  0   2   0   0   0]
-                [ -2   0   4   0   0]
-                [  0 -12   0   8   0]
-                [ 12   0 -48   0  16]
-                sage: P = PowerBasis(1,1)
-                sage: P.functional_matrix(5,5)
-                [1 0 0 0 0]
-                [1 1 0 0 0]
-                [1 2 1 0 0]
-                [1 3 3 1 0]
-                [1 4 6 4 1]
-        '''
-        return Matrix([[self[n][k] for k in range(ncols)] for n in range(nrows)])
-    
-    def _evaluation_matrix(self, nrows, ncols):
-        r'''
-            Method to get a matrix representation of the basis.
-            
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.evaluation_matrix` for further information.
-
-            In particular for a :class:`PolyBasis`, the position `(i,j)` of this evaluation matrix is the evaluation of 
-            the `i`-th polynomial at value `j`:
-
-            .. MATH::
-
-                \begin{pmatrix}
-                    P_0(0) & P_0(1) & P_0(2) & P_0(3) & \ldots\\
-                    P_1(0) & P_1(1) & P_1(2) & P_1(3) & \ldots\\
-                    P_2(0) & P_2(1) & P_2(2) & P_2(3) & \ldots\\
-                    P_3(0) & P_3(1) & P_3(2) & P_3(3) & \ldots\\
-                    \vdots&\vdots&\vdots&\vdots&\ddots
-                \end{pmatrix}
-
-            This matrix can (sometimes) be used for changing the coordinates of a sequence between the canonical 
-            basis and the represented bases. These bases (where this transformation can be performed) are called 
-            quasi-triangular bases (see method :func:`is_quasi_eval_triangular`).
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = BinomialBasis()
-                sage: B.evaluation_matrix(5,5)
-                [1 1 1 1 1]
-                [0 1 2 3 4]
-                [0 0 1 3 6]
-                [0 0 0 1 4]
-                [0 0 0 0 1]
-                sage: B.evaluation_matrix(7,3)
-                [1 1 1]
-                [0 1 2]
-                [0 0 1]
-                [0 0 0]
-                [0 0 0]
-                [0 0 0]
-                [0 0 0]
-                sage: H = HermiteBasis()
-                sage: H.evaluation_matrix(5,5)
-                [   1    1    1    1    1]
-                [   0    2    4    6    8]
-                [  -2    2   14   34   62]
-                [   0   -4   40  180  464]
-                [  12  -20   76  876 3340]
-                sage: P = PowerBasis(1,1)
-                sage: P.evaluation_matrix(5,5)
-                [  1   1   1   1   1]
-                [  1   2   3   4   5]
-                [  1   4   9  16  25]
-                [  1   8  27  64 125]
-                [  1  16  81 256 625]
-        '''
-        return Matrix([[self[n](k) for k in range(ncols)] for n in range(nrows)])
+    def evaluation_seq(self) -> Sequence:
+        return LambdaSequence(lambda k,n : self[k](n), self.base, 2, False)
 
     def __repr__(self):
         return "PolyBasis -- WARNING: this is an abstract class"
@@ -1912,55 +1778,17 @@ class OrderBasis(PSBasis):
 
         * :func:`PSBasis.element`.
     '''
-    def __init__(self):
-        super(OrderBasis,self).__init__(False)
+    def __init__(self, base=QQ, universe=None):
+        super(OrderBasis,self).__init__(base, universe, False)
 
-    def _functional_matrix(self, nrows, ncols):
-        r'''
-            Method to get a matrix representation of the basis.
-            
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.functional_matrix` for further information.
-            
-            In an order basis, the `n`-th element of the basis is always a formal power series
-            of order `n`. Hence, we can consider the infinite matrix where the coefficient
-            `m_{i,j} = [x^j]f_i(x) = a_{i,j}` and the matrix have the following shape:
+    def functional_seq(self) -> Sequence:
+        if is_PolynomialRing(self.universe):
+            return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
+        elif self.universe is SR:
+            return LambdaSequence(lambda k,n: self(k).taylor(self(k).variables()[0], 0, n).polynomial(self.base)[k], self.base, 2, False)
+        else:
+            return LambdaSequence(lambda k,n : self(k).derivative(times=n)(0)/factorial(n), self.base, 2, False)
 
-            .. MATH::
-
-                \begin{pmatrix}
-                    a_{0,0} & a_{0,1} & a_{0,2} & a_{0,3} & \ldots\\
-                    0 & a_{1,1} & a_{1,2} & a_{1,3} & \ldots\\
-                    0 & 0 & a_{2,2} & a_{2,3} & \ldots\\
-                    0 & 0 & 0 & a_{3,3} & \ldots\\
-                    \vdots&\vdots&\vdots&\vdots&\ddots
-                \end{pmatrix}
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = FunctionalBasis(sin(x))
-                sage: B.functional_matrix(5,5)
-                [   1    0    0    0    0]
-                [   0    1    0 -1/6    0]
-                [   0    0    1    0 -1/3]
-                [   0    0    0    1    0]
-                [   0    0    0    0    1]
-                sage: ExponentialBasis().functional_matrix(4,7)
-                [     1      0      0      0      0      0      0]
-                [     0      1    1/2    1/6   1/24  1/120  1/720]
-                [     0      0      1      1   7/12    1/4 31/360]
-                [     0      0      0      1    3/2    5/4    3/4]
-                sage: BesselBasis().functional_matrix(3,6)
-                [    1     0  -1/4     0  1/64     0]
-                [    0   1/2     0 -1/16     0 1/384]
-                [    0     0   1/8     0 -1/96     0]
-        '''
-        try:
-            return Matrix([[self[n].sequence(k) for k in range(ncols)] for n in range(nrows)])
-        except AttributeError:
-            return Matrix([[diff(self[n], k)(x=0)/factorial(k) for k in range(ncols)] for n in range(nrows)])
-    
     def is_quasi_func_triangular(self):
         return True
 
