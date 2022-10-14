@@ -44,11 +44,12 @@ from ore_algebra.ore_operator import OreOperator
 # imports from this package
 from .ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, eval_ore_operator, poly_decomp, 
                     get_rational_algebra, get_recurrence_algebra)
+from .sequences import Sequence
 
 
 class NotCompatibleError(TypeError): pass
 
-class PSBasis(object):
+class PSBasis(Sequence):
     r'''
         Generic (abstract) class for a power series basis.
         
@@ -63,9 +64,13 @@ class PSBasis(object):
         * :func:`~PSBasis.element`.
         * :func:`~PSBasis._functional_matrix`.
     '''
-    def __init__(self, degree=True):
+    def __init__(self, universe, degree=True, var_name=None):
         self.__degree = degree
+        self.__base_universe = universe
         self.__compatibility = {}
+        
+        universe = PolynomialRing(self.__base_universe, 'x' if var_name is None else var_name) if degree else None
+        super().__init__(universe, 1)
 
     ### Getters from the module variable as objects of the class
     def OB(self):
@@ -386,24 +391,10 @@ class PSBasis(object):
         raise NotImplementedError("quo_rem not implemented for %s" %type(n))
 
     ### BASIC METHODS
-    def element(self, n, var_name=None):
-        r'''
-            Method to return the `n`-th element of the basis.
+    @property
+    def base_universe(self):
+        return self.__base_universe
 
-            The user can also get the `n`-th element of the sequence using the *magic* Python syntax for 
-            element in a list (i.e., using the ``[]`` notation).
-
-            This is an abstract method that has to be implemented in some subclass. 
-
-            INPUT:
-
-            * ``n``: the index of the element to get.
-            * ``var_name``: the name of the variable of the resulting polynomial. If ``None`` is given, 
-              we use the variable `x`. Otherwise we create the corresponding polynomial ring and 
-              return the polynomial in that polynomial ring.
-        '''
-        raise NotImplementedError("Method element must be implemented in each subclass of polynomial_basis")
-        
     def by_degree(self):
         r'''
             Getter for the type of ordering of the basis.
@@ -419,6 +410,28 @@ class PSBasis(object):
             Return ``True`` if the `n`-th element of the basis is a power series of order `n`.
         '''
         return (not self.__degree)
+
+    @property
+    def functional_seq(self) -> Sequence:
+        r'''
+            Method to get the functional sequence of the basis.
+
+            A :class:`PSBasis` can be seen as a sequence of functions or polynomials. However, these
+            functions and polynomials are sequences by themselves. In fact, a :class:`PSBasis` is 
+            a basis of the ring of formal power series which, at the same time, is a basis of the 
+            ring of sequences. 
+
+            However, the relation between the sequences and the formal power series is not unique:
+
+            * We can consider the formal power series `f(x) = \sum_n a_n x^n`, then we have the 
+              natural (also called functional) sequence `(a_n)_n`.
+            * We can consider formal power series as functions `f: \mathbb{K} \rightarrow \mathbb{K},
+              and (if convergent) we can define the (evaluation) sequence `(f(n))_n`.
+
+            This method returns a bi-indexed sequence that allows to obtain the functional sequences
+            of this basis.
+        '''
+        raise NotImplementedError("Method functional_seq must be implemented in each subclass of PSBasis")
 
     def functional_matrix(self, nrows, ncols=None):
         r'''
@@ -452,19 +465,12 @@ class PSBasis(object):
         ## Checking the arguments
         if(not ((nrows in ZZ) and nrows > 0)):
             raise ValueError("The number of rows must be a positive integer")
-        if(not ncols is None):
-            if(not ((ncols in ZZ) and ncols > 0)):
+        if(ncols is None):
+            ncols = nrows
+        elif(not ((ncols in ZZ) and ncols > 0)):
                 raise ValueError("The number of columns must be a positive integer")
-            return self._functional_matrix(nrows, ncols)
-        return self._functional_matrix(nrows, nrows)
 
-    def _functional_matrix(self, nrows, ncols):
-        r'''
-            Method that actually computes the functional matrix for basis.
-
-            In this method we have guaranteed that the arguments are positive integers.
-        '''
-        raise NotImplementedError("Method _functional_matrix must be implemented in each subclass of polynomial_basis")
+        return Matrix([[self.functional_seq(i,j) for j in range(ncols)] for i in range(nrows)])
 
     def is_quasi_func_triangular(self):
         r'''
@@ -521,6 +527,28 @@ class PSBasis(object):
             return tuple([el for el in M.solve_left(vector(sequence[:size]))])
         raise NotImplementedError("The pure quasi-triangular case not implemented yet.")
 
+    @property
+    def evaluation_seq(self) -> Sequence:
+        r'''
+            Method to get the functional sequence of the basis.
+
+            A :class:`PSBasis` can be seen as a sequence of functions or polynomials. However, these
+            functions and polynomials are sequences by themselves. In fact, a :class:`PSBasis` is 
+            a basis of the ring of formal power series which, at the same time, is a basis of the 
+            ring of sequences. 
+
+            However, the relation between the sequences and the formal power series is not unique:
+
+            * We can consider the formal power series `f(x) = \sum_n a_n x^n`, then we have the 
+              natural (also called functional) sequence `(a_n)_n`.
+            * We can consider formal power series as functions `f: \mathbb{K} \rightarrow \mathbb{K},
+              and (if convergent) we can define the (evaluation) sequence `(f(n))_n`.
+
+            This method returns a bi-indexed sequence that allows to obtain the evaluation sequences
+            of this basis.
+        '''
+        raise NotImplementedError("Method evaluation_seq must be implemented in each subclass of PSBasis")
+
     def evaluation_matrix(self, nrows, ncols=None):
         r'''
             Method to get a matrix representation of the basis.
@@ -553,19 +581,12 @@ class PSBasis(object):
         ## Checking the arguments
         if(not ((nrows in ZZ) and nrows > 0)):
             raise ValueError("The number of rows must be a positive integer")
-        if(not ncols is None):
-            if(not ((ncols in ZZ) and ncols > 0)):
+        if(ncols is None):
+            ncols = nrows
+        elif(not ((ncols in ZZ) and ncols > 0)):
                 raise ValueError("The number of columns must be a positive integer")
-            return self._evaluation_matrix(nrows, ncols)
-        return self._evaluation_matrix(nrows, nrows)
 
-    def _evaluation_matrix(self, nrows, ncols):
-        r'''
-            Method that actually computes the matrix for basis.
-
-            In this method we have guaranteed that the arguments are positive integers.
-        '''
-        raise NotImplementedError("Method _evaluation_matrix must be implemented in each subclass of polynomial_basis")
+        return Matrix([[self.evaluation_seq(i,j) for j in range(ncols)] for i in range(nrows)])
 
     def is_quasi_eval_triangular(self):
         r'''
