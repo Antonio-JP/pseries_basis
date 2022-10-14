@@ -1,9 +1,9 @@
 .. nodoctest
 
-Sequences and other utilities
+Order basis: more bases for formal power series
 ======================================================
 
-.. automodule:: pseries_basis.misc
+.. automodule:: pseries_basis.order
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,9 +15,7 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
-   misc/io
-   misc/ore
-   misc/sequences
+   order/fun_basis
 
 Indices and Tables
 *********************

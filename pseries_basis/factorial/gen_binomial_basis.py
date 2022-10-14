@@ -6,11 +6,11 @@ try: # python 3.9 or higher
     from functools import cache
 except ImportError: #python 3.8 or lower
     from functools import lru_cache as cache
-from sage.all import ZZ, Matrix, vector, ceil, factorial, PolynomialRing, QQ
+from sage.all import ZZ, Matrix, vector, factorial, PolynomialRing, QQ
 
-from ..psbasis import PSBasis
-from ..factorial.factorial_basis import FallingBasis,BinomialBasis
-from ..factorial.product_basis import SievedBasis, ProductBasis
+from ..psbasis import PSBasis, check_compatibility
+from .factorial_basis import FallingBasis,BinomialBasis
+from .product_basis import SievedBasis, ProductBasis
 
 def DefiniteSumSolutions(operator, *input):
     r'''
@@ -371,16 +371,4 @@ def guess_rational_function(data, algebra):
 
     return sum(sol[i]*solutions[i][0] for i in range(nsols))
 
-def check_compatibility(basis, operator, action, bound=100):
-    if(isinstance(operator, tuple)):
-        a,b,m,alpha = operator
-    else:
-        a,b,m,alpha = basis.compatibility(operator)
-    mm = int(ceil(a/m))
-    return all(
-        all(
-            sum(basis[k*m+r+i]*alpha(r,i,k) for i in range(-a,b+1)) == action(basis[k*m+r]) 
-            for r in range(m)) 
-        for k in range(mm, bound))
-
-__all__ = ["DefiniteSumSolutions","GeneralizedBinomial","check_compatibility"]
+__all__ = ["DefiniteSumSolutions","GeneralizedBinomial"]

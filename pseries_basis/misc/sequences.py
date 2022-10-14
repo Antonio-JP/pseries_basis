@@ -136,7 +136,7 @@ class Sequence(SetMorphism):
 
             REMARK: this method always return a :class:`LambdaSequence`, which is the simplest implementation
             of a sequence and do not rely in any firther classes. If a different behavior is wanted, a subclass
-            of :class:`Sequence`must override this method.
+            of :class:`Sequence` must override this method.
         '''
         if len(vals) >= self.dim:
             return self.element(*vals[:self.dim])

@@ -1,9 +1,10 @@
 .. nodoctest
 
-Interface for Sequences
+Funtional basis: the most basi order bases
 ======================================================
 
-.. automodule:: pseries_basis.sequences
+.. automodule:: pseries_basis.order.fun_basis
    :members:
    :undoc-members:
    :show-inheritance:
+   :member-order: bysource

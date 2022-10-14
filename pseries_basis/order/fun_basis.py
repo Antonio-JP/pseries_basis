@@ -13,12 +13,12 @@ class FunctionalBasis(OrderBasis):
         Class for representing a basis of power functions.
 
         A basis of power functions is a type of order basis for power series
-        where the `n`th element is the `n`th power of an order 1 power series `f(x)`.
+        where the `n`-th element is the `n`-th power of an order 1 power series `f(x)`.
 
         The first element in the sequence will always be the constant polynomial 1.
 
         The second element in the sequence is a function `f(x)` such that `f(0) = 0`
-        and `f'(0) \neq 0'
+        and `f'(0) \neq 0`
 
         INPUT:
             - ``X``: the name for the operator representing the multiplication by `f(x)`.

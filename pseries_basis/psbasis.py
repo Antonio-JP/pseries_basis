@@ -34,7 +34,7 @@ r'''
 ## Sage imports
 from sage.all import (PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff, 
                         SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
-                        block_matrix, vector)
+                        block_matrix, vector, ceil)
 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
 from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
@@ -985,7 +985,7 @@ class PSBasis(Sequence):
                 sage: alpha(0,0,n), alpha(0,1,n), alpha(0,2,n)
                 (n^2, 2*n^2 + 3*n + 1, n^2 + 3*n + 2)
 
-            The method :func:`~pseries_basis.misc.misc.check_compatibility` can check that these tuples are
+            The method :func:`~pseries_basis.psbasis.check_compatibility` can check that these tuples are
             correct for the first terms of the basis::
 
                 sage: x = B[1].parent().gens()[0]
@@ -1799,4 +1799,16 @@ class OrderBasis(PSBasis):
     def __repr__(self):
         return "PolyBasis -- WARNING: this is an abstract class"
 
-__all__ = ["PSBasis", "BruteBasis", "PolyBasis", "OrderBasis"]
+def check_compatibility(basis, operator, action, bound=100):
+    if(isinstance(operator, tuple)):
+        a,b,m,alpha = operator
+    else:
+        a,b,m,alpha = basis.compatibility(operator)
+    mm = int(ceil(a/m))
+    return all(
+        all(
+            sum(basis[k*m+r+i]*alpha(r,i,k) for i in range(-a,b+1)) == action(basis[k*m+r]) 
+            for r in range(m)) 
+        for k in range(mm, bound))
+
+__all__ = ["PSBasis", "BruteBasis", "PolyBasis", "OrderBasis", "check_compatibility"]

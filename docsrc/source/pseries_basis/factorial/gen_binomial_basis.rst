@@ -1,9 +1,9 @@
 .. nodoctest
 
-Orthogonal Polynomials: second order Polynomial Basis
+Generalized Binomial Bases
 ======================================================
 
-.. automodule:: pseries_basis.ortho_basis
+.. automodule:: pseries_basis.factorial.gen_binomial_basis
    :members:
    :undoc-members:
    :show-inheritance:
