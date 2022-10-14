@@ -1635,19 +1635,6 @@ class PSBasis(Sequence):
         return
 
     ### MAGIC METHODS
-    def __getitem__(self, n):
-        r'''
-            See method :func:`element`
-        '''
-        if(isinstance(n, slice)):
-            return [self[i] for i in range(n.stop)[n]]
-        return self.element(n)
-
-    def __call__(self, n):
-        r'''
-            See method :func:`element`
-        '''
-
     def __mul__(self,other):
         r'''
             See method :func:`scalar`.
