@@ -82,7 +82,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis(ZZ) # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.OB()
                 Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
@@ -95,7 +95,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis(ZZ) # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.n()
                 n
                 sage: B.n().parent()
@@ -111,7 +111,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis(ZZ) # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.OS()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
@@ -125,7 +125,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis(ZZ) # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.OSS()
                 Univariate Ore algebra in Sn over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
@@ -140,7 +140,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis(ZZ) # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.Sn()
                 Sn
                 sage: B.Sn().parent()
@@ -157,7 +157,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis(ZZ) # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.Sni()
                 Sni
                 sage: B.Sni().parent()
@@ -672,7 +672,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis(ZZ) # illegal build just for examples
+                sage: B = PSBasis(QQ) # illegal build just for examples
                 sage: Sn = B.Sn(); Sni = B.Sni()
                 sage: Sn*Sni
                 Sn*Sni
@@ -739,7 +739,7 @@ class PSBasis(Sequence):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis(ZZ) # do not do this in your code
+                sage: B = PSBasis(QQ) # do not do this in your code
                 sage: Sn = B.Sn(); Sni = B.Sni()
                 sage: B.remove_Sni(Sni)
                 1
