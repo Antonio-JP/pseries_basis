@@ -86,7 +86,7 @@ class PSBasis(Sequence):
                 sage: B.OB()
                 Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_rational_algebra('n')[0]
+        return get_rational_algebra('n', base=self.base)[0]
 
     def n(self):
         r'''
@@ -101,7 +101,7 @@ class PSBasis(Sequence):
                 sage: B.n().parent()
                 Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_rational_algebra('n')[1]
+        return get_rational_algebra('n', base=self.base)[1]
 
     def OS(self):
         r'''
@@ -115,7 +115,7 @@ class PSBasis(Sequence):
                 sage: B.OS()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_double_recurrence_algebra("n", "Sn", rational=True)[0]
+        return get_double_recurrence_algebra("n", "Sn", rational=True, base=self.base)[0]
 
     def OSS(self):
         r'''
@@ -129,7 +129,7 @@ class PSBasis(Sequence):
                 sage: B.OSS()
                 Univariate Ore algebra in Sn over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_recurrence_algebra("n", "Sn", rational=True)[0]
+        return get_recurrence_algebra("n", "Sn", rational=True, base=self.base)[0]
 
     def Sn(self):
         r'''
@@ -146,7 +146,7 @@ class PSBasis(Sequence):
                 sage: B.Sn().parent()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_double_recurrence_algebra("n", "Sn", rational=True)[1][1]
+        return get_double_recurrence_algebra("n", "Sn", rational=True, base=self.base)[1][1]
 
     def Sni(self):
         r'''
@@ -163,7 +163,7 @@ class PSBasis(Sequence):
                 sage: B.Sni().parent()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_double_recurrence_algebra("n", "Sn")[1][2]
+        return get_double_recurrence_algebra("n", "Sn", base=self.base)[1][2]
     
     def is_hypergeometric(self, element):
         r'''
