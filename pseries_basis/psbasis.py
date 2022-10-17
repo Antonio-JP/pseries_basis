@@ -1760,9 +1760,11 @@ class PolyBasis(PSBasis):
     def __init__(self, base=QQ, var_name=None):
         super(PolyBasis,self).__init__(base, None, True, var_name)
 
+    @PSBasis.functional_seq.getter
     def functional_seq(self) -> Sequence:
         return LambdaSequence(lambda k,n : self[k][n], self.base, 2, False)
 
+    @PSBasis.functional_seq.getter
     def evaluation_seq(self) -> Sequence:
         return LambdaSequence(lambda k,n : self[k](n), self.base, 2, False)
 
@@ -1785,6 +1787,7 @@ class OrderBasis(PSBasis):
     def __init__(self, base=QQ, universe=None):
         super(OrderBasis,self).__init__(base, universe, False)
 
+    @PSBasis.functional_seq.getter
     def functional_seq(self) -> Sequence:
         if is_PolynomialRing(self.universe):
             return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
