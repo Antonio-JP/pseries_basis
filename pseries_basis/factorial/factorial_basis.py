@@ -139,7 +139,7 @@ class FactorialBasis(PolyBasis):
             nth_poly = (self.element(n+1)/self.element(n)).numerator()
             # This polynomial has degree 1, hence the root is easily computable
             return -nth_poly[0]/nth_poly[1]
-        return LambdaSequence(__root_fn, self.base, allow_symb=True)
+        return LambdaSequence(__root_fn, self.base, allow_sym=True)
 
     def leading_coefficient(self) -> Sequence:
         r'''
@@ -153,7 +153,7 @@ class FactorialBasis(PolyBasis):
             coefficient sequence. If this sequence is called with the symbolic `n` as input, it 
             returns (if possible) the general formula for `lc(P_n(x))`.
         '''
-        return LambdaSequence(lambda n : self[n].leading_coefficient(), self.base, allow_symb=True)
+        return LambdaSequence(lambda n : self[n].leading_coefficient(), self.base, allow_sym=True)
 
     def constant_coefficient(self) -> Sequence:
         r'''
@@ -173,7 +173,7 @@ class FactorialBasis(PolyBasis):
             coefficient sequence. If this sequence is called with the symbolic `n` as input, it 
             returns (if possible) the general formula for `b_n`.
         '''
-        return LambdaSequence(lambda n : self.OB()(self[n+1]/self[n])[0], self.base, allow_symb=True)
+        return LambdaSequence(lambda n : self.OB()(self[n+1]/self[n])[0], self.base, allow_sym=True)
 
     def linear_coefficient(self) -> Sequence:
         r'''
@@ -212,7 +212,7 @@ class FactorialBasis(PolyBasis):
                 sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').an
                 1
         '''
-        return LambdaSequence(lambda n : self.OB()(self[n+1]/self[n])[1], self.base, allow_symb=True)
+        return LambdaSequence(lambda n : self.OB()(self[n+1]/self[n])[1], self.base, allow_sym=True)
 
     rho : Sequence = property(lambda self: self.root_sequence()) #: alias property for the root sequence (see :func:`~FactorialBasis.constant_coefficient`)
     an : Sequence = property(lambda self: self.linear_coefficient()) #: alias property for the linear coefficient (see :func:`~FactorialBasis.linear_coefficient`)
@@ -637,6 +637,7 @@ class SFactorialBasis(FactorialBasis):
             ValueError: The leading coefficient for the extra factor must always be non-zero
     '''
     def __init__(self, an, bn, X='x', init=1, base=QQ):
+        PolyBasis.__init__(self, base, X) # initializing some intermediate parts of the basis
         ## Cheking the first element
         init = self.base(init)
         if(init == 0):
@@ -666,13 +667,21 @@ class SFactorialBasis(FactorialBasis):
         ## Extra cached variables
         self.__cached_increasing = {}
 
-    @cached_method
-    def element(self, n):
+    def change_base(self, base):
+        return SFactorialBasis(
+            self.__an,                      # the new linear coefficients stay the same
+            self.__bn,                      # the new constant coefficients stay the same
+            str(self.universe.gens()[0]),   # the name of the variable does not change
+            self.__init,                    # the first element does not change
+            base                            # the base is set to the given base
+        )
+
+    def _element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.element` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.misc.sequences.Sequence`.
+            See method :func:`~pseries_basis.misc.sequences.Sequence.element` for further information.
 
             For a :class:`SFactorialBasis` the output will be a polynomial of degree `n`.
 
@@ -832,7 +841,7 @@ class SFactorialBasis(FactorialBasis):
                 sage: [roots(i) for i in range(7)]
                 [0, -1/3, -1/2, -3/5, -2/3, -5/7, -3/4]
         '''
-        return LambdaSequence(lambda n : -self.bn(n+1)/self.an(n+1), self.base, allow_symb=True)
+        return LambdaSequence(lambda n : -self.bn(n+1)/self.an(n+1), self.base, allow_sym=True)
 
     def constant_coefficient(self) -> Sequence:
         r'''
@@ -861,7 +870,7 @@ class SFactorialBasis(FactorialBasis):
                 sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').bn
                 (n^2 - 3)/(n + 1)
         '''
-        return LambdaSequence(lambda n : self.__bn(n=n), self.base, allow_symb=True)
+        return LambdaSequence(lambda n : self.__bn(n=n), self.base, allow_sym=True)
 
     def linear_coefficient(self) -> Sequence:
         r'''
@@ -892,7 +901,7 @@ class SFactorialBasis(FactorialBasis):
                 sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').an
                 1
         '''
-        return LambdaSequence(lambda n : self.__an(n=n), self.base, allow_symb=True)
+        return LambdaSequence(lambda n : self.__an(n=n), self.base, allow_sym=True)
 
     def increasing_polynomial(self, src, diff=None, dst=None):
         r'''
@@ -1050,13 +1059,20 @@ class RootSequenceBasis(FactorialBasis):
         ## Other cached elements
         self.__cached_increasing = {}
 
-    @cached_method
-    def element(self, n):
+    def change_base(self, base):
+        return RootSequenceBasis(
+            self.__rho,                     # the root sequences does not change
+            self.__cn,                      # the leading coefficient sequence does not change
+            str(self.universe.gens()[0]),   # the name of the variable does not change
+            base                            # the base ring is set to the given value
+        )
+
+    def _element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.element` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.misc.sequences.Sequence`.
+            See method :func:`~pseries_basis.misc.sequences.Sequence.element` for further information.
 
             For a :class:`RootSequenceBasis` the output will be a polynomial of degree `n`.
 
@@ -1089,7 +1105,7 @@ class RootSequenceBasis(FactorialBasis):
     def _latex_(self):
         return r"\text{Factorial basis }\left(r:%s,lc:%s\right): \left\{%s,%s,%s,\ldots\right\}" %(latex(self.__rho), latex(self.__cn), latex(self[0]), latex(self[1]), latex(self[2]))
 
-    def root_sequence(self):
+    def root_sequence(self) -> Sequence:
         r'''
             Method that returns the root sequence of the polynomial basis.
 
@@ -1098,9 +1114,9 @@ class RootSequenceBasis(FactorialBasis):
 
             TODO: add examples
         '''
-        return LambdaSequence(lambda n : self.__rho(n=n), self.base, allow_symb=True)
+        return LambdaSequence(lambda n : self.__rho(n=n), self.base, allow_sym=True)
 
-    def leading_coefficient(self):
+    def leading_coefficient(self) -> Sequence:
         r'''
             Getter for the constant coefficient of the factorial basis.
 
@@ -1110,9 +1126,9 @@ class RootSequenceBasis(FactorialBasis):
 
             TODO: add examples
         '''
-        return LambdaSequence(lambda n : self.__cn(n=n), self.base, allow_symb=True)
+        return LambdaSequence(lambda n : self.__cn(n=n), self.base, allow_sym=True)
 
-    def constant_coefficient(self):
+    def constant_coefficient(self) -> Sequence:
         r'''
             Getter for the constant coefficient of the factorial basis.
 
@@ -1123,9 +1139,9 @@ class RootSequenceBasis(FactorialBasis):
             TODO: add examples
         '''
         cn = self.cn; rho = self.rho
-        return LambdaSequence(lambda n : cn(n)/cn(n-1)*rho(n), self.base, allow_symb=True)
+        return LambdaSequence(lambda n : cn(n)/cn(n-1)*rho(n), self.base, allow_sym=True)
 
-    def linear_coefficient(self):
+    def linear_coefficient(self) -> Sequence:
         r'''
             Getter for the linear coefficient of the factorial basis.
 
@@ -1138,7 +1154,7 @@ class RootSequenceBasis(FactorialBasis):
             TODO: add examples
         '''
         cn = self.cn
-        return LambdaSequence(lambda n : cn(n)/cn(n-1), self.base, allow_symb=True)
+        return LambdaSequence(lambda n : cn(n)/cn(n-1), self.base, allow_sym=True)
 
     def increasing_polynomial(self, src, diff=None, dst=None):
         r'''
@@ -1190,7 +1206,7 @@ class RootSequenceBasis(FactorialBasis):
         return self.__cached_increasing[(n,d)]
 
     @cached_method
-    def increasing_basis(self, shift):
+    def increasing_basis(self, shift) -> "RootSequenceBasis":
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
@@ -1255,19 +1271,24 @@ class ScalarBasis(FactorialBasis):
     @property
     def scale(self) -> Sequence:
         r'''Property for getting the scaling factor'''
-        return LambdaSequence(lambda n : self.__scale(n=n), self.base, allow_symb=True)
+        return LambdaSequence(lambda n : self.__scale(n=n), self.base, allow_sym=True)
     @property
     def quot(self) -> Sequence:
         r'''Property for getting the quotient of the scaling factor'''
-        return LambdaSequence(lambda n : self.__quot(n=n), self.base, allow_symb=True)
+        return LambdaSequence(lambda n : self.__quot(n=n), self.base, allow_sym=True)
 
-    @cached_method
-    def element(self, n):
+    def change_base(self, base):
+        return ScalarBasis(
+            self.basis.change_base(base),   # the basic basis is the same but with the changed base ring
+            self.__scale                    # the scale factor does not change
+        )
+
+    def _element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.element` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.misc.sequences.Sequence`.
+            See method :func:`~pseries_basis.misc.sequences.Sequence.element` for further information.
 
             For a :class:`ScalarBasis` the output will be a polynomial of degree `n` and can be directly
             construct from the original basis.
@@ -1491,6 +1512,16 @@ class FallingBasis(SFactorialBasis):
         P = a*x+b+c
         self.set_compatibility(self.__E_name, self.recurrence(P)*Sn, True)
 
+    def change_base(self, base):
+        return FallingBasis(
+            self.__a,                       # the dilation does not change
+            self.__b,                       # the shift does not change
+            self.__c,                       # the decay does not change
+            str(self.universe.gens()[0]),   # the name of the variable does not change
+            self.__E_name,                  # the name for the shift operator does not change
+            base                            # the base ring is set to the given value
+        )
+
     @cached_method
     def increasing_basis(self, shift) -> "FallingBasis":
         r'''
@@ -1576,8 +1607,19 @@ class PowerBasis(FallingBasis):
     def __init__(self, dilation=1, shift=0, X='x', Dx='Dx', base=QQ):
         super(PowerBasis, self).__init__(dilation,shift,0,X,'Id',base)
 
+        self.__Dx_name = Dx
+
         n = self.n(); Sn = self.Sn(); a = self.linear_coefficient()[0]
         self.set_compatibility(Dx, a*(n+1)*Sn)
+
+    def change_base(self, base):
+        return PowerBasis(
+            self.an(0),                     # the dilation value does not change
+            self.bn(0),                     # the shift value does not change
+            str(self.universe.gens()[0]),   # the name of the main variable does not change
+            self.__Dx_name,                 # the name for the derivation does not change
+            base                            # the base is set to the given value
+        )
 
     @cached_method
     def increasing_basis(self, shift) -> "PowerBasis":
@@ -1648,6 +1690,7 @@ class BinomialBasis(SFactorialBasis):
         dilation = ZZ(dilation); shift = base(shift)
         self.__a = dilation; a = self.__a
         self.__b = shift; b = self.__b
+        self.__E_name = E
 
         n = self.n()
         super(BinomialBasis, self).__init__(a/n, (b-n + 1)/n, X, base=base)
@@ -1657,6 +1700,15 @@ class BinomialBasis(SFactorialBasis):
         self.set_compatibility(E+'t', Sn+1)
         ## Adding the compatibility by $x \mapsto x+1$ (simply powering the previous compatibility)
         self.set_compatibility(E, (Sn+1)**a)
+
+    def change_base(self, base):
+        return BinomialBasis(
+            self.__a,                       # the dilation value does not change
+            self.__b,                       # the shift value does not change
+            str(self.universe.gens()[0]),   # the name of the variable does not change
+            self.__E_name,                  # the name for the shifts does not change
+            base                            # the base is set to the given value
+        )
 
     def __repr__(self):
         x = self.universe.gens()[0]

@@ -62,7 +62,7 @@ class PSBasis(Sequence):
 
         List of abstract methods:
 
-        * :func:`~PSBasis.element`.
+        * :func:`~PSBasis._element`.
         * :func:`~PSBasis._functional_matrix`.
     '''
     def __init__(self, base, universe=None, degree=True, var_name=None):
@@ -396,6 +396,14 @@ class PSBasis(Sequence):
     @property
     def base(self):
         return self.__base
+
+    def change_base(self, base):
+        r'''
+            Method to change the base ring to consider the coefficients.
+
+            This method allows to change the base ring (see input ``base`` in :class:`PSBasis` for further information).
+        '''
+        raise NotImplementedError(f"Method `change_base` not implemented for {self.__class__}")
 
     def by_degree(self):
         r'''
@@ -1710,8 +1718,17 @@ class BruteBasis(PSBasis):
         super().__init__(base, universe, degree, var_name)
         self.__get_element = elements
 
+    def change_base(self, base):
+        return BruteBasis(
+            self.__get_element, 
+            base, 
+            self.universe, 
+            self.by_degree(), 
+            str(self.universe.gens()[0]) if is_PolynomialRing(self.universe) and self.by_degree() else None
+        )
+
     @cached_method
-    def element(self, n):
+    def _element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -1722,6 +1739,7 @@ class BruteBasis(PSBasis):
 
         return output if self.universe is None else self.universe(output)
 
+    @PSBasis.functional_seq.getter
     def functional_seq(self) -> Sequence:
         if is_PolynomialRing(self.universe):
             return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
@@ -1730,6 +1748,7 @@ class BruteBasis(PSBasis):
         else:
             return LambdaSequence(lambda k,n : self(k).derivative(times=n)(0)/factorial(n), self.base, 2, False)
 
+    @PSBasis.evaluation_seq.getter
     def evaluation_seq(self) -> Sequence:
         if is_PolynomialRing(self.universe):
             return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
@@ -1764,7 +1783,7 @@ class PolyBasis(PSBasis):
     def functional_seq(self) -> Sequence:
         return LambdaSequence(lambda k,n : self[k][n], self.base, 2, False)
 
-    @PSBasis.functional_seq.getter
+    @PSBasis.evaluation_seq.getter
     def evaluation_seq(self) -> Sequence:
         return LambdaSequence(lambda k,n : self[k](n), self.base, 2, False)
 
@@ -1800,7 +1819,7 @@ class OrderBasis(PSBasis):
         return True
 
     def __repr__(self):
-        return "PolyBasis -- WARNING: this is an abstract class"
+        return "OrderBasis -- WARNING: this is an abstract class"
 
 def check_compatibility(basis, operator, action, bound=100):
     if(isinstance(operator, tuple)):

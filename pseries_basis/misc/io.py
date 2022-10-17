@@ -8,12 +8,8 @@ r'''
 
 import logging
 import re
-try: # python 3.9 or higher
-    from functools import cache
-except ImportError: #python 3.8 or lower
-    from functools import lru_cache as cache
 
-from sage.all import ZZ, var, lcm
+from sage.all import ZZ, var, lcm, cached_method
 from sage.databases.oeis import OEISSequence
 
 from ore_algebra.ore_operator import OreOperator
@@ -64,14 +60,14 @@ class EnhOEISSequence(OEISSequence):
             ident = ident.id()
         return super(EnhOEISSequence, cls).__classcall__(cls, ident)
 
-    @cache
+    @cached_method
     def is_dfinite(self):
         r'''
             Method to check whether a sequence is D-finite or not.
         '''
         return not (self.dfinite_recurrence() is None)
 
-    @cache
+    @cached_method
     def dfinite_recurrence(self):
         r'''
             Method to compute a difference D-finite recurrence for an OEIS Sequence

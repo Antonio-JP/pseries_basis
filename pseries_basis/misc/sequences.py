@@ -8,13 +8,8 @@ r'''
     This module will create a framework for the whole package to manage, access and manipulate sequences
     in a generic fashion.
 '''
-## Python imports
-try: # python 3.9 or higher
-    from functools import cache
-except ImportError: #python 3.8 or lower
-    from functools import lru_cache as cache
-
 ## Sage imports
+from sage.all import cached_method
 from sage.categories.cartesian_product import cartesian_product
 from sage.categories.homset import Hom
 from sage.categories.pushout import CoercionException, pushout
@@ -29,9 +24,10 @@ class Sequence(SetMorphism):
     r'''
         Main calss for sequences. It defines a universe for its elements and a general interface to access the sequence.
     '''
-    def __init__(self, universe, dim : int =1):
+    def __init__(self, universe, dim : int =1, allow_sym = False):
         self.__universe = universe
         self.__dim = dim
+        self.__alls = allow_sym
         if dim == 1:
             super().__init__(Hom(NN,universe,Sets()), lambda n : self.element(n))
         else:
@@ -43,13 +39,15 @@ class Sequence(SetMorphism):
             Attribute with the common parent for all the elements of this sequence
         '''
         return self.__universe
-
     @property
     def dim(self):
         r'''
             Attribute with the number of variables for the sequence.
         '''
         return self.__dim
+    @property
+    def allow_sym(self):
+        return self.__alls
 
     def __getitem__(self, key):
         if isinstance(key, (tuple, list)):
@@ -70,10 +68,18 @@ class Sequence(SetMorphism):
     def __call__(self, *input):
         return self.element(*input)
 
+    @cached_method
     def element(self, *indices : int):
-        raise NotImplementedError("Method 'element' not implemented")
+        output = self._element(*indices)
+        if (self.universe is None) or (self.allow_sym and not output in self.universe): # we allow None universe and also evaluation that do nto lie in the universe
+            return output
+        else:
+            return self.universe(output)
 
-    @cache
+    def _element(self, *indices : int):
+        raise NotImplementedError("Method '_element' not implemented")
+
+    @cached_method
     def shift(self, *shifts : int) -> "Sequence":
         if len(shifts) == 0:
             shifts = [1 for _ in range(self.dim)]
@@ -84,7 +90,48 @@ class Sequence(SetMorphism):
             raise TypeError("The shift must be integers")
         if len(shifts) != self.dim:
             raise ValueError(f"We need {self.dim} shifts but {len(shifts)} were given")
-        return LambdaSequence(lambda *n : self(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim, allow_symb=self.__alls)
+        return LambdaSequence(lambda *n : self(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim, allow_sym=self.allow_sym)
+
+    # basic arithmethic methods
+    def __add__(self, other):
+        if not isinstance(other, Sequence) or self.dim != other.dim:
+            return NotImplemented
+
+        universe = pushout(self.universe, other.universe)
+        alls = self.allow_sym and other.allow_sym
+        return LambdaSequence(lambda *n : self(*n) + other(*n), universe, dim = self.dim, allow_sym=alls)
+
+    def __sub__(self, other):
+        if not isinstance(other, Sequence) or self.dim != other.dim:
+            return NotImplemented
+
+        universe = pushout(self.universe, other.universe)
+        alls = self.allow_sym and other.allow_sym
+        return LambdaSequence(lambda *n : self(*n) - other(*n), universe, dim = self.dim, allow_sym=alls)
+
+    def __mul__(self, other):
+        if isinstance(other, Sequence) and self.dim == other.dim:
+            universe = pushout(self.universe, other.universe)
+            alls = self.allow_sym and other.allow_sym
+            return LambdaSequence(lambda *n : self(*n) * other(*n), universe, dim = self.dim, allow_sym=alls)
+        elif not isinstance(other, Sequence):
+            try:
+                universe = pushout(self.universe, parent(other))
+                return LambdaSequence(lambda *n : self(*n) * other, universe, dim = self.dim, allow_sym=self.allow_sym)
+            except CoercionException:
+                return NotImplemented
+        return NotImplemented
+        
+    def __neg__(self):
+        return LambdaSequence(lambda *n : -self(*n), self.universe, dim = self.dim, allow_sym=self.allow_sym)
+        
+    # reverse arithmethic methods
+    def __radd__(self, other):
+        return self.__add__(other)
+    def __rsub__(self, other):
+        return self.__sub__(other)
+    def __rmul__(self, other):
+        return self.__mul__(other)
 
     def almost_zero(self, order=10):
         r'''
@@ -155,8 +202,14 @@ class Sequence(SetMorphism):
         if len(vals) >= self.dim:
             return self.element(*vals[:self.dim])
         else:
-            return LambdaSequence(lambda *n: self.element(*vals, *n), self.universe, dim=self.dim-len(vals), allow_symb=True)
+            return LambdaSequence(lambda *n: self.element(*vals, *n), self.universe, dim=self.dim-len(vals), allow_sym=True)
 
+    def __repr__(self):
+        if self.dim == 1:
+            return f"Sequence over [{self.universe}]: ({self[0]}, {self[1]}, {self[2]},...)"
+        else:
+            return f"Sequence with {self.dim} variables over [{self.universe}]"
+        
 class LambdaSequence(Sequence):
     r'''
         Simplest implementation of :class:`Sequence`.
@@ -185,60 +238,13 @@ class LambdaSequence(Sequence):
             sage: F[:10]
             [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
     '''
-    def __init__(self, func, universe, dim = 1, allow_symb = False):
-        super().__init__(universe, dim=dim)
+    def __init__(self, func, universe, dim = 1, allow_sym = False):
+        super().__init__(universe, dim=dim, allow_sym=allow_sym)
 
         self.__func = func
-        self.__alls = allow_symb
 
-    @cache
-    def element(self, *indices : int):
-        output = self.__func(*indices)
-        if (self.universe is None) or (self.__alls and not output in self.universe): # we allow None universe and also evaluation that do nto lie in the universe
-            return output
-        else:
-            return self.universe(output)
-
-    # basic arithmethic methods
-    def __add__(self, other):
-        if not isinstance(other, Sequence) or self.dim != other.dim:
-            return NotImplemented
-
-        universe = pushout(self.universe, other.universe)
-        alls = False if not isinstance(other, LambdaSequence) else (self.__alls and other.__alls)
-        return LambdaSequence(lambda *n : self(*n) + other(*n), universe, dim = self.dim, allow_symb=alls)
-
-    def __sub__(self, other):
-        if not isinstance(other, Sequence) or self.dim != other.dim:
-            return NotImplemented
-
-        universe = pushout(self.universe, other.universe)
-        alls = False if not isinstance(other, LambdaSequence) else (self.__alls and other.__alls)
-        return LambdaSequence(lambda *n : self(*n) - other(*n), universe, dim = self.dim, allow_symb=alls)
-
-    def __mul__(self, other):
-        if isinstance(other, Sequence) and self.dim == other.dim:
-            universe = pushout(self.universe, other.universe)
-            alls = False if not isinstance(other, LambdaSequence) else (self.__alls and other.__alls)
-            return LambdaSequence(lambda *n : self(*n) * other(*n), universe, dim = self.dim, allow_symb=alls)
-        elif not isinstance(other, Sequence):
-            try:
-                universe = pushout(self.universe, parent(other))
-                return LambdaSequence(lambda *n : self(*n) * other, universe, dim = self.dim, allow_symb=self.__alls)
-            except CoercionException:
-                return NotImplemented
-        return NotImplemented
-        
-    def __neg__(self):
-        return LambdaSequence(lambda *n : -self(*n), self.universe, dim = self.dim, allow_symb=self.__alls)
-        
-    # reverse arithmethic methods
-    def __radd__(self, other):
-        return self.__add__(other)
-    def __rsub__(self, other):
-        return self.__sub__(other)
-    def __rmul__(self, other):
-        return self.__mul__(other)
+    def _element(self, *indices : int):
+        return self.__func(*indices)
 
     # equality and hash methods
     def __eq__(self, other):
