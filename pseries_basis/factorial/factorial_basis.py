@@ -707,7 +707,7 @@ class SFactorialBasis(FactorialBasis):
 
         if(n > 0):
             an = self.an; bn = self.bn
-            return self.element(n-1) * (an(n=n)*x + bn(n=n))
+            return self.element(n-1) * (an(n)*x + bn(n))
         elif(n == 0):
             return self.__init
         else:
@@ -790,7 +790,7 @@ class SFactorialBasis(FactorialBasis):
                 sage: B2.bn == B.bn*quot(n=n-1)
                 True
         '''
-        n = self.n()
+        n = self.n(); quotient = self.OB()(quotient); factor = self.OB()(factor)
         return SFactorialBasis(
             self.an(n)*quotient(n=n-1),       # the generic linear coefficient of the factorial basis
             self.bn(n)*quotient(n=n-1),       # the generic constant coefficient of the factorial basis
