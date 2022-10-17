@@ -20,6 +20,7 @@ from sage.categories.homset import Hom
 from sage.categories.pushout import CoercionException, pushout
 from sage.categories.morphism import SetMorphism
 from sage.categories.sets_cat import Sets
+from sage.rings.integer_ring import ZZ
 from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.structure.element import parent
 from sage.symbolic.ring import SR
@@ -71,6 +72,19 @@ class Sequence(SetMorphism):
 
     def element(self, *indices : int):
         raise NotImplementedError("Method 'element' not implemented")
+
+    @cache
+    def shift(self, *shifts : int) -> "Sequence":
+        if len(shifts) == 0:
+            shifts = [1 for _ in range(self.dim)]
+        elif len(shifts) == 1 and isinstance(shifts[0], (tuple, list)):
+            shifts = shifts[0]
+
+        if any(not sh in ZZ for sh in shifts):
+            raise TypeError("The shift must be integers")
+        if len(shifts) != self.dim:
+            raise ValueError(f"We need {self.dim} shifts but {len(shifts)} were given")
+        return LambdaSequence(lambda *n : self(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim, allow_symb=self.__alls)
 
     def almost_zero(self, order=10):
         r'''
@@ -180,10 +194,8 @@ class LambdaSequence(Sequence):
     @cache
     def element(self, *indices : int):
         output = self.__func(*indices)
-        if self.universe is None: # we allow None universe
+        if (self.universe is None) or (self.__alls and not output in self.universe): # we allow None universe and also evaluation that do nto lie in the universe
             return output
-        elif self.__alls and (not output in self.universe) and (output in SR):
-            return SR(output)
         else:
             return self.universe(output)
 
@@ -193,29 +205,32 @@ class LambdaSequence(Sequence):
             return NotImplemented
 
         universe = pushout(self.universe, other.universe)
-        return LambdaSequence(lambda *n : self(*n) + other(*n), universe, dim = self.dim)
+        alls = False if not isinstance(other, LambdaSequence) else (self.__alls and other.__alls)
+        return LambdaSequence(lambda *n : self(*n) + other(*n), universe, dim = self.dim, allow_symb=alls)
 
     def __sub__(self, other):
         if not isinstance(other, Sequence) or self.dim != other.dim:
             return NotImplemented
 
         universe = pushout(self.universe, other.universe)
-        return LambdaSequence(lambda *n : self(*n) - other(*n), universe, dim = self.dim)
+        alls = False if not isinstance(other, LambdaSequence) else (self.__alls and other.__alls)
+        return LambdaSequence(lambda *n : self(*n) - other(*n), universe, dim = self.dim, allow_symb=alls)
 
     def __mul__(self, other):
         if isinstance(other, Sequence) and self.dim == other.dim:
             universe = pushout(self.universe, other.universe)
-            return LambdaSequence(lambda *n : self(*n) * other(*n), universe, dim = self.dim)
+            alls = False if not isinstance(other, LambdaSequence) else (self.__alls and other.__alls)
+            return LambdaSequence(lambda *n : self(*n) * other(*n), universe, dim = self.dim, allow_symb=alls)
         elif not isinstance(other, Sequence):
             try:
                 universe = pushout(self.universe, parent(other))
-                return LambdaSequence(lambda *n : self(*n) * other, universe, dim = self.dim)
+                return LambdaSequence(lambda *n : self(*n) * other, universe, dim = self.dim, allow_symb=self.__alls)
             except CoercionException:
                 return NotImplemented
         return NotImplemented
         
     def __neg__(self):
-        return LambdaSequence(lambda *n : -self(*n), self.universe, dim = self.dim)
+        return LambdaSequence(lambda *n : -self(*n), self.universe, dim = self.dim, allow_symb=self.__alls)
         
     # reverse arithmethic methods
     def __radd__(self, other):
