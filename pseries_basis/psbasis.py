@@ -69,6 +69,8 @@ class PSBasis(Sequence):
         self.__degree = degree
         self.__base = base
         self.__compatibility = {}
+        self.__derivations = []
+        self.__endomorphisms = []
         
         if universe == None and degree is True:
             universe = PolynomialRing(self.__base, 'x' if var_name is None else var_name)
@@ -763,7 +765,7 @@ class PSBasis(Sequence):
         return self.OSS()(self.reduce_SnSni((Sn**d)*operator))
     
     ### COMPATIBILITY RELATED METHODS
-    def set_compatibility(self, name, trans, sub=False):
+    def set_compatibility(self, name, trans, sub=False, type=None):
         r'''
             Method to set a new compatibility operator.
 
@@ -798,6 +800,8 @@ class PSBasis(Sequence):
               `\alpha_{i,j,k}`.
             * ``sub`` (optional): if set to ``True``, the compatibility rule for ``name``
               will be updated even if the operator was already compatible.
+            * ``type`` (optional): if set to ``"endo"`` or ``"der"``, we assume the operator given in 
+              ``name`` is either a endomorphism or derivation.
         '''
         name = str(name)
         
@@ -825,7 +829,50 @@ class PSBasis(Sequence):
                     [self.OB()(trans.constant_coefficient())] + 
                     [self.OB()(trans.coefficient({Sni:i}))(n=n+i) for i in range(1, B+1)])
             self.__compatibility[name] = (ZZ(A), ZZ(B), ZZ(1), lambda i, j, k: alpha[j+A](n=k))
-                    
+
+        if type in ("endo", "der"):
+            if name in self.__derivations:
+                self.__derivations.remove(name)
+            elif name in self.__endomorphisms:
+                self.__endomorphisms.remove(name)
+
+            if type == "endo": self.__endomorphisms.append(name)
+            if type == "der": self.__derivations.append(name)
+
+    def set_endomorphism(self, name, trans, sub=False):
+        r'''
+            Method to set a new compatibility operator for an endomorphism.
+
+            This method sets a new compatibility condition for an operator given 
+            by ``name`` (see :func:`set_compatibility`). We assume the name 
+            is for an endomorphism, i.e., let `\varphi` be the operator represented by ``name``. 
+            Then for all `a,b in \mathbb{K}[[x]]`, it holds
+
+            .. MATH::
+
+                \varphi(ab) = \varphi(a) \varphi(b)
+            
+            INPUT: see input in :func:`set_compatibility`.
+        '''
+        self.set_compatibility(name, trans, sub, "endo")
+
+    def set_derivation(self, name, trans, sub=False):
+        r'''
+            Method to set a new compatibility operator for a derivation.
+
+            This method sets a new compatibility condition for an operator given 
+            by ``name`` (see :func:`set_compatibility`). We assume the name 
+            is for a derivation, i.e., let `\partial` be the operator represented by ``name``. 
+            Then for all `a,b in \mathbb{K}[[x]]`, it holds
+
+            .. MATH::
+
+                \partial(ab) = \partial(a)b +  a\partial(b)
+            
+            INPUT: see input in :func:`set_compatibility`.
+        '''
+        self.set_compatibility(name, trans, sub, "der")
+
     @cached_method
     def get_lower_bound(self, operator):
         r'''
@@ -914,6 +961,18 @@ class PSBasis(Sequence):
         '''
         return self.__compatibility.keys()
 
+    def compatible_endomorphisms(self):
+        r'''
+            Method to get the registered endomorphisms compatible with ``self``.
+        '''
+        return self.__endomorphisms
+
+    def compatible_derivations(self):
+        r'''
+            Method to get the registered derivations compatible with ``self``.
+        '''
+        return self.__derivations
+
     def has_compatibility(self, operator):
         r'''
             Method to know if an operator has compatibility with this basis.
@@ -928,7 +987,7 @@ class PSBasis(Sequence):
 
             OUTPUT:
 
-            ``True`` if the givenoperator is compatible and ``False`` otherwise.
+            ``True`` if the given operator is compatible and ``False`` otherwise.
 
             EXAMPLES::
 
@@ -947,7 +1006,7 @@ class PSBasis(Sequence):
                 sage: B.has_compatibility('E')
                 True
                 
-            This output gets updated when we add new compatibilities
+            This output gets updated when we add new compatibilities::
                 
                 sage: B.has_compatibility('s')
                 False
@@ -957,6 +1016,63 @@ class PSBasis(Sequence):
         '''
         return str(operator) in self.__compatibility
 
+    def compatibility_type(self, operator):
+        r'''
+            Method to know if an operator has compatibility of a specific type.
+
+            This method checks whether the operator given has a compatibility of
+            endomorphism type or derivation type.
+
+            INPUT:
+
+            * ``operator``: the operator we want to know if it is compatible or not.
+              It can be a string or an object that will be transformed into a string
+              to check if the compatibility is included.
+
+            OUTPUT:
+
+            ``"endo"`` if the given operator is considered an endomorphism, ``"der"``
+            if it is considered a derivation and ``None`` otherwise.
+
+            EXAMPLES::
+
+                sage: from pseries_basis import *
+                sage: BinomialBasis().compatibility_type('x')
+                None
+                sage: BinomialBasis().compatibility_type('E')
+                "endo"
+                sage: BinomialBasis().has_compatibility('Id')
+                Traceback (most recent call last):
+                ...
+                NotCompatibleError: operator Id is not compatible with this basis.
+                sage: PowerBasis().compatibility_type('Id')
+                "endo"
+                sage: HermiteBasis().compatibility_type('Dx')
+                "der"
+                sage: B = FallingBasis(1,2,3)
+                sage: B.compatibility_type('E')
+                "endo"
+                
+            This output gets updated when we add new compatibilities::
+                
+                sage: B.compatibility_type('s')
+                Traceback (most recent call last):
+                ...
+                NotCompatibleError: operator s is not compatible with this basis.
+                sage: B.set_compatibility('s', 1)
+                sage: B.has_compatibility('s')
+                None
+        '''
+        operator = str(operator)
+        if not self.has_compatibility(operator):
+            raise NotCompatibleError(f"operator {operator} is not compatible with this basis")
+        if operator in self.__derivations:
+            return "der"
+        elif operator in self.__endomorphisms:
+            return "endo"
+        else:
+            return None
+        
     def compatibility(self, operator):
         r'''
             Method to get the compatibility condition for an operator.
@@ -1029,7 +1145,7 @@ class PSBasis(Sequence):
 
             This method also allows to get compatibility in different sections::
 
-                sage: P = ProductBasis([B,B], ends=['E'])
+                sage: P = ProductBasis([B,B])
                 sage: a,b,m,alpha = P.compatibility('E')
                 sage: a,b,m
                 (2, 0, 2)
@@ -1599,7 +1715,7 @@ class PSBasis(Sequence):
         compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
         for key in compatibilities:
             A, B, m, alpha = self.compatibility(key)
-            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*(factor(n=k*m+i)/factor(k*m+i+j))))
+            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*(factor(n=k*m+i)/factor(k*m+i+j))), type=self.compatibility_type(key))
             
         return
 
@@ -1640,7 +1756,7 @@ class PSBasis(Sequence):
         compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
         for key in compatibilities:
             A, B, m, alpha = self.compatibility(key)
-            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*_Q(1/quotient, k*m+i, j)))
+            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*_Q(1/quotient, k*m+i, j)), type=self.compatibility_type(key))
             
         return
 

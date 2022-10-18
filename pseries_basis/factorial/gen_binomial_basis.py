@@ -86,7 +86,7 @@ def DefiniteSumSolutions(operator, *input):
         return BinomialBasis(a[0],b[0],E=E).recurrence(operator)
     
     ## Building the appropriate ProductBasis
-    B = ProductBasis([BinomialBasis(a[i],b[i],E=E) for i in range(m)], ends=[E])
+    B = ProductBasis([BinomialBasis(a[i],b[i],E=E) for i in range(m)])
     
     ## Getting the compatibility matrix R(operator)
     compatibility = B.recurrence(operator)
@@ -173,9 +173,9 @@ def GeneralizedBinomial(a,b,c,m,r):
     if(r == 0):
         guessed_compatibility = guess_compatibility_E(basis, shift=1/a, sections=m)
         assert(check_compatibility(basis, guessed_compatibility, lambda p: p(x=x+1/a)))
-        basis.set_compatibility('Et', guessed_compatibility)
+        basis.set_endomorphism('Et', guessed_compatibility)
         APR = PolynomialRing(QQ, 'Et'); Et = APR.gens()[0]
-        basis.set_compatibility('E', basis.compatibility((Et**a)))
+        basis.set_endomorphism('E', basis.compatibility((Et**a)))
         
     return basis
 

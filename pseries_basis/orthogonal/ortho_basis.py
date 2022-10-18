@@ -42,6 +42,7 @@ class OrthogonalBasis(PolyBasis):
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
         * ``init``: the first element of the basis. By default, this takes the value `1`.
+        * ``base``: base ring where the coefficients `a_n`, `b_n`, `c_n` and ``init`` must belong.
 
         TODO: add examples
 
@@ -55,12 +56,12 @@ class OrthogonalBasis(PolyBasis):
         * :func:`~OrthogonalBasis.get_mixed_equation`.
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
-    def __init__(self, an, bn, cn, X='x', Dx='Dx', init=1):
+    def __init__(self, an, bn, cn, X='x', Dx='Dx', init=1, base=QQ):
         ## Initializing the PolyBasis structure
-        super(OrthogonalBasis,self).__init__()
+        super().__init__(base, X)
 
         ## Cheking the first element
-        init = self.OB().base()(init)
+        init = self.base(init)
         if(init == 0):
             raise ValueError("The first polynomial must be non-zero")
         self.__init = init
@@ -79,7 +80,6 @@ class OrthogonalBasis(PolyBasis):
             cn = self.OB()(cn); self.__cn = cn
         except:
             if(cn(n=n) in self.OB()): self.__cn = cn
-        self.__var_name = X
 
         ## The multiplication by X compatibility is given
         Sni = self.Sni(); Sn = self.Sn()
@@ -87,12 +87,12 @@ class OrthogonalBasis(PolyBasis):
 
         self.__der_name = Dx
         try:
-            self.set_compatibility(self.derivation_name(), self._first_compatibility())
+            self.set_derivation(self.derivation_name(), self._first_compatibility())
         except NotImplementedError: # the class has no specific compatibility with the derivative
             try: # we try to get the mixed relation for the orthogonal basis
                 _, a,b,c = self.get_mixed_equation()
                 N = self.n(); Sn = self.Sn()
-                self.set_compatibility(Dx, self.reduce_SnSni(a*self.recurrence(X) + b + c(n=N+1)*Sn))
+                self.set_derivation(Dx, self.reduce_SnSni(a*self.recurrence(X) + b + c(n=N+1)*Sn))
             except NotImplementedError:
                 pass # there is nothing we can do
 
@@ -135,8 +135,7 @@ class OrthogonalBasis(PolyBasis):
             return poly.degree(var)
         raise TypeError("The input is not a polynomial")
 
-    @cached_method
-    def element(self, n, var_name=None):
+    def _element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -151,10 +150,6 @@ class OrthogonalBasis(PolyBasis):
 
             TODO: add examples
         '''
-        if(var_name is None):
-            name = self.__var_name
-        else:
-            name = var_name
         R = self.universe
         x = R.gens()[0]
         an = self.__an; bn = self.__bn; cn = self.__cn
@@ -170,7 +165,7 @@ class OrthogonalBasis(PolyBasis):
         elif(n == 1):
             return (an(n=0)*x + bn(n=0))*self.__init
         else: # General (recursive) case
-            return (an(n=n-1)*x + bn(n=n-1))*self.element(n-1, name) - cn(n=n-1)*self.element(n-2, name)
+            return (an(n=n-1)*x + bn(n=n-1))*self.element(n-1) - cn(n=n-1)*self.element(n-2)
 
     def _scalar_basis(self, factor):
         r'''
@@ -187,7 +182,9 @@ class OrthogonalBasis(PolyBasis):
             self.__an*factor(n=n+1)/factor, # an = an*f(n+1)/f(n) 
             self.__bn*factor(n=n+1)/factor, # bn = bn*f(n+1)/f(n)
             self.__cn*factor(n=n+1)/factor(n=n-1), # cn = cn*f(n+1)/f(n-1)
-            self.__var_name, self.__der_name, init = self.__init * factor(n=0)
+            str(self.universe.gens()[0]), # the name of the main variable does not change
+            self.__der_name,    # the name for derivation does not change
+            init = self.__init * factor(n=0) # the first value is altered with the first factor
         )
 
     def _scalar_hypergeometric(self, factor, quotient):
@@ -204,11 +201,13 @@ class OrthogonalBasis(PolyBasis):
             self.__an*quotient, # an = an*f(n+1)/f(n) 
             self.__bn*quotient, # bn = bn*f(n+1)/f(n)
             self.__cn*quotient*quotient(n=n-1), # cn = cn*f(n+1)/f(n-1)
-            self.__var_name, self.__der_name, init = self.__init * factor(n=0)
+            str(self.universe.gens()[0]), # the name of the main variable does not change
+            self.__der_name,    # the name for derivation does not change
+            init = self.__init * factor(n=0) # the first value is altered with the first factor
         )
 
     @cached_method
-    def get_differential_equation(self, var_name=None):
+    def get_differential_equation(self):
         r'''
             Method to get the second order differential equation for a Orthogonal basis.
 
@@ -223,11 +222,6 @@ class OrthogonalBasis(PolyBasis):
             both representation are equivalent. This method computes the second order differential
             equation for the current Orthogonal basis.
 
-            INPUT:
-
-            * ``var_name``: the name of the variable of the polynomials. It takes the value of
-              :func:`var_name` by default.
-
             OUTPUT: 
 
             A triplet `(A(n),B(n),C(n)) \in \mathbb{Q}(n)[x]` such that, for any element `P_n(x)` of the basis, we have
@@ -238,10 +232,6 @@ class OrthogonalBasis(PolyBasis):
 
             TODO: add examples
         '''
-        if(var_name is None):
-            name = self.__var_name
-        else:
-            name = var_name
         R = self.universe
         x = R.gens()[0]
 
@@ -258,7 +248,7 @@ class OrthogonalBasis(PolyBasis):
 
         return (a*x**2 + b*x + c),(d*x+e),-n*((n-1)*a + d)
 
-    def get_mixed_equation(self, var_name=None):
+    def get_mixed_equation(self):
         r'''
             Method to get a mixed relation between the shift and differential operators.
 
@@ -272,11 +262,6 @@ class OrthogonalBasis(PolyBasis):
             This implies that the set also satisfies a mixed difference-differential equation. In fact,
             both representation are equivalent. This method computes the mixed relation for the current 
             Orthogonal basis.
-
-            INPUT:
-
-            * ``var_name``: the name of the variable of the polynomials. It takes the value of
-              :func:`var_name` by default.
 
             OUTPUT: 
 
@@ -335,20 +320,6 @@ class OrthogonalBasis(PolyBasis):
                 return output
 
             raise TypeError("The operator %s is not compatible with %s" %(operator, self))
-
-    def var_name(self):
-        r'''
-            Method to get the name of the main variable for this basis.
-
-            Orthogonal basis are a basis of the ring of formal power series. This ring
-            is generated by a variable whose name is returned by this method. This name
-            is set when creating the object (see input of :class:`OrthogonalBasis`).
-
-            OUTPUT:
-
-            The name of the main variable.
-        '''
-        return self.__var_name
 
     @cached_method
     def derivation_name(self):
@@ -477,6 +448,7 @@ class JacobiBasis(OrthogonalBasis):
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
+        * ``base``: base ring where the coefficients `\alpha` and `\beta` must belong.
 
         TODO: add examples
 
@@ -484,13 +456,13 @@ class JacobiBasis(OrthogonalBasis):
 
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
-    def __init__(self, alpha, beta, X='x', Dx='Dx'):
-        if(not alpha in QQ or alpha <= -1):
+    def __init__(self, alpha, beta, X='x', Dx='Dx', base=QQ):
+        if(not alpha in base or alpha <= -1):
             raise TypeError("The argument `alpha` must be a rational number greater than -1")
-        self.__alpha = QQ(alpha); alpha = self.__alpha
-        if(not beta in QQ or beta <= -1):
+        self.__alpha = base(alpha); alpha = self.__alpha
+        if(not beta in base or beta <= -1):
             raise TypeError("The argument `beta` must be a rational number greater than -1")
-        self.__beta = QQ(beta); beta = self.__beta
+        self.__beta = base(beta); beta = self.__beta
         n = self.n()
 
         self.__special_zero = (alpha + beta == 0) or (alpha + beta == -1)
@@ -499,10 +471,9 @@ class JacobiBasis(OrthogonalBasis):
         bn = (alpha**2 - beta**2)*(2*n + alpha + beta + 1)/(2*(n + 1)*(n + alpha + beta + 1)*(2*n + alpha + beta))
         cn = (n + alpha)*(n + beta)*(2*n + alpha + beta + 2)/((n + 1)*(n + alpha + beta + 1)*(2*n + alpha + beta))
 
-        super(JacobiBasis, self).__init__(an,bn,cn,X,Dx)
+        super().__init__(an,bn,cn,X,Dx,base)
 
-    @cached_method
-    def element(self, n, var_name=None):
+    def _element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -516,15 +487,11 @@ class JacobiBasis(OrthogonalBasis):
             TODO: add examples
         '''
         if(self.__special_zero and n == 1):
-            if(var_name is None):
-                name = self.var_name()
-            else:
-                name = var_name
             R = self.universe; x = R.gens()[0]
             a0 = (self.__alpha + self.__beta)/2 + 1; b0 = (self.__alpha - self.__beta)/2
             return a0*x + b0
 
-        return super(JacobiBasis, self).element(n,var_name)
+        return super(JacobiBasis, self).element(n)
 
     def _first_compatibility(self):
         r'''
@@ -548,10 +515,10 @@ class JacobiBasis(OrthogonalBasis):
         return -op
 
     def __repr__(self):
-        return "Jacobi (%s,%s)-Basis (%s, %s, %s,...)" %(self.__alpha, self.__beta,self.element(0), self.element(1), self.element(2))
+        return f"Jacobi ({self.__alpha},{self.__beta})-Basis ({self(0)}, {self(1)}, {self(2)},...)"
 
     def _latex_(self):
-        return r"\left\{P_n^{(%s,%s)}(%s)\right\}_{n \geq 0}" %(self.__alpha, self.__beta,self.var_name())
+        return r"\left\{P_n^{(%s,%s)}(%s)\right\}_{n \geq 0}" %(self.__alpha, self.__beta,str(self.universe.gens()[0]))
 
 class GegenbauerBasis(OrthogonalBasis):
     r'''
@@ -575,6 +542,7 @@ class GegenbauerBasis(OrthogonalBasis):
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
+        * ``base``: base ring where the coefficients `\lambda` must belong.
 
         TODO: add examples
 
@@ -582,16 +550,16 @@ class GegenbauerBasis(OrthogonalBasis):
 
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
-    def __init__(self, lambd, X='x', Dx='Dx'):
-        if(not lambd in QQ or lambd <= -1/2 or lambd == 0):
+    def __init__(self, lambd, X='x', Dx='Dx', base=QQ):
+        if(not lambd in base or lambd <= -1/2 or lambd == 0):
             raise TypeError("The argument `alpha` must be a rational number greater than -1/2 different from 0")
-        self.__lambda = QQ(lambd); lambd = self.__lambda
+        self.__lambda = base(lambd); lambd = self.__lambda
         n = self.n()
 
         an = 2*(n+lambd)/(n+1)
         cn = (n+2*lambd-1)/(n+1)
 
-        super(GegenbauerBasis, self).__init__(an,0,cn,X,Dx)
+        super().__init__(an,0,cn,X,Dx,base)
 
     def _first_compatibility(self):
         r'''
@@ -614,10 +582,10 @@ class GegenbauerBasis(OrthogonalBasis):
         return -op
 
     def __repr__(self):
-        return "Gegenbauer (%s)-Basis (%s, %s, %s,...)" %(self.__lambda, self.element(0), self.element(1), self.element(2))
+        return f"Gegenbauer ({self.__lambda})-Basis ({self(0)}, {self(1)}, {self(2)},...)"
 
     def _latex_(self):
-        return r"\left\{C_n^{(%s)}(%s)\right\}_{n \geq 0}" %(self.__lambda, self.var_name())
+        return r"\left\{C_n^{(%s)}(%s)\right\}_{n \geq 0}" %(self.__lambda, str(self.universe.gens()[0]))
 
 class LegendreBasis(JacobiBasis):
     r'''
@@ -639,15 +607,16 @@ class LegendreBasis(JacobiBasis):
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
-
+        * ``base``: base ring where the coefficients of the polynomial will belong.
+        
         TODO: add examples
 
         List of abstract methods:
 
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
-    def __init__(self, X='x', Dx='Dx'):
-        super(LegendreBasis, self).__init__(0,0,X,Dx)
+    def __init__(self, X='x', Dx='Dx', base=QQ):
+        super().__init__(0,0,X,Dx,base)
 
     def _first_compatibility(self):
         r'''
@@ -660,10 +629,10 @@ class LegendreBasis(JacobiBasis):
         return self.reduce_SnSni((n*(n-1)/(2*n-1))*Sni - ((n+1)*(n+2)/(2*n+3))*Sn)
 
     def __repr__(self):
-        return "Legendre Basis (%s, %s, %s,...)" %(self.element(0), self.element(1), self.element(2))
+        return f"Legendre Basis ({self(0)}, {self(1)}, {self(2)},...)"
 
     def _latex_(self):
-        return r"\left\{P_n(%s)\right\}_{n \geq 0}" %(self.var_name())
+        return r"\left\{P_n(%s)\right\}_{n \geq 0}" %(str(self.universe.gens()[0]))
 
 class TChebyshevBasis(OrthogonalBasis):
     r'''
@@ -694,7 +663,7 @@ class TChebyshevBasis(OrthogonalBasis):
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, X='x', Dx='Dx'):
-        super(TChebyshevBasis, self).__init__(lambda n: 1 if n == 0 else 2,0,1,X,Dx)
+        super(TChebyshevBasis, self).__init__(lambda n: 1 if n == 0 else 2,0,1,X,Dx,QQ)
 
     def _first_compatibility(self):
         r'''
@@ -707,10 +676,10 @@ class TChebyshevBasis(OrthogonalBasis):
         return self.reduce_SnSni(((n-1)/2)*Sni - ((n+1)/2)*Sn)
 
     def __repr__(self):
-        return "T-Chebyshev Basis (%s, %s, %s,...)" %(self.element(0), self.element(1), self.element(2))
+        return f"T-Chebyshev Basis ({self(0)}, {self(1)}, {self(2)},...)"
 
     def _latex_(self):
-        return r"\left\{T_n(%s)\right\}_{n \geq 0}" %(self.var_name())
+        return r"\left\{T_n(%s)\right\}_{n \geq 0}" %(str(self.universe.gens()[0]))
 
 class UChebyshevBasis(OrthogonalBasis):
     r'''
@@ -741,7 +710,7 @@ class UChebyshevBasis(OrthogonalBasis):
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, X='x', Dx='Dx'):
-        super(UChebyshevBasis, self).__init__(2,0,1,X,Dx)
+        super(UChebyshevBasis, self).__init__(2,0,1,X,Dx,QQ)
 
     def _first_compatibility(self):
         r'''
@@ -754,10 +723,10 @@ class UChebyshevBasis(OrthogonalBasis):
         return self.reduce_SnSni(((3*n-1)/2)*Sni + ((n+1)/2)*Sn)
 
     def __repr__(self):
-        return "U-Chebyshev Basis (%s, %s, %s,...)" %(self.element(0), self.element(1), self.element(2))
+        return f"U-Chebyshev Basis ({self(0)}, {self(1)}, {self(2)},...)"
 
     def _latex_(self):
-        return r"\left\{U_n(%s)\right\}_{n \geq 0}" %(self.var_name())
+        return r"\left\{U_n(%s)\right\}_{n \geq 0}" %(str(self.universe.gens()[0]))
 
 class LaguerreBasis(OrthogonalBasis):
     r'''
@@ -790,7 +759,7 @@ class LaguerreBasis(OrthogonalBasis):
         self.alpha = alpha
 
         n = self.n()
-        super(LaguerreBasis, self).__init__(-1/(n+1),(2*n+alpha+1)/(n+1),(n+alpha)/(n+1),X,Dx)
+        super(LaguerreBasis, self).__init__(-1/(n+1),(2*n+alpha+1)/(n+1),(n+alpha)/(n+1),X,Dx,QQ)
 
     def _first_compatibility(self):
         r'''
@@ -803,10 +772,10 @@ class LaguerreBasis(OrthogonalBasis):
         return self.reduce_SnSni(n*Sni - (n+self.alpha+1))
 
     def __repr__(self):
-        return "%s-Laguerre Basis (%s, %s, %s,...)" %(self.alpha,self.element(0), self.element(1), self.element(2))
+        return f"{self.alpha}-Laguerre Basis ({self(0)}, {self(1)}, {self(2)},...)"
 
     def _latex_(self):
-        return r"\left\{L_n^{(%s)}(%s)\right\}_{n \geq 0}" %(self.alpha,self.var_name())
+        return r"\left\{L_n^{(%s)}(%s)\right\}_{n \geq 0}" %(self.alpha,str(self.universe.gens()[0]))
 
 class HermiteBasis(OrthogonalBasis):
     r'''
@@ -834,10 +803,10 @@ class HermiteBasis(OrthogonalBasis):
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
     def __init__(self, X='x', Dx='Dx'):
-        super(HermiteBasis, self).__init__(2,0,2*self.n(),X,Dx)
+        super(HermiteBasis, self).__init__(2,0,2*self.n(),X,Dx,QQ)
 
         n = self.n(); Sn = self.Sn()
-        self.set_compatibility(Dx, 2*(n+1)*Sn)
+        self.set_derivation(Dx, 2*(n+1)*Sn, True)
 
     def derivation_name(self):
         r'''
@@ -846,13 +815,13 @@ class HermiteBasis(OrthogonalBasis):
             This method *overrides* the corresponding method from :class:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis`.
             See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name` for further information.
         '''
-        return self._OrthogonalBasis__der_name # pylint: disable=no-member
+        return super().derivation_name().split(")")[-1]
 
     def __repr__(self):
-        return "Hermite Basis (%s, %s, %s,...)" %(self.element(0), self.element(1), self.element(2))
+        return f"Hermite Basis ({self(0)}, {self(1)}, {self(2)},...)"
 
     def _latex_(self):
-        return r"\left\{H_n(%s)\right\}_{n \geq 0}" %self.var_name()
+        return r"\left\{H_n(%s)\right\}_{n \geq 0}" %str(self.universe.gens()[0])
 
 class HermitePBasis(OrthogonalBasis):
     r'''
@@ -880,10 +849,10 @@ class HermitePBasis(OrthogonalBasis):
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
     def __init__(self, X='x', Dx='Dx'):
-        super(HermitePBasis, self).__init__(1,0,self.n(),X,Dx)
+        super(HermitePBasis, self).__init__(1,0,self.n(),X,Dx,QQ)
 
         n = self.n(); Sn = self.Sn()
-        self.set_compatibility(Dx, (n+1)*Sn)
+        self.set_derivation(Dx, (n+1)*Sn, True)
 
     def derivation_name(self):
         r'''
@@ -892,12 +861,12 @@ class HermitePBasis(OrthogonalBasis):
             This method *overrides* the corresponding method from :class:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis`.
             See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name` for further information.
         '''
-        return self._OrthogonalBasis__der_name # pylint: disable=no-member
+        return super().derivation_name().split(")")[-1]
 
     def __repr__(self):
-        return "Probabilistic Hermite Basis (%s, %s, %s,...)" %(self.element(0), self.element(1), self.element(2))
+        return f"Probabilistic Hermite Basis ({self(0)}, {self(1)}, {self(2)},...)"
 
     def _latex_(self):
-        return r"\left\{He_n(%s)\right\}_{n \geq 0}" %self.var_name()
+        return r"\left\{He_n(%s)\right\}_{n \geq 0}" %str(self.universe.gens()[0])
 
 __all__ = ["OrthogonalBasis", "JacobiBasis", "GegenbauerBasis", "LegendreBasis", "TChebyshevBasis", "UChebyshevBasis", "LaguerreBasis", "HermiteBasis", "HermitePBasis"]

@@ -95,7 +95,7 @@ class ExponentialBasis(FunctionalBasis):
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
 
         self.set_compatibility(E, Sni + 1)
-        self.set_compatibility(Dx, n + (n+1)*Sn)
+        self.set_derivation(Dx, n + (n+1)*Sn)
 
 
 
@@ -126,7 +126,7 @@ class BesselBasis(OrderBasis):
         ## The multiplication by X compatibility is given
         Sni = self.Sni(); n = self.n(); Sn = self.Sn(); Q12 = 1/Integer(2)
         self.set_compatibility(Xi, (Q12/n)*Sn + (Q12/n)*Sni)
-        self.set_compatibility(Dx, Q12*Sn - Q12*Sni)
+        self.set_derivation(Dx, Q12*Sn - Q12*Sni)
 
     @cached_method
     def element(self, n):

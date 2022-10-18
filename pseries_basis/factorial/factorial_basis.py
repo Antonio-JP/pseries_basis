@@ -1,6 +1,10 @@
 r'''
     Sage package for Factorial Series Basis.
 '''
+
+import logging
+logger = logging.getLogger(__name__)
+
 # sage imports
 from sage.all import prod, vector, ZZ, cached_method, QQ, Matrix, latex
 
@@ -37,8 +41,8 @@ class FactorialBasis(PolyBasis):
             Sni = self.Sni(); n = self.n(); an = self.an; bn = self.bn
             self.set_compatibility(X, -bn(n+1)/an(n+1) + (1/an(n))*Sni)
         except (AttributeError, TypeError) as e:
-            print(f"Error with the compatibility with {X}")
-            raise e
+            logger.info(f"Error with the compatibility with {X} --> {e}")
+            pass
 
     def _scalar_basis(self, factor) -> "FactorialBasis":
         r'''
@@ -979,6 +983,9 @@ class SFactorialBasis(FactorialBasis):
 
         ## Building the polynomial
         PR = self.universe; x = PR.gens()[0]
+        if not n in ZZ: # the symbolic type of `n`
+            PR = PR.change_ring(self.OB()); x = PR(x)
+        
         if(d == 0):
             return PR.one()
 
@@ -1197,6 +1204,9 @@ class RootSequenceBasis(FactorialBasis):
 
         ## Building the polynomial
         PR = self.universe; x = PR.gens()[0]
+        if not n in ZZ: # the symbolic type of `n`
+            PR = PR.change_ring(self.OB()); x = PR(x)
+            
         if(d == 0):
             return PR.one()
 
@@ -1419,7 +1429,10 @@ class ScalarBasis(FactorialBasis):
                 d = ZZ(d); m = dst
 
         ## Building the polynomial
-        PR = self.universe
+        PR = self.universe; x = PR.gens()[0]
+        if not n in ZZ: # the symbolic type of `n`
+            PR = PR.change_ring(self.OB()); x = PR(x)
+
         if(d == 0):
             return PR.one()
 
@@ -1510,7 +1523,7 @@ class FallingBasis(SFactorialBasis):
 
         Sn = self.Sn(); x = self[1].parent().gens()[0]
         P = a*x+b+c
-        self.set_compatibility(self.__E_name, self.recurrence(P)*Sn, True)
+        self.set_endomorphism(self.__E_name, self.recurrence(P)*Sn, True)
 
     def change_base(self, base):
         return FallingBasis(
@@ -1610,7 +1623,7 @@ class PowerBasis(FallingBasis):
         self.__Dx_name = Dx
 
         n = self.n(); Sn = self.Sn(); a = self.linear_coefficient()[0]
-        self.set_compatibility(Dx, a*(n+1)*Sn)
+        self.set_derivation(Dx, a*(n+1)*Sn)
 
     def change_base(self, base):
         return PowerBasis(
@@ -1697,9 +1710,9 @@ class BinomialBasis(SFactorialBasis):
 
         Sn = self.Sn()
         ## Adding the compatibility by $x \mapsto x+1/a$:
-        self.set_compatibility(E+'t', Sn+1)
+        self.set_endomorphism(E+'t', Sn+1)
         ## Adding the compatibility by $x \mapsto x+1$ (simply powering the previous compatibility)
-        self.set_compatibility(E, (Sn+1)**a)
+        self.set_endomorphism(E, (Sn+1)**a)
 
     def change_base(self, base):
         return BinomialBasis(

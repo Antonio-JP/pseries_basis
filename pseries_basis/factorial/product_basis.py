@@ -2,7 +2,12 @@ r'''
     Sage package for Product of Factorial Series Basis.
 '''
 # Sage imports
+from functools import reduce
+from typing import List, Tuple
 from sage.all import cached_method, prod, ZZ, vector, ceil
+from sage.categories.pushout import pushout
+
+from pseries_basis.misc.sequences import LambdaSequence, Sequence
 
 # Local imports
 from .factorial_basis import FactorialBasis
@@ -46,8 +51,6 @@ class SievedBasis(FactorialBasis):
         * ``cycle``: a tuple of length `m` indicating which factor use in each step.
         * ``init``: value for the constant element of the basis.
         * ``X``: name of the operator representing the multiplication by `x`.
-        * ``ends``: endomorphism which compatibility we will try to extend.
-        * ``ders``: derivations which compatibility we wil try to extend.
 
         EXAMPLES::
 
@@ -87,8 +90,8 @@ class SievedBasis(FactorialBasis):
         We first extend the compatibility with `E: x\mapsto x+1` by guessing and then we compute the sieved basis
         with the binomial basis with the cycle `(1,0,1)`::
 
-            sage: B.set_compatibility('E', guess_compatibility_E(B, sections=2))
-            sage: B2 = SievedBasis([BinomialBasis(), B], [1,0,1], ends=['E'])
+            sage: B.set_endomorphism('E', guess_compatibility_E(B, sections=2))
+            sage: B2 = SievedBasis([BinomialBasis(), B], [1,0,1])
 
         Now the basis ``B2`` is formed in 3 sections by the following elements:
 
@@ -148,7 +151,7 @@ class SievedBasis(FactorialBasis):
             sage: column[0].gcrd(*column[1:])
             (n + 1)*Sn - 4*n - 2
     '''
-    def __init__(self, factors, cycle, init=1, X='x', ends=[], ders=[]):
+    def __init__(self, factors, cycle, init=1, X='x'):
         ## Checking the input
         if(not type(factors) in (list,tuple)):
             raise TypeError("The factors must be either a list or a tuple")
@@ -165,8 +168,10 @@ class SievedBasis(FactorialBasis):
         self.__factors = tuple(factors)
         self.__cycle = tuple(cycle)
 
+        base = reduce(lambda R,S : pushout(R,S), [factor.base for factor in factors])
+
         ## Calling the previous constructor
-        super().__init__(X)
+        super().__init__(X, base)
 
         ## Other cached elements
         self.__init = init
@@ -175,19 +180,20 @@ class SievedBasis(FactorialBasis):
         ## Extendeding the required operators
         self.extend_compatibility_X()
 
-        self.__ends = []; self.__ders = []
-        for endomorphism in ends:
+        endomorphisms = list(reduce(lambda p, q : p.intersection(q), [set(factor.compatible_endomorphisms()) for factor in self.factors]))
+        derivations = list(reduce(lambda p, q : p.intersection(q), [set(factor.compatible_derivations()) for factor in self.factors]))
+        for endomorphism in endomorphisms:
             try:
                 self.extend_compatibility_E(endomorphism)
             except (NotImplementedError):
                 pass
-        for derivation in ders:
+        for derivation in derivations:
             try:
                 self.extend_compatibility_D(derivation)
             except (NotImplementedError):
                 pass
 
-    def element(self, n, var_name=None):
+    def _element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -203,7 +209,7 @@ class SievedBasis(FactorialBasis):
             TODO: add examples
         '''
         indices = [self.index(n,i) for i in range(self.nfactors())]
-        return self.__init*prod([self.factors[i].element(indices[i],var_name) for i in range(self.nfactors())])
+        return self.__init*prod([self.factors[i].element(indices[i]) for i in range(self.nfactors())])
 
     @cached_method
     def appear(self, i):
@@ -278,12 +284,12 @@ class SievedBasis(FactorialBasis):
         return self.appear(i)*m + s
 
     def __repr__(self):
-        return ("Sieved Basis %s of the basis:" %str(self.cycle)) + "".join(["\n\t- %s" %repr(f) for f in self.factors])
+        return f"Sieved Basis {self.cycle} of the basis:" + "".join([f"\n\t- {f}" for f in self.factors])
 
     def _latex_(self):
         return (r"\prod_{%s}" %self.cycle)  + "".join([f._latex_() for f in self.factors])
 
-    def root_sequence(self):
+    def root_sequence(self) -> Sequence:
         r'''
             Method that returns the root sequence of the polynomial basis.
 
@@ -298,11 +304,11 @@ class SievedBasis(FactorialBasis):
         def _root_sb(n):
             r = n%self.nsections()
             factor = self.cycle[r]
-            return self.factors[factor].root_sequence()(n=self.index(n, factor))
+            return self.factors[factor].rho(self.index(n, factor))
 
-        return _root_sb
+        return LambdaSequence(_root_sb, self.base, allow_sym=False)
 
-    def constant_coefficient(self):
+    def constant_coefficient(self) -> Sequence:
         r'''
             Getter for the constant coefficient of the factorial basis.
 
@@ -315,10 +321,10 @@ class SievedBasis(FactorialBasis):
         def _const_sb(n):
             r = n%self.nsections()
             factor = self.cycle[r]
-            return self.factors[factor].constant_coefficient()(n=self.index(n, factor))
-        return _const_sb
+            return self.factors[factor].bn(self.index(n, factor))
+        return LambdaSequence(_const_sb, self.base, allow_sym=False)
     
-    def linear_coefficient(self):
+    def linear_coefficient(self) -> Sequence:
         r'''
             Getter for the linear coefficient of the factorial basis.
 
@@ -331,11 +337,17 @@ class SievedBasis(FactorialBasis):
         def _lin_sb(n):
             r = n%self.nsections()
             factor = self.cycle[r]
-            return self.factors[factor].linear_coefficient()(n=self.index(n, factor))
-        return _lin_sb
+            return self.factors[factor].an(self.index(n, factor))
+        return LambdaSequence(_lin_sb, self.base, allow_sym=False)
 
-    factors = property(lambda self: self.__factors) #: property to get the factors of the :class:`SievedBasis`
-    cycle = property(lambda self: self.__cycle) #: property to get the deciding cycle of the :class:`SievedBasis`
+    @property
+    def factors(self) -> Tuple[FactorialBasis]:
+        r'''Property to get the factors of the :class:`SievedBasis`'''
+        return self.__factors
+    @property
+    def cycle(self) -> Tuple[int]:
+        r'''Property to get the deciding cycle of the :class:`SievedBasis`'''
+        return self.__cycle
 
     def nfactors(self):
         r'''
@@ -384,10 +396,11 @@ class SievedBasis(FactorialBasis):
 
             TODO: add examples
         '''
-        if(not self.has_compatibility(self.var_name())):
-            self.set_compatibility(self.var_name(), self._extend_compatibility_X())
+        X = str(self.universe.gens()[0])
+        if(not self.has_compatibility(X)):
+            self.set_compatibility(X, self._extend_compatibility_X())
 
-        return self.compatibility(self.var_name())
+        return self.compatibility(X)
 
     def extend_compatibility_E(self, name):
         r'''
@@ -420,8 +433,7 @@ class SievedBasis(FactorialBasis):
             name = str(name)
 
         if(not self.has_compatibility(name)):
-            self.set_compatibility(name, self._extend_compatibility_E(name))
-            self.__ends += [name]
+            self.set_endomorphism(name, self._extend_compatibility_E(name))
 
         return self.compatibility(name)
 
@@ -456,8 +468,7 @@ class SievedBasis(FactorialBasis):
             name = str(name)
 
         if(not self.has_compatibility(name)):
-            self.set_compatibility(name, self._extend_compatibility_D(name))
-            self.__ders += [name]
+            self.set_derivation(name, self._extend_compatibility_D(name))
 
         return self.compatibility(name)
 
@@ -471,7 +482,7 @@ class SievedBasis(FactorialBasis):
 
             This method can be extended in subclasses for a different behavior.
         '''
-        X = self.var_name(); m = self.nsections(); F = self.nfactors()
+        X = str(self.universe.gens()[0]); m = self.nsections(); F = self.nfactors()
         comps = [self.factors[i].compatibility(X) for i in range(F)]
         t = [comps[i][2] for i in range(F)]
         S = [self.appear(i) for i in range(F)]
@@ -603,7 +614,7 @@ class SievedBasis(FactorialBasis):
         return self.__cached_increasing[(k,r,diff)]
 
     @cached_method
-    def increasing_basis(self, shift):
+    def increasing_basis(self, shift) -> "SievedBasis":
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
@@ -641,7 +652,7 @@ class SievedBasis(FactorialBasis):
         new_cycle = self.cycle[shift[1]:] + self.cycle[:shift[1]]
         indices = [self.index(shift, i) for i in range(self.nfactors())]
         new_basis = [self.factors[i].increasing_basis(indices[i]) for i in range(self.nfactors())]
-        return SievedBasis(new_basis, new_cycle, X=self.var_name())
+        return SievedBasis(new_basis, new_cycle, X=str(self.universe.gens()[0]))
      
     def compatible_division(self, operator):
         r'''
@@ -663,9 +674,10 @@ class SievedBasis(FactorialBasis):
 
             TODO: add examples
         '''
-        if(str(operator) in self.__ders):
+        comp_type = self.compatibility_type(operator)
+        if(comp_type == "der"):
             return self._compatible_division_D(operator)
-        elif(str(operator) in self.__ends):
+        elif(comp_type == "endo"):
             return self._compatible_division_E(operator)
         else:
             return self._compatible_division_X(operator)
@@ -763,8 +775,6 @@ class ProductBasis(SievedBasis):
         * ``factors``: list of :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis` to build the :class:`ProductBasis`.
         * ``init``: value for the constant element of the basis.
         * ``X``: name of the operator representing the multiplication by `x`.
-        * ``ends``: endomorphism which compatibility we will try to extend.
-        * ``ders``: derivations which compatibility we wil try to extend.
 
         EXAMPLES::
 
@@ -797,8 +807,8 @@ class ProductBasis(SievedBasis):
         We first extend the compatibility with `E: x\mapsto x+1` by guessing and then we compute the product basis
         with itself::
 
-            sage: B.set_compatibility('E', guess_compatibility_E(B, sections=2))
-            sage: B2 = ProductBasis([B,B], ends=['E'])
+            sage: B.set_endomorphism('E', guess_compatibility_E(B, sections=2))
+            sage: B2 = ProductBasis([B,B])
 
         Now the basis ``B2`` is formed in 4 sections by the following elements:
 
@@ -852,11 +862,11 @@ class ProductBasis(SievedBasis):
             sage: column[0].gcrd(*column[1:])
             (n^2 + 2*n + 1)*Sn - 16*n^2 - 16*n - 4
     '''
-    def __init__(self, factors, init=1, X='x', ends=[], ders=[]):
-        super(ProductBasis, self).__init__(factors, list(range(len(factors))),init,X,ends,ders)
+    def __init__(self, factors, init=1, X='x'):
+        super(ProductBasis, self).__init__(factors, list(range(len(factors))),init,X)
 
     @cached_method
-    def increasing_basis(self, shift):
+    def increasing_basis(self, shift) -> "ProductBasis":
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
@@ -884,10 +894,11 @@ class ProductBasis(SievedBasis):
         k, j = self.extended_quo_rem(shift, F)
         return ProductBasis(
             [factors[i].increasing_basis(k) for i in range(j, F)]+[factors[i].increasing_basis(k+1) for i in range(j)],
-            X=self.var_name())
+            X=str(self.universe.gens()[0])
+        )
 
     def __repr__(self):
-        return "ProductBasis" + "".join(["\n\t- %s" %repr(f) for f in self.factors])
+        return "ProductBasis" + "".join([f"\n\t- {f}" for f in self.factors])
 
     def _latex_(self):
         return "".join([f._latex_() for f in self.factors])
