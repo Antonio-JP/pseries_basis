@@ -24,13 +24,23 @@ jobs:
     - name: Install package
       run: |
         sage -pip install --upgrade .
+    - name: Install pylint
+      run: |
+        sage -pip install pylint
+        echo "-------------------------------------------------"
         ls -la /home/sage/sage
         echo "-------------------------------------------------"
         ls -la /home/sage/sage/local
         echo "-------------------------------------------------"
-    - name: Install pylint
-      run: |
-        sage -pip install pylint
+        ls -la /home/sage/sage/local/bin
+        echo "-------------------------------------------------"
+        ls -la /home/sage/sage/local/var
+        echo "-------------------------------------------------"
+        ls -la /home/sage/sage/local/var/lib
+        echo "-------------------------------------------------"
+        ls -la /home/sage/sage/local/var/lib/sage
+        echo "-------------------------------------------------"
+        find /home/sage/sage -name "pylint"
     - name: Linting code for repository
       run: |
         /home/sage/sage/local/var/lib/sage/venv-python3.8/bin/pylint ./pseries_basis  --disable=all --enable=F,unreachable,duplicate-key,unnecessary-semicolon,\
