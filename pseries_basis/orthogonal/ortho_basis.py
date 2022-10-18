@@ -8,7 +8,7 @@ from sage.all import cached_method, Matrix, QQ, ZZ, lcm
 
 # Local imports
 from ..misc.ore import poly_decomp
-from ..psbasis import PolyBasis
+from ..psbasis import PSBasis, PolyBasis
 
 class OrthogonalBasis(PolyBasis):
     r'''
@@ -196,7 +196,7 @@ class OrthogonalBasis(PolyBasis):
 
             TODO: add examples
         '''
-        n = self.n()
+        n = self.n(); quotient = self.OB()(quotient)
         return OrthogonalBasis(
             self.__an*quotient, # an = an*f(n+1)/f(n) 
             self.__bn*quotient, # bn = bn*f(n+1)/f(n)
@@ -457,6 +457,7 @@ class JacobiBasis(OrthogonalBasis):
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, alpha, beta, X='x', Dx='Dx', base=QQ):
+        PSBasis.__init__(self, base, var_name=X) # needed for getting ``self.n()``
         if(not alpha in base or alpha <= -1):
             raise TypeError("The argument `alpha` must be a rational number greater than -1")
         self.__alpha = base(alpha); alpha = self.__alpha
@@ -471,7 +472,7 @@ class JacobiBasis(OrthogonalBasis):
         bn = (alpha**2 - beta**2)*(2*n + alpha + beta + 1)/(2*(n + 1)*(n + alpha + beta + 1)*(2*n + alpha + beta))
         cn = (n + alpha)*(n + beta)*(2*n + alpha + beta + 2)/((n + 1)*(n + alpha + beta + 1)*(2*n + alpha + beta))
 
-        super().__init__(an,bn,cn,X,Dx,base)
+        super().__init__(an,bn,cn,X,Dx,base=base)
 
     def _element(self, n):
         r'''
@@ -551,6 +552,7 @@ class GegenbauerBasis(OrthogonalBasis):
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, lambd, X='x', Dx='Dx', base=QQ):
+        PSBasis.__init__(self, base, var_name=X) # needed for getting ``self.n()``
         if(not lambd in base or lambd <= -1/2 or lambd == 0):
             raise TypeError("The argument `alpha` must be a rational number greater than -1/2 different from 0")
         self.__lambda = base(lambd); lambd = self.__lambda
@@ -559,7 +561,7 @@ class GegenbauerBasis(OrthogonalBasis):
         an = 2*(n+lambd)/(n+1)
         cn = (n+2*lambd-1)/(n+1)
 
-        super().__init__(an,0,cn,X,Dx,base)
+        super().__init__(an,0,cn,X,Dx,base=base)
 
     def _first_compatibility(self):
         r'''
@@ -663,7 +665,7 @@ class TChebyshevBasis(OrthogonalBasis):
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, X='x', Dx='Dx'):
-        super(TChebyshevBasis, self).__init__(lambda n: 1 if n == 0 else 2,0,1,X,Dx,QQ)
+        super(TChebyshevBasis, self).__init__(lambda n: 1 if n == 0 else 2,0,1,X,Dx,base=QQ)
 
     def _first_compatibility(self):
         r'''
@@ -710,7 +712,7 @@ class UChebyshevBasis(OrthogonalBasis):
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, X='x', Dx='Dx'):
-        super(UChebyshevBasis, self).__init__(2,0,1,X,Dx,QQ)
+        super(UChebyshevBasis, self).__init__(2,0,1,X,Dx,base=QQ)
 
     def _first_compatibility(self):
         r'''
@@ -754,12 +756,13 @@ class LaguerreBasis(OrthogonalBasis):
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
     def __init__(self, alpha, X='x', Dx='Dx'):
+        PSBasis.__init__(self, QQ, var_name=X) # needed for getting ``self.n()``
         if(alpha < -1):
             raise ValueError("Laguerre polynomials require an alpha parameter of at least -1")
         self.alpha = alpha
 
         n = self.n()
-        super(LaguerreBasis, self).__init__(-1/(n+1),(2*n+alpha+1)/(n+1),(n+alpha)/(n+1),X,Dx,QQ)
+        super(LaguerreBasis, self).__init__(-1/(n+1),(2*n+alpha+1)/(n+1),(n+alpha)/(n+1),X,Dx,base=QQ)
 
     def _first_compatibility(self):
         r'''
@@ -803,7 +806,8 @@ class HermiteBasis(OrthogonalBasis):
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
     def __init__(self, X='x', Dx='Dx'):
-        super(HermiteBasis, self).__init__(2,0,2*self.n(),X,Dx,QQ)
+        PSBasis.__init__(self, QQ, var_name=X) # needed for getting ``self.n()``
+        super(HermiteBasis, self).__init__(2,0,2*self.n(),X,Dx,base=QQ)
 
         n = self.n(); Sn = self.Sn()
         self.set_derivation(Dx, 2*(n+1)*Sn, True)
@@ -849,7 +853,8 @@ class HermitePBasis(OrthogonalBasis):
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
     def __init__(self, X='x', Dx='Dx'):
-        super(HermitePBasis, self).__init__(1,0,self.n(),X,Dx,QQ)
+        PSBasis.__init__(self, QQ, var_name=X) # needed for getting ``self.n()``
+        super(HermitePBasis, self).__init__(1,0,self.n(),X,Dx,base=QQ)
 
         n = self.n(); Sn = self.Sn()
         self.set_derivation(Dx, (n+1)*Sn, True)

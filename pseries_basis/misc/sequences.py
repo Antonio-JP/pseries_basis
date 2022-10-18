@@ -9,7 +9,7 @@ r'''
     in a generic fashion.
 '''
 ## Sage imports
-from sage.all import cached_method
+from sage.all import cached_method, oo
 from sage.categories.cartesian_product import cartesian_product
 from sage.categories.homset import Hom
 from sage.categories.pushout import CoercionException, pushout
@@ -70,7 +70,10 @@ class Sequence(SetMorphism):
 
     @cached_method
     def element(self, *indices : int):
-        output = self._element(*indices)
+        try:
+            output = self._element(*indices)
+        except ZeroDivisionError:
+            return oo
         if (self.universe is None) or (self.allow_sym and not output in self.universe): # we allow None universe and also evaluation that do nto lie in the universe
             return output
         else:

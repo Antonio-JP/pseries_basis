@@ -63,7 +63,7 @@ class SievedBasis(FactorialBasis):
         With this system, we can build the same basis changing the order and the values in the cycle::
 
             sage: B3 = SievedBasis([P,B], [1,0,0,1])
-            sage: all(B3[i] == B2[i] for i in range(30))
+            sage: B3.almost_equals(B2, 30) # checking equality for 30 elements
             True
 
         The length of the cycle is the number of associated sections::

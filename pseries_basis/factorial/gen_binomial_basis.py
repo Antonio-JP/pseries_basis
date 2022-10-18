@@ -371,4 +371,4 @@ def guess_rational_function(data, algebra):
 
     return sum(sol[i]*solutions[i][0] for i in range(nsols))
 
-__all__ = ["DefiniteSumSolutions","GeneralizedBinomial"]
+__all__ = ["DefiniteSumSolutions","GeneralizedBinomial","guess_compatibility_E"]

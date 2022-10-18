@@ -11,7 +11,7 @@ from sage.all import prod, vector, ZZ, cached_method, QQ, Matrix, latex
 from pseries_basis.misc.sequences import LambdaSequence, Sequence
 
 # Local imports
-from ..psbasis import PolyBasis
+from ..psbasis import PSBasis, PolyBasis
 
 class FactorialBasis(PolyBasis):
     r'''
@@ -64,9 +64,9 @@ class FactorialBasis(PolyBasis):
                 
             In fact we can check that the roots are the same and the leading coefficient is scaled::
 
-                sage: all(B.rho(n=i) == B2.rho(n=i) for i in range(100))
+                sage: all(B.rho(i) == B2.rho(i) for i in range(100))
                 True
-                sage: all(B.cn(n=i)*f(n=i) == B2.cn(n=i) for i in range(100))
+                sage: all(B.cn(i)*f(n=i) == B2.cn(i) for i in range(100))
                 True
 
             There are subclasses that overrides this method again and create their own structures of 
@@ -103,9 +103,9 @@ class FactorialBasis(PolyBasis):
                 
             In fact we can check that the roots are the same and the leading coefficient is scaled::
 
-                sage: all(B.rho(n=i) == B2.rho(n=i) for i in range(100))
+                sage: all(B.rho(i) == B2.rho(i) for i in range(100))
                 True
-                sage: all(B.cn(n=i)*f(n=i) == B2.cn(n=i) for i in range(100))
+                sage: all(B.cn(i)*f(n=i) == B2.cn(i) for i in range(100))
                 True
 
             There are subclasses that overrides this method again and create their own structures of 
@@ -201,20 +201,27 @@ class FactorialBasis(PolyBasis):
 
                 sage: from pseries_basis import *
                 sage: SFactorialBasis(1,0).linear_coefficient()
-                1
+                Sequence over [Rational Field]: (1, 1, 1,...)
                 sage: SFactorialBasis(2,1).linear_coefficient()
-                2
+                Sequence over [Rational Field]: (2, 2, 2,...)
                 sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').linear_coefficient()
-                1
+                Sequence over [Rational Field]: (1, 1, 1,...)
 
             This class also allows to access this value with the property :attr:`~SFactorialBasis.an`::
 
                 sage: SFactorialBasis(1,0).an
-                1
+                Sequence over [Rational Field]: (1, 1, 1,...)
                 sage: SFactorialBasis(2,1).an
-                2
+                Sequence over [Rational Field]: (2, 2, 2,...)
                 sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').an
-                1
+                Sequence over [Rational Field]: (1, 1, 1,...)
+
+            The sequences do not always need to be constant::
+
+                sage: BinomialBasis().an
+                Sequence over [Rational Field]: (+Infinity, 1, 1/2,...)
+                sage: BinomialBasis().an[1:10]
+                [1, 1/2, 1/3, 1/4, 1/5, 1/6, 1/7, 1/8, 1/9]
         '''
         return LambdaSequence(lambda n : self.OB()(self[n+1]/self[n])[1], self.base, allow_sym=True)
 
@@ -373,7 +380,7 @@ class FactorialBasis(PolyBasis):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: n = PSBasis.n(None); B = SFactorialBasis(n+1, 1/n)
+                sage: B = SFactorialBasis(lambda n : n+1, lambda n : 1/n); n = B.n()
                 sage: BinomialBasis().matrix_ItP(n,3)
                 [                         1                 -n/(n + 1)                  n/(n + 2)]
                 [                         0                  1/(n + 1) (-2*n - 1)/(n^2 + 3*n + 2)]
@@ -617,14 +624,14 @@ class SFactorialBasis(FactorialBasis):
             sage: from pseries_basis import *
             sage: B = BinomialBasis(); n = B.n()
             sage: B2 = SFactorialBasis(1/n, (-n+1)/n)
-            sage: all(B[i] == B2[i] for i in range(50))
+            sage: B.almost_equals(B2, 50) # checking equality for 50 elements
             True
             sage: B = SFactorialBasis(n, n); x = B[1].parent().gens()[0]
             sage: B[0]
             1
             sage: all(B[i] == B[i-1]*(i*x+i) for i in range(1,50))
             True
-            sage: all(B.scalar(1/factorial(n))[i] == SFactorialBasis(1,1)[i] for i in range(10))
+            sage: B.scalar(1/factorial(n)).almost_equals(SFactorialBasis(1,1), 10)  # checking equality for 10 elements
             True
             sage: SFactorialBasis(n^2/3, 1/n)
             Factorial basis: (1, 1/3*x + 1, 4/9*x^2 + 3/2*x + 1/2, ...)
@@ -786,7 +793,7 @@ class SFactorialBasis(FactorialBasis):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: n = PSBasis.n(None); B = SFactorialBasis(n+1, 1/n)
+                sage: B = SFactorialBasis(lambda n : n+1, lambda n : 1/n); n = B.n()
                 sage: B
                 Factorial basis: (1, 2*x + 1, 6*x^2 + 4*x + 1/2, ...)
                 sage: B2 = B*factorial(n)
@@ -798,12 +805,12 @@ class SFactorialBasis(FactorialBasis):
             slightly changed::
 
                 sage: _,quot = B.is_hypergeometric(factorial(n))
-                sage: B2.an == B.an*quot(n=n-1)
+                sage: B2.an.almost_equals(LambdaSequence(lambda n : B.an(n)*quot(n=n-1), B.base), 50)
                 True
-                sage: B2.bn == B.bn*quot(n=n-1)
+                sage: B2.bn.shift(1).almost_equals(LambdaSequence(lambda n : B.bn(n+1)*quot(n=n), B.base), 50)
                 True
         '''
-        n = self.n(); quotient = self.OB()(quotient); factor = self.OB()(factor)
+        n = self.n(); quotient = self.OB()(quotient)
         return SFactorialBasis(
             self.an(n)*quotient(n=n-1),       # the generic linear coefficient of the factorial basis
             self.bn(n)*quotient(n=n-1),       # the generic constant coefficient of the factorial basis
@@ -838,7 +845,7 @@ class SFactorialBasis(FactorialBasis):
 
                 sage: from pseries_basis import *
                 sage: B = SFactorialBasis(1,0); roots = B.root_sequence()
-                sage: all(roots(i) == 0 for i in range(100))
+                sage: roots.almost_zero(100)
                 True
                 sage: n = B.n()
                 sage: B2 = SFactorialBasis(n+1, n-1); roots = B2.root_sequence()
@@ -859,20 +866,21 @@ class SFactorialBasis(FactorialBasis):
 
                 sage: from pseries_basis import *
                 sage: SFactorialBasis(1,0).constant_coefficient()
-                0
+                Sequence over [Rational Field]: (0, 0, 0,...)
                 sage: SFactorialBasis(2,1).constant_coefficient()
-                1
+                Sequence over [Rational Field]: (1, 1, 1,...)
                 sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').constant_coefficient()
-                (n^2 - 3)/(n + 1)
+                Sequence over [Rational Field]: (-3, -1, 1/3,...)
+                
 
             This class also allows to access this value with the property :attr:`~SFactorialBasis.bn`::
 
                 sage: SFactorialBasis(1,0).bn
-                0
+                Sequence over [Rational Field]: (0, 0, 0,...)
                 sage: SFactorialBasis(2,1).bn
-                1
+                Sequence over [Rational Field]: (1, 1, 1,...)
                 sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').bn
-                (n^2 - 3)/(n + 1)
+                Sequence over [Rational Field]: (-3, -1, 1/3,...)
         '''
         return LambdaSequence(lambda n : self.__bn(n=n), self.base, allow_sym=True)
 
@@ -890,20 +898,20 @@ class SFactorialBasis(FactorialBasis):
 
                 sage: from pseries_basis import *
                 sage: SFactorialBasis(1,0).linear_coefficient()
-                1
+                Sequence over [Rational Field]: (1, 1, 1,...)
                 sage: SFactorialBasis(2,1).linear_coefficient()
-                2
+                Sequence over [Rational Field]: (2, 2, 2,...)
                 sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').linear_coefficient()
-                1
+                Sequence over [Rational Field]: (1, 1, 1,...)
 
             This class also allows to access this value with the property :attr:`~SFactorialBasis.an`::
 
                 sage: SFactorialBasis(1,0).an
-                1
+                Sequence over [Rational Field]: (1, 1, 1,...)
                 sage: SFactorialBasis(2,1).an
-                2
+                Sequence over [Rational Field]: (2, 2, 2,...)
                 sage: SFactorialBasis(1, '(n^2 - 3)/(n+1)').an
-                1
+                Sequence over [Rational Field]: (1, 1, 1,...)
         '''
         return LambdaSequence(lambda n : self.__an(n=n), self.base, allow_sym=True)
 
@@ -925,8 +933,7 @@ class SFactorialBasis(FactorialBasis):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: n = PSBasis.n(None)
-                sage: B = SFactorialBasis(n, 1)
+                sage: B = SFactorialBasis('n', 1); n = B.n()
                 sage: B.increasing_polynomial(2, 3)
                 60*x^3 + 47*x^2 + 12*x + 1
                 sage: B.increasing_polynomial(2, 3) == B.increasing_polynomial(2, dst=5)
@@ -1005,7 +1012,7 @@ class SFactorialBasis(FactorialBasis):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: n = PSBasis.n(None); B = SFactorialBasis(n+1, 1/n)
+                sage: B = SFactorialBasis('n+1', '1/n'); n = B.n()
                 sage: B2 = B.increasing_basis(5)
                 sage: isinstance(B2, SFactorialBasis)
                 True
@@ -1256,16 +1263,18 @@ class ScalarBasis(FactorialBasis):
         TODO: add examples
     '''
     def __init__(self, basis : FactorialBasis, scale):
-        ## Checking the scaling factor
-        hyper, quot = self.is_hypergeometric(scale)
-        if(not (hyper and self.valid_factor(quot))):
-            raise TypeError("The scaling factor is not valid")
-        self.__scale = scale
-        self.__quot = quot
-        
+        # Checking the basis argument
         if(not isinstance(basis, FactorialBasis)):
             raise TypeError("The basis to scale must be a Factorial basis")
 
+        ## Checking the scaling factor
+        hyper, quot = basis.is_hypergeometric(scale)
+        if(not (hyper and basis.valid_factor(quot))):
+            raise TypeError("The scaling factor is not valid")
+        self.__scale = scale
+        self.__quot = quot
+               
+        ## Setting data for the new basis
         super().__init__(
             str(basis.universe.gens()[0]),
             basis.base
@@ -1516,7 +1525,8 @@ class FallingBasis(SFactorialBasis):
         self.__b = shift; b = self.__b
         self.__c = decay; c = self.__c
 
-        self.__E_name = E if E != None else 'E'
+        quot = c/a
+        self.__E_name = E if E != None else "Id" if quot == 0 else 'E' if quot == 1 else f'E{quot}'.replace("-","_").replace("/", "__")
 
         n = self.n()
         super(FallingBasis, self).__init__(a, b-c*(n-1), X)

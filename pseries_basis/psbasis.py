@@ -32,6 +32,7 @@ r'''
 '''
 
 ## Sage imports
+from functools import reduce
 from sage.all import (PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff, 
                         SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
                         block_matrix, vector, ceil)
@@ -339,6 +340,8 @@ class PSBasis(Sequence):
                 sage: B.valid_factor(quotient)
                 False
         '''
+        if isinstance(element, Sequence) and element.allow_sym:
+            element = element(self.n())
         if(not element in self.OB()):
             return False
         element = self.OB()(element)
@@ -951,13 +954,13 @@ class PSBasis(Sequence):
                 dict_keys(['x', 'Dx'])
                 sage: B = FallingBasis(1,2,3)
                 sage: B.compatible_operators()
-                dict_keys(['x', 'E'])
+                dict_keys(['x', 'E3'])
                 
             This output gets updated when we add new compatibilities
                 
                 sage: B.set_compatibility('s', 1)
                 sage: B.compatible_operators()
-                dict_keys(['x', 'E', 's'])
+                dict_keys(['x', 'E3', 's'])
         '''
         return self.__compatibility.keys()
 
@@ -1003,7 +1006,7 @@ class PSBasis(Sequence):
                 sage: HermiteBasis().has_compatibility('Dx')
                 True
                 sage: B = FallingBasis(1,2,3)
-                sage: B.has_compatibility('E')
+                sage: B.has_compatibility('E3')
                 True
                 
             This output gets updated when we add new compatibilities::
@@ -1038,30 +1041,31 @@ class PSBasis(Sequence):
 
                 sage: from pseries_basis import *
                 sage: BinomialBasis().compatibility_type('x')
-                None
                 sage: BinomialBasis().compatibility_type('E')
-                "endo"
-                sage: BinomialBasis().has_compatibility('Id')
+                'endo'
+                sage: BinomialBasis().compatibility_type('Id')
                 Traceback (most recent call last):
                 ...
-                NotCompatibleError: operator Id is not compatible with this basis.
+                NotCompatibleError: operator Id is not compatible with this basis
                 sage: PowerBasis().compatibility_type('Id')
-                "endo"
+                'endo'
                 sage: HermiteBasis().compatibility_type('Dx')
-                "der"
+                'der'
                 sage: B = FallingBasis(1,2,3)
-                sage: B.compatibility_type('E')
-                "endo"
+                sage: B.compatibility_type('E3')
+                'endo'
                 
             This output gets updated when we add new compatibilities::
                 
                 sage: B.compatibility_type('s')
                 Traceback (most recent call last):
                 ...
-                NotCompatibleError: operator s is not compatible with this basis.
+                NotCompatibleError: operator s is not compatible with this basis
                 sage: B.set_compatibility('s', 1)
-                sage: B.has_compatibility('s')
-                None
+                sage: B.compatibility_type('s')
+                sage: B.set_endomorphism('t', 10)
+                sage: B.compatibility_type('t')
+                'endo'
         '''
         operator = str(operator)
         if not self.has_compatibility(operator):
@@ -1112,7 +1116,7 @@ class PSBasis(Sequence):
             The method :func:`~pseries_basis.psbasis.check_compatibility` can check that these tuples are
             correct for the first terms of the basis::
 
-                sage: x = B[1].parent().gens()[0]
+                sage: x = B.universe.gens()[0]
                 sage: check_compatibility(B, B.compatibility(2*x^2 + 3), lambda p :(2*x^2 + 3)*p)
                 True
 
@@ -1208,10 +1212,7 @@ class PSBasis(Sequence):
                     else: # monomial with several variables 
                         comps = [self.compatibility(v**m.degree(v)) for v in g] 
 
-                    while(len(comps) > 1):
-                        comps += [self.__prod2_case(comps.pop(), comps.pop())]
-                    
-                    A,B,m,alphas = comps[0]
+                    A,B,m,alphas = reduce(lambda comp1, comp2 : self.__prod2_case(comp1, comp2), comps[::-1])
                     self.__compatibility[str(operator)] = (A,B,m,lambda i,j,k : c*alphas(i,j,k))
                 else:
                     comps = [self.compatibility(m) for m in mons]
@@ -1938,14 +1939,31 @@ class OrderBasis(PSBasis):
         return "OrderBasis -- WARNING: this is an abstract class"
 
 def check_compatibility(basis, operator, action, bound=100):
+    r'''
+        Method that checks that a compatibility formula holds for some examples.
+
+        This method takes a :class:`PSBasis`, an operator compatibility (either a tuple with the 
+        compatibility data or the operator that must be compatible with the basis), an actions with the 
+        map for the opertator and a bound and checks that the induced compatibility identity holds for 
+        the first terms of the basis.
+
+        INPUT:
+
+        * ``basis``: a :class:`PSBasis` to be checked.
+        * ``operator``: a tuple `(A,B,m,\alpha)` with the compatibility condition (see :func:`PSBasis.compatibility`)
+          or a valid input of that method.
+        * ``action``: a map that takes elements in ``basis.universe`` and perform the operation of ``operator``.
+        * ``bound``: positive integer with the number of cases to be checked.
+    '''
     if(isinstance(operator, tuple)):
         a,b,m,alpha = operator
     else:
         a,b,m,alpha = basis.compatibility(operator)
+        
     mm = int(ceil(a/m))
     return all(
         all(
-            sum(basis[k*m+r+i]*alpha(r,i,k) for i in range(-a,b+1)) == action(basis[k*m+r]) 
+            sum(basis[k*m+r+i]*basis.base(alpha(r,i,k)) for i in range(-a,b+1)) == action(basis[k*m+r]) 
             for r in range(m)) 
         for k in range(mm, bound))
 
