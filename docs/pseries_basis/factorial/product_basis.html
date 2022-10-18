@@ -1,0 +1,578 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Product Basis: combining Factorial basis &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Generalized Binomial Bases" href="gen_binomial_basis.html" />
+    <link rel="prev" title="Factorial Basis: simplest Polynomial basis" href="factorial_basis.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gen_binomial_basis.html" title="Generalized Binomial Bases"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="factorial_basis.html" title="Factorial Basis: simplest Polynomial basis"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../factorial.html" accesskey="U">Factorial Basis: simplest Polynomial basis</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Product Basis: combining Factorial basis</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-pseries_basis.factorial.product_basis">
+<span id="product-basis-combining-factorial-basis"></span><h1>Product Basis: combining Factorial basis<a class="headerlink" href="#module-pseries_basis.factorial.product_basis" title="Permalink to this headline">¶</a></h1>
+<p>Sage package for Product of Factorial Series Basis.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial.product_basis.</span></span><span class="sig-name descname"><span class="pre">SievedBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis" title="pseries_basis.factorial.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.factorial.factorial_basis.FactorialBasis</span></code></a></p>
+<p>Class for a Sieved Basis.</p>
+<p>A sieved basis is a factorial basis built from a finite set
+of source basis <span class="math notranslate nohighlight">\(B_i = \left(P_n^{(i)}(x)\right)_n\)</span> for <span class="math notranslate nohighlight">\(i=0,\ldots,F-1\)</span>. This is built 
+in <span class="math notranslate nohighlight">\(m\)</span> sections using a <em>deciding cycle</em>:</p>
+<div class="math notranslate nohighlight">
+\[(\sigma_0,\ldots,\sigma_{m-1})\]</div>
+<p>where <span class="math notranslate nohighlight">\(\sigma_i \in \{0,\ldots,F-1\}\)</span>. We can then define the <span class="math notranslate nohighlight">\(n\)</span>-th element
+of the basis with the following formula:</p>
+<div class="math notranslate nohighlight">
+\[Q_n(x) = \prod_{i=0}^F P_{e_i(n)}^{(i)}(x)\]</div>
+<p>where the following formula stands:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(n = km+r\)</span>,</p></li>
+<li><p><span class="math notranslate nohighlight">\(S_i = \# \{ j \in \{0,\ldots,m-1\}\ :\ \sigma_j = i\}\)</span>,</p></li>
+<li><p><span class="math notranslate nohighlight">\(e_i(n) = S_im + \#\{j \in \{0,\ldots,r\}\ :\ \sigma_j = i\}\)</span>.</p></li>
+</ul>
+<p>If we look recursively, we can see that each element is built from the previous
+element by increasing one of the factors one degree in the corresponding basis:</p>
+<div class="math notranslate nohighlight">
+\[Q_n(x) = Q_{n-1}(x)\frac{P_{e_{\sigma_i}(n)}^{(\sigma_i)}(x)}{P_{e_{\sigma_i}(n)-1}^{(\sigma_i)}(x)}\]</div>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">factors</span></code>: the basis that build the sieved basis.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cycle</span></code>: a tuple of length <span class="math notranslate nohighlight">\(m\)</span> indicating which factor use in each step.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">init</span></code>: value for the constant element of the basis.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: name of the operator representing the multiplication by <span class="math notranslate nohighlight">\(x\)</span>.</p></li>
+</ul>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BinomialBasis</span><span class="p">();</span> <span class="n">P</span> <span class="o">=</span> <span class="n">PowerBasis</span><span class="p">()</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B2</span> <span class="o">=</span> <span class="n">SievedBasis</span><span class="p">([</span><span class="n">B</span><span class="p">,</span><span class="n">P</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B2</span><span class="p">[:</span><span class="mi">6</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="p">,</span> <span class="n">x</span><span class="o">^</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">4</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">5</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">4</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">3</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>With this system, we can build the same basis changing the order and the values in the cycle:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B3</span> <span class="o">=</span> <span class="n">SievedBasis</span><span class="p">([</span><span class="n">P</span><span class="p">,</span><span class="n">B</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B3</span><span class="o">.</span><span class="n">almost_equals</span><span class="p">(</span><span class="n">B2</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span> <span class="c1"># checking equality for 30 elements</span>
+<span class="kc">True</span>
+</pre></div>
+</div>
+<p>The length of the cycle is the number of associated sections:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B2</span><span class="o">.</span><span class="n">nsections</span><span class="p">()</span>
+<span class="mi">4</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">SievedBasis</span><span class="p">([</span><span class="n">B</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">P</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span><span class="o">.</span><span class="n">nsections</span><span class="p">()</span>
+<span class="mi">6</span>
+</pre></div>
+</div>
+<p>This basis can be use to deduce some nice recurrences for the Apery’s <span class="math notranslate nohighlight">\(\zeta(2)\)</span> sequence:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">b1</span> <span class="o">=</span> <span class="n">FallingBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span> <span class="n">b2</span> <span class="o">=</span> <span class="n">FallingBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span> <span class="n">n</span> <span class="o">=</span> <span class="n">b1</span><span class="o">.</span><span class="n">n</span><span class="p">()</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">SievedBasis</span><span class="p">([</span><span class="n">b1</span><span class="p">,</span><span class="n">b2</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This basis <code class="docutils literal notranslate"><span class="pre">B</span></code> contains the elements</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{matrix}
+\binom{x + n}{2n}\ \text{if }n\equiv 0\ (mod\ 2)\\
+\binom{x + n}{2n+1}\ \text{if }n\equiv 1\ (mod\ 2)
+\end{matrix}\end{split}\]</div>
+<p>We first extend the compatibility with <span class="math notranslate nohighlight">\(E: x\mapsto x+1\)</span> by guessing and then we compute the sieved basis
+with the binomial basis with the cycle <span class="math notranslate nohighlight">\((1,0,1)\)</span>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">set_endomorphism</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="n">guess_compatibility_E</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">sections</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B2</span> <span class="o">=</span> <span class="n">SievedBasis</span><span class="p">([</span><span class="n">BinomialBasis</span><span class="p">(),</span> <span class="n">B</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Now the basis <code class="docutils literal notranslate"><span class="pre">B2</span></code> is formed in 3 sections by the following elements:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{matrix}
+    \binom{x}{n}\binom{x+n}{2n}\ \text{if }n\equiv 0\ (mod\ 3)\\
+    \binom{x}{n}\binom{x+n}{2n+1}\ \text{if }n\equiv 1\ (mod\ 3)\\
+    \binom{x}{n+1}\binom{x+n}{2n+1}\ \text{if }n\equiv 2\ (mod\ 3)
+\end{matrix}\end{split}\]</div>
+<p>We can check that <span class="math notranslate nohighlight">\(B2\)</span> is compatible with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and with 
+the endomorphism <span class="math notranslate nohighlight">\(E\)</span>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">B2</span><span class="o">.</span><span class="n">compatibility</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Matrix</span><span class="p">([[</span><span class="n">alpha</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">B2</span><span class="o">.</span><span class="n">n</span><span class="p">())</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">)])</span>
+<span class="p">[</span>      <span class="n">n</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+<span class="p">[</span>      <span class="n">n</span>   <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+<span class="p">[</span> <span class="o">-</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B2</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="p">[</span>        <span class="n">n</span>         <span class="mi">0</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="p">)</span><span class="o">*</span><span class="n">Sni</span><span class="p">]</span>
+<span class="p">[(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>         <span class="n">n</span>         <span class="mi">0</span><span class="p">]</span>
+<span class="p">[</span>        <span class="mi">0</span>   <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>  <span class="p">(</span><span class="o">-</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">B2</span><span class="o">.</span><span class="n">compatibility</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Matrix</span><span class="p">([[</span><span class="n">alpha</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">B2</span><span class="o">.</span><span class="n">n</span><span class="p">())</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">)])</span>
+<span class="p">[</span>                      <span class="mi">1</span>           <span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">3</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">n</span>                     <span class="mi">3</span><span class="o">/</span><span class="mi">2</span>                       <span class="mi">1</span><span class="p">]</span>
+<span class="p">[</span>    <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>         <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="mi">3</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>                       <span class="mi">1</span><span class="p">]</span>
+<span class="p">[</span>                      <span class="mi">0</span>                       <span class="mi">1</span>       <span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>                       <span class="mi">1</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B2</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">)</span>                                                                                                                                                         
+<span class="p">[</span>                    <span class="n">Sn</span> <span class="o">+</span> <span class="mi">1</span>        <span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>                          <span class="mi">1</span><span class="p">]</span>
+<span class="p">[</span>    <span class="p">(</span><span class="mi">8</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">5</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">Sn</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">Sn</span> <span class="o">+</span> <span class="mi">1</span>          <span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+<span class="p">[</span>                    <span class="mi">3</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">Sn</span>       <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">Sn</span>                          <span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Now consider the following difference operator:</p>
+<div class="math notranslate nohighlight">
+\[L = (x+2)^2 E^2 - (11x^2+33x+25)E - (x+1)^3\]</div>
+<p>This operator <span class="math notranslate nohighlight">\(L\)</span> is compàtible with the basis <code class="docutils literal notranslate"><span class="pre">B2</span></code>. We can get then
+the associated recurrence matrix. Taking the first column and the GCRD
+of its elements, we can see that if a formal power series <span class="math notranslate nohighlight">\(y(x) = \sum_n y_n x^n\)</span>
+that can be written in the form <span class="math notranslate nohighlight">\(y(x) = \sum_{n\geq 0}c_n\binom{x}{n}\binom{x+n}{2n}\)</span> satisfies
+that</p>
+<div class="math notranslate nohighlight">
+\[(n+1)^2c_{n+1} - 2(2n+1)c_n = 0.\]</div>
+<p>Doing that with the code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">ore_algebra</span> <span class="kn">import</span> <span class="n">OreAlgebra</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">R</span><span class="o">.&lt;</span><span class="n">x</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">QQ</span><span class="p">[];</span> <span class="n">OE</span><span class="o">.&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">OreAlgebra</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">))</span>   
+<span class="n">sage</span><span class="p">:</span> <span class="n">L</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span><span class="o">*</span><span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="mi">11</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">33</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">25</span><span class="p">)</span><span class="o">*</span><span class="n">E</span> <span class="o">-</span> <span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span> 
+<span class="n">sage</span><span class="p">:</span> <span class="n">M</span> <span class="o">=</span> <span class="n">B2</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">column</span> <span class="o">=</span> <span class="p">[</span><span class="n">B2</span><span class="o">.</span><span class="n">remove_Sni</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">coefficient</span><span class="p">((</span><span class="n">j</span><span class="p">,</span><span class="mi">0</span><span class="p">)))</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">nrows</span><span class="p">())]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">column</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">gcrd</span><span class="p">(</span><span class="o">*</span><span class="n">column</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+<span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">Sn</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.appear">
+<span class="sig-name descname"><span class="pre">appear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.appear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the appearances of the basis <span class="math notranslate nohighlight">\(i\)</span> in the deciding cycle.</p>
+<p>This method computes how many times we increase the <span class="math notranslate nohighlight">\(i\)</span>-th basis
+in each cycle of the <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a>. This is equivalent to 
+see how many times the number <span class="math notranslate nohighlight">\(i\)</span> appears on the deciding cycle (see
+property <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis.cycle" title="pseries_basis.factorial.product_basis.SievedBasis.cycle"><code class="xref py py-func docutils literal notranslate"><span class="pre">cycle()</span></code></a>).</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">i</span></code>:index we want to check. It must be an element between <span class="math notranslate nohighlight">\(0\)</span> and
+the number of factors of the <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a> (see method <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis.nfactors" title="pseries_basis.factorial.product_basis.SievedBasis.nfactors"><code class="xref py py-func docutils literal notranslate"><span class="pre">nfactors()</span></code></a>).</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>It returns the number of appearances of <span class="math notranslate nohighlight">\(i\)</span> in the deciding cycle.</p>
+<p>TODO: add examples.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.compatible_division">
+<span class="sig-name descname"><span class="pre">compatible_division</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.compatible_division" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the division of a polynomial by other element of the basis after an operator.</p>
+<p>This method <em>overrides</em> the implementation from class <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code>. See <code class="xref py py-func docutils literal notranslate"><span class="pre">FactorialBasis.compatible_division()</span></code>
+for a description on the output.</p>
+<p>For a <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a>, since its elements are products of elements of other basis, we can compute this 
+division using the information in the factors of <code class="docutils literal notranslate"><span class="pre">self</span></code>. However, we need to know how this operator
+acts on products distinguishing between three classes:</p>
+<ul class="simple">
+<li><p><strong>Multiplication operators</strong>: <span class="math notranslate nohighlight">\(L(f(x)) = g(x)f(x)\)</span>.</p></li>
+<li><p><strong>Endomorphisms</strong>: <span class="math notranslate nohighlight">\(L(f(x)g(x)) = L(f(x))L(g(x))\)</span>.</p></li>
+<li><p><strong>Derivations</strong>: <span class="math notranslate nohighlight">\(L(f(x)g(x)) = L(f(x))g(x) + f(x)L(g(x))\)</span>.</p></li>
+</ul>
+<p>In order to know if an operator is an <em>endomorphism</em> or a <em>derivation</em>, we check if we have extended already those 
+compatibilities. If we do not found them, we assume they are multiplication operators.</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.constant_coefficient">
+<span class="sig-name descname"><span class="pre">constant_coefficient</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.constant_coefficient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter for the constant coefficient of the factorial basis.</p>
+<p>This method <em>overrides</em> the corresponding method from <a class="reference internal" href="factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis" title="pseries_basis.factorial.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code></a>.
+See method <a class="reference internal" href="factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.constant_coefficient" title="pseries_basis.factorial.factorial_basis.FactorialBasis.constant_coefficient"><code class="xref py py-func docutils literal notranslate"><span class="pre">constant_coefficient()</span></code></a> for further information 
+in the description or the output.</p>
+<p>TODO: add examples.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.cycle">
+<span class="sig-name descname"><span class="pre">cycle</span></span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.cycle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Property to get the deciding cycle of the <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.extend_compatibility_D">
+<span class="sig-name descname"><span class="pre">extend_compatibility_D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.extend_compatibility_D" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to extend the compatibility of a derivation.</p>
+<p>This method computes the compatibility of a derivation <span class="math notranslate nohighlight">\(L\)</span> over
+the ring <span class="math notranslate nohighlight">\(\mathbb{K}[x]\)</span>. Such derivation must be compatible with all the
+factors on the basis.</p>
+<p>If the operator <span class="math notranslate nohighlight">\(L\)</span> was already compatible with <code class="docutils literal notranslate"><span class="pre">self</span></code>, this method does
+nothing.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code>: name of the derivation or a generator of a <em>ore_algebra</em>
+ring of operators.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>The compatibility for <span class="math notranslate nohighlight">\(L\)</span> computed during this process.</p>
+<p>WARNING:</p>
+<p>This method do not check whether the operator given is a derivation
+or not. That remains as a user responsability.</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.extend_compatibility_E">
+<span class="sig-name descname"><span class="pre">extend_compatibility_E</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.extend_compatibility_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to extend the compatibility of an endomorphism.</p>
+<p>This method computes the compatibility of an endomorphism <span class="math notranslate nohighlight">\(L\)</span> over
+the ring <span class="math notranslate nohighlight">\(\mathbb{K}[x]\)</span>. Such derivation must be compatible with all the
+factors on the basis.</p>
+<p>If the operator <span class="math notranslate nohighlight">\(L\)</span> was already compatible with <code class="docutils literal notranslate"><span class="pre">self</span></code>, this method does
+nothing.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code>: name of the derivation or a generator of a <em>ore_algebra</em>
+ring of operators.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>The compatibility for <span class="math notranslate nohighlight">\(L\)</span> computed during this process.</p>
+<p>WARNING:</p>
+<p>This method do not check whether the operator given is an endomorphism
+or not. That remains as a user responsability.</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.extend_compatibility_X">
+<span class="sig-name descname"><span class="pre">extend_compatibility_X</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.extend_compatibility_X" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to extend the compatibility of the multiplication by <span class="math notranslate nohighlight">\(x\)</span>.</p>
+<p>This method computes the compatibility of a he multiplication by <span class="math notranslate nohighlight">\(x\)</span> over
+the ring <span class="math notranslate nohighlight">\(\mathbb{K}[x]\)</span>. This operator is always compatible with all 
+<code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code>.</p>
+<p>If this method was already called (or the compatibility was found in another way)
+this method only returns the compatibility</p>
+<p>OUTPUT:</p>
+<p>The compatibility for the multiplication by <span class="math notranslate nohighlight">\(x\)</span> computed during this process.</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.factors">
+<span class="sig-name descname"><span class="pre">factors</span></span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Property to get the factors of the <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.increasing_basis">
+<span class="sig-name descname"><span class="pre">increasing_basis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shift</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.increasing_basis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the structure for the <span class="math notranslate nohighlight">\(n\)</span>-th increasing basis.</p>
+<p>This method <em>implements</em> the corresponding abstract method from <a class="reference internal" href="factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis" title="pseries_basis.factorial.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code></a>.
+See method <a class="reference internal" href="factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_basis" title="pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_basis"><code class="xref py py-func docutils literal notranslate"><span class="pre">increasing_basis()</span></code></a> for further information.</p>
+<p>For a <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a>, the increasing basis is again a <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a> of the increasing basis
+of its factors. Depending on the actual shift, the increasing basis may differ. Namely, if the shift is 
+<span class="math notranslate nohighlight">\(N = kF+j\)</span> where <span class="math notranslate nohighlight">\(F\)</span> is the number of sections of <code class="docutils literal notranslate"><span class="pre">self</span></code> and <span class="math notranslate nohighlight">\(B_i\)</span> are those factors, then the we can express 
+the increasing basis as a <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a> again.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">shift</span></code>: value for the starting point of the increasing basis. It can be either
+the value for <span class="math notranslate nohighlight">\(N\)</span> or the tuple <span class="math notranslate nohighlight">\((k,j)\)</span>.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>A <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a> representing the increasing basis starting at <span class="math notranslate nohighlight">\(N\)</span>.</p>
+<p>WARING: currently the compatibilities aer not extended to the increasing basis.</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.increasing_polynomial">
+<span class="sig-name descname"><span class="pre">increasing_polynomial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.increasing_polynomial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the increasing factorial for the factorial basis.</p>
+<p>This method <em>implements</em> the corresponding abstract method from <a class="reference internal" href="factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis" title="pseries_basis.factorial.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code></a>.
+See method <a class="reference internal" href="factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_polynomial" title="pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_polynomial"><code class="xref py py-func docutils literal notranslate"><span class="pre">increasing_polynomial()</span></code></a> for further information 
+in the description or the output.</p>
+<p>As a <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a> is composed with several factors, we compute the difference between each element
+in the factors and compute the corresponding product of the increasing polynomials.</p>
+<p>In this case, we consider the input given by <span class="math notranslate nohighlight">\(n = kF + r\)</span> where <span class="math notranslate nohighlight">\(F\)</span> is the number of sections of the 
+<a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a> (see method <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis.nsections" title="pseries_basis.factorial.product_basis.SievedBasis.nsections"><code class="xref py py-func docutils literal notranslate"><span class="pre">nsections()</span></code></a>).</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">src</span></code>: either the value of <span class="math notranslate nohighlight">\(n\)</span> or a tuple with the values <span class="math notranslate nohighlight">\((k,r)\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">diff</span></code>: difference between the index <span class="math notranslate nohighlight">\(n\)</span> and the largest index, <span class="math notranslate nohighlight">\(m\)</span>. Must be a positive integer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dst</span></code>: value for <span class="math notranslate nohighlight">\(m\)</span>. It could be either its value or a tuple <span class="math notranslate nohighlight">\((t,s)\)</span> where <span class="math notranslate nohighlight">\(m = tF + s\)</span>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.index">
+<span class="sig-name descname"><span class="pre">index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the index of the <span class="math notranslate nohighlight">\(i\)</span>-th basis at the element <span class="math notranslate nohighlight">\(n\)</span>.</p>
+<p>This method computes the actual index of the <span class="math notranslate nohighlight">\(i\)</span>-th basis in the
+<a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a> for its <span class="math notranslate nohighlight">\(n\)</span>-th element. Recall that the
+<span class="math notranslate nohighlight">\(n = kF + r\)</span> element of a <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a> can be computed 
+with:</p>
+<div class="math notranslate nohighlight">
+\[Q_n(x) = \prod_{i=0}^F P_{e_i(n)}^{(i)}(x)\]</div>
+<p>This method returns the value of <span class="math notranslate nohighlight">\(e_i(n)\)</span>.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">n</span></code>: element of the basis we are considering. It can be an
+expression involving <span class="math notranslate nohighlight">\(n\)</span>, but we need that <code class="docutils literal notranslate"><span class="pre">n%self.nsections()</span></code>
+is an integer. It can also be the tuple <span class="math notranslate nohighlight">\((k,r)\)</span> such that <span class="math notranslate nohighlight">\(n = kF+r\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">i</span></code>: index we want to check. It must be an element between <span class="math notranslate nohighlight">\(0\)</span> and
+the number of factors of the <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a> (see method <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis.nfactors" title="pseries_basis.factorial.product_basis.SievedBasis.nfactors"><code class="xref py py-func docutils literal notranslate"><span class="pre">nfactors()</span></code></a>).</p></li>
+</ul>
+<p>TODO: add examples</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.is_quasi_eval_triangular">
+<span class="sig-name descname"><span class="pre">is_quasi_eval_triangular</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.is_quasi_eval_triangular" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.is_quasi_func_triangular">
+<span class="sig-name descname"><span class="pre">is_quasi_func_triangular</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.is_quasi_func_triangular" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.linear_coefficient">
+<span class="sig-name descname"><span class="pre">linear_coefficient</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.linear_coefficient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter for the linear coefficient of the factorial basis.</p>
+<p>This method <em>overrides</em> the corresponding method from <a class="reference internal" href="factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis" title="pseries_basis.factorial.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code></a>.
+See method <a class="reference internal" href="factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.linear_coefficient" title="pseries_basis.factorial.factorial_basis.FactorialBasis.linear_coefficient"><code class="xref py py-func docutils literal notranslate"><span class="pre">linear_coefficient()</span></code></a> for further information 
+in the description or the output.</p>
+<p>TODO: add examples.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.nfactors">
+<span class="sig-name descname"><span class="pre">nfactors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.nfactors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the number of factors of the sieved basis.</p>
+<p>This method returns the number of factors which compose
+this <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a>.</p>
+<p>OUTPUT:</p>
+<p>Number of factors of this <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a>.</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.nsections">
+<span class="sig-name descname"><span class="pre">nsections</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.nsections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the number of sections of the sieved basis.</p>
+<p>This method returns the number of elements in the deciding cycle which 
+is the number of sections in which the <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a> is divided.</p>
+<p>OUTPUT:</p>
+<p>Number of sections of this <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a>.</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.SievedBasis.root_sequence">
+<span class="sig-name descname"><span class="pre">root_sequence</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.SievedBasis.root_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that returns the root sequence of the polynomial basis.</p>
+<p>This method <em>overrides</em> the implementation from class <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code>. See <code class="xref py py-func docutils literal notranslate"><span class="pre">FactorialBasis.root_sequence()</span></code>
+for a description on the output.</p>
+<p>In a sieved basis, the root sequence is a nice entanglement of the root sequences
+given by the deciding cycle (see method <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis.index" title="pseries_basis.factorial.product_basis.SievedBasis.index"><code class="xref py py-func docutils literal notranslate"><span class="pre">index()</span></code></a>).</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.ProductBasis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial.product_basis.</span></span><span class="sig-name descname"><span class="pre">ProductBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.ProductBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.factorial.product_basis.SievedBasis</span></code></a></p>
+<p>Class for Product Basis.</p>
+<p>This class represent basis built using the pieces of other polynomial basis.
+Namely, the <span class="math notranslate nohighlight">\(n=km+j\)</span> element of the product of <span class="math notranslate nohighlight">\(m\)</span> basis, is the product of</p>
+<div class="math notranslate nohighlight">
+\[Q_n(x) = \prod_{i=1}^{j}P_{k+1}^{(j)}(x)\prod_{i=j+1}^{m}P_{k}^{(j)}(x).\]</div>
+<p>See the paper <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a> for further information.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">factors</span></code>: list of <a class="reference internal" href="factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis" title="pseries_basis.factorial.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code></a> to build the <a class="reference internal" href="#pseries_basis.factorial.product_basis.ProductBasis" title="pseries_basis.factorial.product_basis.ProductBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProductBasis</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">init</span></code>: value for the constant element of the basis.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: name of the operator representing the multiplication by <span class="math notranslate nohighlight">\(x\)</span>.</p></li>
+</ul>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B1</span> <span class="o">=</span> <span class="n">BinomialBasis</span><span class="p">();</span> <span class="n">B2</span> <span class="o">=</span> <span class="n">PowerBasis</span><span class="p">();</span> <span class="n">B3</span> <span class="o">=</span> <span class="n">FallingBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">ProductBasis</span><span class="p">([</span><span class="n">B1</span><span class="p">,</span><span class="n">B2</span><span class="p">])</span><span class="o">.</span><span class="n">factors</span> <span class="o">==</span> <span class="p">(</span><span class="n">B1</span><span class="p">,</span> <span class="n">B2</span><span class="p">)</span>
+<span class="kc">True</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">ProductBasis</span><span class="p">([</span><span class="n">B1</span><span class="p">,</span><span class="n">B2</span><span class="p">])</span><span class="o">.</span><span class="n">nfactors</span><span class="p">()</span>
+<span class="mi">2</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">ProductBasis</span><span class="p">([</span><span class="n">B1</span><span class="p">,</span><span class="n">B3</span><span class="p">,</span><span class="n">B2</span><span class="p">])</span><span class="o">.</span><span class="n">factors</span> <span class="o">==</span> <span class="p">(</span><span class="n">B1</span><span class="p">,</span><span class="n">B3</span><span class="p">,</span><span class="n">B2</span><span class="p">)</span>
+<span class="kc">True</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">ProductBasis</span><span class="p">([</span><span class="n">B1</span><span class="p">,</span><span class="n">B3</span><span class="p">,</span><span class="n">B2</span><span class="p">])</span><span class="o">.</span><span class="n">nfactors</span><span class="p">()</span>
+<span class="mi">3</span>
+</pre></div>
+</div>
+<p>This class can be use to simplify the notation os <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a>. The following example
+illustrates how this can be used to understand better the recurrence for the Apery’s <span class="math notranslate nohighlight">\(\zeta(3)\)</span>-recurrence:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">b1</span> <span class="o">=</span> <span class="n">FallingBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span> <span class="n">b2</span> <span class="o">=</span> <span class="n">FallingBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span> <span class="n">n</span> <span class="o">=</span> <span class="n">b1</span><span class="o">.</span><span class="n">n</span><span class="p">()</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">ProductBasis</span><span class="p">([</span><span class="n">b1</span><span class="p">,</span><span class="n">b2</span><span class="p">])</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This basis <code class="docutils literal notranslate"><span class="pre">B</span></code> contains the elements</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{matrix}
+\binom{x + n}{2n}\ \text{if }n\equiv 0\ (mod\ 2)\\
+\binom{x + n}{2n+1}\ \text{if }n\equiv 1\ (mod\ 2)
+\end{matrix}\end{split}\]</div>
+<p>We first extend the compatibility with <span class="math notranslate nohighlight">\(E: x\mapsto x+1\)</span> by guessing and then we compute the product basis
+with itself:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">set_endomorphism</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="n">guess_compatibility_E</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">sections</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B2</span> <span class="o">=</span> <span class="n">ProductBasis</span><span class="p">([</span><span class="n">B</span><span class="p">,</span><span class="n">B</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Now the basis <code class="docutils literal notranslate"><span class="pre">B2</span></code> is formed in 4 sections by the following elements:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{matrix}
+    \binom{x+n}{2n}^2\ \text{if }n\equiv 0\ (mod\ 4)\\
+    \binom{x+n}{2n}\binom{x+n}{2n+1}\ \text{if }n\equiv 1\ (mod\ 4)\\
+    \binom{x+n}{2n+1}^2\ \text{if }n\equiv 2\ (mod\ 4)\\
+    \binom{x+n+1}{2n+2}\binom{x+n}{2n+1}\ \text{if }n\equiv 3\ (mod\ 4)
+\end{matrix}\end{split}\]</div>
+<p>We can check that <code class="docutils literal notranslate"><span class="pre">B2</span></code> is compatible with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and with 
+the endomorphism <span class="math notranslate nohighlight">\(E\)</span>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">B2</span><span class="o">.</span><span class="n">compatibility</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Matrix</span><span class="p">([[</span><span class="n">alpha</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">B2</span><span class="o">.</span><span class="n">n</span><span class="p">())</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">)])</span>
+<span class="p">[</span>      <span class="n">n</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+<span class="p">[</span>      <span class="n">n</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+<span class="p">[</span> <span class="o">-</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span>
+<span class="p">[</span> <span class="o">-</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B2</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="p">[</span>        <span class="n">n</span>         <span class="mi">0</span>         <span class="mi">0</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="p">)</span><span class="o">*</span><span class="n">Sni</span><span class="p">]</span>
+<span class="p">[(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>         <span class="n">n</span>         <span class="mi">0</span>         <span class="mi">0</span><span class="p">]</span>
+<span class="p">[</span>        <span class="mi">0</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>  <span class="p">(</span><span class="o">-</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>         <span class="mi">0</span><span class="p">]</span>
+<span class="p">[</span>        <span class="mi">0</span>         <span class="mi">0</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>  <span class="p">(</span><span class="o">-</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+</pre></div>
+</div>
+<p>Now consider the following difference operator:</p>
+<div class="math notranslate nohighlight">
+\[L = (x+2)^3 E^2 - (2*x + 3)(17x^2+51x+39)E + (x+1)^3\]</div>
+<p>This operator <span class="math notranslate nohighlight">\(L\)</span> is compàtible with the basis <code class="docutils literal notranslate"><span class="pre">B2</span></code>. We can get then
+the associated recurrence matrix. Taking the first column and the GCRD
+of its elements, we can see that if a formal power series <span class="math notranslate nohighlight">\(y(x) = \sum_n y_n x^n\)</span>
+that can be written in the form <span class="math notranslate nohighlight">\(y(x) = \sum_{n\geq 0}c_n\binom{x+n}{2n}^2\)</span> satisfies
+that</p>
+<div class="math notranslate nohighlight">
+\[(n+1)^2c_{n+1} - 4(2n+1)^2c_n = 0.\]</div>
+<p>Doing that with the code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">ore_algebra</span> <span class="kn">import</span> <span class="n">OreAlgebra</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">R</span><span class="o">.&lt;</span><span class="n">x</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">QQ</span><span class="p">[];</span> <span class="n">OE</span><span class="o">.&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">OreAlgebra</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">))</span>   
+<span class="n">sage</span><span class="p">:</span> <span class="n">L</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">3</span> <span class="o">*</span><span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">17</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="o">+</span><span class="mi">51</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">39</span><span class="p">)</span><span class="o">*</span><span class="n">E</span><span class="o">+</span><span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">^</span><span class="mi">3</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">M</span> <span class="o">=</span> <span class="n">B2</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">column</span> <span class="o">=</span> <span class="p">[</span><span class="n">B2</span><span class="o">.</span><span class="n">remove_Sni</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">coefficient</span><span class="p">((</span><span class="n">j</span><span class="p">,</span><span class="mi">0</span><span class="p">)))</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">column</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">gcrd</span><span class="p">(</span><span class="o">*</span><span class="n">column</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+<span class="p">(</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">Sn</span> <span class="o">-</span> <span class="mi">16</span><span class="o">*</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">16</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">4</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial.product_basis.ProductBasis.increasing_basis">
+<span class="sig-name descname"><span class="pre">increasing_basis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shift</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.product_basis.ProductBasis.increasing_basis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the structure for the <span class="math notranslate nohighlight">\(n\)</span>-th increasing basis.</p>
+<p>This method <em>overrides</em> the corresponding method from <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a>.
+See method <a class="reference internal" href="#pseries_basis.factorial.product_basis.SievedBasis.increasing_basis" title="pseries_basis.factorial.product_basis.SievedBasis.increasing_basis"><code class="xref py py-func docutils literal notranslate"><span class="pre">increasing_basis()</span></code></a> for further information.</p>
+<p>For a <a class="reference internal" href="#pseries_basis.factorial.product_basis.ProductBasis" title="pseries_basis.factorial.product_basis.ProductBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProductBasis</span></code></a>, the increasing basis is again a <a class="reference internal" href="#pseries_basis.factorial.product_basis.ProductBasis" title="pseries_basis.factorial.product_basis.ProductBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProductBasis</span></code></a> of the increasing basis
+of its factors. Depending on the actual shift, the increasing basis may differ. Namely, if the shift is 
+<span class="math notranslate nohighlight">\(N = kF+j\)</span> where <span class="math notranslate nohighlight">\(F\)</span> is the number of factors of <code class="docutils literal notranslate"><span class="pre">self</span></code> and <span class="math notranslate nohighlight">\(B_i\)</span> are those factors, then the <span class="math notranslate nohighlight">\(N\)</span>-th 
+increasing basis is the product:</p>
+<div class="math notranslate nohighlight">
+\[I(B_{j}, k)\cdots I(B_{F-1},k) I(B_0, k+1) \cdots I(B_{j-1}, k+1),\]</div>
+<p>where <span class="math notranslate nohighlight">\(I(\cdot, k)\)</span> is the <span class="math notranslate nohighlight">\(k\)</span>-th increasing basis of <span class="math notranslate nohighlight">\(\cdot\)</span>.</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="factorial_basis.html"
+                          title="previous chapter">Factorial Basis: simplest Polynomial basis</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="gen_binomial_basis.html"
+                          title="next chapter">Generalized Binomial Bases</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/pseries_basis/factorial/product_basis.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gen_binomial_basis.html" title="Generalized Binomial Bases"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="factorial_basis.html" title="Factorial Basis: simplest Polynomial basis"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../factorial.html" >Factorial Basis: simplest Polynomial basis</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Product Basis: combining Factorial basis</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

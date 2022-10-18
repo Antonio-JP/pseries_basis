@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Interface with other platforms &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Access and communication with ore_algebra" href="ore.html" />
+    <link rel="prev" title="Sequences and other utilities" href="../misc.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ore.html" title="Access and communication with ore_algebra"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../misc.html" title="Sequences and other utilities"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../misc.html" accesskey="U">Sequences and other utilities</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Interface with other platforms</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-pseries_basis.misc.io">
+<span id="interface-with-other-platforms"></span><h1>Interface with other platforms<a class="headerlink" href="#module-pseries_basis.misc.io" title="Permalink to this headline">¶</a></h1>
+<p>File with some connections of the <a class="reference internal" href="../../index.html#module-pseries_basis" title="pseries_basis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pseries_basis</span></code></a> with other packages.</p>
+<p>The methods, classes and functionalities in this module are focused on the 
+interation of sequences, basis, and solutions with things outside SageMath.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.io.operator2file">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.io.</span></span><span class="sig-name descname"><span class="pre">operator2file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.io.operator2file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to write an <code class="xref py py-class docutils literal notranslate"><span class="pre">OreOperator</span></code> into a file</p>
+<p>This method writes down an Ore Operators to a file (given as argument) with a very
+simplistic format: each line is the coefficient of a monomial times the monomial itself.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">operator</span></code>: a <code class="xref py py-class docutils literal notranslate"><span class="pre">OreOperator</span></code> to write down to a file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">file</span></code>: string with the path to the file were the operator will be written.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.misc.io.EnhOEISSequence">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.io.</span></span><span class="sig-name descname"><span class="pre">EnhOEISSequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ident</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.io.EnhOEISSequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sage.databases.oeis.OEISSequence</span></code></p>
+<p>Enhanced class for OEIS sequences.</p>
+<p>This class extends the functionality of an OEIS sequence. We provide several methods to explore
+the information and the data of the sequence and provides a unified interface for the sequence
+with respect to the package <a class="reference internal" href="../../index.html#module-pseries_basis" title="pseries_basis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pseries_basis</span></code></a></p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ident</span></code>: either a string with the A identifier of the sequence or a <code class="xref py py-class docutils literal notranslate"><span class="pre">OEISSequence</span></code>.</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.misc.io.EnhOEISSequence.is_dfinite">
+<span class="sig-name descname"><span class="pre">is_dfinite</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.io.EnhOEISSequence.is_dfinite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check whether a sequence is D-finite or not.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.misc.io.EnhOEISSequence.dfinite_recurrence">
+<span class="sig-name descname"><span class="pre">dfinite_recurrence</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.io.EnhOEISSequence.dfinite_recurrence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to compute a difference D-finite recurrence for an OEIS Sequence</p>
+<p>This method reads from the formulas on the OEIS Sequence and computes a recurrence equation
+that is valid for this sequence (for all <span class="math notranslate nohighlight">\(n\)</span>). The computations in this method requires
+parsing and extracting information from the text of the formulas. We make use of some generic
+formating in OEIS that does not always hold. Hence, sometimes this method returns <code class="docutils literal notranslate"><span class="pre">None</span></code>
+even when the sequence is D-finite.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.misc.io.EnhOEISSequence.order">
+<span class="sig-name descname"><span class="pre">order</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.io.EnhOEISSequence.order" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the order of a D-finite OEIS sequence (if it is D-finite)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.misc.io.EnhOEISSequence.sequence">
+<span class="sig-name descname"><span class="pre">sequence</span></span><a class="headerlink" href="#pseries_basis.misc.io.EnhOEISSequence.sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.misc.io.EnhOEISSequence.check_consistency">
+<span class="sig-name descname"><span class="pre">check_consistency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.io.EnhOEISSequence.check_consistency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check the consistency between the generated sequence and the terms in the OEIS database</p>
+<p>The offset of the sequences in OEIS may disturb the recurrence equations, hence, we need that
+the corresponding elements of the generated sequence coincide with the terms of the sequence in OEIS.</p>
+<p>If this method return <code class="docutils literal notranslate"><span class="pre">False</span></code>, it means we need to improve the attribute <a class="reference internal" href="#pseries_basis.misc.io.EnhOEISSequence.sequence" title="pseries_basis.misc.io.EnhOEISSequence.sequence"><code class="xref py py-func docutils literal notranslate"><span class="pre">sequence()</span></code></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../misc.html"
+                          title="previous chapter">Sequences and other utilities</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="ore.html"
+                          title="next chapter">Access and communication with <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code></a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/pseries_basis/misc/io.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ore.html" title="Access and communication with ore_algebra"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../misc.html" title="Sequences and other utilities"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../misc.html" >Sequences and other utilities</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Interface with other platforms</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

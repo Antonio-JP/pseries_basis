@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Sequences and other utilities &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
+    <title>Factorial Basis: simplest Polynomial basis &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
@@ -14,11 +14,12 @@
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Interface with other platforms" href="misc/io.html" />
-    <link rel="prev" title="Funtional basis: the most basi order bases" href="order/fun_basis.html" /> 
+    <link rel="next" title="Factorial Basis: simplest Polynomial basis" href="factorial/factorial_basis.html" />
+    <link rel="prev" title="Power Series basis: basic structure and functionality" href="psbasis.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -30,13 +31,13 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="misc/io.html" title="Interface with other platforms"
+          <a href="factorial/factorial_basis.html" title="Factorial Basis: simplest Polynomial basis"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="order/fun_basis.html" title="Funtional basis: the most basi order bases"
+          <a href="psbasis.html" title="Power Series basis: basic structure and functionality"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Sequences and other utilities</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Factorial Basis: simplest Polynomial basis</a></li> 
       </ul>
     </div>  
 
@@ -45,16 +46,23 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="module-pseries_basis.misc">
-<span id="sequences-and-other-utilities"></span><h1>Sequences and other utilities<a class="headerlink" href="#module-pseries_basis.misc" title="Permalink to this headline">¶</a></h1>
-<p>Initialize self.  See help(type(self)) for accurate signature.</p>
+  <section id="module-pseries_basis.factorial">
+<span id="factorial-basis-simplest-polynomial-basis"></span><h1>Factorial Basis: simplest Polynomial basis<a class="headerlink" href="#module-pseries_basis.factorial" title="Permalink to this headline">¶</a></h1>
+<p>Subpackage for Factorial basis.</p>
+<p>A factorial basis is a basis of the ring of formal power series <span class="math notranslate nohighlight">\(\mathbb{K}[[x]]\)</span> where the 
+elements of the basis are polynomials of increasing degree such that:</p>
+<div class="math notranslate nohighlight">
+\[P_{n+1}(x) = (a_n*x + b_n)P_n(x)\]</div>
+<p>There are plenty of types and extensions of Factorial basis. This subpackage will include
+all of them, such as <a class="reference internal" href="factorial/product_basis.html#pseries_basis.factorial.product_basis.ProductBasis" title="pseries_basis.factorial.product_basis.ProductBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProductBasis</span></code></a> or 
+<a class="reference internal" href="factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis" title="pseries_basis.factorial.product_basis.SievedBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">SievedBasis</span></code></a>.</p>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="misc/io.html">Interface with other platforms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="misc/ore.html">Access and communication with <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="misc/sequences.html">Interface for Sequences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factorial/factorial_basis.html">Factorial Basis: simplest Polynomial basis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factorial/product_basis.html">Product Basis: combining Factorial basis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="factorial/gen_binomial_basis.html">Generalized Binomial Bases</a></li>
 </ul>
 </div>
 </section>
@@ -78,7 +86,7 @@
   <div>
     <h3><a href="../index.html">Table of Contents</a></h3>
     <ul>
-<li><a class="reference internal" href="#">Sequences and other utilities</a><ul>
+<li><a class="reference internal" href="#">Factorial Basis: simplest Polynomial basis</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and Tables</a></li>
 </ul>
@@ -88,18 +96,18 @@
   </div>
   <div>
     <h4>Previous topic</h4>
-    <p class="topless"><a href="order/fun_basis.html"
-                          title="previous chapter">Funtional basis: the most basi order bases</a></p>
+    <p class="topless"><a href="psbasis.html"
+                          title="previous chapter">Power Series basis: basic structure and functionality</a></p>
   </div>
   <div>
     <h4>Next topic</h4>
-    <p class="topless"><a href="misc/io.html"
-                          title="next chapter">Interface with other platforms</a></p>
+    <p class="topless"><a href="factorial/factorial_basis.html"
+                          title="next chapter">Factorial Basis: simplest Polynomial basis</a></p>
   </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/pseries_basis/misc.rst.txt"
+      <li><a href="../_sources/pseries_basis/factorial.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -127,13 +135,13 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="misc/io.html" title="Interface with other platforms"
+          <a href="factorial/factorial_basis.html" title="Factorial Basis: simplest Polynomial basis"
              >next</a> |</li>
         <li class="right" >
-          <a href="order/fun_basis.html" title="Funtional basis: the most basi order bases"
+          <a href="psbasis.html" title="Power Series basis: basic structure and functionality"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Sequences and other utilities</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Factorial Basis: simplest Polynomial basis</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
