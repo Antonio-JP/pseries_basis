@@ -18,7 +18,10 @@ jobs:
     - uses: actions/checkout@v3
     - name: Installing git and dependencies
       run: |
-        ls -a /home/sage
+        ls -a /home/sage/sage
+        echo "-------------------------------------------------"
+        ls -a /home/sage/sage/venv
+        echo "-------------------------------------------------"
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates
         sudo apt-get clean
@@ -28,6 +31,7 @@ jobs:
     - name: Install pylint
       run: |
         sage -pip install pylint
+        ls -a /home/sage/sage/venv/bin
     - name: Linting code for repository
       run: |
         /home/sage/sage/venv/bin/pylint ./pseries_basis  --disable=all --enable=F,unreachable,duplicate-key,unnecessary-semicolon,\
