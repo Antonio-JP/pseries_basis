@@ -18,23 +18,22 @@ jobs:
     - uses: actions/checkout@v3
     - name: Installing git and dependencies
       run: |
-        ls -a /home/sage/sage
-        echo "-------------------------------------------------"
-        ls -a /home/sage/sage/venv
-        echo "-------------------------------------------------"
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates
         sudo apt-get clean
     - name: Install package
       run: |
         sage -pip install --upgrade .
+        ls -la /home/sage/sage
+        echo "-------------------------------------------------"
+        ls -la /home/sage/sage/local
+        echo "-------------------------------------------------"
     - name: Install pylint
       run: |
         sage -pip install pylint
-        ls -a /home/sage/sage/venv/bin
     - name: Linting code for repository
       run: |
-        /home/sage/sage/venv/bin/pylint ./pseries_basis  --disable=all --enable=F,unreachable,duplicate-key,unnecessary-semicolon,\
+        /home/sage/sage/local/var/lib/sage/venv-python3.8/bin/pylint ./pseries_basis  --disable=all --enable=F,unreachable,duplicate-key,unnecessary-semicolon,\
         global-variable-not-assigned,unused-variable,unused-wildcard-import,binary-op-exception,\
         bad-format-string,anomalous-backslash-in-string,bad-open-mode,E0001,E0011,E0012,E0100,\
         E0101,E0102,E0103,E0104,E0105,E0107,E0108,E0110,E0111,E0112,E0113,E0114,E0115,E0116,E0117,\
