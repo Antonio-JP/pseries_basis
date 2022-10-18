@@ -38,8 +38,7 @@ class FunctionalBasis(OrderBasis):
         Sni = self.Sni()
         self.set_compatibility(X, Sni)
 
-    @cached_method
-    def element(self, n, real=True):
+    def _element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -57,11 +56,6 @@ class FunctionalBasis(OrderBasis):
 
             TODO: FIX THIS METHOD
         '''
-        #if(not real):
-            # R = self.polynomial_ring(self.__fun_name)
-            # f = R.gens()[0]
-            # return f**n
-        #else:
         return self.__function**n
 
     def __repr__(self):

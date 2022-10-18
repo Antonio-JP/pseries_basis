@@ -9,16 +9,12 @@ r'''
     in a generic fashion.
 '''
 ## Sage imports
-from sage.all import cached_method, oo
-from sage.categories.cartesian_product import cartesian_product
+from sage.all import (cached_method, oo, cartesian_product, ZZ, parent)
 from sage.categories.homset import Hom
 from sage.categories.pushout import CoercionException, pushout
-from sage.categories.morphism import SetMorphism
+from sage.categories.morphism import SetMorphism # pylint: disable=no-name-in-module
 from sage.categories.sets_cat import Sets
-from sage.rings.integer_ring import ZZ
 from sage.rings.semirings.non_negative_integer_semiring import NN
-from sage.structure.element import parent
-from sage.symbolic.ring import SR
 
 class Sequence(SetMorphism):
     r'''
@@ -126,7 +122,7 @@ class Sequence(SetMorphism):
         return NotImplemented
         
     def __neg__(self):
-        return LambdaSequence(lambda *n : -self(*n), self.universe, dim = self.dim, allow_sym=self.allow_sym)
+        return LambdaSequence(lambda *n : -self(*n), self.universe, dim = self.dim, allow_sym=self.allow_sym) # pylint: disable=invalid-unary-operand-type
         
     # reverse arithmethic methods
     def __radd__(self, other):

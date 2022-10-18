@@ -3,7 +3,7 @@ r'''
 '''
 # Sage imports
 from functools import reduce
-from typing import List, Tuple
+from typing import Tuple
 from sage.all import cached_method, prod, ZZ, vector, ceil
 from sage.categories.pushout import pushout
 

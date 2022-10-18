@@ -13,7 +13,7 @@ try: # python 3.9 or higher
     from functools import cache
 except ImportError: #python 3.8 or lower
     from functools import lru_cache as cache
-from typing import Any # pylint: disable=unused-import
+from typing import Any, Tuple # pylint: disable=unused-import
 
 from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
@@ -25,6 +25,8 @@ from sage.rings.fraction_field import FractionField_1poly_field
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 
 from .sequences import Sequence, LambdaSequence
+
+_Fields = Fields.__classcall__(Fields)
 
 #############################################################################################
 ###
@@ -80,7 +82,7 @@ def is_based_field(algebra: OreAlgebra_generic) -> bool:
 ###
 #############################################################################################
 __CACHE_POLY_ALGEBRAS = {}
-def get_polynomial_algebra(name_x: str = "x", base : Fields().parent_class = QQ) -> "tuple[PolynomialRing_field, Any]":
+def get_polynomial_algebra(name_x: str = "x", base : _Fields.parent_class = QQ) -> Tuple[PolynomialRing_field, Any]:
     r'''
         Method to get always the same Polynomial Ring
 
@@ -103,7 +105,7 @@ def get_polynomial_algebra(name_x: str = "x", base : Fields().parent_class = QQ)
     
     return __CACHE_POLY_ALGEBRAS[(name_x, base)]
 
-def get_rational_algebra(name_x: str = "x", base : Fields().parent_class = QQ) -> "tuple[FractionField_1poly_field, Any]":
+def get_rational_algebra(name_x: str = "x", base : _Fields.parent_class = QQ) -> Tuple[FractionField_1poly_field, Any]:
     r'''
         Method to get always the same fraction field of a Polynomial Ring
 
@@ -124,7 +126,7 @@ def get_rational_algebra(name_x: str = "x", base : Fields().parent_class = QQ) -
     return (R.fraction_field(), R.fraction_field()(x))
 
 __CACHE_REC_ALGEBRAS = {}
-def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True, base : Fields().parent_class = QQ) -> "tuple[OreAlgebra_generic, tuple[Any, Any]]":
+def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any]]:
     r'''
         Method to get always the same ore algebra
 
@@ -153,7 +155,7 @@ def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational 
     return __CACHE_REC_ALGEBRAS[(name_x, name_shift, rational, base)]
 
 __CACHE_DREC_ALGEBRAS = {}
-def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True, base : Fields().parent_class = QQ) -> "tuple[OreAlgebra_generic, tuple[Any, Any, Any]]":
+def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any, Any]]:
     r'''
         Method to get always the same ore algebra
 
@@ -183,7 +185,7 @@ def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", ra
     return __CACHE_DREC_ALGEBRAS[(name_x, name_shift, rational, base)]
 
 __CACHE_DER_ALGEBRAS = {}
-def get_differential_algebra(name_x : str = "x", name_der : str = "Dx", rational : bool = True, base : Fields().parent_class = QQ) -> "tuple[OreAlgebra_generic, tuple[Any, Any]]":
+def get_differential_algebra(name_x : str = "x", name_der : str = "Dx", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any]]:
     r'''
         Method to get always the same ore algebra
 

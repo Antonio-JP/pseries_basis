@@ -33,7 +33,7 @@ r'''
 
 ## Sage imports
 from functools import reduce
-from sage.all import (PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, diff, 
+from sage.all import (PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, 
                         SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
                         block_matrix, vector, ceil)
 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing

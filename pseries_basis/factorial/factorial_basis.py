@@ -11,7 +11,7 @@ from sage.all import prod, vector, ZZ, cached_method, QQ, Matrix, latex
 from pseries_basis.misc.sequences import LambdaSequence, Sequence
 
 # Local imports
-from ..psbasis import PSBasis, PolyBasis
+from ..psbasis import PolyBasis
 
 class FactorialBasis(PolyBasis):
     r'''
@@ -39,7 +39,7 @@ class FactorialBasis(PolyBasis):
         ## Creating the compatibility with the multiplication by X (if possible)
         try:
             Sni = self.Sni(); n = self.n(); an = self.an; bn = self.bn
-            self.set_compatibility(X, -bn(n+1)/an(n+1) + (1/an(n))*Sni)
+            self.set_compatibility(X, -bn(n+1)/an(n+1) + (1/an(n))*Sni) # pylint: disable=invalid-unary-operand-type
         except (AttributeError, TypeError) as e:
             logger.info(f"Error with the compatibility with {X} --> {e}")
             pass
@@ -852,7 +852,7 @@ class SFactorialBasis(FactorialBasis):
                 sage: [roots(i) for i in range(7)]
                 [0, -1/3, -1/2, -3/5, -2/3, -5/7, -3/4]
         '''
-        return LambdaSequence(lambda n : -self.bn(n+1)/self.an(n+1), self.base, allow_sym=True)
+        return LambdaSequence(lambda n : -self.bn(n+1)/self.an(n+1), self.base, allow_sym=True) # pylint: disable=invalid-unary-operand-type
 
     def constant_coefficient(self) -> Sequence:
         r'''
