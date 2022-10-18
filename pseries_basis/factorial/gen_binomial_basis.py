@@ -160,7 +160,7 @@ def GeneralizedBinomial(a,b,c,m,r):
     if(m == 1 and b == 0 and r == 0):
         return BinomialBasis(a,c) 
     
-    n = PSBasis.n(None)
+    n = PSBasis(QQ).n()
     
     ## Basis for the roots on the first factor:
     F1 = [FallingBasis(a, c-r-i, (m-b)) for i in range(m-b)]
