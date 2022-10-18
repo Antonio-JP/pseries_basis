@@ -12,7 +12,7 @@ jobs:
   linting:    
     runs-on: ubuntu-latest
     container: 
-        image: sagemath/sagemath:9.3.beta8
+        image: sagemath/sagemath:latest
         options: --user root
     steps:
     - uses: actions/checkout@v3
@@ -44,7 +44,7 @@ jobs:
   testing:
     runs-on: ubuntu-latest
     container: 
-        image: sagemath/sagemath:9.3.beta8
+        image: sagemath/sagemath:latest
         options: --user root
     steps:
     - uses: actions/checkout@v3
