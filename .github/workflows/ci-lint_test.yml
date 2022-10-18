@@ -18,6 +18,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Installing git and dependencies
       run: |
+        ls -a /home/sage
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends git apt-transport-https ca-certificates
         sudo apt-get clean
