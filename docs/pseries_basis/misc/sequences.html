@@ -98,22 +98,16 @@ in a generic fashion.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="pseries_basis.misc.sequences.Sequence.shift">
 <span class="sig-name descname"><span class="pre">shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">shifts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.sequences.Sequence.shift" title="Permalink to this definition">¶</a></dt>
-<dd><p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">:</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-<span class="o">....</span><span class="p">:</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
-<span class="o">....</span><span class="p">:</span>     <span class="nd">@cached_method</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
-<span class="o">....</span><span class="p">:</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="o">^</span><span class="mi">2</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
-<span class="p">{}</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="p">()</span>
-<span class="mi">4</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
-<span class="p">{((),</span> <span class="p">()):</span> <span class="mi">4</span><span class="p">}</span>
-</pre></div>
-</div>
+<dd><p>Method to compute the shifted sequence given some shifting indices.</p>
+<p>Given a sequence <span class="math notranslate nohighlight">\((a_n)_n\)</span>, we can always consider the <span class="math notranslate nohighlight">\(k\)</span>-shifted sequence
+for any <span class="math notranslate nohighlight">\(k \mathbb{Z}\)</span> defined by <span class="math notranslate nohighlight">\(b_n = a_{n+k}\)</span>. This method allows a 
+sequence in any number of variables to obtained its shifted version for any tuple of 
+shifts.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">shifts</span></code>: a list of integers providing the shifts for each of the dimensions of 
+the sequence. It must be only integers and have same length as <code class="docutils literal notranslate"><span class="pre">self.dim</span></code>.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py method">
@@ -170,9 +164,6 @@ arguments <span class="math notranslate nohighlight">\((a_1,\ldots, a_t)\)</span
 <p>This method build the corresponding subsequence for the given values in <code class="docutils literal notranslate"><span class="pre">vals</span></code>.
 If the number of values is more than the number of inputs, then we return the value
 of the sequence at the given position.</p>
-<p>REMARK: this method always return a <a class="reference internal" href="#pseries_basis.misc.sequences.LambdaSequence" title="pseries_basis.misc.sequences.LambdaSequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">LambdaSequence</span></code></a>, which is the simplest implementation
-of a sequence and do not rely in any firther classes. If a different behavior is wanted, a subclass
-of <a class="reference internal" href="#pseries_basis.misc.sequences.Sequence" title="pseries_basis.misc.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a> must override this method.</p>
 </dd></dl>
 
 </dd></dl>
@@ -183,8 +174,7 @@ of <a class="reference internal" href="#pseries_basis.misc.sequences.Sequence" t
 <dd><p>Bases: <a class="reference internal" href="#pseries_basis.misc.sequences.Sequence" title="pseries_basis.misc.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.misc.sequences.Sequence</span></code></a></p>
 <p>Simplest implementation of <a class="reference internal" href="#pseries_basis.misc.sequences.Sequence" title="pseries_basis.misc.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>.</p>
 <p>This class computes a sequence by calling a function with some integer coefficient. It does not check whether this 
-defining function will always work. This class implements some basic arithmetic for sequences, simplifying 
-their use.</p>
+defining function will always work.</p>
 <p>INPUT:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">func</span></code>: a callable that defines the sequence as their output with natural input.</p></li>
@@ -205,6 +195,56 @@ their use.</p>
 <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">34</span><span class="p">]</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.misc.sequences.ExpressionSequence">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.sequences.</span></span><span class="sig-name descname"><span class="pre">ExpressionSequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.sequences.ExpressionSequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.misc.sequences.Sequence" title="pseries_basis.misc.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.misc.sequences.Sequence</span></code></a></p>
+<p>Implementation of <a class="reference internal" href="#pseries_basis.misc.sequences.Sequence" title="pseries_basis.misc.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a> using expressions from Sage.</p>
+<p>This class computes a sequence by calling setting up an expression an a list of variables to be the variables of the
+sequence. This class can always be evaluated symbolically and a general expression can be obtained.</p>
+<p>Several methods from <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence`are</span> <span class="pre">overriden</span> <span class="pre">to</span> <span class="pre">take</span> <span class="pre">into</span> <span class="pre">account</span> <span class="pre">the</span> <span class="pre">use</span> <span class="pre">of</span> <span class="pre">:class:`ExpressionSequence</span></code> for 
+arithmetic operation and similar methods that obtain new <a class="reference internal" href="#pseries_basis.misc.sequences.Sequence" title="pseries_basis.misc.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a></p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">expr</span></code>: an object of SageMath that can be casted into an expression in the symbolic ring.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">universe</span></code>: a parent structure where all the elements (after evaluation) should belong.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">variables</span></code>: list of variables that are evaluated for the sequence. If <code class="docutils literal notranslate"><span class="pre">None</span></code> is given,
+then all variables in <code class="docutils literal notranslate"><span class="pre">expr</span></code> are used in the order given by <code class="docutils literal notranslate"><span class="pre">expr.variables()</span></code>. We encourage 
+the use of this input to define the ordering of the variables.</p></li>
+</ul>
+<p>REMARK:</p>
+<ul class="simple">
+<li><p>The value for <code class="docutils literal notranslate"><span class="pre">dim</span></code> in <a class="reference internal" href="#pseries_basis.misc.sequences.Sequence" title="pseries_basis.misc.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a> can be obtained from the number of variables.</p></li>
+<li><p>The value for <code class="docutils literal notranslate"><span class="pre">allow_sym</span></code> in <a class="reference internal" href="#pseries_basis.misc.sequences.Sequence" title="pseries_basis.misc.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a> is always <code class="docutils literal notranslate"><span class="pre">True</span></code> for a <a class="reference internal" href="#pseries_basis.misc.sequences.ExpressionSequence" title="pseries_basis.misc.sequences.ExpressionSequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExpressionSequence</span></code></a></p></li>
+</ul>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis.misc.sequences</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">F</span> <span class="o">=</span> <span class="n">ExpressionSequence</span><span class="p">(</span><span class="n">factorial</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">ZZ</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">F2</span> <span class="o">=</span> <span class="n">LambdaSequence</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span> <span class="p">:</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">ZZ</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">F</span><span class="o">.</span><span class="n">almost_equals</span><span class="p">(</span><span class="n">F2</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="kc">True</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">F</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Integer</span> <span class="n">Ring</span><span class="p">]:</span> <span class="n">factorial</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.misc.sequences.ExpressionSequence.generic">
+<span class="sig-name descname"><span class="pre">generic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.sequences.ExpressionSequence.generic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that returns the generic expression for this sequence.</p>
+<p>This method returns the expression that defines this sequence. Use method <a class="reference internal" href="#pseries_basis.misc.sequences.ExpressionSequence.variables" title="pseries_basis.misc.sequences.ExpressionSequence.variables"><code class="xref py py-func docutils literal notranslate"><span class="pre">variables()</span></code></a> 
+to obtain the list (in appropriate order) of variables that are used for this sequence.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.misc.sequences.ExpressionSequence.variables">
+<span class="sig-name descname"><span class="pre">variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.sequences.ExpressionSequence.variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that returns the variables of this sequence.</p>
+<p>This method returns the (sorted) tuple of variables that defines this sequence. Use method <a class="reference internal" href="#pseries_basis.misc.sequences.ExpressionSequence.generic" title="pseries_basis.misc.sequences.ExpressionSequence.generic"><code class="xref py py-func docutils literal notranslate"><span class="pre">generic()</span></code></a> 
+to obtain the defining expression of this sequence.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>

@@ -18,9 +18,10 @@ from typing import Any, Tuple # pylint: disable=unused-import
 from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
 
-from sage.all import QQ, ZZ, prod, PolynomialRing, lcm
+from sage.all import QQ, ZZ, prod, lcm
 from sage.categories.fields import Fields
 from sage.rings.polynomial.polynomial_ring import PolynomialRing_field, is_PolynomialRing
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.fraction_field import FractionField_1poly_field
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 

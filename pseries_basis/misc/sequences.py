@@ -302,13 +302,13 @@ class ExpressionSequence(Sequence):
 
         EXAMPLES::
 
-            sage: from pseries_basis.misc.sequences import ExpressionSequence, LambdaSequence
-            sage: F = ExpressionSequence(factorial(n), ZZ)
+            sage: from pseries_basis.misc.sequences import *
+            sage: F = ExpressionSequence(factorial(x), ZZ)
             sage: F2 = LambdaSequence(lambda n : factorial(n), ZZ)
             sage: F.almost_equals(F2, 100)
             True
             sage: F
-            Sequence over [Integer Ring]: factorial(n)
+            Sequence over [Integer Ring]: factorial(x)
     '''
     def __init__(self, expr, universe, variables=None):
         if not expr in SR:

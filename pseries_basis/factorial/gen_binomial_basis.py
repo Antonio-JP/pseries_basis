@@ -6,7 +6,9 @@ try: # python 3.9 or higher
     from functools import cache
 except ImportError: #python 3.8 or lower
     from functools import lru_cache as cache
-from sage.all import ZZ, Matrix, vector, factorial, PolynomialRing, QQ
+    
+from sage.all import ZZ, Matrix, vector, factorial, QQ
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 
 from ..psbasis import PSBasis, check_compatibility
 from .factorial_basis import FallingBasis,BinomialBasis

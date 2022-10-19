@@ -33,10 +33,11 @@ r'''
 
 ## Sage imports
 from functools import reduce
-from sage.all import (PolynomialRing, ZZ, QQ, Matrix, cached_method, latex, factorial, 
+from sage.all import (ZZ, QQ, Matrix, cached_method, latex, factorial, 
                         SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
                         block_matrix, vector, ceil)
 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
