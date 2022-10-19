@@ -9,7 +9,7 @@ r'''
     in a generic fashion.
 '''
 ## Sage imports
-from sage.all import (cached_method, oo, cartesian_product, ZZ, parent)
+from sage.all import (cached_method, oo, NaN, cartesian_product, ZZ, parent, SR)
 from sage.categories.homset import Hom
 from sage.categories.pushout import CoercionException, pushout
 from sage.categories.morphism import SetMorphism # pylint: disable=no-name-in-module
@@ -36,13 +36,13 @@ class Sequence(SetMorphism):
         '''
         return self.__universe
     @property
-    def dim(self):
+    def dim(self) -> int:
         r'''
             Attribute with the number of variables for the sequence.
         '''
         return self.__dim
     @property
-    def allow_sym(self):
+    def allow_sym(self) -> bool:
         return self.__alls
 
     def __getitem__(self, key):
@@ -70,6 +70,8 @@ class Sequence(SetMorphism):
             output = self._element(*indices)
         except ZeroDivisionError:
             return oo
+        except:
+            return NaN
         if (self.universe is None) or (self.allow_sym and not output in self.universe): # we allow None universe and also evaluation that do nto lie in the universe
             return output
         else:
@@ -80,6 +82,19 @@ class Sequence(SetMorphism):
 
     @cached_method
     def shift(self, *shifts : int) -> "Sequence":
+        r'''
+            Method to compute the shifted sequence given some shifting indices.
+
+            Given a sequence `(a_n)_n`, we can always consider the `k`-shifted sequence
+            for any `k \mathbb{Z}` defined by `b_n = a_{n+k}`. This method allows a 
+            sequence in any number of variables to obtained its shifted version for any tuple of 
+            shifts.
+
+            INPUT:
+
+            * ``shifts``: a list of integers providing the shifts for each of the dimensions of 
+              the sequence. It must be only integers and have same length as ``self.dim``.
+        '''
         if len(shifts) == 0:
             shifts = [1 for _ in range(self.dim)]
         elif len(shifts) == 1 and isinstance(shifts[0], (tuple, list)):
@@ -89,6 +104,12 @@ class Sequence(SetMorphism):
             raise TypeError("The shift must be integers")
         if len(shifts) != self.dim:
             raise ValueError(f"We need {self.dim} shifts but {len(shifts)} were given")
+        return self._shift(*shifts)
+
+    def _shift(self, *shifts):
+        r'''
+            Return the actual shifted sequence. Can assume ``shifts`` is a list of appropriate length and type.
+        '''
         return LambdaSequence(lambda *n : self(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim, allow_sym=self.allow_sym)
 
     # basic arithmethic methods
@@ -132,7 +153,7 @@ class Sequence(SetMorphism):
     def __rmul__(self, other):
         return self.__mul__(other)
 
-    def almost_zero(self, order=10):
+    def almost_zero(self, order=10) -> bool:
         r'''
             Method that checks if a sequence is zero at the beginning.
 
@@ -142,7 +163,7 @@ class Sequence(SetMorphism):
         '''
         return all(self[i] == 0 for i in range(order))
 
-    def almost_equals(self, other : 'Sequence', order=10):
+    def almost_equals(self, other : 'Sequence', order=10) -> bool:
         r'''
             Method that checks if two sequences are equals at the beginning.
 
@@ -179,7 +200,7 @@ class Sequence(SetMorphism):
         '''
         return self[:order] == other[:order]
 
-    def subsequence(self, *vals : int):
+    def subsequence(self, *vals : int) -> "Sequence":
         r'''
             Method to obtain a subsequence when having multiple arguments.
 
@@ -193,17 +214,20 @@ class Sequence(SetMorphism):
             This method build the corresponding subsequence for the given values in ``vals``.
             If the number of values is more than the number of inputs, then we return the value
             of the sequence at the given position.
-
-            REMARK: this method always return a :class:`LambdaSequence`, which is the simplest implementation
-            of a sequence and do not rely in any firther classes. If a different behavior is wanted, a subclass
-            of :class:`Sequence` must override this method.
         '''
         if len(vals) >= self.dim:
             return self.element(*vals[:self.dim])
-        else:
-            return LambdaSequence(lambda *n: self.element(*vals, *n), self.universe, dim=self.dim-len(vals), allow_sym=True)
+        elif any(not v in ZZ for v in vals):
+            raise TypeError("The values for subsequences must be integers")
+        return self._subsequence(*vals)
 
-    def __repr__(self):
+    def _subsequence(self, *vals): 
+        r'''
+            Return the actual subsequence (see :func:`subsequence`). Can assume ``vals`` is a list of appropriate length and type.
+        '''
+        return LambdaSequence(lambda *n: self.element(*vals, *n), self.universe, dim=self.dim-len(vals), allow_sym=True)
+
+    def __repr__(self) -> str:
         if self.dim == 1:
             return f"Sequence over [{self.universe}]: ({self[0]}, {self[1]}, {self[2]},...)"
         else:
@@ -214,8 +238,7 @@ class LambdaSequence(Sequence):
         Simplest implementation of :class:`Sequence`.
 
         This class computes a sequence by calling a function with some integer coefficient. It does not check whether this 
-        defining function will always work. This class implements some basic arithmetic for sequences, simplifying 
-        their use.
+        defining function will always work.
 
         INPUT:
 
@@ -254,4 +277,134 @@ class LambdaSequence(Sequence):
     def __hash__(self):
         return hash(self.__func)
 
-__all__ = ["Sequence", "LambdaSequence"]
+class ExpressionSequence(Sequence):
+    r'''
+        Implementation of :class:`Sequence` using expressions from Sage.
+
+        This class computes a sequence by calling setting up an expression an a list of variables to be the variables of the
+        sequence. This class can always be evaluated symbolically and a general expression can be obtained.
+
+        Several methods from :class:`Sequence`are overriden to take into account the use of :class:`ExpressionSequence` for 
+        arithmetic operation and similar methods that obtain new :class:`Sequence`
+
+        INPUT:
+
+        * ``expr``: an object of SageMath that can be casted into an expression in the symbolic ring.
+        * ``universe``: a parent structure where all the elements (after evaluation) should belong.
+        * ``variables``: list of variables that are evaluated for the sequence. If ``None`` is given,
+          then all variables in ``expr`` are used in the order given by ``expr.variables()``. We encourage 
+          the use of this input to define the ordering of the variables.
+
+        REMARK:
+
+        * The value for ``dim`` in :class:`Sequence` can be obtained from the number of variables.
+        * The value for ``allow_sym`` in :class:`Sequence` is always ``True`` for a :class:`ExpressionSequence`
+
+        EXAMPLES::
+
+            sage: from pseries_basis.misc.sequences import ExpressionSequence, LambdaSequence
+            sage: F = ExpressionSequence(factorial(n), ZZ)
+            sage: F2 = LambdaSequence(lambda n : factorial(n), ZZ)
+            sage: F.almost_equals(F2, 100)
+            True
+            sage: F
+            Sequence over [Integer Ring]: factorial(n)
+    '''
+    def __init__(self, expr, universe, variables=None):
+        if not expr in SR:
+            raise ValueError("The expression must be something we can convert to an expression")
+        expr = SR(expr)
+        variables = expr.variables() if variables is None else tuple(variables)
+
+        super().__init__(universe, len(variables), True)
+        self.__generic = expr
+        self.__vars = variables
+
+    def generic(self):
+        r'''
+            Method that returns the generic expression for this sequence.
+
+            This method returns the expression that defines this sequence. Use method :func:`variables` 
+            to obtain the list (in appropriate order) of variables that are used for this sequence.
+        '''
+        return self.__generic
+
+    def variables(self):
+        r'''
+            Method that returns the variables of this sequence.
+
+            This method returns the (sorted) tuple of variables that defines this sequence. Use method :func:`generic` 
+            to obtain the defining expression of this sequence.
+        '''
+        return self.__vars
+
+    def _element(self, *indices: int):
+        vars = self.variables()
+        return self.generic()(**{str(vars[i]) : indices[i] for i in range(len(indices))})
+
+    def _shift(self, *shifts):
+        vars = self.variables()
+        evaluations = [vars[i] + shifts[i] for i in range(self.dim)]
+        new_expr = self.generic()(**{str(vars[i]) : evaluations[i] for i in range(self.dim)})
+
+        return ExpressionSequence(new_expr, self.universe, vars)
+
+    # basic arithmethic methods
+    def __add__(self, other):
+        if not isinstance(other, ExpressionSequence) or self.dim != other.dim:
+            return super().__add__(other)
+
+        if [SR(v) for v in self.variables()] != [SR(v) for v in other.variables()]:
+            return NotImplemented
+
+        universe = pushout(self.universe, other.universe)
+        return ExpressionSequence(self.generic() + other.generic(), universe, self.variables())
+
+    def __sub__(self, other):
+        if not isinstance(other, ExpressionSequence) or self.dim != other.dim:
+            return super().__add__(other)
+
+        if [SR(v) for v in self.variables()] != [SR(v) for v in other.variables()]:
+            return NotImplemented
+
+        universe = pushout(self.universe, other.universe)
+        return ExpressionSequence(self.generic() - other.generic(), universe, self.variables())
+
+    def __mul__(self, other):
+        if isinstance(other, ExpressionSequence) and self.dim == other.dim:
+            if [SR(v) for v in self.variables()] != [SR(v) for v in other.variables()]:
+                return NotImplemented
+            universe = pushout(self.universe, other.universe)
+            return ExpressionSequence(self.generic() * other.generic(), universe, self.variables())
+        elif not isinstance(other, Sequence):
+            try:
+                universe = pushout(self.universe, parent(other))
+                return ExpressionSequence(SR(other)*self.generic(), universe, self.variables())
+            except CoercionException:
+                return NotImplemented
+        return super().__mul__(other)
+        
+    def __neg__(self):
+        return ExpressionSequence(-self.generic(), self.universe, self.variables())
+    
+    def _subsequence(self, *vals):
+        vars = self.variables()
+        new_expr = self.generic(**{str(vars[i]) : vals[i] for i in range(len(vals))}) 
+        rem_vars = vars[len(vals):]
+        return ExpressionSequence(new_expr, self.universe, rem_vars)
+
+    # equality and hash methods
+    def __eq__(self, other):
+        if not isinstance(other, ExpressionSequence):
+            return False
+        if [SR(v) for v in self.variables()] != [SR(v) for v in other.variables()]:
+            return False
+        return bool(self.generic() == other.generic())
+    
+    def __hash__(self):
+        return hash(self.__generic)
+
+    def __repr__(self) -> str:
+        return f"Sequence{f' in {self.__vars}' if self.dim > 1 else ''} over [{self.universe}]: {self.generic()}"
+
+__all__ = ["Sequence", "LambdaSequence", "ExpressionSequence"]
