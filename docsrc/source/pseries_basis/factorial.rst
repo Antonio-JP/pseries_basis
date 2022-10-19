@@ -1,9 +1,9 @@
 .. nodoctest
 
-Sequences and other utilities
+Factorial Basis: simplest Polynomial basis
 ======================================================
 
-.. automodule:: pseries_basis.misc
+.. automodule:: pseries_basis.factorial
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,9 +15,9 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
-   misc/io
-   misc/ore
-   misc/sequences
+   factorial/factorial_basis
+   factorial/product_basis
+   factorial/gen_binomial_basis
 
 Indices and Tables
 *********************

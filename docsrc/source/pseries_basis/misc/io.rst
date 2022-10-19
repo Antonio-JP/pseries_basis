@@ -1,9 +1,10 @@
 .. nodoctest
 
-Access and communication with ``ore_algebra``
+Interface with other platforms
 ======================================================
 
-.. automodule:: pseries_basis.ore
+.. automodule:: pseries_basis.misc.io
    :members:
    :undoc-members:
    :show-inheritance:
+   :member-order: bysource

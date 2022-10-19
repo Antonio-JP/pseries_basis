@@ -1,9 +1,9 @@
 .. nodoctest
 
-Sequences and other utilities
+Orthogonal basis: a complex type of polynomial bases
 ======================================================
 
-.. automodule:: pseries_basis.misc
+.. automodule:: pseries_basis.orthogonal
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,9 +15,7 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
-   misc/io
-   misc/ore
-   misc/sequences
+   orthogonal/ortho_basis
 
 Indices and Tables
 *********************

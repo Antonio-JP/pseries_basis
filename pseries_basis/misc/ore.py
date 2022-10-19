@@ -13,16 +13,21 @@ try: # python 3.9 or higher
     from functools import cache
 except ImportError: #python 3.8 or lower
     from functools import lru_cache as cache
-from typing import Any # pylint: disable=unused-import
+from typing import Any, Tuple # pylint: disable=unused-import
 
 from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
 
-from sage.all import QQ, ZZ, prod, PolynomialRing, lcm
-from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
+from sage.all import QQ, ZZ, prod, lcm
+from sage.categories.fields import Fields
+from sage.rings.polynomial.polynomial_ring import PolynomialRing_field, is_PolynomialRing
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.fraction_field import FractionField_1poly_field
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 
 from .sequences import Sequence, LambdaSequence
+
+_Fields = Fields.__classcall__(Fields)
 
 #############################################################################################
 ###
@@ -78,7 +83,7 @@ def is_based_field(algebra: OreAlgebra_generic) -> bool:
 ###
 #############################################################################################
 __CACHE_POLY_ALGEBRAS = {}
-def get_polynomial_algebra(name_x: str = "x") -> "tuple[OreAlgebra_generic, Any]":
+def get_polynomial_algebra(name_x: str = "x", base : _Fields.parent_class = QQ) -> Tuple[PolynomialRing_field, Any]:
     r'''
         Method to get always the same Polynomial Ring
 
@@ -89,18 +94,19 @@ def get_polynomial_algebra(name_x: str = "x") -> "tuple[OreAlgebra_generic, Any]
         INPUT:
 
         * ``name_x``: string with the name of the variable for the polynomial ring.
+        * ``base``: the base field for the polynomial ring.
 
         OUTPUT:
 
         A tuple `(R, x)` where `R = \mathbb{Q}[x]`.
     '''
-    if not name_x in __CACHE_POLY_ALGEBRAS:
-        Px = PolynomialRing(QQ, name_x); x = Px(name_x)
-        __CACHE_POLY_ALGEBRAS[name_x] = (Px, x)
+    if not (name_x, base) in __CACHE_POLY_ALGEBRAS:
+        Px = PolynomialRing(base, name_x); x = Px(name_x)
+        __CACHE_POLY_ALGEBRAS[(name_x, base)] = (Px, x)
     
-    return __CACHE_POLY_ALGEBRAS[name_x]
+    return __CACHE_POLY_ALGEBRAS[(name_x, base)]
 
-def get_rational_algebra(name_x: str = "x") -> "tuple[OreAlgebra_generic, Any]":
+def get_rational_algebra(name_x: str = "x", base : _Fields.parent_class = QQ) -> Tuple[FractionField_1poly_field, Any]:
     r'''
         Method to get always the same fraction field of a Polynomial Ring
 
@@ -111,16 +117,17 @@ def get_rational_algebra(name_x: str = "x") -> "tuple[OreAlgebra_generic, Any]":
         INPUT:
 
         * ``name_x``: string with the name of the variable for the polynomial ring.
+        * ``base``: the base field for the rational function field.
 
         OUTPUT:
 
         A tuple `(R, x)` where `R = \mathbb{Q}(x)`.
     '''
-    R, x = get_polynomial_algebra(name_x)
+    R, x = get_polynomial_algebra(name_x, base)
     return (R.fraction_field(), R.fraction_field()(x))
 
 __CACHE_REC_ALGEBRAS = {}
-def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True) -> "tuple[OreAlgebra_generic, tuple[Any, Any]]":
+def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any]]:
     r'''
         Method to get always the same ore algebra
 
@@ -134,21 +141,22 @@ def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational 
         * ``name_shift``: string with the name of the shift operator for the algebra.
         * ``rational``: boolean (``True`` by default) deciding whether the base ring is 
           the field of rational functions or a polynomial ring.
+        * ``base``: the base field for the polynomial ring w.r.t. ``name_x``.
 
         OUTPUT:
 
         A tuple `(A, (x, E))` where `A` is the corresponding recurrence algebra, `x` is the 
         variable of the inner variable and `E` the recurrence operator with `E(x) = x+1`.
     '''
-    if not (name_x, name_shift, rational) in __CACHE_REC_ALGEBRAS:
-        PR, x = get_rational_algebra(name_x) if rational else get_polynomial_algebra(name_x)
+    if not (name_x, name_shift, rational, base) in __CACHE_REC_ALGEBRAS:
+        PR, x = get_rational_algebra(name_x, base) if rational else get_polynomial_algebra(name_x, base)
         OE = OreAlgebra(PR, (name_shift, lambda p : p(**{str(x) : x+1}), lambda _ : 0)); E = OE.gens()[0]
-        __CACHE_REC_ALGEBRAS[(name_x, name_shift, rational)] = (OE, (x,E)) 
+        __CACHE_REC_ALGEBRAS[(name_x, name_shift, rational, base)] = (OE, (x,E)) 
     
-    return __CACHE_REC_ALGEBRAS[(name_x, name_shift, rational)]
+    return __CACHE_REC_ALGEBRAS[(name_x, name_shift, rational, base)]
 
 __CACHE_DREC_ALGEBRAS = {}
-def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True) -> "tuple[OreAlgebra_generic, tuple[Any, Any, Any]]":
+def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any, Any]]:
     r'''
         Method to get always the same ore algebra
 
@@ -162,6 +170,7 @@ def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", ra
         * ``name_shift``: string with the name of the shift operator for the algebra.
         * ``rational``: boolean (``True`` by default) deciding whether the base ring is 
           the field of rational functions or a polynomial ring.
+        * ``base``: the base field for the polynomial ring w.r.t. ``name_x``.
 
         OUTPUT:
 
@@ -169,15 +178,15 @@ def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", ra
         variable of the inner variable and `E` the recurrence operator with `E(x) = x+1` and 
         `Ei` is the inverse recurrence operator, i.e., `Ei(x) = x-1`.
     '''
-    if not (name_x, name_shift, rational) in __CACHE_DREC_ALGEBRAS:
-        PR, x = get_rational_algebra(name_x) if rational else get_polynomial_algebra(name_x)
+    if not (name_x, name_shift, rational, base) in __CACHE_DREC_ALGEBRAS:
+        PR, x = get_rational_algebra(name_x, base) if rational else get_polynomial_algebra(name_x, base)
         OE = OreAlgebra(PR, (name_shift, lambda p : p(**{str(x) : x+1}), lambda _ : 0), (name_shift+"i", lambda p : p(**{str(x) : x-1}), lambda _ : 0)); E, Ei = OE.gens()
-        __CACHE_DREC_ALGEBRAS[(name_x, name_shift, rational)] = (OE, (x,E,Ei)) 
+        __CACHE_DREC_ALGEBRAS[(name_x, name_shift, rational, base)] = (OE, (x,E,Ei)) 
     
-    return __CACHE_DREC_ALGEBRAS[(name_x, name_shift, rational)]
+    return __CACHE_DREC_ALGEBRAS[(name_x, name_shift, rational, base)]
 
 __CACHE_DER_ALGEBRAS = {}
-def get_differential_algebra(name_x : str = "x", name_der : str = "Dx", rational : bool = True) -> "tuple[OreAlgebra_generic, tuple[Any, Any]]":
+def get_differential_algebra(name_x : str = "x", name_der : str = "Dx", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any]]:
     r'''
         Method to get always the same ore algebra
 
@@ -191,18 +200,19 @@ def get_differential_algebra(name_x : str = "x", name_der : str = "Dx", rational
         * ``name_der``: string with the name of the derivation for the algebra.
         * ``rational``: boolean (``True`` by default) deciding whether the base ring is 
           the field of rational functions or a polynomial ring.
+        * ``base``: the base field for the polynomial ring w.r.t. ``name_x``.
         
         OUTPUT:
 
         A tuple `(A, (x, D))` where `A` is the corresponding recurrence algebra, `x` is the 
         variable of the inner variable and `D` the recurrence operator with `D(x) = 1`.
     '''
-    if not (name_x, name_der, rational) in __CACHE_DER_ALGEBRAS:
-        PR, x = get_rational_algebra(name_x) if rational else get_polynomial_algebra(name_x)
+    if not (name_x, name_der, rational, base) in __CACHE_DER_ALGEBRAS:
+        PR, x = get_rational_algebra(name_x, base) if rational else get_polynomial_algebra(name_x, base)
         OD = OreAlgebra(PR, (name_der, lambda p : p, lambda p : p.derivative(x))); D = OD.gens()[0]
-        __CACHE_DER_ALGEBRAS[(name_x, name_der, rational)] = (OD, (x, D))
+        __CACHE_DER_ALGEBRAS[(name_x, name_der, rational, base)] = (OD, (x, D))
     
-    return __CACHE_DER_ALGEBRAS[(name_x, name_der, rational)]
+    return __CACHE_DER_ALGEBRAS[(name_x, name_der, rational, base)]
 
 #############################################################################################
 ###
@@ -363,3 +373,5 @@ def poly_decomp(polynomial):
     else:
         raise TypeError("The input must be a polynomial")
     return monomials, coefficients
+
+__all__ = ["solution", "OreSequence"]

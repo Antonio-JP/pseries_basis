@@ -1,9 +1,10 @@
 .. nodoctest
 
-Interface with other platforms
+Interface for Sequences
 ======================================================
 
-.. automodule:: pseries_basis.io
+.. automodule:: pseries_basis.misc.sequences
    :members:
    :undoc-members:
    :show-inheritance:
+   :member-order: bysource

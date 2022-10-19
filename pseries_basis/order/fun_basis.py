@@ -6,19 +6,19 @@ from sage.all import cached_method, Integer, bessel_J, exp
 from sage.all_cmdline import x
 
 # Local imports
-from .psbasis import OrderBasis
+from ..psbasis import OrderBasis
 
 class FunctionalBasis(OrderBasis):
     r'''
         Class for representing a basis of power functions.
 
         A basis of power functions is a type of order basis for power series
-        where the `n`th element is the `n`th power of an order 1 power series `f(x)`.
+        where the `n`-th element is the `n`-th power of an order 1 power series `f(x)`.
 
         The first element in the sequence will always be the constant polynomial 1.
 
         The second element in the sequence is a function `f(x)` such that `f(0) = 0`
-        and `f'(0) \neq 0'
+        and `f'(0) \neq 0`
 
         INPUT:
             - ``X``: the name for the operator representing the multiplication by `f(x)`.
@@ -38,8 +38,7 @@ class FunctionalBasis(OrderBasis):
         Sni = self.Sni()
         self.set_compatibility(X, Sni)
 
-    @cached_method
-    def element(self, n, real=True):
+    def _element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -55,14 +54,9 @@ class FunctionalBasis(OrderBasis):
 
             A formal power series of order ``n``.
 
-            TODO: add examples
+            TODO: FIX THIS METHOD
         '''
-        if(not real):
-            R = self.polynomial_ring(self.__fun_name)
-            f = R.gens()[0]
-            return f**n
-        else:
-            return self.__function**n
+        return self.__function**n
 
     def __repr__(self):
         return "Functional Power Basis (%s)" %(self.__fun_name)
@@ -95,7 +89,7 @@ class ExponentialBasis(FunctionalBasis):
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
 
         self.set_compatibility(E, Sni + 1)
-        self.set_compatibility(Dx, n + (n+1)*Sn)
+        self.set_derivation(Dx, n + (n+1)*Sn)
 
 
 
@@ -126,7 +120,7 @@ class BesselBasis(OrderBasis):
         ## The multiplication by X compatibility is given
         Sni = self.Sni(); n = self.n(); Sn = self.Sn(); Q12 = 1/Integer(2)
         self.set_compatibility(Xi, (Q12/n)*Sn + (Q12/n)*Sni)
-        self.set_compatibility(Dx, Q12*Sn - Q12*Sni)
+        self.set_derivation(Dx, Q12*Sn - Q12*Sni)
 
     @cached_method
     def element(self, n):
@@ -156,3 +150,5 @@ class BesselBasis(OrderBasis):
 
     def _latex_(self):
         return r"\left\{J_n(x)\right\}_{n \geq 0}"
+
+__all__ = ["FunctionalBasis", "ExponentialBasis", "BesselBasis"]

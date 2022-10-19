@@ -34,7 +34,11 @@ setup(
       'Programming Language :: Python :: 3.8.10',
     ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords = "holonomic SageMath sequence power-series",
-    packages = ["pseries_basis"],
+    packages = ["pseries_basis", 
+                "pseries_basis.factorial",
+                "pseries_basis.misc",
+                "pseries_basis.order",
+                "pseries_basis.orthogonal"],
     setup_requires   = [],
     install_requires = ['ore_algebra @ git+https://github.com/mkauers/ore_algebra.git',
                         'dd_functions @ git+https://github.com/Antonio-JP/dd_functions.git'],

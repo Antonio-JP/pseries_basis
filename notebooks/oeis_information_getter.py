@@ -5,7 +5,7 @@ from sage.all import oeis
 from ore_algebra import guess
 
 from pseries_basis import *
-from pseries_basis.io import *
+from pseries_basis.misc.io import *
 
 def search_dfinite_order(min_order, min_results = 5, i = 0):
     r'''

@@ -23,7 +23,7 @@ uninstall:
 develop:
 	$(SAGE) -pip install --upgrade -e .
 
-test: install
+test: no-deps
 	$(SAGE) -t --force-lib pseries_basis
 
 coverage:

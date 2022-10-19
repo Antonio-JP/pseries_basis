@@ -27,14 +27,17 @@ r'''
         sage: from pseries_basis import *
 
     This package includes no example since all the structures it offers are abstract, so they should
-    never be instantiated. For particular examples and test, look to the modules :mod:`~pseries_basis.factorial_basis`
-    and :mod:`~pseries_basis.product_basis`.
+    never be instantiated. For particular examples and test, look to the modules :mod:`~pseries_basis.factorial.factorial_basis`
+    and :mod:`~pseries_basis.factorial.product_basis`.
 '''
 
 ## Sage imports
-from sage.all import (PolynomialRing, ZZ, Matrix, cached_method, latex, factorial, diff, 
+from functools import reduce
+from sage.all import (ZZ, QQ, Matrix, cached_method, latex, factorial, 
                         SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
-                        block_matrix, vector)
+                        block_matrix, vector, ceil)
+from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
@@ -42,13 +45,14 @@ from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 from ore_algebra.ore_operator import OreOperator
 
 # imports from this package
-from .ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, eval_ore_operator, poly_decomp, 
+from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, eval_ore_operator, poly_decomp, 
                     get_rational_algebra, get_recurrence_algebra)
+from .misc.sequences import LambdaSequence, Sequence
 
 
 class NotCompatibleError(TypeError): pass
 
-class PSBasis(object):
+class PSBasis(Sequence):
     r'''
         Generic (abstract) class for a power series basis.
         
@@ -60,12 +64,19 @@ class PSBasis(object):
 
         List of abstract methods:
 
-        * :func:`~PSBasis.element`.
+        * :func:`~PSBasis._element`.
         * :func:`~PSBasis._functional_matrix`.
     '''
-    def __init__(self, degree=True):
+    def __init__(self, base, universe=None, degree=True, var_name=None):
         self.__degree = degree
+        self.__base = base
         self.__compatibility = {}
+        self.__derivations = []
+        self.__endomorphisms = []
+        
+        if universe == None and degree is True:
+            universe = PolynomialRing(self.__base, 'x' if var_name is None else var_name)
+        super().__init__(universe, 1)
 
     ### Getters from the module variable as objects of the class
     def OB(self):
@@ -75,11 +86,11 @@ class PSBasis(object):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.OB()
                 Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_rational_algebra('n')[0]
+        return get_rational_algebra('n', base=self.base)[0]
 
     def n(self):
         r'''
@@ -88,13 +99,13 @@ class PSBasis(object):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.n()
                 n
                 sage: B.n().parent()
                 Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_rational_algebra('n')[1]
+        return get_rational_algebra('n', base=self.base)[1]
 
     def OS(self):
         r'''
@@ -104,11 +115,11 @@ class PSBasis(object):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.OS()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_double_recurrence_algebra("n", "Sn", rational=True)[0]
+        return get_double_recurrence_algebra("n", "Sn", rational=True, base=self.base)[0]
 
     def OSS(self):
         r'''
@@ -118,11 +129,11 @@ class PSBasis(object):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.OSS()
                 Univariate Ore algebra in Sn over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_recurrence_algebra("n", "Sn", rational=True)[0]
+        return get_recurrence_algebra("n", "Sn", rational=True, base=self.base)[0]
 
     def Sn(self):
         r'''
@@ -133,13 +144,13 @@ class PSBasis(object):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.Sn()
                 Sn
                 sage: B.Sn().parent()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_double_recurrence_algebra("n", "Sn", rational=True)[1][1]
+        return get_double_recurrence_algebra("n", "Sn", rational=True, base=self.base)[1][1]
 
     def Sni(self):
         r'''
@@ -150,13 +161,13 @@ class PSBasis(object):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal building, do not use in general
+                sage: B = PSBasis(QQ) # illegal building, do not use in general
                 sage: B.Sni()
                 Sni
                 sage: B.Sni().parent()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_double_recurrence_algebra("n", "Sn")[1][2]
+        return get_double_recurrence_algebra("n", "Sn", base=self.base)[1][2]
     
     def is_hypergeometric(self, element):
         r'''
@@ -330,6 +341,8 @@ class PSBasis(object):
                 sage: B.valid_factor(quotient)
                 False
         '''
+        if isinstance(element, Sequence) and element.allow_sym:
+            element = element(self.n())
         if(not element in self.OB()):
             return False
         element = self.OB()(element)
@@ -386,24 +399,18 @@ class PSBasis(object):
         raise NotImplementedError("quo_rem not implemented for %s" %type(n))
 
     ### BASIC METHODS
-    def element(self, n, var_name=None):
+    @property
+    def base(self):
+        return self.__base
+
+    def change_base(self, base):
         r'''
-            Method to return the `n`-th element of the basis.
+            Method to change the base ring to consider the coefficients.
 
-            The user can also get the `n`-th element of the sequence using the *magic* Python syntax for 
-            element in a list (i.e., using the ``[]`` notation).
-
-            This is an abstract method that has to be implemented in some subclass. 
-
-            INPUT:
-
-            * ``n``: the index of the element to get.
-            * ``var_name``: the name of the variable of the resulting polynomial. If ``None`` is given, 
-              we use the variable `x`. Otherwise we create the corresponding polynomial ring and 
-              return the polynomial in that polynomial ring.
+            This method allows to change the base ring (see input ``base`` in :class:`PSBasis` for further information).
         '''
-        raise NotImplementedError("Method element must be implemented in each subclass of polynomial_basis")
-        
+        raise NotImplementedError(f"Method `change_base` not implemented for {self.__class__}")
+
     def by_degree(self):
         r'''
             Getter for the type of ordering of the basis.
@@ -419,6 +426,28 @@ class PSBasis(object):
             Return ``True`` if the `n`-th element of the basis is a power series of order `n`.
         '''
         return (not self.__degree)
+
+    @property
+    def functional_seq(self) -> Sequence:
+        r'''
+            Method to get the functional sequence of the basis.
+
+            A :class:`PSBasis` can be seen as a sequence of functions or polynomials. However, these
+            functions and polynomials are sequences by themselves. In fact, a :class:`PSBasis` is 
+            a basis of the ring of formal power series which, at the same time, is a basis of the 
+            ring of sequences. 
+
+            However, the relation between the sequences and the formal power series is not unique:
+
+            * We can consider the formal power series `f(x) = \sum_n a_n x^n`, then we have the 
+              natural (also called functional) sequence `(a_n)_n`.
+            * We can consider formal power series as functions `f: \mathbb{K} \rightarrow \mathbb{K},
+              and (if convergent) we can define the (evaluation) sequence `(f(n))_n`.
+
+            This method returns a bi-indexed sequence that allows to obtain the functional sequences
+            of this basis.
+        '''
+        raise NotImplementedError("Method functional_seq must be implemented in each subclass of PSBasis")
 
     def functional_matrix(self, nrows, ncols=None):
         r'''
@@ -452,19 +481,12 @@ class PSBasis(object):
         ## Checking the arguments
         if(not ((nrows in ZZ) and nrows > 0)):
             raise ValueError("The number of rows must be a positive integer")
-        if(not ncols is None):
-            if(not ((ncols in ZZ) and ncols > 0)):
+        if(ncols is None):
+            ncols = nrows
+        elif(not ((ncols in ZZ) and ncols > 0)):
                 raise ValueError("The number of columns must be a positive integer")
-            return self._functional_matrix(nrows, ncols)
-        return self._functional_matrix(nrows, nrows)
 
-    def _functional_matrix(self, nrows, ncols):
-        r'''
-            Method that actually computes the functional matrix for basis.
-
-            In this method we have guaranteed that the arguments are positive integers.
-        '''
-        raise NotImplementedError("Method _functional_matrix must be implemented in each subclass of polynomial_basis")
+        return Matrix([[self.functional_seq(i,j) for j in range(ncols)] for i in range(nrows)])
 
     def is_quasi_func_triangular(self):
         r'''
@@ -521,6 +543,28 @@ class PSBasis(object):
             return tuple([el for el in M.solve_left(vector(sequence[:size]))])
         raise NotImplementedError("The pure quasi-triangular case not implemented yet.")
 
+    @property
+    def evaluation_seq(self) -> Sequence:
+        r'''
+            Method to get the functional sequence of the basis.
+
+            A :class:`PSBasis` can be seen as a sequence of functions or polynomials. However, these
+            functions and polynomials are sequences by themselves. In fact, a :class:`PSBasis` is 
+            a basis of the ring of formal power series which, at the same time, is a basis of the 
+            ring of sequences. 
+
+            However, the relation between the sequences and the formal power series is not unique:
+
+            * We can consider the formal power series `f(x) = \sum_n a_n x^n`, then we have the 
+              natural (also called functional) sequence `(a_n)_n`.
+            * We can consider formal power series as functions `f: \mathbb{K} \rightarrow \mathbb{K},
+              and (if convergent) we can define the (evaluation) sequence `(f(n))_n`.
+
+            This method returns a bi-indexed sequence that allows to obtain the evaluation sequences
+            of this basis.
+        '''
+        raise NotImplementedError("Method evaluation_seq must be implemented in each subclass of PSBasis")
+
     def evaluation_matrix(self, nrows, ncols=None):
         r'''
             Method to get a matrix representation of the basis.
@@ -553,19 +597,12 @@ class PSBasis(object):
         ## Checking the arguments
         if(not ((nrows in ZZ) and nrows > 0)):
             raise ValueError("The number of rows must be a positive integer")
-        if(not ncols is None):
-            if(not ((ncols in ZZ) and ncols > 0)):
+        if(ncols is None):
+            ncols = nrows
+        elif(not ((ncols in ZZ) and ncols > 0)):
                 raise ValueError("The number of columns must be a positive integer")
-            return self._evaluation_matrix(nrows, ncols)
-        return self._evaluation_matrix(nrows, nrows)
 
-    def _evaluation_matrix(self, nrows, ncols):
-        r'''
-            Method that actually computes the matrix for basis.
-
-            In this method we have guaranteed that the arguments are positive integers.
-        '''
-        raise NotImplementedError("Method _evaluation_matrix must be implemented in each subclass of polynomial_basis")
+        return Matrix([[self.evaluation_seq(i,j) for j in range(ncols)] for i in range(nrows)])
 
     def is_quasi_eval_triangular(self):
         r'''
@@ -649,7 +686,7 @@ class PSBasis(object):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # illegal build just for examples
+                sage: B = PSBasis(QQ) # illegal build just for examples
                 sage: Sn = B.Sn(); Sni = B.Sni()
                 sage: Sn*Sni
                 Sn*Sni
@@ -716,7 +753,7 @@ class PSBasis(object):
             EXAMPLES::
 
                 sage: from pseries_basis import *
-                sage: B = PSBasis() # do not do this in your code
+                sage: B = PSBasis(QQ) # do not do this in your code
                 sage: Sn = B.Sn(); Sni = B.Sni()
                 sage: B.remove_Sni(Sni)
                 1
@@ -731,17 +768,8 @@ class PSBasis(object):
         d = operator.degree(Sni)
         return self.OSS()(self.reduce_SnSni((Sn**d)*operator))
     
-    def polynomial_ring(self,var_name='x'):
-        r'''
-            Method to create a polynomial ring.
-
-            This method creates a polynomial ring with a given variable name
-            with coefficients in the field given by default by :func:`OB`.
-        '''
-        return PolynomialRing(self.OB().base(), [var_name])
-    
     ### COMPATIBILITY RELATED METHODS
-    def set_compatibility(self, name, trans, sub=False):
+    def set_compatibility(self, name, trans, sub=False, type=None):
         r'''
             Method to set a new compatibility operator.
 
@@ -776,6 +804,8 @@ class PSBasis(object):
               `\alpha_{i,j,k}`.
             * ``sub`` (optional): if set to ``True``, the compatibility rule for ``name``
               will be updated even if the operator was already compatible.
+            * ``type`` (optional): if set to ``"endo"`` or ``"der"``, we assume the operator given in 
+              ``name`` is either a endomorphism or derivation.
         '''
         name = str(name)
         
@@ -803,7 +833,50 @@ class PSBasis(object):
                     [self.OB()(trans.constant_coefficient())] + 
                     [self.OB()(trans.coefficient({Sni:i}))(n=n+i) for i in range(1, B+1)])
             self.__compatibility[name] = (ZZ(A), ZZ(B), ZZ(1), lambda i, j, k: alpha[j+A](n=k))
-                    
+
+        if type in ("endo", "der"):
+            if name in self.__derivations:
+                self.__derivations.remove(name)
+            elif name in self.__endomorphisms:
+                self.__endomorphisms.remove(name)
+
+            if type == "endo": self.__endomorphisms.append(name)
+            if type == "der": self.__derivations.append(name)
+
+    def set_endomorphism(self, name, trans, sub=False):
+        r'''
+            Method to set a new compatibility operator for an endomorphism.
+
+            This method sets a new compatibility condition for an operator given 
+            by ``name`` (see :func:`set_compatibility`). We assume the name 
+            is for an endomorphism, i.e., let `\varphi` be the operator represented by ``name``. 
+            Then for all `a,b in \mathbb{K}[[x]]`, it holds
+
+            .. MATH::
+
+                \varphi(ab) = \varphi(a) \varphi(b)
+            
+            INPUT: see input in :func:`set_compatibility`.
+        '''
+        self.set_compatibility(name, trans, sub, "endo")
+
+    def set_derivation(self, name, trans, sub=False):
+        r'''
+            Method to set a new compatibility operator for a derivation.
+
+            This method sets a new compatibility condition for an operator given 
+            by ``name`` (see :func:`set_compatibility`). We assume the name 
+            is for a derivation, i.e., let `\partial` be the operator represented by ``name``. 
+            Then for all `a,b in \mathbb{K}[[x]]`, it holds
+
+            .. MATH::
+
+                \partial(ab) = \partial(a)b +  a\partial(b)
+            
+            INPUT: see input in :func:`set_compatibility`.
+        '''
+        self.set_compatibility(name, trans, sub, "der")
+
     @cached_method
     def get_lower_bound(self, operator):
         r'''
@@ -882,15 +955,27 @@ class PSBasis(object):
                 dict_keys(['x', 'Dx'])
                 sage: B = FallingBasis(1,2,3)
                 sage: B.compatible_operators()
-                dict_keys(['x', 'E'])
+                dict_keys(['x', 'E3'])
                 
             This output gets updated when we add new compatibilities
                 
                 sage: B.set_compatibility('s', 1)
                 sage: B.compatible_operators()
-                dict_keys(['x', 'E', 's'])
+                dict_keys(['x', 'E3', 's'])
         '''
         return self.__compatibility.keys()
+
+    def compatible_endomorphisms(self):
+        r'''
+            Method to get the registered endomorphisms compatible with ``self``.
+        '''
+        return self.__endomorphisms
+
+    def compatible_derivations(self):
+        r'''
+            Method to get the registered derivations compatible with ``self``.
+        '''
+        return self.__derivations
 
     def has_compatibility(self, operator):
         r'''
@@ -906,7 +991,7 @@ class PSBasis(object):
 
             OUTPUT:
 
-            ``True`` if the givenoperator is compatible and ``False`` otherwise.
+            ``True`` if the given operator is compatible and ``False`` otherwise.
 
             EXAMPLES::
 
@@ -922,10 +1007,10 @@ class PSBasis(object):
                 sage: HermiteBasis().has_compatibility('Dx')
                 True
                 sage: B = FallingBasis(1,2,3)
-                sage: B.has_compatibility('E')
+                sage: B.has_compatibility('E3')
                 True
                 
-            This output gets updated when we add new compatibilities
+            This output gets updated when we add new compatibilities::
                 
                 sage: B.has_compatibility('s')
                 False
@@ -935,6 +1020,64 @@ class PSBasis(object):
         '''
         return str(operator) in self.__compatibility
 
+    def compatibility_type(self, operator):
+        r'''
+            Method to know if an operator has compatibility of a specific type.
+
+            This method checks whether the operator given has a compatibility of
+            endomorphism type or derivation type.
+
+            INPUT:
+
+            * ``operator``: the operator we want to know if it is compatible or not.
+              It can be a string or an object that will be transformed into a string
+              to check if the compatibility is included.
+
+            OUTPUT:
+
+            ``"endo"`` if the given operator is considered an endomorphism, ``"der"``
+            if it is considered a derivation and ``None`` otherwise.
+
+            EXAMPLES::
+
+                sage: from pseries_basis import *
+                sage: BinomialBasis().compatibility_type('x')
+                sage: BinomialBasis().compatibility_type('E')
+                'endo'
+                sage: BinomialBasis().compatibility_type('Id')
+                Traceback (most recent call last):
+                ...
+                NotCompatibleError: operator Id is not compatible with this basis
+                sage: PowerBasis().compatibility_type('Id')
+                'endo'
+                sage: HermiteBasis().compatibility_type('Dx')
+                'der'
+                sage: B = FallingBasis(1,2,3)
+                sage: B.compatibility_type('E3')
+                'endo'
+                
+            This output gets updated when we add new compatibilities::
+                
+                sage: B.compatibility_type('s')
+                Traceback (most recent call last):
+                ...
+                NotCompatibleError: operator s is not compatible with this basis
+                sage: B.set_compatibility('s', 1)
+                sage: B.compatibility_type('s')
+                sage: B.set_endomorphism('t', 10)
+                sage: B.compatibility_type('t')
+                'endo'
+        '''
+        operator = str(operator)
+        if not self.has_compatibility(operator):
+            raise NotCompatibleError(f"operator {operator} is not compatible with this basis")
+        if operator in self.__derivations:
+            return "der"
+        elif operator in self.__endomorphisms:
+            return "endo"
+        else:
+            return None
+        
     def compatibility(self, operator):
         r'''
             Method to get the compatibility condition for an operator.
@@ -971,10 +1114,10 @@ class PSBasis(object):
                 sage: alpha(0,0,n), alpha(0,1,n), alpha(0,2,n)
                 (n^2, 2*n^2 + 3*n + 1, n^2 + 3*n + 2)
 
-            The method :func:`~pseries_basis.misc.check_compatibility` can check that these tuples are
+            The method :func:`~pseries_basis.psbasis.check_compatibility` can check that these tuples are
             correct for the first terms of the basis::
 
-                sage: x = B[1].parent().gens()[0]
+                sage: x = B.universe.gens()[0]
                 sage: check_compatibility(B, B.compatibility(2*x^2 + 3), lambda p :(2*x^2 + 3)*p)
                 True
 
@@ -1007,7 +1150,7 @@ class PSBasis(object):
 
             This method also allows to get compatibility in different sections::
 
-                sage: P = ProductBasis([B,B], ends=['E'])
+                sage: P = ProductBasis([B,B])
                 sage: a,b,m,alpha = P.compatibility('E')
                 sage: a,b,m
                 (2, 0, 2)
@@ -1070,10 +1213,7 @@ class PSBasis(object):
                     else: # monomial with several variables 
                         comps = [self.compatibility(v**m.degree(v)) for v in g] 
 
-                    while(len(comps) > 1):
-                        comps += [self.__prod2_case(comps.pop(), comps.pop())]
-                    
-                    A,B,m,alphas = comps[0]
+                    A,B,m,alphas = reduce(lambda comp1, comp2 : self.__prod2_case(comp1, comp2), comps[::-1])
                     self.__compatibility[str(operator)] = (A,B,m,lambda i,j,k : c*alphas(i,j,k))
                 else:
                     comps = [self.compatibility(m) for m in mons]
@@ -1198,7 +1338,7 @@ class PSBasis(object):
             We can also use the operators from :class:`ore_algebra.OreAlgebra` to get the compatibility. Here
             we see some examples extracted from Example 25 in :arxiv:`2202.05550`::
 
-                sage: from pseries_basis.ore import get_recurrence_algebra
+                sage: from pseries_basis.misc.ore import get_recurrence_algebra
                 sage: OE, (x,E) = get_recurrence_algebra("x", "E", rational=False)
                 sage: example25_1 = E - 3; B.recurrence(example25_1)
                 Sn - 2
@@ -1577,7 +1717,7 @@ class PSBasis(object):
         compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
         for key in compatibilities:
             A, B, m, alpha = self.compatibility(key)
-            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*(factor(n=k*m+i)/factor(k*m+i+j))))
+            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*(factor(n=k*m+i)/factor(k*m+i+j))), type=self.compatibility_type(key))
             
         return
 
@@ -1618,24 +1758,11 @@ class PSBasis(object):
         compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
         for key in compatibilities:
             A, B, m, alpha = self.compatibility(key)
-            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*_Q(1/quotient, k*m+i, j)))
+            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*_Q(1/quotient, k*m+i, j)), type=self.compatibility_type(key))
             
         return
 
     ### MAGIC METHODS
-    def __getitem__(self, n):
-        r'''
-            See method :func:`element`
-        '''
-        if(isinstance(n, slice)):
-            return [self[i] for i in range(n.stop)[n]]
-        return self.element(n)
-
-    def __call__(self, n):
-        r'''
-            See method :func:`element`
-        '''
-
     def __mul__(self,other):
         r'''
             See method :func:`scalar`.
@@ -1684,12 +1811,16 @@ class BruteBasis(PSBasis):
 
         * ``elements``: function or lambda method that takes one parameter `n` and return the `n`-th element
           of this basis.
+        * ``base``: base domain for the sequences this basis represents.
+        * ``universe``: domain where the elements of the bais will be represented.
         * ``degree``: indicates if it is a polynomial basis or an order basis.
+        * ``var_name``: (only used if ``universe`` is None and ``degree`` is True) provides a name for the main variable
+          of the polynomials that compose this basis.
 
         EXAMPLES::
 
             sage: from pseries_basis import *
-            sage: B = BruteBasis(lambda n : QQ[x](binomial(x,n)), True)
+            sage: B = BruteBasis(lambda n : binomial(x,n), QQ, degree=True)
             sage: B2 = BinomialBasis()
             sage: all(B[i] == B2[i] for i in range(100))
             True
@@ -1697,64 +1828,55 @@ class BruteBasis(PSBasis):
         **Be careful**: this method does not check that the lambda function induces a basis nor that 
         the ``degree`` argument is correct::
 
-            sage: B = BruteBasis(lambda n : 0, False)
+            sage: B = BruteBasis(lambda n : 0, ZZ, ZZ, False)
             sage: all(B[i] == 0 for i in range(100))
             True
     '''
-    def __init__(self, elements, degree=True):
-        super().__init__(degree)
+    def __init__(self, elements, base, universe=None, degree=True, var_name=None):
+        super().__init__(base, universe, degree, var_name)
         self.__get_element = elements
 
+    def change_base(self, base):
+        return BruteBasis(
+            self.__get_element, 
+            base, 
+            self.universe, 
+            self.by_degree(), 
+            str(self.universe.gens()[0]) if is_PolynomialRing(self.universe) and self.by_degree() else None
+        )
+
     @cached_method
-    def element(self, n, var_name=None):
+    def _element(self, n):
         r'''
             Method to return the `n`-th element of the basis.
 
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.element` for further information.
+            This method *implements* the corresponding abstract method from :class:`~pseries_basis.misc.sequences.Sequence`.
+            See method :func:`~pseries_basis.misc.sequences.element` for further information.
         '''
-        if(var_name is None):
-            name = 'x'
+        output = self.__get_element(n)
+
+        return output if self.universe is None else self.universe(output)
+
+    @PSBasis.functional_seq.getter
+    def functional_seq(self) -> Sequence:
+        if is_PolynomialRing(self.universe):
+            return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
+        elif self.universe is SR:
+            return LambdaSequence(lambda k,n: self(k).taylor(self(k).variables()[0], 0, n).polynomial(self.base)[k], self.base, 2, False)
         else:
-            name = var_name
+            return LambdaSequence(lambda k,n : self(k).derivative(times=n)(0)/factorial(n), self.base, 2, False)
 
-        if(self.by_degree()):
-            return self.polynomial_ring(name)(self.__get_element(n))
-        return self.__get_element(n)
-
-    def _functional_matrix(self, nrows, ncols):
-        r'''
-            Method to get a matrix representation of the basis.
-            
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.functional_matrix` for further information.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: from ajpastor.dd_functions import *
-                sage: B = BruteBasis(lambda n : BesselD(n), False)
-                sage: B2 = BruteBasis(lambda n : bessel_J(n,x), False)
-                sage: B3 = BesselBasis()
-                sage: B.functional_matrix(4,5) == B2.functional_matrix(4,5)
-                True
-                sage: B.functional_matrix(6,7)
-                [      1       0    -1/4       0    1/64       0 -1/2304]
-                [      0     1/2       0   -1/16       0   1/384       0]
-                [      0       0     1/8       0   -1/96       0  1/3072]
-                [      0       0       0    1/48       0  -1/768       0]
-                [      0       0       0       0   1/384       0 -1/7680]
-                [      0       0       0       0       0  1/3840       0]
-                sage: B3.functional_matrix(10) == B.functional_matrix(10)
-                True
-        '''
-        try:
-            return Matrix([[self[n].sequence(k) for k in range(ncols)] for n in range(nrows)])
-        except AttributeError:
-            return Matrix([[diff(self[n], k)(x=0)/factorial(k) for k in range(ncols)] for n in range(nrows)])
+    @PSBasis.evaluation_seq.getter
+    def evaluation_seq(self) -> Sequence:
+        if is_PolynomialRing(self.universe):
+            return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
+        elif self.universe is SR:
+            return LambdaSequence(lambda k,n: self(k)(**{str(self(k).variables()[0]) : n}), self.base, 2, False)
+        else:
+            return LambdaSequence(lambda k,n : self(k)(n), self.base, 2, False)
 
     def __repr__(self):
-        return "Brute basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])
+        return f"Brute basis: ({self[0]}, {self[1]}, {self[2]}, ...)"
 
     def _latex_(self):
         return r"Brute basis: \left(%s, %s, %s, \ldots\right)" %(latex(self[0]), latex(self[1]), latex(self[2]))
@@ -1772,130 +1894,16 @@ class PolyBasis(PSBasis):
 
         * :func:`PSBasis.element`.
     '''
-    def __init__(self):
-        super(PolyBasis,self).__init__(True)
+    def __init__(self, base=QQ, var_name=None):
+        super(PolyBasis,self).__init__(base, None, True, var_name)
 
-    def _functional_matrix(self, nrows, ncols):
-        r'''
-            Method to get a matrix representation of the basis.
-            
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.functional_matrix` for further information.
+    @PSBasis.functional_seq.getter
+    def functional_seq(self) -> Sequence:
+        return LambdaSequence(lambda k,n : self[k][n], self.base, 2, False)
 
-            In particular for a :class:`PolyBasis`, the elements `P_n(x)` have degree `n` for each
-            value of `n \in \mathbb{N}`. This means that we can write:
-
-            .. MATH::
-
-                P_n(x) = \sum_{k=0}^n a_{n,k} x^k
-
-            And by taking `a_{n,k} = 0` for all `k > 0`, we can build the matrix 
-            `M = \left(a_{n,k}\right)_{n,k \geq 0}` with the following shape:
-
-            .. MATH::
-
-                \begin{pmatrix}P_0(x)\\P_1(x)\\P_2(x)\\P_3(x)\\\vdots\end{pmatrix} = 
-                \begin{pmatrix}
-                    a_{0,0} & 0 & 0 & 0 & \ldots\\
-                    a_{1,0} & a_{1,1} & 0 & 0 & \ldots\\
-                    a_{2,0} & a_{2,1} & a_{2,2} & 0 & \ldots\\
-                    a_{3,0} & a_{3,1} & a_{3,2} & a_{3,3} & \ldots\\
-                    \vdots&\vdots&\vdots&\vdots&\ddots
-                \end{pmatrix} \begin{pmatrix}1\\x\\x^2\\x^3\\\vdots\end{pmatrix}
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = BinomialBasis()
-                sage: B.functional_matrix(5,5)
-                [    1     0     0     0     0]
-                [    0     1     0     0     0]
-                [    0  -1/2   1/2     0     0]
-                [    0   1/3  -1/2   1/6     0]
-                [    0  -1/4 11/24  -1/4  1/24]
-                sage: B.functional_matrix(7,3)
-                [      1       0       0]
-                [      0       1       0]
-                [      0    -1/2     1/2]
-                [      0     1/3    -1/2]
-                [      0    -1/4   11/24]
-                [      0     1/5   -5/12]
-                [      0    -1/6 137/360]
-                sage: H = HermiteBasis()
-                sage: H.functional_matrix(5,5)
-                [  1   0   0   0   0]
-                [  0   2   0   0   0]
-                [ -2   0   4   0   0]
-                [  0 -12   0   8   0]
-                [ 12   0 -48   0  16]
-                sage: P = PowerBasis(1,1)
-                sage: P.functional_matrix(5,5)
-                [1 0 0 0 0]
-                [1 1 0 0 0]
-                [1 2 1 0 0]
-                [1 3 3 1 0]
-                [1 4 6 4 1]
-        '''
-        return Matrix([[self[n][k] for k in range(ncols)] for n in range(nrows)])
-    
-    def _evaluation_matrix(self, nrows, ncols):
-        r'''
-            Method to get a matrix representation of the basis.
-            
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.evaluation_matrix` for further information.
-
-            In particular for a :class:`PolyBasis`, the position `(i,j)` of this evaluation matrix is the evaluation of 
-            the `i`-th polynomial at value `j`:
-
-            .. MATH::
-
-                \begin{pmatrix}
-                    P_0(0) & P_0(1) & P_0(2) & P_0(3) & \ldots\\
-                    P_1(0) & P_1(1) & P_1(2) & P_1(3) & \ldots\\
-                    P_2(0) & P_2(1) & P_2(2) & P_2(3) & \ldots\\
-                    P_3(0) & P_3(1) & P_3(2) & P_3(3) & \ldots\\
-                    \vdots&\vdots&\vdots&\vdots&\ddots
-                \end{pmatrix}
-
-            This matrix can (sometimes) be used for changing the coordinates of a sequence between the canonical 
-            basis and the represented bases. These bases (where this transformation can be performed) are called 
-            quasi-triangular bases (see method :func:`is_quasi_eval_triangular`).
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = BinomialBasis()
-                sage: B.evaluation_matrix(5,5)
-                [1 1 1 1 1]
-                [0 1 2 3 4]
-                [0 0 1 3 6]
-                [0 0 0 1 4]
-                [0 0 0 0 1]
-                sage: B.evaluation_matrix(7,3)
-                [1 1 1]
-                [0 1 2]
-                [0 0 1]
-                [0 0 0]
-                [0 0 0]
-                [0 0 0]
-                [0 0 0]
-                sage: H = HermiteBasis()
-                sage: H.evaluation_matrix(5,5)
-                [   1    1    1    1    1]
-                [   0    2    4    6    8]
-                [  -2    2   14   34   62]
-                [   0   -4   40  180  464]
-                [  12  -20   76  876 3340]
-                sage: P = PowerBasis(1,1)
-                sage: P.evaluation_matrix(5,5)
-                [  1   1   1   1   1]
-                [  1   2   3   4   5]
-                [  1   4   9  16  25]
-                [  1   8  27  64 125]
-                [  1  16  81 256 625]
-        '''
-        return Matrix([[self[n](k) for k in range(ncols)] for n in range(nrows)])
+    @PSBasis.evaluation_seq.getter
+    def evaluation_seq(self) -> Sequence:
+        return LambdaSequence(lambda k,n : self[k](n), self.base, 2, False)
 
     def __repr__(self):
         return "PolyBasis -- WARNING: this is an abstract class"
@@ -1913,59 +1921,51 @@ class OrderBasis(PSBasis):
 
         * :func:`PSBasis.element`.
     '''
-    def __init__(self):
-        super(OrderBasis,self).__init__(False)
+    def __init__(self, base=QQ, universe=None):
+        super(OrderBasis,self).__init__(base, universe, False)
 
-    def _functional_matrix(self, nrows, ncols):
-        r'''
-            Method to get a matrix representation of the basis.
-            
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-            See method :func:`~pseries_basis.psbasis.PSBasis.functional_matrix` for further information.
-            
-            In an order basis, the `n`-th element of the basis is always a formal power series
-            of order `n`. Hence, we can consider the infinite matrix where the coefficient
-            `m_{i,j} = [x^j]f_i(x) = a_{i,j}` and the matrix have the following shape:
+    @PSBasis.functional_seq.getter
+    def functional_seq(self) -> Sequence:
+        if is_PolynomialRing(self.universe):
+            return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
+        elif self.universe is SR:
+            return LambdaSequence(lambda k,n: self(k).taylor(self(k).variables()[0], 0, n).polynomial(self.base)[k], self.base, 2, False)
+        else:
+            return LambdaSequence(lambda k,n : self(k).derivative(times=n)(0)/factorial(n), self.base, 2, False)
 
-            .. MATH::
-
-                \begin{pmatrix}
-                    a_{0,0} & a_{0,1} & a_{0,2} & a_{0,3} & \ldots\\
-                    0 & a_{1,1} & a_{1,2} & a_{1,3} & \ldots\\
-                    0 & 0 & a_{2,2} & a_{2,3} & \ldots\\
-                    0 & 0 & 0 & a_{3,3} & \ldots\\
-                    \vdots&\vdots&\vdots&\vdots&\ddots
-                \end{pmatrix}
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = FunctionalBasis(sin(x))
-                sage: B.functional_matrix(5,5)
-                [   1    0    0    0    0]
-                [   0    1    0 -1/6    0]
-                [   0    0    1    0 -1/3]
-                [   0    0    0    1    0]
-                [   0    0    0    0    1]
-                sage: ExponentialBasis().functional_matrix(4,7)
-                [     1      0      0      0      0      0      0]
-                [     0      1    1/2    1/6   1/24  1/120  1/720]
-                [     0      0      1      1   7/12    1/4 31/360]
-                [     0      0      0      1    3/2    5/4    3/4]
-                sage: BesselBasis().functional_matrix(3,6)
-                [    1     0  -1/4     0  1/64     0]
-                [    0   1/2     0 -1/16     0 1/384]
-                [    0     0   1/8     0 -1/96     0]
-        '''
-        try:
-            return Matrix([[self[n].sequence(k) for k in range(ncols)] for n in range(nrows)])
-        except AttributeError:
-            return Matrix([[diff(self[n], k)(x=0)/factorial(k) for k in range(ncols)] for n in range(nrows)])
-    
     def is_quasi_func_triangular(self):
         return True
 
     def __repr__(self):
-        return "PolyBasis -- WARNING: this is an abstract class"
+        return "OrderBasis -- WARNING: this is an abstract class"
 
-__all__ = ["PSBasis", "BruteBasis", "PolyBasis", "OrderBasis"]
+def check_compatibility(basis, operator, action, bound=100):
+    r'''
+        Method that checks that a compatibility formula holds for some examples.
+
+        This method takes a :class:`PSBasis`, an operator compatibility (either a tuple with the 
+        compatibility data or the operator that must be compatible with the basis), an actions with the 
+        map for the opertator and a bound and checks that the induced compatibility identity holds for 
+        the first terms of the basis.
+
+        INPUT:
+
+        * ``basis``: a :class:`PSBasis` to be checked.
+        * ``operator``: a tuple `(A,B,m,\alpha)` with the compatibility condition (see :func:`PSBasis.compatibility`)
+          or a valid input of that method.
+        * ``action``: a map that takes elements in ``basis.universe`` and perform the operation of ``operator``.
+        * ``bound``: positive integer with the number of cases to be checked.
+    '''
+    if(isinstance(operator, tuple)):
+        a,b,m,alpha = operator
+    else:
+        a,b,m,alpha = basis.compatibility(operator)
+        
+    mm = int(ceil(a/m))
+    return all(
+        all(
+            sum(basis[k*m+r+i]*basis.base(alpha(r,i,k)) for i in range(-a,b+1)) == action(basis[k*m+r]) 
+            for r in range(m)) 
+        for k in range(mm, bound))
+
+__all__ = ["PSBasis", "BruteBasis", "PolyBasis", "OrderBasis", "check_compatibility"]

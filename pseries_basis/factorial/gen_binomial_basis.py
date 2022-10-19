@@ -6,11 +6,13 @@ try: # python 3.9 or higher
     from functools import cache
 except ImportError: #python 3.8 or lower
     from functools import lru_cache as cache
-from sage.all import ZZ, Matrix, vector, ceil, factorial, PolynomialRing, QQ
+    
+from sage.all import ZZ, Matrix, vector, factorial, QQ
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 
-from pseries_basis.psbasis import PSBasis
-from pseries_basis.factorial_basis import FallingBasis,BinomialBasis
-from pseries_basis.product_basis import SievedBasis, ProductBasis
+from ..psbasis import PSBasis, check_compatibility
+from .factorial_basis import FallingBasis,BinomialBasis
+from .product_basis import SievedBasis, ProductBasis
 
 def DefiniteSumSolutions(operator, *input):
     r'''
@@ -86,7 +88,7 @@ def DefiniteSumSolutions(operator, *input):
         return BinomialBasis(a[0],b[0],E=E).recurrence(operator)
     
     ## Building the appropriate ProductBasis
-    B = ProductBasis([BinomialBasis(a[i],b[i],E=E) for i in range(m)], ends=[E])
+    B = ProductBasis([BinomialBasis(a[i],b[i],E=E) for i in range(m)])
     
     ## Getting the compatibility matrix R(operator)
     compatibility = B.recurrence(operator)
@@ -160,7 +162,7 @@ def GeneralizedBinomial(a,b,c,m,r):
     if(m == 1 and b == 0 and r == 0):
         return BinomialBasis(a,c) 
     
-    n = PSBasis.n(None)
+    n = PSBasis(QQ).n()
     
     ## Basis for the roots on the first factor:
     F1 = [FallingBasis(a, c-r-i, (m-b)) for i in range(m-b)]
@@ -173,9 +175,9 @@ def GeneralizedBinomial(a,b,c,m,r):
     if(r == 0):
         guessed_compatibility = guess_compatibility_E(basis, shift=1/a, sections=m)
         assert(check_compatibility(basis, guessed_compatibility, lambda p: p(x=x+1/a)))
-        basis.set_compatibility('Et', guessed_compatibility)
+        basis.set_endomorphism('Et', guessed_compatibility)
         APR = PolynomialRing(QQ, 'Et'); Et = APR.gens()[0]
-        basis.set_compatibility('E', basis.compatibility((Et**a)))
+        basis.set_endomorphism('E', basis.compatibility((Et**a)))
         
     return basis
 
@@ -349,7 +351,6 @@ def guess_compatibility_E(basis, shift = 1, sections = None, A = None, bound_roo
     ## returning the compatibility tuple
     return (A, 0, F, lambda i,j,k : functions[i][-j](n=F*k+j))
     
-        
 def guess_rational_function(data, algebra):
     # special case all zero
     if(all(el == 0 for el in data)):
@@ -372,14 +373,4 @@ def guess_rational_function(data, algebra):
 
     return sum(sol[i]*solutions[i][0] for i in range(nsols))
 
-def check_compatibility(basis, operator, action, bound=100):
-    if(isinstance(operator, tuple)):
-        a,b,m,alpha = operator
-    else:
-        a,b,m,alpha = basis.compatibility(operator)
-    mm = int(ceil(a/m))
-    return all(
-        all(
-            sum(basis[k*m+r+i]*alpha(r,i,k) for i in range(-a,b+1)) == action(basis[k*m+r]) 
-            for r in range(m)) 
-        for k in range(mm, bound))
+__all__ = ["DefiniteSumSolutions","GeneralizedBinomial","guess_compatibility_E"]

@@ -14,7 +14,7 @@
 
 # General information about the project.
 project = u"Inverse Zeibelger Problem: Power Series basis for Sage"
-copyright = u'2019'
+copyright = u'2022'
 package_name = 'pseries_basis'
 package_folder = "../../pseries_basis"
 authors = u"Antonio Jimenez-Pastor"
@@ -130,7 +130,7 @@ extlinks = {
     'sageref': ('https://doc.sagemath.org/html/en/reference/%s', 'Sage_doc:'),
     'fungrim': ('https://fungrim.org/entry/%s', 'Fungrim:'),
     'fungrimT': ('https://fungrim.org/topic/%s', 'Fungrim:'),
-    'issue': ('https://github.com/Antonio-JP/dd_functions/issues/%s', 'GitHub/Issue:#')
+    'issue': ('https://github.com/Antonio-JP/pseries_basis/issues/%s', 'GitHub/Issue:#')
     }
 
 # -- Options for HTML output ----------------------------------------------

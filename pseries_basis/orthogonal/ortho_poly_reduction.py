@@ -1,4 +1,5 @@
-from sage.all import PolynomialRing, FractionField, QQ
+from sage.all import FractionField, QQ
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 
 ## Basic variables for replicating the reductions
 R = PolynomialRing(QQ, ['a','b','n'])

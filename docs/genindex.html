@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</title>
+    <title>Index &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
@@ -26,7 +26,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Index</a></li> 
       </ul>
     </div>  
@@ -68,17 +68,19 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.A">A (pseries_basis.psbasis.PSBasis attribute)</a>
 </li>
-      <li><a href="pseries_basis/sequences.html#pseries_basis.sequences.Sequence.almost_zero">almost_zero() (pseries_basis.sequences.Sequence method)</a>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.Sequence.allow_sym">allow_sym (pseries_basis.misc.sequences.Sequence attribute)</a>
 </li>
-      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.alpha">alpha (pseries_basis.psbasis.PSBasis attribute)</a>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.Sequence.almost_equals">almost_equals() (pseries_basis.misc.sequences.Sequence method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.an">an (pseries_basis.factorial_basis.FactorialBasis attribute)</a>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.Sequence.almost_zero">almost_zero() (pseries_basis.misc.sequences.Sequence method)</a>
 </li>
-      <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.appear">appear() (pseries_basis.product_basis.SievedBasis method)</a>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.alpha">alpha (pseries_basis.psbasis.PSBasis attribute)</a>
 </li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.apply_operator_to_seq">apply_operator_to_seq() (in module pseries_basis.ore)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.an">an (pseries_basis.factorial.factorial_basis.FactorialBasis attribute)</a>
+</li>
+      <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.appear">appear() (pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -88,13 +90,17 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.B">B (pseries_basis.psbasis.PSBasis attribute)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.basis">basis (pseries_basis.factorial_basis.ScalarBasis attribute)</a>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.base">base (pseries_basis.psbasis.PSBasis attribute)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.BinomialBasis">BinomialBasis (class in pseries_basis.factorial_basis)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.basis">basis (pseries_basis.factorial.factorial_basis.ScalarBasis attribute)</a>
+</li>
+      <li><a href="pseries_basis/order/fun_basis.html#pseries_basis.order.fun_basis.BesselBasis">BesselBasis (class in pseries_basis.order.fun_basis)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.bn">bn (pseries_basis.factorial_basis.FactorialBasis attribute)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.BinomialBasis">BinomialBasis (class in pseries_basis.factorial.factorial_basis)</a>
+</li>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.bn">bn (pseries_basis.factorial.factorial_basis.FactorialBasis attribute)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.BruteBasis">BruteBasis (class in pseries_basis.psbasis)</a>
 </li>
@@ -108,45 +114,67 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/misc.html#pseries_basis.misc.check_compatibility">check_compatibility() (in module pseries_basis.misc)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.BinomialBasis.change_base">change_base() (pseries_basis.factorial.factorial_basis.BinomialBasis method)</a>
+
+      <ul>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FallingBasis.change_base">(pseries_basis.factorial.factorial_basis.FallingBasis method)</a>
 </li>
-      <li><a href="pseries_basis/io.html#pseries_basis.io.EnhOEISSequence.check_consistency">check_consistency() (pseries_basis.io.EnhOEISSequence method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.PowerBasis.change_base">(pseries_basis.factorial.factorial_basis.PowerBasis method)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.cn">cn (pseries_basis.factorial_basis.FactorialBasis attribute)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.RootSequenceBasis.change_base">(pseries_basis.factorial.factorial_basis.RootSequenceBasis method)</a>
+</li>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.change_base">(pseries_basis.factorial.factorial_basis.ScalarBasis method)</a>
+</li>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.SFactorialBasis.change_base">(pseries_basis.factorial.factorial_basis.SFactorialBasis method)</a>
+</li>
+        <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.BruteBasis.change_base">(pseries_basis.psbasis.BruteBasis method)</a>
+</li>
+        <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.change_base">(pseries_basis.psbasis.PSBasis method)</a>
+</li>
+      </ul></li>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.check_compatibility">check_compatibility() (in module pseries_basis.psbasis)</a>
+</li>
+      <li><a href="pseries_basis/misc/io.html#pseries_basis.misc.io.EnhOEISSequence.check_consistency">check_consistency() (pseries_basis.misc.io.EnhOEISSequence method)</a>
+</li>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.cn">cn (pseries_basis.factorial.factorial_basis.FactorialBasis attribute)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.compatibility">compatibility() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.compatibility_coefficient">compatibility_coefficient() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.compatibility_matrix">compatibility_matrix() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.compatibility_sections">compatibility_sections() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.compatible_division">compatible_division() (pseries_basis.factorial_basis.FactorialBasis method)</a>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.compatibility_type">compatibility_type() (pseries_basis.psbasis.PSBasis method)</a>
+</li>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.compatible_derivations">compatible_derivations() (pseries_basis.psbasis.PSBasis method)</a>
+</li>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.compatible_division">compatible_division() (pseries_basis.factorial.factorial_basis.FactorialBasis method)</a>
 
       <ul>
-        <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.compatible_division">(pseries_basis.product_basis.SievedBasis method)</a>
+        <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.compatible_division">(pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.compatible_endomorphisms">compatible_endomorphisms() (pseries_basis.psbasis.PSBasis method)</a>
+</li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.compatible_operators">compatible_operators() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
-      <li><a href="pseries_basis/misc.html#pseries_basis.misc.compute_in_basis">compute_in_basis() (in module pseries_basis.misc)</a>
-</li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.constant_coefficient">constant_coefficient() (pseries_basis.factorial_basis.FactorialBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.constant_coefficient">constant_coefficient() (pseries_basis.factorial.factorial_basis.FactorialBasis method)</a>
 
       <ul>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.RootSequenceBasis.constant_coefficient">(pseries_basis.factorial_basis.RootSequenceBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.RootSequenceBasis.constant_coefficient">(pseries_basis.factorial.factorial_basis.RootSequenceBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.constant_coefficient">(pseries_basis.factorial_basis.ScalarBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.constant_coefficient">(pseries_basis.factorial.factorial_basis.ScalarBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.SFactorialBasis.constant_coefficient">(pseries_basis.factorial_basis.SFactorialBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.SFactorialBasis.constant_coefficient">(pseries_basis.factorial.factorial_basis.SFactorialBasis method)</a>
 </li>
-        <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.constant_coefficient">(pseries_basis.product_basis.SievedBasis method)</a>
+        <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.constant_coefficient">(pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
       </ul></li>
-      <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.cycle">cycle (pseries_basis.product_basis.SievedBasis attribute)</a>
+      <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.cycle">cycle (pseries_basis.factorial.product_basis.SievedBasis attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -154,19 +182,23 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/misc.html#pseries_basis.misc.DefiniteSumSolutions">DefiniteSumSolutions() (in module pseries_basis.misc)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FallingBasis.default_shift">default_shift() (pseries_basis.factorial.factorial_basis.FallingBasis method)</a>
 </li>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.HermiteBasis.derivation_name">derivation_name() (pseries_basis.ortho_basis.HermiteBasis method)</a>
+      <li><a href="pseries_basis/factorial/gen_binomial_basis.html#pseries_basis.factorial.gen_binomial_basis.DefiniteSumSolutions">DefiniteSumSolutions() (in module pseries_basis.factorial.gen_binomial_basis)</a>
+</li>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.HermiteBasis.derivation_name">derivation_name() (pseries_basis.orthogonal.ortho_basis.HermiteBasis method)</a>
 
       <ul>
-        <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.HermitePBasis.derivation_name">(pseries_basis.ortho_basis.HermitePBasis method)</a>
+        <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.HermitePBasis.derivation_name">(pseries_basis.orthogonal.ortho_basis.HermitePBasis method)</a>
 </li>
-        <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.OrthogonalBasis.derivation_name">(pseries_basis.ortho_basis.OrthogonalBasis method)</a>
+        <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name">(pseries_basis.orthogonal.ortho_basis.OrthogonalBasis method)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/io.html#pseries_basis.io.EnhOEISSequence.dfinite_recurrence">dfinite_recurrence() (pseries_basis.io.EnhOEISSequence method)</a>
+      <li><a href="pseries_basis/misc/io.html#pseries_basis.misc.io.EnhOEISSequence.dfinite_recurrence">dfinite_recurrence() (pseries_basis.misc.io.EnhOEISSequence method)</a>
+</li>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.Sequence.dim">dim (pseries_basis.misc.sequences.Sequence attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -174,47 +206,41 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.RootSequenceBasis.element">element() (pseries_basis.factorial_basis.RootSequenceBasis method)</a>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.Sequence.element">element() (pseries_basis.misc.sequences.Sequence method)</a>
 
       <ul>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.element">(pseries_basis.factorial_basis.ScalarBasis method)</a>
+        <li><a href="pseries_basis/order/fun_basis.html#pseries_basis.order.fun_basis.BesselBasis.element">(pseries_basis.order.fun_basis.BesselBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.SFactorialBasis.element">(pseries_basis.factorial_basis.SFactorialBasis method)</a>
+      </ul></li>
+      <li><a href="pseries_basis/misc/io.html#pseries_basis.misc.io.EnhOEISSequence">EnhOEISSequence (class in pseries_basis.misc.io)</a>
 </li>
-        <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.JacobiBasis.element">(pseries_basis.ortho_basis.JacobiBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.equiv_CtD">equiv_CtD() (pseries_basis.factorial.factorial_basis.FactorialBasis method)</a>
 </li>
-        <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.OrthogonalBasis.element">(pseries_basis.ortho_basis.OrthogonalBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.equiv_DtC">equiv_DtC() (pseries_basis.factorial.factorial_basis.FactorialBasis method)</a>
 </li>
-        <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.element">(pseries_basis.product_basis.SievedBasis method)</a>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.evaluation_matrix">evaluation_matrix() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
-        <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.BruteBasis.element">(pseries_basis.psbasis.BruteBasis method)</a>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.BruteBasis.evaluation_seq">evaluation_seq (pseries_basis.psbasis.BruteBasis attribute)</a>
+
+      <ul>
+        <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PolyBasis.evaluation_seq">(pseries_basis.psbasis.PolyBasis attribute)</a>
 </li>
-        <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.element">(pseries_basis.psbasis.PSBasis method)</a>
-</li>
-        <li><a href="pseries_basis/sequences.html#pseries_basis.sequences.LambdaSequence.element">(pseries_basis.sequences.LambdaSequence method)</a>
-</li>
-        <li><a href="pseries_basis/sequences.html#pseries_basis.sequences.Sequence.element">(pseries_basis.sequences.Sequence method)</a>
+        <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.evaluation_seq">(pseries_basis.psbasis.PSBasis attribute)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/io.html#pseries_basis.io.EnhOEISSequence">EnhOEISSequence (class in pseries_basis.io)</a>
-</li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.equiv_CtD">equiv_CtD() (pseries_basis.factorial_basis.FactorialBasis method)</a>
-</li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.equiv_DtC">equiv_DtC() (pseries_basis.factorial_basis.FactorialBasis method)</a>
-</li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.eval_ore_operator">eval_ore_operator() (in module pseries_basis.ore)</a>
-</li>
-      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.evaluation_matrix">evaluation_matrix() (pseries_basis.psbasis.PSBasis method)</a>
-</li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.evaluation_to_self">evaluation_to_self() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
-      <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.extend_compatibility_D">extend_compatibility_D() (pseries_basis.product_basis.SievedBasis method)</a>
+      <li><a href="pseries_basis/order/fun_basis.html#pseries_basis.order.fun_basis.ExponentialBasis">ExponentialBasis (class in pseries_basis.order.fun_basis)</a>
 </li>
-      <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.extend_compatibility_E">extend_compatibility_E() (pseries_basis.product_basis.SievedBasis method)</a>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.ExpressionSequence">ExpressionSequence (class in pseries_basis.misc.sequences)</a>
 </li>
-      <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.extend_compatibility_X">extend_compatibility_X() (pseries_basis.product_basis.SievedBasis method)</a>
+      <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.extend_compatibility_D">extend_compatibility_D() (pseries_basis.factorial.product_basis.SievedBasis method)</a>
+</li>
+      <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.extend_compatibility_E">extend_compatibility_E() (pseries_basis.factorial.product_basis.SievedBasis method)</a>
+</li>
+      <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.extend_compatibility_X">extend_compatibility_X() (pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.extended_quo_rem">extended_quo_rem() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
@@ -224,17 +250,29 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis">FactorialBasis (class in pseries_basis.factorial_basis)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis">FactorialBasis (class in pseries_basis.factorial.factorial_basis)</a>
 </li>
-      <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.factors">factors (pseries_basis.product_basis.SievedBasis attribute)</a>
+      <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.factors">factors (pseries_basis.factorial.product_basis.SievedBasis attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FallingBasis">FallingBasis (class in pseries_basis.factorial_basis)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FallingBasis">FallingBasis (class in pseries_basis.factorial.factorial_basis)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.functional_matrix">functional_matrix() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.BruteBasis.functional_seq">functional_seq (pseries_basis.psbasis.BruteBasis attribute)</a>
+
+      <ul>
+        <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.OrderBasis.functional_seq">(pseries_basis.psbasis.OrderBasis attribute)</a>
+</li>
+        <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PolyBasis.functional_seq">(pseries_basis.psbasis.PolyBasis attribute)</a>
+</li>
+        <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.functional_seq">(pseries_basis.psbasis.PSBasis attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.functional_to_self">functional_to_self() (pseries_basis.psbasis.PSBasis method)</a>
+</li>
+      <li><a href="pseries_basis/order/fun_basis.html#pseries_basis.order.fun_basis.FunctionalBasis">FunctionalBasis (class in pseries_basis.order.fun_basis)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -242,33 +280,23 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.GegenbauerBasis">GegenbauerBasis (class in pseries_basis.ortho_basis)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.GegenbauerBasis">GegenbauerBasis (class in pseries_basis.orthogonal.ortho_basis)</a>
 </li>
-      <li><a href="pseries_basis/misc.html#pseries_basis.misc.GeneralizedBinomial">GeneralizedBinomial() (in module pseries_basis.misc)</a>
+      <li><a href="pseries_basis/factorial/gen_binomial_basis.html#pseries_basis.factorial.gen_binomial_basis.GeneralizedBinomial">GeneralizedBinomial() (in module pseries_basis.factorial.gen_binomial_basis)</a>
 </li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.get_differential_algebra">get_differential_algebra() (in module pseries_basis.ore)</a>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.ExpressionSequence.generic">generic() (pseries_basis.misc.sequences.ExpressionSequence method)</a>
 </li>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.OrthogonalBasis.get_differential_equation">get_differential_equation() (pseries_basis.ortho_basis.OrthogonalBasis method)</a>
-</li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.get_double_recurrence_algebra">get_double_recurrence_algebra() (in module pseries_basis.ore)</a>
-</li>
-      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.get_lower_bound">get_lower_bound() (pseries_basis.psbasis.PSBasis method)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_differential_equation">get_differential_equation() (pseries_basis.orthogonal.ortho_basis.OrthogonalBasis method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.OrthogonalBasis.get_mixed_equation">get_mixed_equation() (pseries_basis.ortho_basis.OrthogonalBasis method)</a>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.get_lower_bound">get_lower_bound() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.get_polynomial_algebra">get_polynomial_algebra() (in module pseries_basis.ore)</a>
-</li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.get_rational_algebra">get_rational_algebra() (in module pseries_basis.ore)</a>
-</li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.get_recurrence_algebra">get_recurrence_algebra() (in module pseries_basis.ore)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation">get_mixed_equation() (pseries_basis.orthogonal.ortho_basis.OrthogonalBasis method)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.get_upper_bound">get_upper_bound() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
-      <li><a href="pseries_basis/misc.html#pseries_basis.misc.guess_compatibility_E">guess_compatibility_E() (in module pseries_basis.misc)</a>
-</li>
-      <li><a href="pseries_basis/misc.html#pseries_basis.misc.guess_rational_function">guess_rational_function() (in module pseries_basis.misc)</a>
+      <li><a href="pseries_basis/factorial/gen_binomial_basis.html#pseries_basis.factorial.gen_binomial_basis.guess_compatibility_E">guess_compatibility_E() (in module pseries_basis.factorial.gen_binomial_basis)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -280,9 +308,9 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.HermiteBasis">HermiteBasis (class in pseries_basis.ortho_basis)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.HermiteBasis">HermiteBasis (class in pseries_basis.orthogonal.ortho_basis)</a>
 </li>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.HermitePBasis">HermitePBasis (class in pseries_basis.ortho_basis)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.HermitePBasis">HermitePBasis (class in pseries_basis.orthogonal.ortho_basis)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -290,83 +318,73 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.increasing_basis">increasing_basis() (pseries_basis.factorial_basis.FactorialBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_basis">increasing_basis() (pseries_basis.factorial.factorial_basis.FactorialBasis method)</a>
 
       <ul>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FallingBasis.increasing_basis">(pseries_basis.factorial_basis.FallingBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FallingBasis.increasing_basis">(pseries_basis.factorial.factorial_basis.FallingBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.PowerBasis.increasing_basis">(pseries_basis.factorial_basis.PowerBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.PowerBasis.increasing_basis">(pseries_basis.factorial.factorial_basis.PowerBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.RootSequenceBasis.increasing_basis">(pseries_basis.factorial_basis.RootSequenceBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.RootSequenceBasis.increasing_basis">(pseries_basis.factorial.factorial_basis.RootSequenceBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.increasing_basis">(pseries_basis.factorial_basis.ScalarBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.increasing_basis">(pseries_basis.factorial.factorial_basis.ScalarBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.SFactorialBasis.increasing_basis">(pseries_basis.factorial_basis.SFactorialBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.SFactorialBasis.increasing_basis">(pseries_basis.factorial.factorial_basis.SFactorialBasis method)</a>
 </li>
-        <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.ProductBasis.increasing_basis">(pseries_basis.product_basis.ProductBasis method)</a>
+        <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.ProductBasis.increasing_basis">(pseries_basis.factorial.product_basis.ProductBasis method)</a>
 </li>
-        <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.increasing_basis">(pseries_basis.product_basis.SievedBasis method)</a>
+        <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.increasing_basis">(pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
       </ul></li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.increasing_polynomial">increasing_polynomial() (pseries_basis.factorial_basis.FactorialBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_polynomial">increasing_polynomial() (pseries_basis.factorial.factorial_basis.FactorialBasis method)</a>
 
       <ul>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.RootSequenceBasis.increasing_polynomial">(pseries_basis.factorial_basis.RootSequenceBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.RootSequenceBasis.increasing_polynomial">(pseries_basis.factorial.factorial_basis.RootSequenceBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.increasing_polynomial">(pseries_basis.factorial_basis.ScalarBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.increasing_polynomial">(pseries_basis.factorial.factorial_basis.ScalarBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.SFactorialBasis.increasing_polynomial">(pseries_basis.factorial_basis.SFactorialBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.SFactorialBasis.increasing_polynomial">(pseries_basis.factorial.factorial_basis.SFactorialBasis method)</a>
 </li>
-        <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.increasing_polynomial">(pseries_basis.product_basis.SievedBasis method)</a>
+        <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.increasing_polynomial">(pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
       </ul></li>
-      <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.index">index() (pseries_basis.product_basis.SievedBasis method)</a>
-</li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.is_based_field">is_based_field() (in module pseries_basis.ore)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.is_based_polynomial">is_based_polynomial() (in module pseries_basis.ore)</a>
+      <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.index">index() (pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
-      <li><a href="pseries_basis/io.html#pseries_basis.io.EnhOEISSequence.is_dfinite">is_dfinite() (pseries_basis.io.EnhOEISSequence method)</a>
-</li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.is_differential_algebra">is_differential_algebra() (in module pseries_basis.ore)</a>
-</li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.is_double_recurrence_algebra">is_double_recurrence_algebra() (in module pseries_basis.ore)</a>
+      <li><a href="pseries_basis/misc/io.html#pseries_basis.misc.io.EnhOEISSequence.is_dfinite">is_dfinite() (pseries_basis.misc.io.EnhOEISSequence method)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.is_hypergeometric">is_hypergeometric() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.BinomialBasis.is_quasi_eval_triangular">is_quasi_eval_triangular() (pseries_basis.factorial_basis.BinomialBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.BinomialBasis.is_quasi_eval_triangular">is_quasi_eval_triangular() (pseries_basis.factorial.factorial_basis.BinomialBasis method)</a>
 
       <ul>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.is_quasi_eval_triangular">(pseries_basis.factorial_basis.ScalarBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.is_quasi_eval_triangular">(pseries_basis.factorial.factorial_basis.ScalarBasis method)</a>
 </li>
-        <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.is_quasi_eval_triangular">(pseries_basis.product_basis.SievedBasis method)</a>
+        <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.is_quasi_eval_triangular">(pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
         <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.is_quasi_eval_triangular">(pseries_basis.psbasis.PSBasis method)</a>
 </li>
       </ul></li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.PowerBasis.is_quasi_func_triangular">is_quasi_func_triangular() (pseries_basis.factorial_basis.PowerBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.PowerBasis.is_quasi_func_triangular">is_quasi_func_triangular() (pseries_basis.factorial.factorial_basis.PowerBasis method)</a>
 
       <ul>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.is_quasi_func_triangular">(pseries_basis.factorial_basis.ScalarBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.is_quasi_func_triangular">(pseries_basis.factorial.factorial_basis.ScalarBasis method)</a>
 </li>
-        <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.is_quasi_func_triangular">(pseries_basis.product_basis.SievedBasis method)</a>
+        <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.is_quasi_func_triangular">(pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
         <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.OrderBasis.is_quasi_func_triangular">(pseries_basis.psbasis.OrderBasis method)</a>
 </li>
         <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.is_quasi_func_triangular">(pseries_basis.psbasis.PSBasis method)</a>
 </li>
       </ul></li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.is_recurrence_algebra">is_recurrence_algebra() (in module pseries_basis.ore)</a>
-</li>
   </ul></td>
 </tr></table>
 
 <h2 id="J">J</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.JacobiBasis">JacobiBasis (class in pseries_basis.ortho_basis)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.JacobiBasis">JacobiBasis (class in pseries_basis.orthogonal.ortho_basis)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -374,32 +392,32 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.LaguerreBasis">LaguerreBasis (class in pseries_basis.ortho_basis)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.LaguerreBasis">LaguerreBasis (class in pseries_basis.orthogonal.ortho_basis)</a>
 </li>
-      <li><a href="pseries_basis/sequences.html#pseries_basis.sequences.LambdaSequence">LambdaSequence (class in pseries_basis.sequences)</a>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.LambdaSequence">LambdaSequence (class in pseries_basis.misc.sequences)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.leading_coefficient">leading_coefficient() (pseries_basis.factorial_basis.FactorialBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.leading_coefficient">leading_coefficient() (pseries_basis.factorial.factorial_basis.FactorialBasis method)</a>
 
       <ul>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.RootSequenceBasis.leading_coefficient">(pseries_basis.factorial_basis.RootSequenceBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.RootSequenceBasis.leading_coefficient">(pseries_basis.factorial.factorial_basis.RootSequenceBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.leading_coefficient">(pseries_basis.factorial_basis.ScalarBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.leading_coefficient">(pseries_basis.factorial.factorial_basis.ScalarBasis method)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.LegendreBasis">LegendreBasis (class in pseries_basis.ortho_basis)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.LegendreBasis">LegendreBasis (class in pseries_basis.orthogonal.ortho_basis)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.linear_coefficient">linear_coefficient() (pseries_basis.factorial_basis.FactorialBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.linear_coefficient">linear_coefficient() (pseries_basis.factorial.factorial_basis.FactorialBasis method)</a>
 
       <ul>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.RootSequenceBasis.linear_coefficient">(pseries_basis.factorial_basis.RootSequenceBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.RootSequenceBasis.linear_coefficient">(pseries_basis.factorial.factorial_basis.RootSequenceBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.linear_coefficient">(pseries_basis.factorial_basis.ScalarBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.linear_coefficient">(pseries_basis.factorial.factorial_basis.ScalarBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.SFactorialBasis.linear_coefficient">(pseries_basis.factorial_basis.SFactorialBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.SFactorialBasis.linear_coefficient">(pseries_basis.factorial.factorial_basis.SFactorialBasis method)</a>
 </li>
-        <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.linear_coefficient">(pseries_basis.product_basis.SievedBasis method)</a>
+        <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.linear_coefficient">(pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -408,35 +426,43 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.matrix_ItP">matrix_ItP() (pseries_basis.factorial_basis.FactorialBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.matrix_ItP">matrix_ItP() (pseries_basis.factorial.factorial_basis.FactorialBasis method)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.matrix_PtI">matrix_PtI() (pseries_basis.factorial_basis.FactorialBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.matrix_PtI">matrix_PtI() (pseries_basis.factorial.factorial_basis.FactorialBasis method)</a>
 </li>
       <li>
     module
 
       <ul>
-        <li><a href="pseries_basis/factorial_basis.html#module-pseries_basis.factorial_basis">pseries_basis.factorial_basis</a>
+        <li><a href="index.html#module-pseries_basis">pseries_basis</a>
 </li>
-        <li><a href="pseries_basis/io.html#module-pseries_basis.io">pseries_basis.io</a>
+        <li><a href="pseries_basis/factorial.html#module-pseries_basis.factorial">pseries_basis.factorial</a>
+</li>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#module-pseries_basis.factorial.factorial_basis">pseries_basis.factorial.factorial_basis</a>
+</li>
+        <li><a href="pseries_basis/factorial/gen_binomial_basis.html#module-pseries_basis.factorial.gen_binomial_basis">pseries_basis.factorial.gen_binomial_basis</a>
+</li>
+        <li><a href="pseries_basis/factorial/product_basis.html#module-pseries_basis.factorial.product_basis">pseries_basis.factorial.product_basis</a>
 </li>
         <li><a href="pseries_basis/misc.html#module-pseries_basis.misc">pseries_basis.misc</a>
 </li>
-        <li><a href="pseries_basis/ore.html#module-pseries_basis.ore">pseries_basis.ore</a>
+        <li><a href="pseries_basis/misc/io.html#module-pseries_basis.misc.io">pseries_basis.misc.io</a>
 </li>
-        <li><a href="pseries_basis/ortho_basis.html#module-pseries_basis.ortho_basis">pseries_basis.ortho_basis</a>
+        <li><a href="pseries_basis/misc/ore.html#module-pseries_basis.misc.ore">pseries_basis.misc.ore</a>
 </li>
-        <li><a href="pseries_basis/product_basis.html#module-pseries_basis.product_basis">pseries_basis.product_basis</a>
+        <li><a href="pseries_basis/misc/sequences.html#module-pseries_basis.misc.sequences">pseries_basis.misc.sequences</a>
+</li>
+        <li><a href="pseries_basis/order.html#module-pseries_basis.order">pseries_basis.order</a>
+</li>
+        <li><a href="pseries_basis/order/fun_basis.html#module-pseries_basis.order.fun_basis">pseries_basis.order.fun_basis</a>
+</li>
+        <li><a href="pseries_basis/orthogonal.html#module-pseries_basis.orthogonal">pseries_basis.orthogonal</a>
+</li>
+        <li><a href="pseries_basis/orthogonal/ortho_basis.html#module-pseries_basis.orthogonal.ortho_basis">pseries_basis.orthogonal.ortho_basis</a>
 </li>
         <li><a href="pseries_basis/psbasis.html#module-pseries_basis.psbasis">pseries_basis.psbasis</a>
 </li>
-        <li><a href="pseries_basis/sequences.html#module-pseries_basis.sequences">pseries_basis.sequences</a>
-</li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/misc.html#pseries_basis.misc.multiset_inclusion">multiset_inclusion() (in module pseries_basis.misc)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -447,9 +473,9 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.nfactors">nfactors() (pseries_basis.product_basis.SievedBasis method)</a>
+      <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.nfactors">nfactors() (pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
-      <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.nsections">nsections() (pseries_basis.product_basis.SievedBasis method)</a>
+      <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.nsections">nsections() (pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -459,17 +485,17 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.OB">OB() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
-      <li><a href="pseries_basis/io.html#pseries_basis.io.operator2file">operator2file() (in module pseries_basis.io)</a>
+      <li><a href="pseries_basis/misc/io.html#pseries_basis.misc.io.operator2file">operator2file() (in module pseries_basis.misc.io)</a>
 </li>
-      <li><a href="pseries_basis/io.html#pseries_basis.io.EnhOEISSequence.order">order() (pseries_basis.io.EnhOEISSequence method)</a>
+      <li><a href="pseries_basis/misc/io.html#pseries_basis.misc.io.EnhOEISSequence.order">order() (pseries_basis.misc.io.EnhOEISSequence method)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.OrderBasis">OrderBasis (class in pseries_basis.psbasis)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.OreSequence">OreSequence (class in pseries_basis.ore)</a>
+      <li><a href="pseries_basis/misc/ore.html#pseries_basis.misc.ore.OreSequence">OreSequence (class in pseries_basis.misc.ore)</a>
 </li>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.OrthogonalBasis">OrthogonalBasis (class in pseries_basis.ortho_basis)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis">OrthogonalBasis (class in pseries_basis.orthogonal.ortho_basis)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.OS">OS() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
@@ -481,30 +507,47 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.poly_decomp">poly_decomp() (in module pseries_basis.ore)</a>
-</li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PolyBasis">PolyBasis (class in pseries_basis.psbasis)</a>
 </li>
-      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.polynomial_ring">polynomial_ring() (pseries_basis.psbasis.PSBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.PowerBasis">PowerBasis (class in pseries_basis.factorial.factorial_basis)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.PowerBasis">PowerBasis (class in pseries_basis.factorial_basis)</a>
-</li>
-      <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.ProductBasis">ProductBasis (class in pseries_basis.product_basis)</a>
+      <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.ProductBasis">ProductBasis (class in pseries_basis.factorial.product_basis)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis">PSBasis (class in pseries_basis.psbasis)</a>
 </li>
       <li>
-    pseries_basis.factorial_basis
+    pseries_basis
 
       <ul>
-        <li><a href="pseries_basis/factorial_basis.html#module-pseries_basis.factorial_basis">module</a>
+        <li><a href="index.html#module-pseries_basis">module</a>
 </li>
       </ul></li>
       <li>
-    pseries_basis.io
+    pseries_basis.factorial
 
       <ul>
-        <li><a href="pseries_basis/io.html#module-pseries_basis.io">module</a>
+        <li><a href="pseries_basis/factorial.html#module-pseries_basis.factorial">module</a>
+</li>
+      </ul></li>
+      <li>
+    pseries_basis.factorial.factorial_basis
+
+      <ul>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#module-pseries_basis.factorial.factorial_basis">module</a>
+</li>
+      </ul></li>
+      <li>
+    pseries_basis.factorial.gen_binomial_basis
+
+      <ul>
+        <li><a href="pseries_basis/factorial/gen_binomial_basis.html#module-pseries_basis.factorial.gen_binomial_basis">module</a>
+</li>
+      </ul></li>
+      <li>
+    pseries_basis.factorial.product_basis
+
+      <ul>
+        <li><a href="pseries_basis/factorial/product_basis.html#module-pseries_basis.factorial.product_basis">module</a>
 </li>
       </ul></li>
       <li>
@@ -517,24 +560,52 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
-    pseries_basis.ore
+    pseries_basis.misc.io
 
       <ul>
-        <li><a href="pseries_basis/ore.html#module-pseries_basis.ore">module</a>
+        <li><a href="pseries_basis/misc/io.html#module-pseries_basis.misc.io">module</a>
 </li>
       </ul></li>
       <li>
-    pseries_basis.ortho_basis
+    pseries_basis.misc.ore
 
       <ul>
-        <li><a href="pseries_basis/ortho_basis.html#module-pseries_basis.ortho_basis">module</a>
+        <li><a href="pseries_basis/misc/ore.html#module-pseries_basis.misc.ore">module</a>
 </li>
       </ul></li>
       <li>
-    pseries_basis.product_basis
+    pseries_basis.misc.sequences
 
       <ul>
-        <li><a href="pseries_basis/product_basis.html#module-pseries_basis.product_basis">module</a>
+        <li><a href="pseries_basis/misc/sequences.html#module-pseries_basis.misc.sequences">module</a>
+</li>
+      </ul></li>
+      <li>
+    pseries_basis.order
+
+      <ul>
+        <li><a href="pseries_basis/order.html#module-pseries_basis.order">module</a>
+</li>
+      </ul></li>
+      <li>
+    pseries_basis.order.fun_basis
+
+      <ul>
+        <li><a href="pseries_basis/order/fun_basis.html#module-pseries_basis.order.fun_basis">module</a>
+</li>
+      </ul></li>
+      <li>
+    pseries_basis.orthogonal
+
+      <ul>
+        <li><a href="pseries_basis/orthogonal.html#module-pseries_basis.orthogonal">module</a>
+</li>
+      </ul></li>
+      <li>
+    pseries_basis.orthogonal.ortho_basis
+
+      <ul>
+        <li><a href="pseries_basis/orthogonal/ortho_basis.html#module-pseries_basis.orthogonal.ortho_basis">module</a>
 </li>
       </ul></li>
       <li>
@@ -544,20 +615,13 @@
         <li><a href="pseries_basis/psbasis.html#module-pseries_basis.psbasis">module</a>
 </li>
       </ul></li>
-      <li>
-    pseries_basis.sequences
-
-      <ul>
-        <li><a href="pseries_basis/sequences.html#module-pseries_basis.sequences">module</a>
-</li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="Q">Q</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.quot">quot (pseries_basis.factorial_basis.ScalarBasis attribute)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.quot">quot (pseries_basis.factorial.factorial_basis.ScalarBasis attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -565,7 +629,7 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.OrthogonalBasis.recurrence">recurrence() (pseries_basis.ortho_basis.OrthogonalBasis method)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.recurrence">recurrence() (pseries_basis.orthogonal.ortho_basis.OrthogonalBasis method)</a>
 
       <ul>
         <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.recurrence">(pseries_basis.psbasis.PSBasis method)</a>
@@ -577,25 +641,23 @@
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.remove_Sni">remove_Sni() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.required_init">required_init() (in module pseries_basis.ore)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.rho">rho (pseries_basis.factorial.factorial_basis.FactorialBasis attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.rho">rho (pseries_basis.factorial_basis.FactorialBasis attribute)</a>
-</li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.root_sequence">root_sequence() (pseries_basis.factorial_basis.FactorialBasis method)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.FactorialBasis.root_sequence">root_sequence() (pseries_basis.factorial.factorial_basis.FactorialBasis method)</a>
 
       <ul>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.RootSequenceBasis.root_sequence">(pseries_basis.factorial_basis.RootSequenceBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.RootSequenceBasis.root_sequence">(pseries_basis.factorial.factorial_basis.RootSequenceBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.root_sequence">(pseries_basis.factorial_basis.ScalarBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.root_sequence">(pseries_basis.factorial.factorial_basis.ScalarBasis method)</a>
 </li>
-        <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.SFactorialBasis.root_sequence">(pseries_basis.factorial_basis.SFactorialBasis method)</a>
+        <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.SFactorialBasis.root_sequence">(pseries_basis.factorial.factorial_basis.SFactorialBasis method)</a>
 </li>
-        <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis.root_sequence">(pseries_basis.product_basis.SievedBasis method)</a>
+        <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis.root_sequence">(pseries_basis.factorial.product_basis.SievedBasis method)</a>
 </li>
       </ul></li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.RootSequenceBasis">RootSequenceBasis (class in pseries_basis.factorial_basis)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.RootSequenceBasis">RootSequenceBasis (class in pseries_basis.factorial.factorial_basis)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -605,29 +667,35 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.scalar">scalar() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis">ScalarBasis (class in pseries_basis.factorial_basis)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis">ScalarBasis (class in pseries_basis.factorial.factorial_basis)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.ScalarBasis.scale">scale (pseries_basis.factorial_basis.ScalarBasis attribute)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.ScalarBasis.scale">scale (pseries_basis.factorial.factorial_basis.ScalarBasis attribute)</a>
 </li>
-      <li><a href="pseries_basis/sequences.html#pseries_basis.sequences.Sequence">Sequence (class in pseries_basis.sequences)</a>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.Sequence">Sequence (class in pseries_basis.misc.sequences)</a>
 </li>
-      <li><a href="pseries_basis/io.html#pseries_basis.io.EnhOEISSequence.sequence">sequence (pseries_basis.io.EnhOEISSequence attribute)</a>
+      <li><a href="pseries_basis/misc/io.html#pseries_basis.misc.io.EnhOEISSequence.sequence">sequence (pseries_basis.misc.io.EnhOEISSequence attribute)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.set_compatibility">set_compatibility() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.set_derivation">set_derivation() (pseries_basis.psbasis.PSBasis method)</a>
+</li>
+      <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.set_endomorphism">set_endomorphism() (pseries_basis.psbasis.PSBasis method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.SFactorialBasis">SFactorialBasis (class in pseries_basis.factorial_basis)</a>
+      <li><a href="pseries_basis/factorial/factorial_basis.html#pseries_basis.factorial.factorial_basis.SFactorialBasis">SFactorialBasis (class in pseries_basis.factorial.factorial_basis)</a>
 </li>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FallingBasis.shift">shift() (pseries_basis.factorial_basis.FallingBasis method)</a>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.Sequence.shift">shift() (pseries_basis.misc.sequences.Sequence method)</a>
 </li>
-      <li><a href="pseries_basis/product_basis.html#pseries_basis.product_basis.SievedBasis">SievedBasis (class in pseries_basis.product_basis)</a>
+      <li><a href="pseries_basis/factorial/product_basis.html#pseries_basis.factorial.product_basis.SievedBasis">SievedBasis (class in pseries_basis.factorial.product_basis)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.Sn">Sn() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.Sni">Sni() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
-      <li><a href="pseries_basis/ore.html#pseries_basis.ore.solution">solution() (in module pseries_basis.ore)</a>
+      <li><a href="pseries_basis/misc/ore.html#pseries_basis.misc.ore.solution">solution() (in module pseries_basis.misc.ore)</a>
+</li>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.Sequence.subsequence">subsequence() (pseries_basis.misc.sequences.Sequence method)</a>
 </li>
       <li><a href="pseries_basis/psbasis.html#pseries_basis.psbasis.PSBasis.system">system() (pseries_basis.psbasis.PSBasis method)</a>
 </li>
@@ -637,7 +705,7 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.TChebyshevBasis">TChebyshevBasis (class in pseries_basis.ortho_basis)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.TChebyshevBasis">TChebyshevBasis (class in pseries_basis.orthogonal.ortho_basis)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -645,15 +713,11 @@
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.UChebyshevBasis">UChebyshevBasis (class in pseries_basis.ortho_basis)</a>
-</li>
-      <li><a href="pseries_basis/sequences.html#pseries_basis.sequences.Sequence.universe">universe (pseries_basis.sequences.Sequence attribute)</a>
+      <li><a href="pseries_basis/orthogonal/ortho_basis.html#pseries_basis.orthogonal.ortho_basis.UChebyshevBasis">UChebyshevBasis (class in pseries_basis.orthogonal.ortho_basis)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/misc.html#pseries_basis.misc.unroll_in_basis">unroll_in_basis() (in module pseries_basis.misc)</a>
-</li>
-      <li><a href="pseries_basis/misc.html#pseries_basis.misc.unroll_sequence">unroll_sequence() (in module pseries_basis.misc)</a>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.Sequence.universe">universe (pseries_basis.misc.sequences.Sequence attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -665,12 +729,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pseries_basis/factorial_basis.html#pseries_basis.factorial_basis.FactorialBasis.var_name">var_name() (pseries_basis.factorial_basis.FactorialBasis method)</a>
-
-      <ul>
-        <li><a href="pseries_basis/ortho_basis.html#pseries_basis.ortho_basis.OrthogonalBasis.var_name">(pseries_basis.ortho_basis.OrthogonalBasis method)</a>
+      <li><a href="pseries_basis/misc/sequences.html#pseries_basis.misc.sequences.ExpressionSequence.variables">variables() (pseries_basis.misc.sequences.ExpressionSequence method)</a>
 </li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -705,12 +765,12 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Index</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2019.
+        &#169; Copyright 2022.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
