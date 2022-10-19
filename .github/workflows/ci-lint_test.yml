@@ -26,7 +26,7 @@ jobs:
         sage -pip install --upgrade .
     - name: Install pylint
       run: |
-        sage -pip install pylint astroid
+        sage -pip install pylint==2.14.5
         /home/sage/sage/local/var/lib/sage/venv-python3.10.5/bin/pylint --version
     - name: Linting code for repository
       run: |
