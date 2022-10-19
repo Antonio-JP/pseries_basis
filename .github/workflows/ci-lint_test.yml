@@ -27,6 +27,7 @@ jobs:
     - name: Install pylint
       run: |
         sage -pip install pylint astroid
+        /home/sage/sage/local/var/lib/sage/venv-python3.10.5/bin/pylint --version
     - name: Linting code for repository
       run: |
         /home/sage/sage/local/var/lib/sage/venv-python3.10.5/bin/pylint ./pseries_basis  --disable=all --enable=F,unreachable,duplicate-key,unnecessary-semicolon,\
