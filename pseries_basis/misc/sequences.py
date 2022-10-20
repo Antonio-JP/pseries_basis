@@ -9,25 +9,31 @@ r'''
     in a generic fashion.
 '''
 ## Sage imports
-from sage.all import (cached_method, oo, NaN, cartesian_product, ZZ, parent, SR)
-from sage.categories.homset import Hom
+from sage.all import (cached_method, oo, NaN, cartesian_product, cartesian_product_iterator, ZZ, parent, SR)
+from sage.categories.homset import Hom, Homset
 from sage.categories.pushout import CoercionException, pushout
 from sage.categories.morphism import SetMorphism # pylint: disable=no-name-in-module
 from sage.categories.sets_cat import Sets
 from sage.rings.semirings.non_negative_integer_semiring import NN
+from sage.structure.unique_representation import UniqueRepresentation
 
+_Sets = Sets.__classcall__(Sets)
+       
+###########################################################################################
+### Base element and parent structures for sequences
+###########################################################################################
 class Sequence(SetMorphism):
     r'''
-        Main calss for sequences. It defines a universe for its elements and a general interface to access the sequence.
+        Main class for sequences. It defines a universe for its elements and a general interface to access the sequence.
     '''
     def __init__(self, universe, dim : int =1, allow_sym = False):
         self.__universe = universe
         self.__dim = dim
         self.__alls = allow_sym
-        if dim == 1:
-            super().__init__(Hom(NN,universe,Sets()), lambda n : self.element(n))
-        else:
-            super().__init__(Hom(cartesian_product(dim*[NN]), universe, Sets()), lambda n : self.element(*n))
+        parent = SequenceSet(dim, universe)
+        func = (lambda n : self.element(*n)) if dim > 1 else (lambda n : self.element(n))
+
+        super().__init__(parent, func)
 
     @property
     def universe(self): 
@@ -63,6 +69,13 @@ class Sequence(SetMorphism):
 
     def __call__(self, *input):
         return self.element(*input)
+
+    def change_universe(self, new_universe):
+        r'''
+            Method that change the universe of a sequence. This can help to use the same universe in different 
+            spaces or when it is required to force a specific universe.
+        '''
+        return LambdaSequence(lambda *n : self._element(*n), new_universe, dim=self.dim, allow_sym=self.allow_sym)
 
     @cached_method
     def element(self, *indices : int):
@@ -161,7 +174,8 @@ class Sequence(SetMorphism):
             elements of the sequence are equal to zero. This is helpful in some sequence to guarantee that the whole 
             sequence is exactly zero.
         '''
-        return all(self[i] == 0 for i in range(order))
+        first_terms = cartesian_product_iterator(self.parent().dimension()*[range(order)])
+        return all(self(*term) == 0 for term in first_terms)
 
     def almost_equals(self, other : 'Sequence', order=10) -> bool:
         r'''
@@ -198,7 +212,8 @@ class Sequence(SetMorphism):
                 sage: Fib.almost_equals(Fac, 4)
                 False
         '''
-        return self[:order] == other[:order]
+        first_terms = cartesian_product_iterator(self.parent().dimension()*[range(order)])
+        return all(self(*term) == other(*term) for term in first_terms)
 
     def subsequence(self, *vals : int) -> "Sequence":
         r'''
@@ -232,7 +247,39 @@ class Sequence(SetMorphism):
             return f"Sequence over [{self.universe}]: ({self[0]}, {self[1]}, {self[2]},...)"
         else:
             return f"Sequence with {self.dim} variables over [{self.universe}]"
+
+class SequenceSet(Homset,UniqueRepresentation):
+    r'''
+        Class for the set of sequences. We implement more coercion methods to allow more operations for sequences.
+    '''
+    Element = Sequence
+
+    def __init__(self, dimension, codomain):
+        domain = NN if dimension == 1 else cartesian_product(dimension*[NN])
+        super().__init__(domain, codomain, category=_Sets)
+
+    def dimension(self):
+        try:
+            return len(self.domain().construction()[1])
+        except TypeError:
+            return 1
+
+    ## Category and coercion methods
+    def _element_constructor_(self, x, check=None, **options):
+        if x in self.codomain():
+            return LambdaSequence(lambda *_ : x, self.codomain(), dim=self.dimension(), allow_sym=True)
         
+        return super()._element_constructor_(x, check, **options)
+
+    def _coerce_map_from_(self, S):
+        return super().has_coerce_map_from(S) or self.codomain().has_coerce_map_from(S)
+
+    def __repr__(self):
+        return f"Set of Sequences from NN{'' if self.dimension()==1 else f'^{self.dimension()}'} to {self.codomain()}"
+
+###########################################################################################
+### Specific implementations of the class Sequence
+###########################################################################################
 class LambdaSequence(Sequence):
     r'''
         Simplest implementation of :class:`Sequence`.
@@ -338,6 +385,9 @@ class ExpressionSequence(Sequence):
         '''
         return self.__vars
 
+    def change_universe(self, new_universe):
+        return ExpressionSequence(self.generic(), new_universe, self.variables())
+
     def _element(self, *indices: int):
         vars = self.variables()
         return self.generic()(**{str(vars[i]) : indices[i] for i in range(len(indices))})
@@ -407,4 +457,4 @@ class ExpressionSequence(Sequence):
     def __repr__(self) -> str:
         return f"Sequence{f' in {self.__vars}' if self.dim > 1 else ''} over [{self.universe}]: {self.generic()}"
 
-__all__ = ["Sequence", "LambdaSequence", "ExpressionSequence"]
+__all__ = ["Sequence", "SequenceSet", "LambdaSequence", "ExpressionSequence"]
