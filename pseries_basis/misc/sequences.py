@@ -274,6 +274,8 @@ class SequenceSet(Homset,UniqueRepresentation):
     def _element_constructor_(self, x, check=None, **options):
         if x in self.codomain():
             return LambdaSequence(lambda *_ : x, self.codomain(), dim=self.dimension(), allow_sym=True)
+        elif parent(x).has_coerce_map_from(self.codomain()):
+            return LambdaSequence(lambda *_: x, pushout(self.codomain(), parent(x)), dim=self.dimension(), allow_sym=True)
         
         return super()._element_constructor_(x, check, **options)
 
