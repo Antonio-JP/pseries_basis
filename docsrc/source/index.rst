@@ -1,38 +1,27 @@
-=============================
+========================================================
 Inverse Zeibelger Problem
-=============================
+========================================================
 
-This is the documentation for the package ``pseries_basis``.
+.. automodule:: pseries_basis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order: bysource
 
-The main package of this project is the package , you need to import it:: 
-
-    from pseries_basis import *
-
-This package allows the user to create and manipulate basis for a
-power series ring, and provides methods to compute recurrence equations
-for solutions of difference/differential equations within the ring
-of formal power series.
-
-This package synergies pretty naturally with other packages from the author 
-and with the package ``ore_algebra`` from M. Kauers et. al.
-
-This work is licensed under a `Creative Commons Attribution-Share Alike
-3.0 License <https://creativecommons.org/licenses/by-sa/3.0/>`_.
-
-Sequences 
-=========
+Submodules 
+########################################################
 
 .. toctree::
    :maxdepth: 1
 
    pseries_basis/psbasis
-   pseries_basis/factorial_basis
-   pseries_basis/product_basis
-   pseries_basis/ortho_basis
-
+   pseries_basis/factorial
+   pseries_basis/orthogonal
+   pseries_basis/order
+   pseries_basis/misc
 
 Indices and Tables
-==================
+***********************************************************
 
 * :ref:`genindex`
 * :ref:`modindex`

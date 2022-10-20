@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Inverse Zeibelger Problem &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.2 documentation</title>
+    <title>Inverse Zeibelger Problem &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
@@ -14,6 +14,7 @@
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -31,7 +32,7 @@
         <li class="right" >
           <a href="pseries_basis/psbasis.html" title="Power Series basis: basic structure and functionality"
              accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">Inverse Zeibelger Problem: Power Series basis for Sage 0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Inverse Zeibelger Problem</a></li> 
       </ul>
     </div>  
@@ -41,39 +42,148 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="inverse-zeibelger-problem">
-<h1>Inverse Zeibelger Problem<a class="headerlink" href="#inverse-zeibelger-problem" title="Permalink to this headline">¶</a></h1>
-<p>This is the documentation for the package <code class="docutils literal notranslate"><span class="pre">pseries_basis</span></code>.</p>
-<p>The main package of this project is the package , you need to import it:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+  <section id="module-pseries_basis">
+<span id="inverse-zeibelger-problem"></span><h1>Inverse Zeibelger Problem<a class="headerlink" href="#module-pseries_basis" title="Permalink to this headline">¶</a></h1>
+<section id="inverse-zeibelger-problem-in-sage">
+<h2><strong>Inverse Zeibelger Problem in Sage</strong><a class="headerlink" href="#inverse-zeibelger-problem-in-sage" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">pseries_basis</span></code> is a <a class="reference external" href="https://www.sagemath.org">SageMath</a> package that allow to transform linear operators to compute definite-sum solutions of 
+differential or recurrence equations.</p>
+<p>This package is based on the work of the following research articles:</p>
+<ul class="simple">
+<li><p>A. Jiménez-Pastor, M. Petkovšek: <em>The factorial-basis method for finding definite-sum solutions of linear recurrences with polynomial coefficients</em>. 
+<a class="reference external" href="https://arxiv.org/abs/2202.05550">arXiv:2202.05550</a> (under revision in <em>Journal of Symbolic Computation</em>).</p></li>
+</ul>
+<section id="some-information-about-the-module">
+<h3><strong>Some information about the module</strong><a class="headerlink" href="#some-information-about-the-module" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><em>Author</em>: Antonio Jiménez-Pastor</p></li>
+<li><p><em>License</em>: GNU Public License v3.0</p></li>
+<li><p><em>Home page</em>: <a class="reference external" href="https://github.com/Antonio-JP/pseries_basis">https://github.com/Antonio-JP/pseries_basis</a></p></li>
+<li><p><em>Documenation</em>: <a class="reference external" href="https://antonio-jp.github.io/pseries_basis/">https://antonio-jp.github.io/pseries_basis/</a></p></li>
+<li><p><em>Online demo</em>: <a class="reference external" href="https://mybinder.org/v2/gh/Antonio-JP/pseries_basis/master?labpath=notebooks%2Fpaper_examples.ipynb">On Binder</a></p></li>
+</ul>
+</section>
+<section id="main-use-case">
+<h3><strong>Main use-case</strong><a class="headerlink" href="#main-use-case" title="Permalink to this headline">¶</a></h3>
+<p>Let <span class="math notranslate nohighlight">\(\mathbb{K}\)</span> be a computable field and consider <span class="math notranslate nohighlight">\(\mathbb{K}[[x]]\)</span> its ring of formal power series. The problem of creative telescoping can be stated as follows: 
+let <span class="math notranslate nohighlight">\(F(x,n)\)</span> be a function. Is there any linear operator that annihilates the sum <span class="math notranslate nohighlight">\(\sum_n F(x,n)\)</span>?</p>
+<p>Solving this problem is equivalent to find an operator <span class="math notranslate nohighlight">\(L\)</span> acting only on <span class="math notranslate nohighlight">\(x\)</span> and a function <span class="math notranslate nohighlight">\(G(x,n)\)</span> (called a <em>certificate</em>) such that:</p>
+<div class="math notranslate nohighlight">
+\[L \cdot F(x,n) = G(x, n+1) - G(x,n),\]</div>
+<p>since once we have this <em>telescoping equation</em> for <span class="math notranslate nohighlight">\(F(x,n)\)</span> we can then sum-up w.r.t. <span class="math notranslate nohighlight">\(n\)</span> obtaining the equation</p>
+<div class="math notranslate nohighlight">
+\[L \cdot \sum_n F(x,n) = 0.``\]</div>
+<p>There are many studies with respect to this problem and, in fact, it has been solved in many cases. This package, however, tries to solved a somehow <em>inverse</em> problem:</p>
+<p><strong>Problem:</strong> let <span class="math notranslate nohighlight">\(L\)</span> be a linear operator and <span class="math notranslate nohighlight">\(K(x,n)\)</span> be a kernel. Compute a new operator <span class="math notranslate nohighlight">\(\tilde{L}\)</span> such that for any solution of the form 
+<span class="math notranslate nohighlight">\(f(x) = \sum_n a_nK(x,n)\)</span> to <span class="math notranslate nohighlight">\(L \cdot f(x) = 0\)</span>, we have</p>
+<div class="math notranslate nohighlight">
+\[\tilde{L} \cdot a_n = 0.``\]</div>
+<p>This is a partial solution to the more general case of <strong>Inverse Zeilberger Problem</strong>:</p>
+<p><strong>Inverse Zeilberger Problem:</strong> let <span class="math notranslate nohighlight">\(L\)</span> be a linear operator. Find all the possible solutions that can be express as a definite-sum in such a way that Zeilberger 
+algorithm will succeed.</p>
+</section>
+</section>
+<section id="installation">
+<h2><strong>Installation</strong><a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>This package can be installed, used, modified and distributed freely under the conditions of the 
+<a class="reference external" href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License v3</a> (see the file <a class="reference external" href="https://github.com/Antonio-JP/pseries_basis/blob/master/LICENSE">LICENSE</a>).</p>
+<p>There are two different ways of installing the package into your SageMath distribution:</p>
+<section id="install-from-souce-code">
+<h3><strong>Install from souce code</strong><a class="headerlink" href="#install-from-souce-code" title="Permalink to this headline">¶</a></h3>
+<p>The package can be obtained from the public git repository on GitHub:
+* by clicking <a class="reference external" href="https://github.com/Antonio-JP/pseries_basis">here</a> for the webpage view,
+* or by cloning the repository by <a class="reference external" href="https://github.com/Antonio-JP/pseries_basis.git">https</a>,
+* or downloading the latest version in <a class="reference external" href="https://github.com/Antonio-JP/pseries_basis/archive/master.zip">zip</a> format.</p>
+<p>After cloning or downloading the source cose, you may install it by running the following command line from the main folder of the repository:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ make install
 </pre></div>
 </div>
-<p>This package allows the user to create and manipulate basis for a
-power series ring, and provides methods to compute recurrence equations
-for solutions of difference/differential equations within the ring
-of formal power series.</p>
-<p>This package synergies pretty naturally with other packages from the author
-and with the package <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code> from M. Kauers et. al.</p>
-<p>This work is licensed under a <a class="reference external" href="https://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-Share Alike
-3.0 License</a>.</p>
-<section id="sequences">
-<h2>Sequences<a class="headerlink" href="#sequences" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="install-via-pip">
+<h3><strong>Install via pip</strong><a class="headerlink" href="#install-via-pip" title="Permalink to this headline">¶</a></h3>
+<p>Another option to install this package is to use the pip functionality within SageMath. This will install the latest stable version of the package and will 
+take care of any dependencies that may be required.</p>
+<p>To install it via pip, run the following in a terminal where <code class="docutils literal notranslate"><span class="pre">sage</span></code> can be executed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sage -pip install [--user] git+https://github.com/Antonio-JP/pseries_basis.git
+</pre></div>
+</div>
+<p>The optional argument <em>–user</em> allows to install the package just for the current user instead of a global installation.</p>
+</section>
+<section id="loading-the-package">
+<h3><strong>Loading the package</strong><a class="headerlink" href="#loading-the-package" title="Permalink to this headline">¶</a></h3>
+<p>Once installed, the full functionality of the pacakge can be used after importing it with the command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+</section>
+<section id="examples-of-use">
+<h3><strong>Examples of use</strong><a class="headerlink" href="#examples-of-use" title="Permalink to this headline">¶</a></h3>
+<p>This package is based on the concept of <em>compatibility</em> of a basis with a linear operator (see the main <a class="reference external" href="https://arxiv.org/abs/2202.05550">paper</a> for a proper definition). 
+The bases can be obtained in several ways and they usually include a set of operator they are compatible with. For example, consider the binomial basis 
+<span class="math notranslate nohighlight">\(P_n(x) = \binom{x}{n}\)</span>. It is well known that for <span class="math notranslate nohighlight">\(n\in\mathbb{N}\)</span>, <span class="math notranslate nohighlight">\(P_n(x)\)</span> is a polynomial of degree <span class="math notranslate nohighlight">\(n\)</span>. 
+We can create this basis easily:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BinomialBasis</span><span class="p">()</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span>
+<span class="n">Binomial</span> <span class="n">basis</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="n">choose</span> <span class="n">n</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>We can also create basis using the idea of a <em>falling factorial</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">F</span> <span class="o">=</span> <span class="n">FallingBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">F</span>
+<span class="n">Falling</span> <span class="n">Factorial</span> <span class="n">Basis</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span><span class="o">...</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">F</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="n">x</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">[</span><span class="n">F</span><span class="o">.</span><span class="n">root_sequence</span><span class="p">()(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)]</span>
+<span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>There are plenty of methods to check compatibility with a basis. We refer to the <a class="reference external" href="https://antonio-jp.github.io/pseries_basis/">documentation</a> for further information.</p>
+</section>
+<section id="dependencies">
+<h3><strong>Dependencies</strong><a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h3>
+<p>This package has been developed on top of <a class="reference external" href="https://www.sagemath.org">SageMath</a> and depends on the following packages:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code> (<a class="reference external" href="https://github.com/mkauers/ore_algebra">GitHub ore_algebra</a>): developed by <a class="reference external" href="http://www.kauers.de/">M. Kauers</a> and <a class="reference external" href="http://marc.mezzarobba.net/">M. Mezzarobba</a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dd_functions</span></code> (<a class="reference external" href="https://github.com/Antonio-JP/dd_functions">GitHub dd_functions</a>): developed by <a class="reference external" href="https://scholar.google.com/citations?user=1gq-jy4AAAAJ&amp;hl=es">A. Jiménez-Pastor</a>.</p></li>
+</ul>
+<p><strong>Package under active developement</strong></p>
+<p>This package is still under an active developement and further features will be included in future version of the code. This means that several bugs may exist or appear. 
+We would thank anyone that, after detecting any error, would post it in the <a class="reference external" href="https://github.com/Antonio-JP/pseries_basis/issues">issues page</a> of the repository 
+using the label <a class="reference external" href="https://github.com/github/docs/labels/bug">bug</a>.</p>
+<p>Moreover, any requested feature can be post in the <a class="reference external" href="https://github.com/Antonio-JP/pseries_basis/issues">issues page</a> of the repository using the label 
+<a class="reference external" href="https://github.com/github/docs/labels/enhancement">enhancement</a>.</p>
+</section>
+<section id="acknowledgements">
+<h3><strong>Acknowledgements</strong><a class="headerlink" href="#acknowledgements" title="Permalink to this headline">¶</a></h3>
+<p>This package has been developed with the finaltial support of the following insitutions:</p>
+<ul class="simple">
+<li><p>The Austrian Science Fund (FWF): by W1214-N15, project DK15.</p></li>
+<li><p>The Oberösterreich region: by the Innovatives OÖ-2010 plus program.</p></li>
+<li><p>The Île-de-France region: by the project “XOR”.</p></li>
+</ul>
+</section>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="pseries_basis/psbasis.html">Power Series basis: basic structure and functionality</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pseries_basis/factorial_basis.html">Factorial Basis: simplest Polynomial basis</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pseries_basis/product_basis.html">Product Basis: combining Factorial basis</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pseries_basis/ortho_basis.html">Orthogonal Polynomials: second order Polynomial Basis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pseries_basis/factorial.html">Factorial Basis: simplest Polynomial basis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pseries_basis/orthogonal.html">Orthogonal basis: a complex type of polynomial bases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pseries_basis/order.html">Order basis: more bases for formal power series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pseries_basis/misc.html">Sequences and other utilities</a></li>
 </ul>
 </div>
-</section>
 <section id="indices-and-tables">
-<h2>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<h3>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
+</section>
 </section>
 </section>
 
@@ -84,18 +194,38 @@ and with the package <code class="docutils literal notranslate"><span class="pre
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="#">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Inverse Zeibelger Problem</a><ul>
-<li><a class="reference internal" href="#sequences">Sequences</a></li>
+<li><a class="reference internal" href="#inverse-zeibelger-problem-in-sage"><strong>Inverse Zeibelger Problem in Sage</strong></a><ul>
+<li><a class="reference internal" href="#some-information-about-the-module"><strong>Some information about the module</strong></a></li>
+<li><a class="reference internal" href="#main-use-case"><strong>Main use-case</strong></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#installation"><strong>Installation</strong></a><ul>
+<li><a class="reference internal" href="#install-from-souce-code"><strong>Install from souce code</strong></a></li>
+<li><a class="reference internal" href="#install-via-pip"><strong>Install via pip</strong></a></li>
+<li><a class="reference internal" href="#loading-the-package"><strong>Loading the package</strong></a></li>
+<li><a class="reference internal" href="#examples-of-use"><strong>Examples of use</strong></a></li>
+<li><a class="reference internal" href="#dependencies"><strong>Dependencies</strong></a></li>
+<li><a class="reference internal" href="#acknowledgements"><strong>Acknowledgements</strong></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#submodules">Submodules</a><ul>
 <li><a class="reference internal" href="#indices-and-tables">Indices and Tables</a></li>
 </ul>
 </li>
 </ul>
+</li>
+</ul>
 
-  <h4>Next topic</h4>
-  <p class="topless"><a href="pseries_basis/psbasis.html"
-                        title="next chapter">Power Series basis: basic structure and functionality</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="pseries_basis/psbasis.html"
+                          title="next chapter">Power Series basis: basic structure and functionality</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -107,7 +237,7 @@ and with the package <code class="docutils literal notranslate"><span class="pre
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -129,13 +259,13 @@ and with the package <code class="docutils literal notranslate"><span class="pre
         <li class="right" >
           <a href="pseries_basis/psbasis.html" title="Power Series basis: basic structure and functionality"
              >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">Inverse Zeibelger Problem: Power Series basis for Sage 0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Inverse Zeibelger Problem</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2019.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+        &#169; Copyright 2022.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

@@ -14,7 +14,7 @@
 
 # General information about the project.
 project = u"Inverse Zeibelger Problem: Power Series basis for Sage"
-copyright = u'2019'
+copyright = u'2022'
 package_name = 'pseries_basis'
 package_folder = "../../pseries_basis"
 authors = u"Antonio Jimenez-Pastor"
@@ -34,7 +34,6 @@ except ImportError:
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.append(os.path.abspath(package_folder))
-
 sys.path.append(os.path.join(SAGE_SRC, "sage_docbuild","ext"))
 
 # -- General configuration ------------------------------------------------
@@ -119,16 +118,19 @@ pygments_style = 'sphinx'
 pythonversion = sys.version.split(' ')[0]
 # Python and Sage trac ticket shortcuts. For example, :trac:`7549` .
 extlinks = {
-    'python': ('https://docs.python.org/3/library/%s', 'Python doc: '),
+    'python': ('https://docs.python.org/release/'+pythonversion+'/%s', ''),
     'trac': ('http://trac.sagemath.org/%s', 'trac ticket #'),
     'wiki': ('https://en.wikipedia.org/wiki/%s', 'Wikipedia: '),
-    'arxiv': ('https://arxiv.org/abs/%s', 'Arxiv '),
+    'arxiv': ('http://arxiv.org/abs/%s', 'Arxiv '),
     'oeis': ('https://oeis.org/%s', 'OEIS sequence '),
     'doi': ('https://dx.doi.org/%s', 'doi:'),
     'mathscinet': ('http://www.ams.org/mathscinet-getitem?mr=%s', 'MathSciNet '),
     'dlmf': ('https://dlmf.nist.gov/%s', 'DLMF Chapter '),
     'wolf': ('https://mathworld.wolfram.com/%s.html', 'Wolfram MathWorld: '),
-    'sageref': ('https://doc.sagemath.org/html/en/reference/%s', 'Sage doc: ')
+    'sageref': ('https://doc.sagemath.org/html/en/reference/%s', 'Sage_doc:'),
+    'fungrim': ('https://fungrim.org/entry/%s', 'Fungrim:'),
+    'fungrimT': ('https://fungrim.org/topic/%s', 'Fungrim:'),
+    'issue': ('https://github.com/Antonio-JP/pseries_basis/issues/%s', 'GitHub/Issue:#')
     }
 
 # -- Options for HTML output ----------------------------------------------
@@ -300,34 +302,9 @@ texinfo_documents = [
 # -- Options copied from Sagemath conf.py file -------------------------------
 
 # We use MathJax to build the documentation unless the environment
-# variable SAGE_DOC_MATHJAX is set to "no" or "False".  (Note that if
-# the user does not set this variable, then the script sage-env sets
-# it to "True".)
+extensions.append('sphinx.ext.mathjax')
+mathjax_path = 'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
 
-if (os.environ.get('SAGE_DOC_MATHJAX', 'no') != 'no'
-            and os.environ.get('SAGE_DOC_MATHJAX', 'no') != 'False'):
-
-    extensions.append('sphinx.ext.mathjax')
-    # mathjax_path = 'MathJax.js?config=TeX-AMS_HTML-full,../mathjax_sage.js'
-    mathjax_path = 'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-
-    # from sage.misc.latex_macros import sage_mathjax_macros
-    # this is broken for now
-    # html_theme_options['mathjax_macros'] = sage_mathjax_macros()
-
-    # from pkg_resources import Requirement, working_set
-    # sagenb_path = working_set.find(Requirement.parse('sagenb')).location
-    # mathjax_relative = os.path.join('sagenb','data','mathjax')
-
-    # It would be really nice if sphinx would copy the entire mathjax directory,
-    # (so we could have a _static/mathjax directory), rather than the contents of the directory
-
-    # mathjax_static = os.path.join(sagenb_path, mathjax_relative)
-    # html_static_path.append(mathjax_static)
-    # exclude_patterns=['**/'+os.path.join(mathjax_relative, i) for i in ('docs', 'README*', 'test',
-    #                                                                     'unpacked', 'LICENSE')]
-else:
-     extensions.append('sphinx.ext.pngmath')
 
 # This is to make the verbatim font smaller;
 # Verbatim environment is not breaking long lines

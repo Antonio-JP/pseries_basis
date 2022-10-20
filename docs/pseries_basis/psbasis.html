@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Power Series basis: basic structure and functionality &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.2 documentation</title>
+    <title>Power Series basis: basic structure and functionality &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
@@ -18,7 +18,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Factorial Basis: simplest Polynomial basis" href="factorial_basis.html" />
+    <link rel="next" title="Factorial Basis: simplest Polynomial basis" href="factorial.html" />
     <link rel="prev" title="Inverse Zeibelger Problem" href="../index.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -31,12 +31,12 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="factorial_basis.html" title="Factorial Basis: simplest Polynomial basis"
+          <a href="factorial.html" title="Factorial Basis: simplest Polynomial basis"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="../index.html" title="Inverse Zeibelger Problem"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Power Series basis: basic structure and functionality</a></li> 
       </ul>
     </div>  
@@ -50,7 +50,7 @@
 <span id="power-series-basis-basic-structure-and-functionality"></span><h1>Power Series basis: basic structure and functionality<a class="headerlink" href="#module-pseries_basis.psbasis" title="Permalink to this headline">¶</a></h1>
 <p>Sage package for Power Series Basis.</p>
 <p>This module introduces the basic structures in Sage for computing with <em>Power
-Series Basis</em>. We based this work in the paper <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>
+Series Basis</em>. We based this work in the paper <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>
 by M. Petkovšek, where all definitions and proofs for the algorithms here can be found.</p>
 <p>A Power Series basis is defined as a sequence <span class="math notranslate nohighlight">\(\{f_n\}_{n\in\mathbb{N}} \subset \mathbb{K}[[x]]\)</span>
 that form a <span class="math notranslate nohighlight">\(\mathbb{K}\)</span>-basis of the whole ring of formal power series. We distinguish
@@ -66,16 +66,16 @@ between two basic type of basis:</p>
 ring of formal power series are <em>compatible</em> with a power series basis, meaning that, 
 <span class="math notranslate nohighlight">\(L\cdot g(x) = 0\)</span> if and only if the sequence <span class="math notranslate nohighlight">\(\alpha_n\)</span> is P-recursive.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 </pre></div>
 </div>
 <p>This package includes no example since all the structures it offers are abstract, so they should
-never be instancaited. For particular examples and test, look to the modules <a class="reference internal" href="factorial_basis.html#module-pseries_basis.factorial_basis" title="pseries_basis.factorial_basis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">factorial_basis</span></code></a>
-and <a class="reference internal" href="product_basis.html#module-pseries_basis.product_basis" title="pseries_basis.product_basis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">product_basis</span></code></a>.</p>
+never be instantiated. For particular examples and test, look to the modules <a class="reference internal" href="factorial/factorial_basis.html#module-pseries_basis.factorial.factorial_basis" title="pseries_basis.factorial.factorial_basis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">factorial_basis</span></code></a>
+and <a class="reference internal" href="factorial/product_basis.html#module-pseries_basis.factorial.product_basis" title="pseries_basis.factorial.product_basis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">product_basis</span></code></a>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pseries_basis.psbasis.</span></span><span class="sig-name descname"><span class="pre">PSBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.psbasis.</span></span><span class="sig-name descname"><span class="pre">PSBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="misc/sequences.html#pseries_basis.misc.sequences.Sequence" title="pseries_basis.misc.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.misc.sequences.Sequence</span></code></a></p>
 <p>Generic (abstract) class for a power series basis.</p>
 <p>Their elements must be indexed by natural numbers and ordered by
 <em>degree</em> or <em>order</em>.</p>
@@ -83,19 +83,19 @@ and <a class="reference internal" href="product_basis.html#module-pseries_basis.
 have a common implementation for particular basis.</p>
 <p>List of abstract methods:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#pseries_basis.psbasis.PSBasis.element" title="pseries_basis.psbasis.PSBasis.element"><code class="xref py py-func docutils literal notranslate"><span class="pre">element()</span></code></a>.</p></li>
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_basis_matrix()</span></code>.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_element()</span></code>.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_functional_matrix()</span></code>.</p></li>
 </ul>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.A">
 <span class="sig-name descname"><span class="pre">A</span></span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.A" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.get_lower_bound" title="pseries_basis.psbasis.PSBasis.get_lower_bound"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_lower_bound()</span></code></a>, according to notation in <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a></p>
+<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.get_lower_bound" title="pseries_basis.psbasis.PSBasis.get_lower_bound"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_lower_bound()</span></code></a>, according to notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a></p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.B">
 <span class="sig-name descname"><span class="pre">B</span></span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.B" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.get_upper_bound" title="pseries_basis.psbasis.PSBasis.get_upper_bound"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_upper_bound()</span></code></a>, according to notation in <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a></p>
+<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.get_upper_bound" title="pseries_basis.psbasis.PSBasis.get_upper_bound"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_upper_bound()</span></code></a>, according to notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a></p>
 </dd></dl>
 
 <dl class="py method">
@@ -103,8 +103,8 @@ have a common implementation for particular basis.</p>
 <span class="sig-name descname"><span class="pre">OB</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.OB" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to get the generic base ring for rational functions in <span class="math notranslate nohighlight">\(n\)</span>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">()</span> <span class="c1"># illegal building, do not use in general</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">(</span><span class="n">QQ</span><span class="p">)</span> <span class="c1"># illegal building, do not use in general</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">OB</span><span class="p">()</span>
 <span class="n">Fraction</span> <span class="n">Field</span> <span class="n">of</span> <span class="n">Univariate</span> <span class="n">Polynomial</span> <span class="n">Ring</span> <span class="ow">in</span> <span class="n">n</span> <span class="n">over</span> <span class="n">Rational</span> <span class="n">Field</span>
 </pre></div>
@@ -117,8 +117,8 @@ have a common implementation for particular basis.</p>
 <dd><p>Method to get the generic variable <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra</span></code> for the shift 
 and inverse shift operators over the rational functions in <span class="math notranslate nohighlight">\(n\)</span>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">()</span> <span class="c1"># illegal building, do not use in general</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">(</span><span class="n">QQ</span><span class="p">)</span> <span class="c1"># illegal building, do not use in general</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">OS</span><span class="p">()</span>
 <span class="n">Multivariate</span> <span class="n">Ore</span> <span class="n">algebra</span> <span class="ow">in</span> <span class="n">Sn</span><span class="p">,</span> <span class="n">Sni</span> <span class="n">over</span> <span class="n">Fraction</span> <span class="n">Field</span> <span class="n">of</span> <span class="n">Univariate</span> <span class="n">Polynomial</span> <span class="n">Ring</span> <span class="ow">in</span> <span class="n">n</span> <span class="n">over</span> <span class="n">Rational</span> <span class="n">Field</span>
 </pre></div>
@@ -131,8 +131,8 @@ and inverse shift operators over the rational functions in <span class="math not
 <dd><p>Method to get the generic variable <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra</span></code> with only the direct shift 
 over the rational functions in <span class="math notranslate nohighlight">\(n\)</span>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">()</span> <span class="c1"># illegal building, do not use in general</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">(</span><span class="n">QQ</span><span class="p">)</span> <span class="c1"># illegal building, do not use in general</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">OSS</span><span class="p">()</span>
 <span class="n">Univariate</span> <span class="n">Ore</span> <span class="n">algebra</span> <span class="ow">in</span> <span class="n">Sn</span> <span class="n">over</span> <span class="n">Fraction</span> <span class="n">Field</span> <span class="n">of</span> <span class="n">Univariate</span> <span class="n">Polynomial</span> <span class="n">Ring</span> <span class="ow">in</span> <span class="n">n</span> <span class="n">over</span> <span class="n">Rational</span> <span class="n">Field</span>
 </pre></div>
@@ -145,8 +145,8 @@ over the rational functions in <span class="math notranslate nohighlight">\(n\)<
 <dd><p>Method to get the generic variable for the direct shift operator.</p>
 <p>This object is in the ring <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.OS" title="pseries_basis.psbasis.PSBasis.OS"><code class="xref py py-func docutils literal notranslate"><span class="pre">OS()</span></code></a>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">()</span> <span class="c1"># illegal building, do not use in general</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">(</span><span class="n">QQ</span><span class="p">)</span> <span class="c1"># illegal building, do not use in general</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">Sn</span><span class="p">()</span>
 <span class="n">Sn</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">Sn</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
@@ -161,8 +161,8 @@ over the rational functions in <span class="math notranslate nohighlight">\(n\)<
 <dd><p>Method to get the generic variable for the inverse shift operator.</p>
 <p>This object is in the ring <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.OS" title="pseries_basis.psbasis.PSBasis.OS"><code class="xref py py-func docutils literal notranslate"><span class="pre">OS()</span></code></a>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">()</span> <span class="c1"># illegal building, do not use in general</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">(</span><span class="n">QQ</span><span class="p">)</span> <span class="c1"># illegal building, do not use in general</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">Sni</span><span class="p">()</span>
 <span class="n">Sni</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">Sni</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
@@ -174,22 +174,13 @@ over the rational functions in <span class="math notranslate nohighlight">\(n\)<
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.alpha">
 <span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.alpha" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.compatibility_coefficient" title="pseries_basis.psbasis.PSBasis.compatibility_coefficient"><code class="xref py py-func docutils literal notranslate"><span class="pre">compatibility_coefficient()</span></code></a>, according to notation in <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a></p>
+<dd><p>alias for the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.compatibility_coefficient" title="pseries_basis.psbasis.PSBasis.compatibility_coefficient"><code class="xref py py-func docutils literal notranslate"><span class="pre">compatibility_coefficient()</span></code></a>, according to notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a></p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.basis_matrix">
-<span class="sig-name descname"><span class="pre">basis_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nrows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.basis_matrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to get a matrix representation of the basis.</p>
-<p>This method returns a matrix <span class="math notranslate nohighlight">\(M = (m_{i,j})\)</span> with <code class="docutils literal notranslate"><span class="pre">nrows</span></code> rows and
-<code class="docutils literal notranslate"><span class="pre">ncols</span></code> columns such that <span class="math notranslate nohighlight">\(m_{i,j} = [x^j]f_i(x)\)</span>, where <span class="math notranslate nohighlight">\(f_i(x)\)</span> is 
-the <span class="math notranslate nohighlight">\(i\)</span>-th element of <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
-<p>INPUT:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">nrows</span></code>: number of rows of the final matrix</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">ncols</span></code>: number of columns of the final matrix. If <code class="docutils literal notranslate"><span class="pre">None</span></code> is given, we
-will automatically return the square matrix with size given by <code class="docutils literal notranslate"><span class="pre">nrows</span></code>.</p></li>
-</ul>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.base">
+<span class="sig-name descname"><span class="pre">base</span></span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -204,6 +195,13 @@ will automatically return the square matrix with size given by <code class="docu
 <span class="sig-name descname"><span class="pre">by_order</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.by_order" title="Permalink to this definition">¶</a></dt>
 <dd><p>Getter for the type of ordering of the basis.</p>
 <p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if the <span class="math notranslate nohighlight">\(n\)</span>-th element of the basis is a power series of order <span class="math notranslate nohighlight">\(n\)</span>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.change_base">
+<span class="sig-name descname"><span class="pre">change_base</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.change_base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to change the base ring to consider the coefficients.</p>
+<p>This method allows to change the base ring (see input <code class="docutils literal notranslate"><span class="pre">base</span></code> in <a class="reference internal" href="#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSBasis</span></code></a> for further information).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -223,7 +221,7 @@ that is compatible with <code class="docutils literal notranslate"><span class="
 <div class="math notranslate nohighlight">
 \[`L \cdot b_n = \sum_{j=-A, B} \alpha_{r,j}(k) b_{n+j}`.\]</div>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BinomialBasis</span><span class="p">();</span> <span class="n">n</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">n</span><span class="p">()</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">compatibility</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">m</span>
@@ -237,9 +235,9 @@ that is compatible with <code class="docutils literal notranslate"><span class="
 <span class="p">(</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The method <code class="xref py py-func docutils literal notranslate"><span class="pre">check_compatibility()</span></code> can check that these tuples are
+<p>The method <a class="reference internal" href="#pseries_basis.psbasis.check_compatibility" title="pseries_basis.psbasis.check_compatibility"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_compatibility()</span></code></a> can check that these tuples are
 correct for the first terms of the basis:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">x</span> <span class="o">=</span> <span class="n">B</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">gens</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">x</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">universe</span><span class="o">.</span><span class="n">gens</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">check_compatibility</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">compatibility</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">p</span><span class="p">)</span>
 <span class="kc">True</span>
 </pre></div>
@@ -255,7 +253,7 @@ also get the compatibility of that operator by name:</p>
 </div>
 <p>But we can also use any operator in the <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra</span></code> representing the operators
 generated by <span class="math notranslate nohighlight">\(E\)</span> and <span class="math notranslate nohighlight">\(x\)</span>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">ore_algebra</span> <span class="k">import</span> <span class="n">OreAlgebra</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">ore_algebra</span> <span class="kn">import</span> <span class="n">OreAlgebra</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">R</span> <span class="o">=</span> <span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">];</span> <span class="n">OE</span><span class="o">.&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">OreAlgebra</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">))</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">compatibility</span><span class="p">(</span><span class="n">E</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">m</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
@@ -272,7 +270,7 @@ generated by <span class="math notranslate nohighlight">\(E\)</span> and <span c
 </pre></div>
 </div>
 <p>This method also allows to get compatibility in different sections:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">P</span> <span class="o">=</span> <span class="n">ProductBasis</span><span class="p">([</span><span class="n">B</span><span class="p">,</span><span class="n">B</span><span class="p">],</span> <span class="n">ends</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">P</span> <span class="o">=</span> <span class="n">ProductBasis</span><span class="p">([</span><span class="n">B</span><span class="p">,</span><span class="n">B</span><span class="p">])</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">compatibility</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">m</span>
 <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -300,7 +298,7 @@ generated by <span class="math notranslate nohighlight">\(E\)</span> and <span c
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.compatibility_coefficient">
 <span class="sig-name descname"><span class="pre">compatibility_coefficient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.compatibility_coefficient" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to get the compatibility coefficient.</p>
-<p>Following <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>, an operator <span class="math notranslate nohighlight">\(L\)</span> is
+<p>Following <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, an operator <span class="math notranslate nohighlight">\(L\)</span> is
 <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible if there are some <span class="math notranslate nohighlight">\(\alpha_{n,i}\)</span> such that for all <span class="math notranslate nohighlight">\(n = kr + j\)</span></p>
 <div class="math notranslate nohighlight">
 \[L \cdot b_n = \sum_{i=-A}^B \alpha_{r,i}(k)b_{n+i}.\]</div>
@@ -373,6 +371,65 @@ but for a new number of sections <span class="math notranslate nohighlight">\(M\
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.compatibility_type">
+<span class="sig-name descname"><span class="pre">compatibility_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.compatibility_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to know if an operator has compatibility of a specific type.</p>
+<p>This method checks whether the operator given has a compatibility of
+endomorphism type or derivation type.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">operator</span></code>: the operator we want to know if it is compatible or not.
+It can be a string or an object that will be transformed into a string
+to check if the compatibility is included.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p><code class="docutils literal notranslate"><span class="pre">&quot;endo&quot;</span></code> if the given operator is considered an endomorphism, <code class="docutils literal notranslate"><span class="pre">&quot;der&quot;</span></code>
+if it is considered a derivation and <code class="docutils literal notranslate"><span class="pre">None</span></code> otherwise.</p>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">BinomialBasis</span><span class="p">()</span><span class="o">.</span><span class="n">compatibility_type</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">BinomialBasis</span><span class="p">()</span><span class="o">.</span><span class="n">compatibility_type</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">)</span>
+<span class="s1">&#39;endo&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">BinomialBasis</span><span class="p">()</span><span class="o">.</span><span class="n">compatibility_type</span><span class="p">(</span><span class="s1">&#39;Id&#39;</span><span class="p">)</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+<span class="o">...</span>
+<span class="n">NotCompatibleError</span><span class="p">:</span> <span class="n">operator</span> <span class="n">Id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">compatible</span> <span class="k">with</span> <span class="n">this</span> <span class="n">basis</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">PowerBasis</span><span class="p">()</span><span class="o">.</span><span class="n">compatibility_type</span><span class="p">(</span><span class="s1">&#39;Id&#39;</span><span class="p">)</span>
+<span class="s1">&#39;endo&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">HermiteBasis</span><span class="p">()</span><span class="o">.</span><span class="n">compatibility_type</span><span class="p">(</span><span class="s1">&#39;Dx&#39;</span><span class="p">)</span>
+<span class="s1">&#39;der&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">FallingBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">compatibility_type</span><span class="p">(</span><span class="s1">&#39;E3&#39;</span><span class="p">)</span>
+<span class="s1">&#39;endo&#39;</span>
+</pre></div>
+</div>
+<p>This output gets updated when we add new compatibilities:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">compatibility_type</span><span class="p">(</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+<span class="o">...</span>
+<span class="n">NotCompatibleError</span><span class="p">:</span> <span class="n">operator</span> <span class="n">s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">compatible</span> <span class="k">with</span> <span class="n">this</span> <span class="n">basis</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">set_compatibility</span><span class="p">(</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">compatibility_type</span><span class="p">(</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">set_endomorphism</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">compatibility_type</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+<span class="s1">&#39;endo&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.compatible_derivations">
+<span class="sig-name descname"><span class="pre">compatible_derivations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.compatible_derivations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the registered derivations compatible with <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.compatible_endomorphisms">
+<span class="sig-name descname"><span class="pre">compatible_endomorphisms</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.compatible_endomorphisms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the registered endomorphisms compatible with <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.compatible_operators">
 <span class="sig-name descname"><span class="pre">compatible_operators</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.compatible_operators" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method that returns a list with the compatible operators stored in the dictionary.</p>
@@ -382,7 +439,7 @@ basis. Any polynomial built on these operators will be valid for the method <a c
 <p>Return the key set of the dictionary of compatibilities. This set will be composed of the names of 
 the compatible operators with <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">BinomialBasis</span><span class="p">()</span><span class="o">.</span><span class="n">compatible_operators</span><span class="p">()</span>
 <span class="n">dict_keys</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;Et&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">])</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">PowerBasis</span><span class="p">()</span><span class="o">.</span><span class="n">compatible_operators</span><span class="p">()</span>
@@ -391,31 +448,80 @@ the compatible operators with <code class="docutils literal notranslate"><span c
 <span class="n">dict_keys</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;Dx&#39;</span><span class="p">])</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">FallingBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">compatible_operators</span><span class="p">()</span>
-<span class="n">dict_keys</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">])</span>
+<span class="n">dict_keys</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;E3&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>This output gets updated when we add new compatibilities</p>
 <blockquote>
 <div><p>sage: B.set_compatibility(‘s’, 1)
 sage: B.compatible_operators()
-dict_keys([‘x’, ‘E’, ‘s’])</p>
+dict_keys([‘x’, ‘E3’, ‘s’])</p>
 </div></blockquote>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.element">
-<span class="sig-name descname"><span class="pre">element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.element" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to return the <span class="math notranslate nohighlight">\(n\)</span>-th element of the basis.</p>
-<p>The user can also get the <span class="math notranslate nohighlight">\(n\)</span>-th element of the sequence using the <em>magic</em> Python syntax for 
-element in a list (i.e., using the <code class="docutils literal notranslate"><span class="pre">[]</span></code> notation).</p>
-<p>This is an abstract method that has to be implemented in some subclass.</p>
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.evaluation_matrix">
+<span class="sig-name descname"><span class="pre">evaluation_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nrows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.evaluation_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get a matrix representation of the basis.</p>
+<p>This method returns a matrix <span class="math notranslate nohighlight">\(\tilde{M} = (m_{i,j})\)</span> with <code class="docutils literal notranslate"><span class="pre">nrows</span></code> rows and
+<code class="docutils literal notranslate"><span class="pre">ncols</span></code> columns such that <span class="math notranslate nohighlight">\(m_{i,j} = f_i(j)\)</span>, where <span class="math notranslate nohighlight">\(f_i(x)\)</span> is 
+the <span class="math notranslate nohighlight">\(i\)</span>-th element of <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<p>This is the upper-left part of the matrix <span class="math notranslate nohighlight">\(M\)</span> that represent, by rows,
+the images of this basis in the natural numbers. This is specially useful when
+considering recurrences since, if we have an element 
+<span class="math notranslate nohighlight">\(y(x) \in \mathbb{K}[[x]]\)</span> with <span class="math notranslate nohighlight">\(y(n) = y_n\)</span> and:</p>
+<div class="math notranslate nohighlight">
+\[y(x) = \sum_{n\geq 0} c_n f_n(x),\]</div>
+<p>then the infinite vectors <span class="math notranslate nohighlight">\(\mathbf{y}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{c}\)</span> satisfies:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{y} = \mathbf{c} M\]</div>
 <p>INPUT:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">n</span></code>: the index of the element to get.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">var_name</span></code>: the name of the variable of the resulting polynomial. If <code class="docutils literal notranslate"><span class="pre">None</span></code> is given, 
-we use the variable <span class="math notranslate nohighlight">\(x\)</span>. Otherwise we create the corresponding polynomial ring and 
-return the polynomial in that polynomial ring.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nrows</span></code>: number of rows of the final matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ncols</span></code>: number of columns of the final matrix. If <code class="docutils literal notranslate"><span class="pre">None</span></code> is given, we
+will automatically return the square matrix with size given by <code class="docutils literal notranslate"><span class="pre">nrows</span></code>.</p></li>
 </ul>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.evaluation_seq">
+<span class="sig-name descname"><span class="pre">evaluation_seq</span></span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.evaluation_seq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the functional sequence of the basis.</p>
+<p>A <a class="reference internal" href="#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSBasis</span></code></a> can be seen as a sequence of functions or polynomials. However, these
+functions and polynomials are sequences by themselves. In fact, a <a class="reference internal" href="#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSBasis</span></code></a> is 
+a basis of the ring of formal power series which, at the same time, is a basis of the 
+ring of sequences.</p>
+<p>However, the relation between the sequences and the formal power series is not unique:</p>
+<ul class="simple">
+<li><p>We can consider the formal power series <span class="math notranslate nohighlight">\(f(x) = \sum_n a_n x^n\)</span>, then we have the 
+natural (also called functional) sequence <span class="math notranslate nohighlight">\((a_n)_n\)</span>.</p></li>
+<li><p>We can consider formal power series as functions <span class="math notranslate nohighlight">\(f: \mathbb{K} \rightarrow \mathbb{K},
+and (if convergent) we can define the (evaluation) sequence \)</span>.</p></li>
+</ul>
+<p>This method returns a bi-indexed sequence that allows to obtain the evaluation sequences
+of this basis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.evaluation_to_self">
+<span class="sig-name descname"><span class="pre">evaluation_to_self</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.evaluation_to_self" title="Permalink to this definition">¶</a></dt>
+<dd><p>Matrix to convert a sequence from the evaluation basis of <span class="math notranslate nohighlight">\(\mathbb{K}[[x]]\)</span> to <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<p>Let <span class="math notranslate nohighlight">\(y(x) = \sum_{n\geq 0} c_n f_n(x)\)</span> be a formal power series where <span class="math notranslate nohighlight">\(f_n(x)\)</span> is the <span class="math notranslate nohighlight">\(n\)</span>-th term of this basis.
+If well defined, the values <span class="math notranslate nohighlight">\(y_n = y(n)\)</span> defined a new sequence of numbers.</p>
+<p>This method allows to obtain the first terms of the <span class="math notranslate nohighlight">\(\mathbf{c}\)</span> expansion (as many as given in <code class="docutils literal notranslate"><span class="pre">size</span></code>) 
+for the formal power series <span class="math notranslate nohighlight">\(y(x)\)</span> where the first evaluations <span class="math notranslate nohighlight">\(y_n\)</span> are given by <code class="docutils literal notranslate"><span class="pre">sequence</span></code>.</p>
+<p>Using the evaluation matrix <span class="math notranslate nohighlight">\(M\)</span> (see <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.evaluation_matrix" title="pseries_basis.psbasis.PSBasis.evaluation_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">evaluation_matrix()</span></code></a>), this computation is straightforward, since</p>
+<div class="math notranslate nohighlight">
+\[y = c M.\]</div>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sequence</span></code>: indexable object with <em>enough</em> information to compute the result, representing the first
+terms of the sequence <span class="math notranslate nohighlight">\((y_0, y_1, \ldots)\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">size</span></code>: number of elements of the sequence <span class="math notranslate nohighlight">\((c_0, c_1,\ldots)\)</span> computed in this method.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>The tuple <span class="math notranslate nohighlight">\((c_0, \ldots, c_{k})\)</span> where <span class="math notranslate nohighlight">\(k\)</span> is given by <code class="docutils literal notranslate"><span class="pre">size-1</span></code>.</p>
+<p>TODO: add Examples and tests</p>
 </dd></dl>
 
 <dl class="py method">
@@ -434,12 +540,78 @@ care of the different types the input may have.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.functional_matrix">
+<span class="sig-name descname"><span class="pre">functional_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nrows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.functional_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get a matrix representation of the basis.</p>
+<p>This method returns a matrix <span class="math notranslate nohighlight">\(\tilde{M} = (m_{i,j})\)</span> with <code class="docutils literal notranslate"><span class="pre">nrows</span></code> rows and
+<code class="docutils literal notranslate"><span class="pre">ncols</span></code> columns such that <span class="math notranslate nohighlight">\(m_{i,j} = [x^j]f_i(x)\)</span>, where <span class="math notranslate nohighlight">\(f_i(x)\)</span> is 
+the <span class="math notranslate nohighlight">\(i\)</span>-th element of <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<p>This is the upper-left part of the matrix <span class="math notranslate nohighlight">\(M\)</span> that represent, by rows,
+the elements of this basis in terms of the canonical basis of the formal
+power series ring (<span class="math notranslate nohighlight">\(\{1,x,x^2,\ldots\}\)</span>). Hence, if we have an element 
+<span class="math notranslate nohighlight">\(y(x) \in \mathbb{K}[[x]]\)</span> with:</p>
+<div class="math notranslate nohighlight">
+\[y(x) = \sum_{n\geq 0} y_n x^n = \sum_{n\geq 0} c_n f_n(x),\]</div>
+<p>then the infinite vectors <span class="math notranslate nohighlight">\(\mathbf{y}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{c}\)</span> satisfies:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{y} = \mathbf{c} M\]</div>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nrows</span></code>: number of rows of the final matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ncols</span></code>: number of columns of the final matrix. If <code class="docutils literal notranslate"><span class="pre">None</span></code> is given, we
+will automatically return the square matrix with size given by <code class="docutils literal notranslate"><span class="pre">nrows</span></code>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.functional_seq">
+<span class="sig-name descname"><span class="pre">functional_seq</span></span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.functional_seq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the functional sequence of the basis.</p>
+<p>A <a class="reference internal" href="#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSBasis</span></code></a> can be seen as a sequence of functions or polynomials. However, these
+functions and polynomials are sequences by themselves. In fact, a <a class="reference internal" href="#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSBasis</span></code></a> is 
+a basis of the ring of formal power series which, at the same time, is a basis of the 
+ring of sequences.</p>
+<p>However, the relation between the sequences and the formal power series is not unique:</p>
+<ul class="simple">
+<li><p>We can consider the formal power series <span class="math notranslate nohighlight">\(f(x) = \sum_n a_n x^n\)</span>, then we have the 
+natural (also called functional) sequence <span class="math notranslate nohighlight">\((a_n)_n\)</span>.</p></li>
+<li><p>We can consider formal power series as functions <span class="math notranslate nohighlight">\(f: \mathbb{K} \rightarrow \mathbb{K},
+and (if convergent) we can define the (evaluation) sequence \)</span>.</p></li>
+</ul>
+<p>This method returns a bi-indexed sequence that allows to obtain the functional sequences
+of this basis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.functional_to_self">
+<span class="sig-name descname"><span class="pre">functional_to_self</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.functional_to_self" title="Permalink to this definition">¶</a></dt>
+<dd><p>Matrix to convert a sequence from the canonical basis of <span class="math notranslate nohighlight">\(\mathbb{K}[[x]]\)</span> to <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<p>Let <span class="math notranslate nohighlight">\(y(x) = \sum_{n\geq 0} y_n x^n\)</span> be a formal power series. Since <code class="docutils literal notranslate"><span class="pre">self</span></code> represents another 
+basis of the formal power series ring, then <span class="math notranslate nohighlight">\(y(x)\)</span> can be expressed in terms of the elements
+of <code class="docutils literal notranslate"><span class="pre">self</span></code>, i.e., <span class="math notranslate nohighlight">\(y(x) = \sum_{n\geq 0} c_n f_n(x)\)</span> where <span class="math notranslate nohighlight">\(f_n(x)\)</span> is the <span class="math notranslate nohighlight">\(n\)</span>-th term of this basis.</p>
+<p>This method allows to obtain the first terms of this expansion (as many as given in <code class="docutils literal notranslate"><span class="pre">size</span></code>) 
+for the formal power series <span class="math notranslate nohighlight">\(y(x)\)</span> where the first elements are given by <code class="docutils literal notranslate"><span class="pre">sequence</span></code>.</p>
+<p>Using the basis matrix <span class="math notranslate nohighlight">\(M\)</span> (see <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.functional_matrix" title="pseries_basis.psbasis.PSBasis.functional_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">functional_matrix()</span></code></a>), this computation is straightforward, since</p>
+<div class="math notranslate nohighlight">
+\[y = c M.\]</div>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sequence</span></code>: indexable object with <em>enough</em> information to compute the result, representing the first
+terms of the sequence <span class="math notranslate nohighlight">\((y_0, y_1, \ldots)\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">size</span></code>: number of elements of the sequence <span class="math notranslate nohighlight">\((c_0, c_1,\ldots)\)</span> computed in this method.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>The tuple <span class="math notranslate nohighlight">\((c_0, \ldots, c_{k})\)</span> where <span class="math notranslate nohighlight">\(k\)</span> is given by <code class="docutils literal notranslate"><span class="pre">size-1</span></code>.</p>
+<p>TODO: add Examples and tests</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.get_lower_bound">
 <span class="sig-name descname"><span class="pre">get_lower_bound</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.get_lower_bound" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to get the lower bound compatibility for an operator.</p>
 <p>This method returns the minimal index for the compatibility property
 for a particular operator. In the notation of the paper
-<a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>, for a <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible operator,
+<a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, for a <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible operator,
 this lower bound corresponds to the value of <span class="math notranslate nohighlight">\(A\)</span>.</p>
 <p>INPUT:</p>
 <ul class="simple">
@@ -459,7 +631,7 @@ itself.</p></li>
 <dd><p>Method to get the upper bound compatibility for an operator.</p>
 <p>This method returns the maximal index for the compatibility property
 for a particular operator. In the notation of the paper
-<a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>, for a <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible operator,
+<a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, for a <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible operator,
 this lower bound corresponds to the value of <span class="math notranslate nohighlight">\(B\)</span>.</p>
 <p>INPUT:</p>
 <ul class="simple">
@@ -485,9 +657,9 @@ It can be a string or an object that will be transformed into a string
 to check if the compatibility is included.</p></li>
 </ul>
 <p>OUTPUT:</p>
-<p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the givenoperator is compatible and <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+<p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the given operator is compatible and <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">BinomialBasis</span><span class="p">()</span><span class="o">.</span><span class="n">has_compatibility</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
 <span class="kc">True</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">BinomialBasis</span><span class="p">()</span><span class="o">.</span><span class="n">has_compatibility</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">)</span>
@@ -499,18 +671,18 @@ to check if the compatibility is included.</p></li>
 <span class="n">sage</span><span class="p">:</span> <span class="n">HermiteBasis</span><span class="p">()</span><span class="o">.</span><span class="n">has_compatibility</span><span class="p">(</span><span class="s1">&#39;Dx&#39;</span><span class="p">)</span>
 <span class="kc">True</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">FallingBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">has_compatibility</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">has_compatibility</span><span class="p">(</span><span class="s1">&#39;E3&#39;</span><span class="p">)</span>
 <span class="kc">True</span>
 </pre></div>
 </div>
-<p>This output gets updated when we add new compatibilities</p>
-<blockquote>
-<div><p>sage: B.has_compatibility(‘s’)
-False
-sage: B.set_compatibility(‘s’, 1)
-sage: B.has_compatibility(‘s’)
-True</p>
-</div></blockquote>
+<p>This output gets updated when we add new compatibilities:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">has_compatibility</span><span class="p">(</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<span class="kc">False</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">set_compatibility</span><span class="p">(</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">has_compatibility</span><span class="p">(</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<span class="kc">True</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py method">
@@ -526,7 +698,7 @@ or <code class="docutils literal notranslate"><span class="pre">None</span></cod
 <li><p><code class="docutils literal notranslate"><span class="pre">element</span></code>: the object that will be checked.</p></li>
 </ul>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BinomialBasis</span><span class="p">();</span> <span class="n">n</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">n</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -554,8 +726,8 @@ method of Sage and recognize the type of sequence:</p>
 <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="o">^</span><span class="mi">6</span> <span class="o">+</span> <span class="mi">6</span><span class="o">*</span><span class="n">n</span><span class="o">^</span><span class="mi">5</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="o">^</span><span class="mi">4</span> <span class="o">-</span> <span class="mi">6</span><span class="o">*</span><span class="n">n</span><span class="o">^</span><span class="mi">3</span> <span class="o">-</span> <span class="mi">7</span><span class="o">*</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">9</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">n</span><span class="o">^</span><span class="mi">5</span> <span class="o">-</span> <span class="n">n</span><span class="o">^</span><span class="mi">4</span> <span class="o">-</span> <span class="n">n</span><span class="o">^</span><span class="mi">3</span> <span class="o">+</span> <span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>The argument for the <a class="reference external" href="https://doc.sagemath.org/html/en/reference/functions/sage/functions/hypergeometric">Sage doc: functions/sage/functions/hypergeometric</a> and 
-<a class="reference external" href="https://doc.sagemath.org/html/en/reference/functions/sage/functions/other#sage.functions.other.Function_factorial">Sage doc: functions/sage/functions/other#sage.functions.other.Function_factorial</a>
+<p>The argument for the <a class="reference external" href="https://doc.sagemath.org/html/en/reference/functions/sage/functions/hypergeometric">Sage_doc:functions/sage/functions/hypergeometric</a> and 
+<a class="reference external" href="https://doc.sagemath.org/html/en/reference/functions/sage/functions/other#sage.functions.other.Function_factorial">Sage_doc:functions/sage/functions/other#sage.functions.other.Function_factorial</a>
 has to be exactly <span class="math notranslate nohighlight">\(n\)</span> or a simple shift. Otherwise this method returns <code class="docutils literal notranslate"><span class="pre">False</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">is_hypergeometric</span><span class="p">(</span><span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
 <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
@@ -572,12 +744,48 @@ TODO: extend this method for further hypergeometric detection (if possible)</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.is_quasi_eval_triangular">
+<span class="sig-name descname"><span class="pre">is_quasi_eval_triangular</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.is_quasi_eval_triangular" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check whether a basis is quasi-triangular or not as an evaluation basis.</p>
+<p>A basis <span class="math notranslate nohighlight">\(\mathcal{B} = \{f_n(x)\}_n\)</span> is an evaluation <em>quasi-triangular</em> if its 
+evaluation matrix representation <span class="math notranslate nohighlight">\(M = \left(m_{n,k}\right)_{n,k \geq 0}\)</span> (see 
+<a class="reference internal" href="#pseries_basis.psbasis.PSBasis.evaluation_matrix" title="pseries_basis.psbasis.PSBasis.evaluation_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">evaluation_matrix()</span></code></a>) is <em>quasi-upper triangular</em>, i.e.,
+there is a strictly monotonic function <span class="math notranslate nohighlight">\(I: \mathbb{N} \rightarrow \mathbb{N}\)</span> such that</p>
+<ul class="simple">
+<li><p>For all <span class="math notranslate nohighlight">\(k \in \mathbb{N}\)</span>, and <span class="math notranslate nohighlight">\(m &gt; I(k)\)</span>, <span class="math notranslate nohighlight">\(m_{n,k} =0\)</span>, i.e., <span class="math notranslate nohighlight">\(k\)</span> is a zero of <span class="math notranslate nohighlight">\(f_n(x)\)</span>.</p></li>
+<li><p>For all <span class="math notranslate nohighlight">\(k \in \mathbb{N}\)</span>, <span class="math notranslate nohighlight">\(m_{I(k),k} \neq 0\)</span>, i.e., <span class="math notranslate nohighlight">\(k\)</span> is not a zero of <span class="math notranslate nohighlight">\(f_{I(k)}(x)\)</span>.</p></li>
+</ul>
+<p>This property will allow to transform the initial conditions from a recurrence defined 
+by the evaluation at the natural numbers to the initial conditions of the expansion
+over <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<p>In <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, this concept is equivalent to the definition of a <em>quasi-triangular</em> basis
+in the case of factorial bases.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.is_quasi_func_triangular">
+<span class="sig-name descname"><span class="pre">is_quasi_func_triangular</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.is_quasi_func_triangular" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check whether a basis is quasi-triangular or not as a functional basis.</p>
+<p>A basis <span class="math notranslate nohighlight">\(\mathcal{B} = \{f_n(x)\}_n\)</span> is a functional <em>quasi-triangular</em> if its 
+functional matrix representation <span class="math notranslate nohighlight">\(M = \left(m_{n,k}\right)_{n,k \geq 0}\)</span> (see 
+<a class="reference internal" href="#pseries_basis.psbasis.PSBasis.functional_matrix" title="pseries_basis.psbasis.PSBasis.functional_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">functional_matrix()</span></code></a>) is <em>quasi-upper triangular</em>, i.e.,
+there is a strictly monotonic function <span class="math notranslate nohighlight">\(I: \mathbb{N} \rightarrow \mathbb{N}\)</span> such that</p>
+<ul class="simple">
+<li><p>For all <span class="math notranslate nohighlight">\(k \in \mathbb{N}\)</span>, and <span class="math notranslate nohighlight">\(m &gt; I(k)\)</span>, <span class="math notranslate nohighlight">\(m_{n,k} =0\)</span>, i.e., <span class="math notranslate nohighlight">\(x^k\)</span> divides <span class="math notranslate nohighlight">\(f_n(x)\)</span>.</p></li>
+<li><p>For all <span class="math notranslate nohighlight">\(k \in \mathbb{N}\)</span>, <span class="math notranslate nohighlight">\(m_{I(k),k} \neq 0\)</span>, i.e., <span class="math notranslate nohighlight">\(x^k\)</span> does not divide <span class="math notranslate nohighlight">\(f_{I(k)}(x)\)</span>.</p></li>
+</ul>
+<p>This property will allow to transform the initial conditions from the canonical basis
+of formal power series (<span class="math notranslate nohighlight">\(\{1,x,x^2,\ldots\}\)</span>) to the initial conditions of the expansion
+over <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.n">
 <span class="sig-name descname"><span class="pre">n</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.n" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to get the generic variable <span class="math notranslate nohighlight">\(n\)</span> for the recurrences.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">()</span> <span class="c1"># illegal building, do not use in general</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">(</span><span class="n">QQ</span><span class="p">)</span> <span class="c1"># illegal building, do not use in general</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">n</span><span class="p">()</span>
 <span class="n">n</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">n</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
@@ -587,19 +795,11 @@ TODO: extend this method for further hypergeometric detection (if possible)</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.polynomial_ring">
-<span class="sig-name descname"><span class="pre">polynomial_ring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.polynomial_ring" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to create a polynomial ring.</p>
-<p>This method creates a polynomial ring with a given variable name
-with coefficients in the field given by default by <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.OB" title="pseries_basis.psbasis.PSBasis.OB"><code class="xref py py-func docutils literal notranslate"><span class="pre">OB()</span></code></a>.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.recurrence">
-<span class="sig-name descname"><span class="pre">recurrence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sections</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.recurrence" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">recurrence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sections</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cleaned</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.recurrence" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to get the recurrence for a compatible operator.</p>
 <p>This method returns the recurrence equation induced for a compatible operator. 
-In <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a> this compatibility
+In <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a> this compatibility
 is shown to be an algebra isomorphism, so we can compute the compatibility
 final sequence operator using the <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code> package and a plain 
 substitution.</p>
@@ -618,7 +818,7 @@ condition of <code class="docutils literal notranslate"><span class="pre">operat
 <p>If <code class="docutils literal notranslate"><span class="pre">sections</span></code> is a positive integer greater than 1, then a matrix of that size
 is returned.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">P</span> <span class="o">=</span> <span class="n">PowerBasis</span><span class="p">()</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
 <span class="n">Sni</span>
@@ -644,23 +844,44 @@ is returned.</p>
 </pre></div>
 </div>
 <p>We can also use the operators from <code class="xref py py-class docutils literal notranslate"><span class="pre">ore_algebra.OreAlgebra</span></code> to get the compatibility. Here
-we see some examples extracted from <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">ore_algebra</span> <span class="k">import</span> <span class="n">OreAlgebra</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">OE</span><span class="o">.&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">OreAlgebra</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">))</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">x</span> <span class="o">=</span> <span class="n">B</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">gens</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">example4_1</span> <span class="o">=</span> <span class="n">E</span> <span class="o">-</span> <span class="mi">3</span><span class="p">;</span> <span class="n">B</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">example4_1</span><span class="p">)</span>
+we see some examples extracted from Example 25 in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis.misc.ore</span> <span class="kn">import</span> <span class="n">get_recurrence_algebra</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">OE</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">E</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_recurrence_algebra</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="n">rational</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">example25_1</span> <span class="o">=</span> <span class="n">E</span> <span class="o">-</span> <span class="mi">3</span><span class="p">;</span> <span class="n">B</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">example25_1</span><span class="p">)</span>
 <span class="n">Sn</span> <span class="o">-</span> <span class="mi">2</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">example4_2</span> <span class="o">=</span> <span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">E</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="n">B</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">example4_2</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">example25_2</span> <span class="o">=</span> <span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">E</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="n">B</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">example25_2</span><span class="p">)</span>
 <span class="n">Sn</span><span class="o">^</span><span class="mi">2</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">example4_3</span> <span class="o">=</span> <span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="n">E</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="n">B</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">example4_3</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">example25_3</span> <span class="o">=</span> <span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="n">E</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="n">B</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">example25_3</span><span class="p">)</span>
 <span class="n">Sn</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Sn</span> <span class="o">-</span> <span class="mi">1</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">example4_4</span> <span class="o">=</span> <span class="n">E</span> <span class="o">-</span> <span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span> <span class="n">B</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">example4_4</span><span class="p">)</span>
-<span class="n">Sn</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="p">)</span><span class="o">*</span><span class="n">Sni</span> <span class="o">-</span> <span class="n">n</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">example4_5</span> <span class="o">=</span> <span class="n">E</span><span class="o">^</span><span class="mi">3</span> <span class="o">-</span> <span class="p">(</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="o">+</span><span class="mi">6</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">10</span><span class="p">)</span><span class="o">*</span><span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">5</span><span class="p">)</span><span class="o">*</span><span class="n">E</span><span class="o">-</span><span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">example4_5</span><span class="p">)</span>
-<span class="n">Sn</span><span class="o">^</span><span class="mi">3</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">6</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">7</span><span class="p">)</span><span class="o">*</span><span class="n">Sn</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">8</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">7</span><span class="p">)</span><span class="o">*</span><span class="n">Sn</span> <span class="o">-</span> <span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">example25_4</span> <span class="o">=</span> <span class="n">E</span> <span class="o">-</span> <span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span> <span class="n">B</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">example25_4</span><span class="p">)</span>
+<span class="n">Sn</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="p">)</span><span class="o">*</span><span class="n">Sni</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">example25_5</span> <span class="o">=</span> <span class="n">E</span><span class="o">^</span><span class="mi">3</span> <span class="o">-</span> <span class="p">(</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="o">+</span><span class="mi">6</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">10</span><span class="p">)</span><span class="o">*</span><span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">5</span><span class="p">)</span><span class="o">*</span><span class="n">E</span><span class="o">-</span><span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="n">example25_5</span><span class="p">)</span>
+<span class="n">Sn</span><span class="o">^</span><span class="mi">3</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">6</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">7</span><span class="p">)</span><span class="o">*</span><span class="n">Sn</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">8</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">7</span><span class="p">)</span><span class="o">*</span><span class="n">Sn</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.recurrence_orig">
+<span class="sig-name descname"><span class="pre">recurrence_orig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.recurrence_orig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the recurrence for a compatible operator.</p>
+<p>This method computes a recurrence operator assocaited with a compatible operator with this basis
+(see <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.recurrence" title="pseries_basis.psbasis.PSBasis.recurrence"><code class="xref py py-func docutils literal notranslate"><span class="pre">recurrence()</span></code></a>). There are cases where the original operator was also a recurrence
+operator. In these cases, we are able to repeat the process of compatibility over and over.</p>
+<p>This method transforms the output of <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.recurrence" title="pseries_basis.psbasis.PSBasis.recurrence"><code class="xref py py-func docutils literal notranslate"><span class="pre">recurrence()</span></code></a> so this iterative behavior can be done.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">operator</span></code>: the linear recurrence to check for compatibility.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>A new operator in the same ring as <code class="docutils literal notranslate"><span class="pre">operator</span></code> representing the associated recurrence with the 
+compatibility conditions w.r.t. <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>TODO: Add examples and tests for this method</p>
 </dd></dl>
 
 <dl class="py method">
@@ -681,8 +902,8 @@ in all terms that have the two operators involved and returns a reduced version 
 <p>A reduced but equivalent version of <code class="docutils literal notranslate"><span class="pre">operator</span></code> such that the monomials involved in the reduced version only have
 <code class="docutils literal notranslate"><span class="pre">Sn</span></code> or <code class="docutils literal notranslate"><span class="pre">Sni</span></code>, but never mixed.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">()</span> <span class="c1"># illegal build just for examples</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">(</span><span class="n">QQ</span><span class="p">)</span> <span class="c1"># illegal build just for examples</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">Sn</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">Sn</span><span class="p">();</span> <span class="n">Sni</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">Sni</span><span class="p">()</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">Sn</span><span class="o">*</span><span class="n">Sni</span>
 <span class="n">Sn</span><span class="o">*</span><span class="n">Sni</span>
@@ -723,8 +944,8 @@ the method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.OS
 <p>An operator that annihilates all the objects annihilated by <code class="docutils literal notranslate"><span class="pre">operator</span></code> that belong to the ring
 returned by <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.OSS" title="pseries_basis.psbasis.PSBasis.OSS"><code class="xref py py-func docutils literal notranslate"><span class="pre">OSS()</span></code></a>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">()</span> <span class="c1"># do not do this in your code</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="p">(</span><span class="n">QQ</span><span class="p">)</span> <span class="c1"># do not do this in your code</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">Sn</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">Sn</span><span class="p">();</span> <span class="n">Sni</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">Sni</span><span class="p">()</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">remove_Sni</span><span class="p">(</span><span class="n">Sni</span><span class="p">)</span>
 <span class="mi">1</span>
@@ -752,7 +973,7 @@ multiplied by <code class="docutils literal notranslate"><span class="pre">facto
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.set_compatibility">
-<span class="sig-name descname"><span class="pre">set_compatibility</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.set_compatibility" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">set_compatibility</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.set_compatibility" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to set a new compatibility operator.</p>
 <p>This method sets a new compatibility condition for an operator given 
 by <code class="docutils literal notranslate"><span class="pre">name</span></code>. The compatibility condition must be given as a tuple
@@ -762,7 +983,7 @@ for the compatibility. In this way, we have tht the operator <span class="math n
 satisfies:</p>
 <div class="math notranslate nohighlight">
 \[L \cdot b_{km+r} = \sum_{i=-A}^B \alpha_{r, i, k} b_{km+r+j}\]</div>
-<p>See <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a> for further information about the
+<p>See <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a> for further information about the
 definition of a compatible operator.</p>
 <p>INPUT:</p>
 <ul>
@@ -784,7 +1005,35 @@ is of 1 section and we can compute explicitly the values of <span class="math no
 </li>
 <li><p><code class="docutils literal notranslate"><span class="pre">sub</span></code> (optional): if set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the compatibility rule for <code class="docutils literal notranslate"><span class="pre">name</span></code>
 will be updated even if the operator was already compatible.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code> (optional): if set to <code class="docutils literal notranslate"><span class="pre">&quot;endo&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;der&quot;</span></code>, we assume the operator given in 
+<code class="docutils literal notranslate"><span class="pre">name</span></code> is either a endomorphism or derivation.</p></li>
 </ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.set_derivation">
+<span class="sig-name descname"><span class="pre">set_derivation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.set_derivation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to set a new compatibility operator for a derivation.</p>
+<p>This method sets a new compatibility condition for an operator given 
+by <code class="docutils literal notranslate"><span class="pre">name</span></code> (see <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.set_compatibility" title="pseries_basis.psbasis.PSBasis.set_compatibility"><code class="xref py py-func docutils literal notranslate"><span class="pre">set_compatibility()</span></code></a>). We assume the name 
+is for a derivation, i.e., let <span class="math notranslate nohighlight">\(\partial\)</span> be the operator represented by <code class="docutils literal notranslate"><span class="pre">name</span></code>. 
+Then for all <span class="math notranslate nohighlight">\(a,b in \mathbb{K}[[x]]\)</span>, it holds</p>
+<div class="math notranslate nohighlight">
+\[\partial(ab) = \partial(a)b +  a\partial(b)\]</div>
+<p>INPUT: see input in <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.set_compatibility" title="pseries_basis.psbasis.PSBasis.set_compatibility"><code class="xref py py-func docutils literal notranslate"><span class="pre">set_compatibility()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.set_endomorphism">
+<span class="sig-name descname"><span class="pre">set_endomorphism</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.set_endomorphism" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to set a new compatibility operator for an endomorphism.</p>
+<p>This method sets a new compatibility condition for an operator given 
+by <code class="docutils literal notranslate"><span class="pre">name</span></code> (see <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.set_compatibility" title="pseries_basis.psbasis.PSBasis.set_compatibility"><code class="xref py py-func docutils literal notranslate"><span class="pre">set_compatibility()</span></code></a>). We assume the name 
+is for an endomorphism, i.e., let <span class="math notranslate nohighlight">\(\varphi\)</span> be the operator represented by <code class="docutils literal notranslate"><span class="pre">name</span></code>. 
+Then for all <span class="math notranslate nohighlight">\(a,b in \mathbb{K}[[x]]\)</span>, it holds</p>
+<div class="math notranslate nohighlight">
+\[\varphi(ab) = \varphi(a) \varphi(b)\]</div>
+<p>INPUT: see input in <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.set_compatibility" title="pseries_basis.psbasis.PSBasis.set_compatibility"><code class="xref py py-func docutils literal notranslate"><span class="pre">set_compatibility()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -828,7 +1077,7 @@ simply the rational roots (which can be done with the usual Sage algorithms).</p
 <p>OUTPUT:</p>
 <p>This method return <code class="docutils literal notranslate"><span class="pre">True</span></code> if the rational function has no pole nor zero on <span class="math notranslate nohighlight">\(\mathbb{N}\)</span>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BinomialBasis</span><span class="p">();</span> <span class="n">n</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">n</span><span class="p">()</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">valid_factor</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 <span class="kc">False</span>
@@ -871,7 +1120,7 @@ simply the rational roots (which can be done with the usual Sage algorithms).</p
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.BruteBasis">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pseries_basis.psbasis.</span></span><span class="sig-name descname"><span class="pre">BruteBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.BruteBasis" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.psbasis.</span></span><span class="sig-name descname"><span class="pre">BruteBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.BruteBasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.psbasis.PSBasis</span></code></a></p>
 <p>A brute type of basis where the elements are provided by a method.</p>
 <p>Class for representing basis where the construction does not fit into any other construction
@@ -883,11 +1132,15 @@ for certain amount of elements in the basis.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">elements</span></code>: function or lambda method that takes one parameter <span class="math notranslate nohighlight">\(n\)</span> and return the <span class="math notranslate nohighlight">\(n\)</span>-th element
 of this basis.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span></code>: base domain for the sequences this basis represents.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">universe</span></code>: domain where the elements of the bais will be represented.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">degree</span></code>: indicates if it is a polynomial basis or an order basis.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">var_name</span></code>: (only used if <code class="docutils literal notranslate"><span class="pre">universe</span></code> is None and <code class="docutils literal notranslate"><span class="pre">degree</span></code> is True) provides a name for the main variable
+of the polynomials that compose this basis.</p></li>
 </ul>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BruteBasis</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span> <span class="p">:</span> <span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">](</span><span class="n">binomial</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">n</span><span class="p">)),</span> <span class="kc">True</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BruteBasis</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span> <span class="p">:</span> <span class="n">binomial</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">n</span><span class="p">),</span> <span class="n">QQ</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B2</span> <span class="o">=</span> <span class="n">BinomialBasis</span><span class="p">()</span>
 <span class="n">sage</span><span class="p">:</span> <span class="nb">all</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">B2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
 <span class="kc">True</span>
@@ -895,24 +1148,33 @@ of this basis.</p></li>
 </div>
 <p><strong>Be careful</strong>: this method does not check that the lambda function induces a basis nor that 
 the <code class="docutils literal notranslate"><span class="pre">degree</span></code> argument is correct:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BruteBasis</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BruteBasis</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="nb">all</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
 <span class="kc">True</span>
 </pre></div>
 </div>
 <dl class="py method">
-<dt class="sig sig-object py" id="pseries_basis.psbasis.BruteBasis.element">
-<span class="sig-name descname"><span class="pre">element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.BruteBasis.element" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to return the <span class="math notranslate nohighlight">\(n\)</span>-th element of the basis.</p>
-<p>This method <em>implements</em> the corresponding abstract method from <a class="reference internal" href="#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSBasis</span></code></a>.
-See method <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.element" title="pseries_basis.psbasis.PSBasis.element"><code class="xref py py-func docutils literal notranslate"><span class="pre">element()</span></code></a> for further information.</p>
+<dt class="sig sig-object py" id="pseries_basis.psbasis.BruteBasis.change_base">
+<span class="sig-name descname"><span class="pre">change_base</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.BruteBasis.change_base" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.BruteBasis.evaluation_seq">
+<span class="sig-name descname"><span class="pre">evaluation_seq</span></span><a class="headerlink" href="#pseries_basis.psbasis.BruteBasis.evaluation_seq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.BruteBasis.functional_seq">
+<span class="sig-name descname"><span class="pre">functional_seq</span></span><a class="headerlink" href="#pseries_basis.psbasis.BruteBasis.functional_seq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.PolyBasis">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pseries_basis.psbasis.</span></span><span class="sig-name descname"><span class="pre">PolyBasis</span></span><a class="headerlink" href="#pseries_basis.psbasis.PolyBasis" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.psbasis.</span></span><span class="sig-name descname"><span class="pre">PolyBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base=Rational</span> <span class="pre">Field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PolyBasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.psbasis.PSBasis</span></code></a></p>
 <p>Abstract class for a polynomial power series basis.</p>
 <p>Their elements must be indexed by natural numbers such that the n-th
@@ -920,13 +1182,25 @@ element of the basis has degree exactly <span class="math notranslate nohighligh
 <p>This class <strong>must never</strong> be instantiated.</p>
 <p>List of abstract methods:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#pseries_basis.psbasis.PSBasis.element" title="pseries_basis.psbasis.PSBasis.element"><code class="xref py py-func docutils literal notranslate"><span class="pre">PSBasis.element()</span></code></a>.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">PSBasis.element()</span></code>.</p></li>
 </ul>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PolyBasis.evaluation_seq">
+<span class="sig-name descname"><span class="pre">evaluation_seq</span></span><a class="headerlink" href="#pseries_basis.psbasis.PolyBasis.evaluation_seq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PolyBasis.functional_seq">
+<span class="sig-name descname"><span class="pre">functional_seq</span></span><a class="headerlink" href="#pseries_basis.psbasis.PolyBasis.functional_seq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pseries_basis.psbasis.OrderBasis">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pseries_basis.psbasis.</span></span><span class="sig-name descname"><span class="pre">OrderBasis</span></span><a class="headerlink" href="#pseries_basis.psbasis.OrderBasis" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.psbasis.</span></span><span class="sig-name descname"><span class="pre">OrderBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base=Rational</span> <span class="pre">Field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.OrderBasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.psbasis.PSBasis</span></code></a></p>
 <p>Abstract class for a order power series basis.</p>
 <p>Their elements must be indexed by natural numbers such that the n-th
@@ -934,7 +1208,36 @@ element of the basis has order exactly <span class="math notranslate nohighlight
 <p>This class <strong>must never</strong> be instantiated.</p>
 <p>List of abstract methods:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#pseries_basis.psbasis.PSBasis.element" title="pseries_basis.psbasis.PSBasis.element"><code class="xref py py-func docutils literal notranslate"><span class="pre">PSBasis.element()</span></code></a>.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">PSBasis.element()</span></code>.</p></li>
+</ul>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.OrderBasis.functional_seq">
+<span class="sig-name descname"><span class="pre">functional_seq</span></span><a class="headerlink" href="#pseries_basis.psbasis.OrderBasis.functional_seq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.OrderBasis.is_quasi_func_triangular">
+<span class="sig-name descname"><span class="pre">is_quasi_func_triangular</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.OrderBasis.is_quasi_func_triangular" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.psbasis.check_compatibility">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.psbasis.</span></span><span class="sig-name descname"><span class="pre">check_compatibility</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.check_compatibility" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that checks that a compatibility formula holds for some examples.</p>
+<p>This method takes a <a class="reference internal" href="#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSBasis</span></code></a>, an operator compatibility (either a tuple with the 
+compatibility data or the operator that must be compatible with the basis), an actions with the 
+map for the opertator and a bound and checks that the induced compatibility identity holds for 
+the first terms of the basis.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">basis</span></code>: a <a class="reference internal" href="#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSBasis</span></code></a> to be checked.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">operator</span></code>: a tuple <span class="math notranslate nohighlight">\((A,B,m,\alpha)\)</span> with the compatibility condition (see <a class="reference internal" href="#pseries_basis.psbasis.PSBasis.compatibility" title="pseries_basis.psbasis.PSBasis.compatibility"><code class="xref py py-func docutils literal notranslate"><span class="pre">PSBasis.compatibility()</span></code></a>)
+or a valid input of that method.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">action</span></code>: a map that takes elements in <code class="docutils literal notranslate"><span class="pre">basis.universe</span></code> and perform the operation of <code class="docutils literal notranslate"><span class="pre">operator</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bound</span></code>: positive integer with the number of cases to be checked.</p></li>
 </ul>
 </dd></dl>
 
@@ -947,12 +1250,16 @@ element of the basis has order exactly <span class="math notranslate nohighlight
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="../index.html"
-                        title="previous chapter">Inverse Zeibelger Problem</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="factorial_basis.html"
-                        title="next chapter">Factorial Basis: simplest Polynomial basis</a></p>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../index.html"
+                          title="previous chapter">Inverse Zeibelger Problem</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="factorial.html"
+                          title="next chapter">Factorial Basis: simplest Polynomial basis</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -964,7 +1271,7 @@ element of the basis has order exactly <span class="math notranslate nohighlight
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -984,18 +1291,18 @@ element of the basis has order exactly <span class="math notranslate nohighlight
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="factorial_basis.html" title="Factorial Basis: simplest Polynomial basis"
+          <a href="factorial.html" title="Factorial Basis: simplest Polynomial basis"
              >next</a> |</li>
         <li class="right" >
           <a href="../index.html" title="Inverse Zeibelger Problem"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Power Series basis: basic structure and functionality</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2019.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+        &#169; Copyright 2022.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

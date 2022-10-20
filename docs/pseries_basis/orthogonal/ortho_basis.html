@@ -1,0 +1,460 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Orthogonal Polynomials: second order Polynomial Basis &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Order basis: more bases for formal power series" href="../order.html" />
+    <link rel="prev" title="Orthogonal basis: a complex type of polynomial bases" href="../orthogonal.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../order.html" title="Order basis: more bases for formal power series"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../orthogonal.html" title="Orthogonal basis: a complex type of polynomial bases"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../orthogonal.html" accesskey="U">Orthogonal basis: a complex type of polynomial bases</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Orthogonal Polynomials: second order Polynomial Basis</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-pseries_basis.orthogonal.ortho_basis">
+<span id="orthogonal-polynomials-second-order-polynomial-basis"></span><h1>Orthogonal Polynomials: second order Polynomial Basis<a class="headerlink" href="#module-pseries_basis.orthogonal.ortho_basis" title="Permalink to this headline">¶</a></h1>
+<p>Sage package for Orthogonal Series Basis.</p>
+<p>TODO: review this file to check the compatibility with the derivative in general.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.orthogonal.ortho_basis.</span></span><span class="sig-name descname"><span class="pre">OrthogonalBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X='x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx='Dx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base=Rational</span> <span class="pre">Field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../psbasis.html#pseries_basis.psbasis.PolyBasis" title="pseries_basis.psbasis.PolyBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.psbasis.PolyBasis</span></code></a></p>
+<p>Class for representing a basis of orthogonal polynomials.</p>
+<p>A basis of orthogonal polynomials is a type of polynomial basis for power series
+where the <span class="math notranslate nohighlight">\((n+2)\)</span>-th element is built from the <span class="math notranslate nohighlight">\(n\)</span>-th and <span class="math notranslate nohighlight">\((n+1)\)</span>-th elements. This can be
+seen as a three-term recurrence basis. See <a class="reference external" href="https://dlmf.nist.gov/18">DLMF Chapter 18</a> for further
+information and formulas for orthogonal polynomials.</p>
+<p>The first element in the sequence is given by input and the second element in the sequence 
+is such that the recurrence still holds when taking <span class="math notranslate nohighlight">\(P_{-1}(x) = 0\)</span>.</p>
+<p>We represent a orthogonal polynomial basis with the three coefficients required for
+the three term recurrence:</p>
+<div class="math notranslate nohighlight">
+\[P_{n+1}(x) = (a_n x + b_n)P_n(x) - c_nP_{n-1}(x).\]</div>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">an</span></code>: the first coefficient of the three term recurrence. It can be either a rational
+element in <span class="math notranslate nohighlight">\(n\)</span> or a function or lambda expression that takes 1 argument.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bn</span></code>: the second coefficient of the three term recurrence. It can be either a rational
+element in <span class="math notranslate nohighlight">\(n\)</span> or a function or lambda expression that takes 1 argument.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cn</span></code>: the third coefficient of the three term recurrence. It can be either a rational
+element in <span class="math notranslate nohighlight">\(n\)</span> or a function or lambda expression that takes 1 argument.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “x”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Dx</span></code>: the name for the operator representing the derivation w.r.t. <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “Dx”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">init</span></code>: the first element of the basis. By default, this takes the value <span class="math notranslate nohighlight">\(1\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span></code>: base ring where the coefficients <span class="math notranslate nohighlight">\(a_n\)</span>, <span class="math notranslate nohighlight">\(b_n\)</span>, <span class="math notranslate nohighlight">\(c_n\)</span> and <code class="docutils literal notranslate"><span class="pre">init</span></code> must belong.</p></li>
+</ul>
+<p>TODO: add examples</p>
+<p>WARNING: the compatibility with “Dx” is not standard, since not all orthogonal basis are compatible
+with the derivation w.r.t. <span class="math notranslate nohighlight">\(x\)</span>. However, there is always a derivation with which the basis is compatible.
+This derivation is of the form <span class="math notranslate nohighlight">\(p(x)\partial_x\)</span>, for some <span class="math notranslate nohighlight">\(p(x)\)</span> that is determined by the three 
+term recurrence (see method <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_differential_equation" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_differential_equation"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_differential_equation()</span></code></a>).</p>
+<p>List of abstract methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_mixed_equation()</span></code></a>.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_first_compatibility()</span></code>.</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_differential_equation">
+<span class="sig-name descname"><span class="pre">get_differential_equation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_differential_equation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the second order differential equation for a Orthogonal basis.</p>
+<p>By definition, a set of Orthogonal polynomials satisfies a three term recurrence
+of the form</p>
+<div class="math notranslate nohighlight">
+\[P_{n+1}(x) = (a_n x + b_n)P_n(x) - c_nP_{n-1}(x).\]</div>
+<p>This implies that the set also satisfies a second order differential equation. In fact,
+both representation are equivalent. This method computes the second order differential
+equation for the current Orthogonal basis.</p>
+<p>OUTPUT:</p>
+<p>A triplet <span class="math notranslate nohighlight">\((A(n),B(n),C(n)) \in \mathbb{Q}(n)[x]\)</span> such that, for any element <span class="math notranslate nohighlight">\(P_n(x)\)</span> of the basis, we have</p>
+<div class="math notranslate nohighlight">
+\[A(n)P_n(x)'' + B(n)P_n(x)' + C(n)P_n(x) = 0.\]</div>
+<p>TODO: add examples</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation">
+<span class="sig-name descname"><span class="pre">get_mixed_equation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get a mixed relation between the shift and differential operators.</p>
+<p>By definition, a set of Orthogonal polynomials satisfies a three term recurrence
+of the form</p>
+<div class="math notranslate nohighlight">
+\[P_{n+1}(x) = (a_n x + b_n)P_n(x) - c_nP_{n-1}(x).\]</div>
+<p>This implies that the set also satisfies a mixed difference-differential equation. In fact,
+both representation are equivalent. This method computes the mixed relation for the current 
+Orthogonal basis.</p>
+<p>OUTPUT:</p>
+<p>A tuple <span class="math notranslate nohighlight">\((A(n),B(n),C(n),D(n)) \in \mathbb{Q}(n)\)</span> such that, for any element <span class="math notranslate nohighlight">\(P_n(x)\)</span> of the basis, we have</p>
+<div class="math notranslate nohighlight">
+\[A(n)P_{n}(x)' = (B(n)x+C(n))P_n(x) + D(n)P_{n-1}(x).\]</div>
+<p>TODO: add examples</p>
+<p>WARNING: <strong>this method is currently not implemented.</strong></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.recurrence">
+<span class="sig-name descname"><span class="pre">recurrence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cleaned</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.recurrence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get the compatibility for an operator.</p>
+<p>This method <em>overrides</em> the corresponding abstract method from <a class="reference internal" href="../psbasis.html#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.psbasis.PSBasis</span></code></a>.
+See method <a class="reference internal" href="../psbasis.html#pseries_basis.psbasis.PSBasis.recurrence" title="pseries_basis.psbasis.PSBasis.recurrence"><code class="xref py py-func docutils literal notranslate"><span class="pre">recurrence()</span></code></a> for further information.</p>
+<p>In a first glance, this method tries the classical compatibility using the compatibility dictionary.
+However, the derivation is not usually compatible with <code class="docutils literal notranslate"><span class="pre">self</span></code>, but we may need a prefactor
+<span class="math notranslate nohighlight">\(Q(x)\)</span> (see method <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name"><code class="xref py py-func docutils literal notranslate"><span class="pre">derivation_name()</span></code></a>) to make the derivation compatible.</p>
+<p>Since for any <span class="math notranslate nohighlight">\(L \in \mathbb{Q}[x][\partial]\)</span> we have that <span class="math notranslate nohighlight">\(L \cdot f(x) = 0\)</span> if and only
+if <span class="math notranslate nohighlight">\((Q(x)^{\deg(L)}L) \cdot f(x)= 0\)</span>, and that last operator <strong>is</strong> compatible, we adapted
+this method to return the compatibility condition related with <strong>that</strong> extended operator.</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name">
+<span class="sig-name descname"><span class="pre">derivation_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the compatible derivation with this basis.</p>
+<p>This method returns the name of the 
+associated derivativion with this basis. By definition, a set of Orthogonal 
+polynomials satisfies a three term recurrence of the form</p>
+<div class="math notranslate nohighlight">
+\[P_{n+1}(x) = (a_n x + b_n)P_n(x) - c_nP_{n-1}(x).\]</div>
+<p>That leads to a second order differential equation (see method <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_differential_equation" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_differential_equation"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_differential_equation()</span></code></a>)
+of the form</p>
+<div class="math notranslate nohighlight">
+\[Q(x)P_n''(x) + R(x)P_n'(x) + S(n)P_n(x) = 0.\]</div>
+<p>This means that the operator <span class="math notranslate nohighlight">\(Q(x)\partial_x\)</span> is directly compatible with this basis. This method
+returns the string for this derivation.</p>
+<p>OUTPUT:</p>
+<p>Name of the associated derivation.</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.JacobiBasis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.orthogonal.ortho_basis.</span></span><span class="sig-name descname"><span class="pre">JacobiBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X='x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx='Dx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base=Rational</span> <span class="pre">Field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.JacobiBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis</span></code></a></p>
+<p>Class for the Jacobi Basis with parameters <span class="math notranslate nohighlight">\(\alpha\)</span> and <span class="math notranslate nohighlight">\(\beta\)</span>.</p>
+<p>This class represents the <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrthogonalBasis</span></code></a> formed by the set of Jacobi polynomials
+with some fixed parameters <span class="math notranslate nohighlight">\(\alpha, \beta\)</span>, which are a class of orthogonal polynomials
+with weight function <span class="math notranslate nohighlight">\((1-x)^\alpha (1+x)^\beta\)</span>.</p>
+<p>Following the notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, we can find that
+this basis has compatibilities with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and the derivation
+<span class="math notranslate nohighlight">\((1-x^2)\partial_x\)</span>.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code>: a rational number greater than -1</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">beta</span></code>: a rational number greater than -1</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(x\)</span>.By default, this 
+takes the value “x”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Dx</span></code>: the name for the operator representing the derivation w.r.t. <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “Dx”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span></code>: base ring where the coefficients <span class="math notranslate nohighlight">\(\alpha\)</span> and <span class="math notranslate nohighlight">\(\beta\)</span> must belong.</p></li>
+</ul>
+<p>TODO: add examples</p>
+<p>List of abstract methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation"><code class="xref py py-func docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation()</span></code></a>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.GegenbauerBasis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.orthogonal.ortho_basis.</span></span><span class="sig-name descname"><span class="pre">GegenbauerBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lambd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X='x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx='Dx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base=Rational</span> <span class="pre">Field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.GegenbauerBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis</span></code></a></p>
+<p>Class for the Gegenbauer Basis with parameter <span class="math notranslate nohighlight">\(\lambda\)</span>.</p>
+<p>This class represents the <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrthogonalBasis</span></code></a> formed by the set of Gegenbauer polynomials
+with some fixed parameter <span class="math notranslate nohighlight">\(\lambda\)</span>, which are a class of orthogonal polynomials
+with weight function <span class="math notranslate nohighlight">\((1-x^2)^{\lambda - 1/2}\)</span>.</p>
+<p>Gegenbauer polynomials are (up to scale) a special case of Jacobi polynomials
+with parameters <span class="math notranslate nohighlight">\(\alpha = \beta = \lambda - 1/2\)</span>.</p>
+<p>Following the notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, we can find that
+this basis has compatibilities with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and the 
+differential operator <span class="math notranslate nohighlight">\((1-x^2)\partial_x\)</span>.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">lambd</span></code>: a rational number greater than <span class="math notranslate nohighlight">\(-1/2\)</span> different from <span class="math notranslate nohighlight">\(0\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “x”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Dx</span></code>: the name for the operator representing the derivation w.r.t. <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “Dx”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span></code>: base ring where the coefficients <span class="math notranslate nohighlight">\(\lambda\)</span> must belong.</p></li>
+</ul>
+<p>TODO: add examples</p>
+<p>List of abstract methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation"><code class="xref py py-func docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation()</span></code></a>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.LegendreBasis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.orthogonal.ortho_basis.</span></span><span class="sig-name descname"><span class="pre">LegendreBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X='x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx='Dx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base=Rational</span> <span class="pre">Field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.LegendreBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.JacobiBasis" title="pseries_basis.orthogonal.ortho_basis.JacobiBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.JacobiBasis</span></code></a></p>
+<p>Class for the Legendre Basis.</p>
+<p>This class represents the <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrthogonalBasis</span></code></a> formed by the set of Legendre polynomials
+which are a class of orthogonal polynomials with weight function <span class="math notranslate nohighlight">\(1\)</span>.</p>
+<p>Legendre polynomials are a special case of Jacobi polynomials
+with parameters <span class="math notranslate nohighlight">\(\alpha = \beta = 0\)</span>.</p>
+<p>Following the notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, we can find that
+this basis has compatibilities with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and 
+the differential operator <span class="math notranslate nohighlight">\((1-x^2)\partial_x\)</span>.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “x”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Dx</span></code>: the name for the operator representing the derivation w.r.t. <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “Dx”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span></code>: base ring where the coefficients of the polynomial will belong.</p></li>
+</ul>
+<p>TODO: add examples</p>
+<p>List of abstract methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation"><code class="xref py py-func docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation()</span></code></a>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.TChebyshevBasis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.orthogonal.ortho_basis.</span></span><span class="sig-name descname"><span class="pre">TChebyshevBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dx'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.TChebyshevBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis</span></code></a></p>
+<p>Class for the T-Chebyshev Basis.</p>
+<p>This class represents the T-Chebyshev Basis formed by the set of Chebyshev polynomials
+of the first kind. These polynomials are easily defined with the three term recurrence:</p>
+<div class="math notranslate nohighlight">
+\[`T_{n+1} = (2-\delta_{n,0})xT_n - T_{n-1}`\]</div>
+<p>Following the notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, we can find that
+this basis has compatibilities with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and with the
+differential operator <span class="math notranslate nohighlight">\((1-x^2)\partial_x\)</span>.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “x”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Dx</span></code>: the name for the operator representing the derivation w.r.t. <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “Dx”.</p></li>
+</ul>
+<p>TODO: add examples</p>
+<p>List of abstract methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation"><code class="xref py py-func docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation()</span></code></a>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.UChebyshevBasis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.orthogonal.ortho_basis.</span></span><span class="sig-name descname"><span class="pre">UChebyshevBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dx'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.UChebyshevBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis</span></code></a></p>
+<p>Class for the U-Chebyshev Basis.</p>
+<p>This class represents the U-Chebyshev Basis formed by the set of Chebyshev polynomials
+of the second kind. These polynomials are easily defined with the three term recurrence:</p>
+<div class="math notranslate nohighlight">
+\[`U_{n+1} = 2xU_n - U_{n-1}`\]</div>
+<p>Following the notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, we can find that
+this basis has compatibilities with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and with the
+differential operator <span class="math notranslate nohighlight">\((1-x^2)\partial_x\)</span>.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “x”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Dx</span></code>: the name for the operator representing the derivation w.r.t. <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “Dx”.</p></li>
+</ul>
+<p>TODO: add examples</p>
+<p>List of abstract methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation"><code class="xref py py-func docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation()</span></code></a>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.LaguerreBasis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.orthogonal.ortho_basis.</span></span><span class="sig-name descname"><span class="pre">LaguerreBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dx'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.LaguerreBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis</span></code></a></p>
+<p>Class for the Laguerre Basis.</p>
+<p>This class represents the <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrthogonalBasis</span></code></a> formed by the set of Laguerre polynomials
+parametrized by <span class="math notranslate nohighlight">\(\alpha\)</span>, which are a class of orthogonal polynomials with weight function <span class="math notranslate nohighlight">\(e^{-x}x^{\alpha}\)</span>.</p>
+<p>Following the notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, we can find that
+this basis has compatibilities with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and with the Euler
+differential operator (i.e., <span class="math notranslate nohighlight">\(x\partial_x\)</span>).</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code>: rational value for parameter <span class="math notranslate nohighlight">\(\alpha\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “x”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Dx</span></code>: the name for the operator representing the derivation w.r.t. <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “Dx”.</p></li>
+</ul>
+<p>TODO: add examples</p>
+<p>List of abstract methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation"><code class="xref py py-func docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation()</span></code></a>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.HermiteBasis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.orthogonal.ortho_basis.</span></span><span class="sig-name descname"><span class="pre">HermiteBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dx'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.HermiteBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis</span></code></a></p>
+<p>Class for the Hermite Basis <span class="math notranslate nohighlight">\((1,2x,4x^2-2,\dots)\)</span>.</p>
+<p>This class represents the <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrthogonalBasis</span></code></a> formed by the set of Hermite polynomials
+which are a class of orthogonal polynomials with weight function <span class="math notranslate nohighlight">\(e^{-x^2}\)</span>.</p>
+<p>Following the notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, we can find that
+this basis has compatibilities with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and with the derivation
+w.r.t. <span class="math notranslate nohighlight">\(x\)</span>.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “x”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Dx</span></code>: the name for the operator representing the derivation w.r.t. <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “Dx”.</p></li>
+</ul>
+<p>TODO: add examples</p>
+<p>List of abstract methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation"><code class="xref py py-func docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation()</span></code></a>.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_first_compatibility()</span></code>.</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.HermiteBasis.derivation_name">
+<span class="sig-name descname"><span class="pre">derivation_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.HermiteBasis.derivation_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the compatible derivation with this basis.</p>
+<p>This method <em>overrides</em> the corresponding method from <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrthogonalBasis</span></code></a>.
+See method <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name"><code class="xref py py-func docutils literal notranslate"><span class="pre">derivation_name()</span></code></a> for further information.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.HermitePBasis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.orthogonal.ortho_basis.</span></span><span class="sig-name descname"><span class="pre">HermitePBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dx'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.HermitePBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis</span></code></a></p>
+<p>Class for the Probabilistic Hermite Basis <span class="math notranslate nohighlight">\((1,x,x^2-1,\dots)\)</span>.</p>
+<p>This class represents the <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrthogonalBasis</span></code></a> formed by the set of probabilistic Hermite polynomials
+which are a class of orthogonal polynomials with weight function <span class="math notranslate nohighlight">\(e^{-x^2/2}\)</span>.</p>
+<p>Following the notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, we can find that
+this basis has compatibilities with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and with the derivation
+w.r.t. <span class="math notranslate nohighlight">\(x\)</span>.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “x”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Dx</span></code>: the name for the operator representing the derivation w.r.t. <span class="math notranslate nohighlight">\(x\)</span>. By default, this 
+takes the value “Dx”.</p></li>
+</ul>
+<p>TODO: add examples</p>
+<p>List of abstract methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation"><code class="xref py py-func docutils literal notranslate"><span class="pre">pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation()</span></code></a>.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_first_compatibility()</span></code>.</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.orthogonal.ortho_basis.HermitePBasis.derivation_name">
+<span class="sig-name descname"><span class="pre">derivation_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.orthogonal.ortho_basis.HermitePBasis.derivation_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the compatible derivation with this basis.</p>
+<p>This method <em>overrides</em> the corresponding method from <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrthogonalBasis</span></code></a>.
+See method <a class="reference internal" href="#pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name" title="pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.derivation_name"><code class="xref py py-func docutils literal notranslate"><span class="pre">derivation_name()</span></code></a> for further information.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../orthogonal.html"
+                          title="previous chapter">Orthogonal basis: a complex type of polynomial bases</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../order.html"
+                          title="next chapter">Order basis: more bases for formal power series</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/pseries_basis/orthogonal/ortho_basis.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../order.html" title="Order basis: more bases for formal power series"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../orthogonal.html" title="Orthogonal basis: a complex type of polynomial bases"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../orthogonal.html" >Orthogonal basis: a complex type of polynomial bases</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Orthogonal Polynomials: second order Polynomial Basis</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

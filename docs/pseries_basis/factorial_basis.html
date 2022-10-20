@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Factorial Basis: simplest Polynomial basis &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.2 documentation</title>
+    <title>Factorial Basis: simplest Polynomial basis &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="psbasis.html" title="Power Series basis: basic structure and functionality"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Factorial Basis: simplest Polynomial basis</a></li> 
       </ul>
     </div>  
@@ -51,7 +51,7 @@
 <p>Sage package for Factorial Series Basis.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="pseries_basis.factorial_basis.FactorialBasis">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">FactorialBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.FactorialBasis" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">FactorialBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.FactorialBasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="psbasis.html#pseries_basis.psbasis.PolyBasis" title="pseries_basis.psbasis.PolyBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.psbasis.PolyBasis</span></code></a></p>
 <p>Abstract class for a factorial basis.</p>
 <p>A factorial basis is a type of polynomial basis for power series where
@@ -125,7 +125,7 @@ Basis, the <span class="math notranslate nohighlight">\(n\)</span>-th element di
 <p>OUTPUT:</p>
 <p>This method returns the value of <span class="math notranslate nohighlight">\(a_n\)</span>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">linear_coefficient</span><span class="p">()</span>
 <span class="mi">1</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">linear_coefficient</span><span class="p">()</span>
@@ -210,7 +210,7 @@ are another Factorial Basis, since we have:</p>
 <dt class="sig sig-object py" id="pseries_basis.factorial_basis.FactorialBasis.compatible_division">
 <span class="sig-name descname"><span class="pre">compatible_division</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.FactorialBasis.compatible_division" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to get the division of a polynomial by other element of the basis after an operator.</p>
-<p>It was proven in <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a> that if <span class="math notranslate nohighlight">\(L\)</span> is an <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible operator
+<p>It was proven in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a> that if <span class="math notranslate nohighlight">\(L\)</span> is an <span class="math notranslate nohighlight">\((A,B)\)</span>-compatible operator
 with a factorial basis, then for any <span class="math notranslate nohighlight">\(n \in \mathbb{N}\)</span>, we have</p>
 <div class="math notranslate nohighlight">
 \[P_{n-A}(x) | L\cdot P_n(x).\]</div>
@@ -228,7 +228,7 @@ of method <code class="xref py py-func docutils literal notranslate"><span class
 so we can obtain the value for <span class="math notranslate nohighlight">\(A\)</span>.</p></li>
 </ul>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BinomialBasis</span><span class="p">();</span> <span class="n">n</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">n</span><span class="p">();</span> <span class="n">B</span><span class="o">.</span><span class="n">recurrence</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
 <span class="n">n</span><span class="o">*</span><span class="n">Sni</span> <span class="o">+</span> <span class="n">n</span>
 </pre></div>
@@ -285,7 +285,7 @@ or equal to a given size from the basis <span class="math notranslate nohighligh
 <p>OUTPUT:</p>
 <p>A matrix that convert coordinates from the increasing basis to the canonical power basis.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">n</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="o">.</span><span class="n">n</span><span class="p">(</span><span class="kc">None</span><span class="p">);</span> <span class="n">B</span> <span class="o">=</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="n">n</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">BinomialBasis</span><span class="p">()</span><span class="o">.</span><span class="n">matrix_ItP</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
 <span class="p">[</span>                         <span class="mi">1</span>                 <span class="o">-</span><span class="n">n</span><span class="o">/</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>                  <span class="n">n</span><span class="o">/</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)]</span>
@@ -328,7 +328,7 @@ power basis to the basis <span class="math notranslate nohighlight">\(Q_{n,n+i}\
 <p>OUTPUT:</p>
 <p>A matrix that convert coordinates from the canonical power basis to the requested increasing basis.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BinomialBasis</span><span class="p">()</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">matrix_PtI</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
 <span class="p">[</span>   <span class="mi">1</span>    <span class="mi">3</span>    <span class="mi">9</span>   <span class="mi">27</span>   <span class="mi">81</span><span class="p">]</span>
@@ -348,10 +348,10 @@ power basis to the basis <span class="math notranslate nohighlight">\(Q_{n,n+i}\
 <span class="kc">True</span>
 </pre></div>
 </div>
-<p>This is equivalent to compute the basis matrix (see method <a class="reference internal" href="psbasis.html#pseries_basis.psbasis.PSBasis.basis_matrix" title="pseries_basis.psbasis.PSBasis.basis_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">basis_matrix()</span></code></a>) of the 
+<p>This is equivalent to compute the basis matrix (see method <a class="reference internal" href="psbasis.html#pseries_basis.psbasis.PSBasis.functional_matrix" title="pseries_basis.psbasis.PSBasis.functional_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">functional_matrix()</span></code></a>) of the 
 increasing basis (see method <a class="reference internal" href="#pseries_basis.factorial_basis.FactorialBasis.increasing_basis" title="pseries_basis.factorial_basis.FactorialBasis.increasing_basis"><code class="xref py py-func docutils literal notranslate"><span class="pre">increasing_basis()</span></code></a>). However, due to the different notation between these two
 methods, the relation is with the transposed matrix:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">increasing_basis</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">basis_matrix</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">inverse</span><span class="p">()</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">==</span> <span class="n">B</span><span class="o">.</span><span class="n">matrix_PtI</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">increasing_basis</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">functional_matrix</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">inverse</span><span class="p">()</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">==</span> <span class="n">B</span><span class="o">.</span><span class="n">matrix_PtI</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
 <span class="kc">True</span>
 </pre></div>
 </div>
@@ -361,7 +361,7 @@ methods, the relation is with the transposed matrix:</p>
 <dt class="sig sig-object py" id="pseries_basis.factorial_basis.FactorialBasis.equiv_DtC">
 <span class="sig-name descname"><span class="pre">equiv_DtC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compatibility</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.FactorialBasis.equiv_DtC" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to get the equivalence condition for a compatible operator.</p>
-<p>Following the notation and ideas of <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>, there is an
+<p>Following the notation and ideas of <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, there is an
 equivalent condition to be a compatible operator. Namely, and operator is compatible
 by definition if it expands:</p>
 <div class="math notranslate nohighlight">
@@ -404,7 +404,7 @@ and <span class="math notranslate nohighlight">\(k\)</span> such that, for <span
 <dt class="sig sig-object py" id="pseries_basis.factorial_basis.FactorialBasis.equiv_CtD">
 <span class="sig-name descname"><span class="pre">equiv_CtD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">division</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.FactorialBasis.equiv_CtD" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to get the equivalence condition for a compatible operator.</p>
-<p>Following the notation and ideas of <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>, there is an
+<p>Following the notation and ideas of <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, there is an
 equivalent condition to be a compatible operator. Namely, and operator is compatible
 by definition if it expands:</p>
 <div class="math notranslate nohighlight">
@@ -444,7 +444,7 @@ and <span class="math notranslate nohighlight">\(k\)</span> such that, for <span
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pseries_basis.factorial_basis.SFactorialBasis">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">SFactorialBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.SFactorialBasis" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">SFactorialBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.SFactorialBasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pseries_basis.factorial_basis.FactorialBasis" title="pseries_basis.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.factorial_basis.FactorialBasis</span></code></a></p>
 <p>Class for representing a simple factorial basis.</p>
 <p>A factorial basis is a type of polynomial basis for power series where
@@ -462,7 +462,7 @@ such that for all <span class="math notranslate nohighlight">\(n\)</span>:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">init</span></code>: the value of <span class="math notranslate nohighlight">\(P_0(x)\)</span>. Must be a constant.</p></li>
 </ul>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">BinomialBasis</span><span class="p">();</span> <span class="n">n</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">n</span><span class="p">()</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B2</span> <span class="o">=</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">n</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="nb">all</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">B2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
@@ -499,7 +499,7 @@ See method <a class="reference internal" href="psbasis.html#pseries_basis.psbasi
 <p>OUTPUT:</p>
 <p>A polynomial with variable name given by <code class="docutils literal notranslate"><span class="pre">var_name</span></code> and degree <code class="docutils literal notranslate"><span class="pre">n</span></code>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span> <span class="n">B</span>
 <span class="n">Factorial</span> <span class="n">basis</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -528,7 +528,7 @@ for a description on the output.</p>
 <p>we can explicitly build the new root added in <span class="math notranslate nohighlight">\(P_{n+1}(x)\)</span> by simply taking
 <span class="math notranslate nohighlight">\(-b_{n+1}/a_{n+1}\)</span>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span> <span class="n">roots</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">root_sequence</span><span class="p">()</span>
 <span class="n">sage</span><span class="p">:</span> <span class="nb">all</span><span class="p">(</span><span class="n">roots</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
 <span class="kc">True</span>
@@ -548,7 +548,7 @@ for a description on the output.</p>
 See method <a class="reference internal" href="#pseries_basis.factorial_basis.FactorialBasis.constant_coefficient" title="pseries_basis.factorial_basis.FactorialBasis.constant_coefficient"><code class="xref py py-func docutils literal notranslate"><span class="pre">constant_coefficient()</span></code></a> for further information 
 in the description or the output.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">constant_coefficient</span><span class="p">()</span>
 <span class="mi">0</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">constant_coefficient</span><span class="p">()</span>
@@ -577,7 +577,7 @@ See method <a class="reference internal" href="#pseries_basis.factorial_basis.Fa
 in the description or the output.</p>
 <p>This method returns the value of <span class="math notranslate nohighlight">\(a_n\)</span>.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">linear_coefficient</span><span class="p">()</span>
 <span class="mi">1</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">linear_coefficient</span><span class="p">()</span>
@@ -612,7 +612,7 @@ in the description or the output.</p>
 be bigger than <span class="math notranslate nohighlight">\(n\)</span>.</p></li>
 </ul>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">n</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="o">.</span><span class="n">n</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">increasing_polynomial</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
@@ -657,7 +657,7 @@ ValueError: The difference between `dst` and `src` must be a positive integer
 <p>This method <em>implements</em> the corresponding abstract method from <a class="reference internal" href="#pseries_basis.factorial_basis.FactorialBasis" title="pseries_basis.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code></a>.
 See method <a class="reference internal" href="#pseries_basis.factorial_basis.FactorialBasis.increasing_basis" title="pseries_basis.factorial_basis.FactorialBasis.increasing_basis"><code class="xref py py-func docutils literal notranslate"><span class="pre">increasing_basis()</span></code></a> for further information.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="k">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">n</span> <span class="o">=</span> <span class="n">PSBasis</span><span class="o">.</span><span class="n">n</span><span class="p">(</span><span class="kc">None</span><span class="p">);</span> <span class="n">B</span> <span class="o">=</span> <span class="n">SFactorialBasis</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="n">n</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">B2</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">increasing_basis</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">B2</span><span class="p">,</span> <span class="n">SFactorialBasis</span><span class="p">)</span>
@@ -674,7 +674,7 @@ See method <a class="reference internal" href="#pseries_basis.factorial_basis.Fa
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pseries_basis.factorial_basis.RootSequenceBasis">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">RootSequenceBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.RootSequenceBasis" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">RootSequenceBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.RootSequenceBasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pseries_basis.factorial_basis.FactorialBasis" title="pseries_basis.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.factorial_basis.FactorialBasis</span></code></a></p>
 <p>Class representing a factorial basis from the root sequence and sequence of coefficients.</p>
 <p>A factorial basis is a type of polynomial basis for power series where
@@ -772,7 +772,7 @@ See method <a class="reference internal" href="#pseries_basis.factorial_basis.Fa
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pseries_basis.factorial_basis.ScalarBasis">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">ScalarBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.ScalarBasis" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">ScalarBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.ScalarBasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pseries_basis.factorial_basis.FactorialBasis" title="pseries_basis.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.factorial_basis.FactorialBasis</span></code></a></p>
 <p>This class represents trivially the scalar product of a Factorial basis.</p>
 <p>This class allows the user to trivially extend the functionality of a 
@@ -902,11 +902,21 @@ version of the original scaling divided by the element of the original shift:</p
 <p>TODO: add examples</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial_basis.ScalarBasis.is_quasi_eval_triangular">
+<span class="sig-name descname"><span class="pre">is_quasi_eval_triangular</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.ScalarBasis.is_quasi_eval_triangular" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial_basis.ScalarBasis.is_quasi_func_triangular">
+<span class="sig-name descname"><span class="pre">is_quasi_func_triangular</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.ScalarBasis.is_quasi_func_triangular" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pseries_basis.factorial_basis.FallingBasis">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">FallingBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dilation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decay</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.FallingBasis" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">FallingBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dilation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decay</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.FallingBasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pseries_basis.factorial_basis.SFactorialBasis" title="pseries_basis.factorial_basis.SFactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.factorial_basis.SFactorialBasis</span></code></a></p>
 <p>Class for a Falling factorial Basis.</p>
 <p>This class represent the FactorialBasis formed by the falling factorial basis
@@ -916,7 +926,7 @@ for the power series ring <span class="math notranslate nohighlight">\(\mathbb{Q
 <p>In the case of <span class="math notranslate nohighlight">\(a = 1\)</span>, <span class="math notranslate nohighlight">\(b = 0\)</span> and <span class="math notranslate nohighlight">\(c = 0\)</span>, we have the usual power basis (see class
 <a class="reference internal" href="#pseries_basis.factorial_basis.PowerBasis" title="pseries_basis.factorial_basis.PowerBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">PowerBasis</span></code></a>) and in the case of <span class="math notranslate nohighlight">\(a=1\)</span>, <span class="math notranslate nohighlight">\(b = 0\)</span> and <span class="math notranslate nohighlight">\(c = \pm 1\)</span> we have the falling (or
 raising) factorial basis.</p>
-<p>Following the notation in <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>, these basis
+<p>Following the notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, these basis
 have compatibilities with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and with the isomorphism
 <span class="math notranslate nohighlight">\(E: x \mapsto x+\frac{c}{a}\)</span>. All other compatible shifts (i.e., 
 maps <span class="math notranslate nohighlight">\(E_{\alpha}: x \mapsto x+\alpha)\)</span> are just powers of <span class="math notranslate nohighlight">\(E\)</span>.</p>
@@ -958,12 +968,12 @@ action of the value <span class="math notranslate nohighlight">\(x+\alpha\)</spa
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pseries_basis.factorial_basis.PowerBasis">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">PowerBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dx'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.PowerBasis" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">PowerBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dx'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.PowerBasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pseries_basis.factorial_basis.FallingBasis" title="pseries_basis.factorial_basis.FallingBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.factorial_basis.FallingBasis</span></code></a></p>
 <p>Class for the Power Basis <span class="math notranslate nohighlight">\((1,x,x^2,\dots)\)</span>.</p>
 <p>This class represents the <a class="reference internal" href="#pseries_basis.factorial_basis.FactorialBasis" title="pseries_basis.factorial_basis.FactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code></a> formed by the simplest basis
 for the power series: <span class="math notranslate nohighlight">\(1\)</span>, <span class="math notranslate nohighlight">\((ax+b)\)</span>, <span class="math notranslate nohighlight">\((ax+b)^2\)</span>, etc.</p>
-<p>Following the notation in <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a>, this basis
+<p>Following the notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, this basis
 corresponds with <span class="math notranslate nohighlight">\(\mathfrak{P}_{a,b}\)</span>. In that paper we can find that these basis
 have compatibilities with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and with the derivation
 with respect to <span class="math notranslate nohighlight">\(x\)</span>.</p>
@@ -988,11 +998,16 @@ equal to itself.</p>
 <p>TODO: add examples</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial_basis.PowerBasis.is_quasi_func_triangular">
+<span class="sig-name descname"><span class="pre">is_quasi_func_triangular</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.PowerBasis.is_quasi_func_triangular" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pseries_basis.factorial_basis.BinomialBasis">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">BinomialBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'E'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.BinomialBasis" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial_basis.</span></span><span class="sig-name descname"><span class="pre">BinomialBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'E'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.BinomialBasis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pseries_basis.factorial_basis.SFactorialBasis" title="pseries_basis.factorial_basis.SFactorialBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.factorial_basis.SFactorialBasis</span></code></a></p>
 <p>Class for the generic binomial basis.</p>
 <p>This class represents a binomial basis with a shift and dilation effect on the
@@ -1000,7 +1015,7 @@ top variable. Namely, a basis of the form</p>
 <div class="math notranslate nohighlight">
 \[\binom{ax+b}{n},\]</div>
 <p>where <span class="math notranslate nohighlight">\(a\)</span> is a natural number and <span class="math notranslate nohighlight">\(b\)</span> is a rational number.</p>
-<p>In <a class="reference external" href="https://arxiv.org/abs/1804.02964v1">Arxiv 1804.02964v1</a> this corresponds to <span class="math notranslate nohighlight">\(\mathfrak{C}_{a,b}\)</span>
+<p>In <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a> this corresponds to <span class="math notranslate nohighlight">\(\mathfrak{C}_{a,b}\)</span>
 and it is compatible with the multiplication by <span class="math notranslate nohighlight">\(x\)</span> and by the shift operator
 <span class="math notranslate nohighlight">\(E: x \rightarrow x+1\)</span>.</p>
 <p>INPUT:</p>
@@ -1012,6 +1027,11 @@ consider <span class="math notranslate nohighlight">\(x\)</span> as default.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">E</span></code>: the name for the operator representing the shift of <span class="math notranslate nohighlight">\(x\)</span> by <span class="math notranslate nohighlight">\(1\)</span>. If not given, we will
 consider <span class="math notranslate nohighlight">\(E\)</span> as default. The operator of shift by <span class="math notranslate nohighlight">\(1/a\)</span> will be named by adding a <span class="math notranslate nohighlight">\(t\)</span> to the name.</p></li>
 </ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.factorial_basis.BinomialBasis.is_quasi_eval_triangular">
+<span class="sig-name descname"><span class="pre">is_quasi_eval_triangular</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial_basis.BinomialBasis.is_quasi_eval_triangular" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
@@ -1023,12 +1043,16 @@ consider <span class="math notranslate nohighlight">\(E\)</span> as default. The
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="psbasis.html"
-                        title="previous chapter">Power Series basis: basic structure and functionality</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="product_basis.html"
-                        title="next chapter">Product Basis: combining Factorial basis</a></p>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="psbasis.html"
+                          title="previous chapter">Power Series basis: basic structure and functionality</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="product_basis.html"
+                          title="next chapter">Product Basis: combining Factorial basis</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -1040,7 +1064,7 @@ consider <span class="math notranslate nohighlight">\(E\)</span> as default. The
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -1065,13 +1089,13 @@ consider <span class="math notranslate nohighlight">\(E\)</span> as default. The
         <li class="right" >
           <a href="psbasis.html" title="Power Series basis: basic structure and functionality"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Factorial Basis: simplest Polynomial basis</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>
