@@ -1770,7 +1770,7 @@ class PSBasis(Sequence):
         try:
             return self.scalar(other)
         except:
-            return NotImplemented
+            return super().__mul__(other)
         
     def __rmul__(self, other):
         r'''
