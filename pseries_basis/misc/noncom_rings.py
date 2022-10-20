@@ -18,6 +18,7 @@ r'''
     This module provides a class :class:`OperatorAlgebra` which is based in the implementation on Sage of 
     :class:`~sage.algebras.free_algebra.FreeAlgebra`.
 '''
+from functools import reduce
 from typing import Any, Collection, Tuple
 from sage.all import prod
 from sage.algebras.free_algebra import FreeAlgebra_generic
@@ -84,6 +85,21 @@ class OperatorAlgebra_element(FreeAlgebraElement):
             return prod([values[str(el)] if str(el) in values else self.parent()(el) for el in monomial.to_list()])
 
         return sum([coeff*_evaluate_monomial(mon, values) for (mon, coeff) in self.monomial_coefficients().items()])
+
+    def apply(self, element, subtitutions):
+        gens = self.parent().variable_names()
+        if isinstance(subtitutions, (list, tuple)):
+            subtitutions = {gens[i] : subtitutions[i] for i in range(len(gens))}
+        elif isinstance(subtitutions, dict):
+            if any(not g in subtitutions for g in gens):
+                raise ValueError("We need a method for all generators")
+
+        result = self.parent().base().zero()
+        for (mon, coeff) in self.monomial_coefficients().items():
+            monoid_list = [subtitutions[str(el)] for el in mon.to_list()]; monoid_list.reverse()
+            evaluated = reduce(lambda p, q : q(p), monoid_list, element)
+            result = result + coeff * evaluated
+        return result
 
 class OperatorAlgebra_generic(FreeAlgebra_generic):
     r'''
