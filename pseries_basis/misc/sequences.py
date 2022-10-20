@@ -175,7 +175,10 @@ class Sequence(SetMorphism):
             sequence is exactly zero.
         '''
         first_terms = cartesian_product_iterator(self.parent().dimension()*[range(order)])
-        return all(self(*term) == 0 for term in first_terms)
+        if isinstance(self.universe, SequenceSet):
+            return all(self(*term).almost_zero(order) for term in first_terms)
+        else:
+            return all(self(*term) == 0 for term in first_terms)
 
     def almost_equals(self, other : 'Sequence', order=10) -> bool:
         r'''
@@ -213,7 +216,10 @@ class Sequence(SetMorphism):
                 False
         '''
         first_terms = cartesian_product_iterator(self.parent().dimension()*[range(order)])
-        return all(self(*term) == other(*term) for term in first_terms)
+        if isinstance(self.universe, SequenceSet): # equality if the codomain are more sequences
+            return all(self(*term).almost_equals(other(*term), order) for term in first_terms)
+        else: # equality when elements lied in other ring
+            return all(self(*term) == other(*term) for term in first_terms)
 
     def subsequence(self, *vals : int) -> "Sequence":
         r'''
