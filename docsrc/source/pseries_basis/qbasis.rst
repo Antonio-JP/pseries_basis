@@ -1,9 +1,9 @@
 .. nodoctest
 
-Sequences and other utilities
+Q-series as Power series basis
 ======================================================
 
-.. automodule:: pseries_basis.misc
+.. automodule:: pseries_basis.qbasis
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,10 +15,7 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
-   misc/io
-   misc/noncom_rings
-   misc/ore
-   misc/sequences
+   qbasis/qbasis
 
 Indices and Tables
 *********************
