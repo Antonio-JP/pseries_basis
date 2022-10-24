@@ -88,17 +88,17 @@ def is_based_field(algebra: Union[OreAlgebra_generic, OperatorAlgebra_generic]) 
     '''
     return algebra.base().is_field() and (algebra.base().base_ring() != algebra.base())
 
-def has_q(algebra, name_q):
+def has_variable(algebra, name):
     r'''
         Method to check whether an algebra has a generator or not.
     '''
     current = algebra
     while (not 1 in current.gens()) and len(current.gens()) > 0:
         gnames = [str(el) for el in current.gens()]
-        if name_q in gnames: return True, current(name_q)
+        if name in gnames: return True, current(name)
         current = current.base()
     
-    return False
+    return False, None
 
 #############################################################################################
 ###
@@ -264,11 +264,11 @@ def get_qshift_algebra(name_shift : str = "S", name_q : str = "q", name_Q : str 
     '''
     if not (name_shift, name_q, name_Q, base) in __CACHE_QSHIFT_ALGEBRA:
         relations = [(name_shift, name_Q, f"{name_q}*{name_Q}*{name_shift}")]
-        if not has_q(base, name_q):
+        with_q, q = has_variable(base, name_q)
+        if not with_q:
             base = PolynomialRing(base, name_q).fraction_field()
 
         OA = OperatorAlgebra(base, names = (name_Q, name_shift), relations = relations)
-        q = OA.base()(name_q)
         Q,S = OA.gens()
 
         __CACHE_QSHIFT_ALGEBRA[(name_shift, name_q, name_Q, base)] = (OA, (q, Q, S))
@@ -307,11 +307,11 @@ def get_double_qshift_algebra(name_shift : str = "S", name_q : str = "q", name_Q
             (name_iS, name_Q, f"(1/{name_q})*{name_Q}*{name_iS}"),
             (name_iS, name_shift, f"1")
         ]
-        if not has_q(base, name_q):
+        with_q, q = has_variable(base, name_q)
+        if not with_q:
             base = PolynomialRing(base, name_q).fraction_field()
 
         OA = OperatorAlgebra(base, names = (name_Q, name_shift, name_iS), relations = relations)
-        q = OA.base()(name_q)
         Q,S,Si = OA.gens()
 
         __CACHE_DQSHIFT_ALGEBRA[(name_shift, name_q, name_Q, base)] = (OA, (q, Q, S, Si))
@@ -323,7 +323,7 @@ def is_q_operator_algebra(algebra, name_q : str = "q"):
         Method to check whether an algebra behaves like one with Q-shifts operators.
     '''
     if isinstance(algebra, OperatorAlgebra_generic):
-        with_q, q = has_q(algebra.base(), name_q)
+        with_q, q = has_variable(algebra.base(), name_q)
         if not algebra.is_complete_commutation() or not with_q:
             print("Error in format")
             return None, None
