@@ -96,7 +96,7 @@ def DefiniteSumSolutions(operator, *input):
     ## Cleaning the appearance of Sni
     column = [compatibility.coefficient((j,0)) for j in range(m)]
     deg = max(el.degree(B.Sni()) for el in column)
-    column = [B.OSS()(B.reduce_SnSni(B.Sn()**deg * el)) for el in column]
+    column = [B.OSS()(B.simplify_operator(B.Sn()**deg * el)) for el in column]
     
     ## Extracting the gcrd for the first column
     result = column[0].gcrd(*column[1:])

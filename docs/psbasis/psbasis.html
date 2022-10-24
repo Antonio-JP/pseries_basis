@@ -656,8 +656,8 @@ we see some examples extracted from <a class="reference external" href="https://
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.reduce_SnSni">
-<span class="sig-name descname"><span class="pre">reduce_SnSni</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.reduce_SnSni" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="pseries_basis.psbasis.PSBasis.simplify_operator">
+<span class="sig-name descname"><span class="pre">simplify_operator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.psbasis.PSBasis.simplify_operator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to reduce operators with <code class="docutils literal notranslate"><span class="pre">Sn</span></code> and <code class="docutils literal notranslate"><span class="pre">Sni</span></code>.</p>
 <p>The operators we handle will have two shifts in the variable <span class="math notranslate nohighlight">\(n\)</span>: the direct shift (<span class="math notranslate nohighlight">\(\sigma: n \mapsto n+1\)</span>)
 and the inverse shift (<span class="math notranslate nohighlight">\(\sigma^{-1}: n \mapsto n-1\)</span>). These two shifts are represented in our system with the 
@@ -680,11 +680,11 @@ in all terms that have the two operators involved and returns a reduced version 
 <span class="n">Sn</span><span class="o">*</span><span class="n">Sni</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">Sni</span><span class="o">*</span><span class="n">Sn</span>
 <span class="n">Sn</span><span class="o">*</span><span class="n">Sni</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">reduce_SnSni</span><span class="p">(</span><span class="n">Sn</span><span class="o">*</span><span class="n">Sni</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">simplify_operator</span><span class="p">(</span><span class="n">Sn</span><span class="o">*</span><span class="n">Sni</span><span class="p">)</span>
 <span class="mi">1</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">reduce_SnSni</span><span class="p">(</span><span class="n">Sni</span><span class="o">*</span><span class="n">Sn</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">simplify_operator</span><span class="p">(</span><span class="n">Sni</span><span class="o">*</span><span class="n">Sn</span><span class="p">)</span>
 <span class="mi">1</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">reduce_SnSni</span><span class="p">(</span><span class="n">Sni</span><span class="o">*</span><span class="n">Sn</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">Sni</span><span class="o">^</span><span class="mi">2</span><span class="o">*</span><span class="n">Sn</span><span class="o">^</span><span class="mi">3</span> <span class="o">+</span> <span class="n">Sn</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">simplify_operator</span><span class="p">(</span><span class="n">Sni</span><span class="o">*</span><span class="n">Sn</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">Sni</span><span class="o">^</span><span class="mi">2</span><span class="o">*</span><span class="n">Sn</span><span class="o">^</span><span class="mi">3</span> <span class="o">+</span> <span class="n">Sn</span><span class="p">)</span>
 <span class="o">-</span><span class="n">Sn</span>
 </pre></div>
 </div>

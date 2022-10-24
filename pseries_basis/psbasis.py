@@ -44,10 +44,12 @@ from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 # ore_algebra imports
 from ore_algebra.ore_operator import OreOperator
 
+from pseries_basis.misc.noncom_rings import OperatorAlgebra_element
+
 # imports from this package
 from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, eval_ore_operator, poly_decomp, 
                     get_rational_algebra, get_recurrence_algebra)
-from .misc.sequences import LambdaSequence, Sequence
+from .misc.sequences import LambdaSequence, Sequence, SequenceSet
 
 
 class NotCompatibleError(TypeError): pass
@@ -662,7 +664,7 @@ class PSBasis(Sequence):
         raise NotImplementedError("The pure quasi-triangular case not implemented yet.")
 
     ### AUXILIARY METHODS
-    def reduce_SnSni(self,operator):
+    def simplify_operator(self,operator):
         r'''
             Method to reduce operators with ``Sn`` and ``Sni``.
 
@@ -692,33 +694,46 @@ class PSBasis(Sequence):
                 Sn*Sni
                 sage: Sni*Sn
                 Sn*Sni
-                sage: B.reduce_SnSni(Sn*Sni)
+                sage: B.simplify_operator(Sn*Sni)
                 1
-                sage: B.reduce_SnSni(Sni*Sn)
+                sage: B.simplify_operator(Sni*Sn)
                 1
-                sage: B.reduce_SnSni(Sni*Sn^2 - 3*Sni^2*Sn^3 + Sn)
+                sage: B.simplify_operator(Sni*Sn^2 - 3*Sni^2*Sn^3 + Sn)
                 -Sn
         '''
         if(is_Matrix(operator)):
             base = operator.parent().base(); n = operator.nrows()
-            return Matrix(base, [[self.reduce_SnSni(operator.coefficient((i,j))) for j in range(n)] for i in range(n)])
-        operator = self.OS()(str(operator))
-        Sn = self.Sn(); Sni = self.Sni()
+            return Matrix(base, [[self.simplify_operator(operator.coefficient((i,j))) for j in range(n)] for i in range(n)])
+        
+        return self._simplify_operator(operator)
 
-        poly = operator.polynomial()
-        monomials = poly.monomials()
-        coefficients = poly.coefficients()
-        result = operator.parent().zero()
+    def _simplify_operator(self, operator):
+        r'''
+            Method that actually simplifies the operator. This removes inverses operators and ensures all
+            the variables apepar in desirable order.
+        '''
+        if isinstance(operator, OreOperator):
+            operator = self.OS()(str(operator))
+            Sn = self.Sn(); Sni = self.Sni()
 
-        for i in range(len(monomials)):
-            d1,d2 = monomials[i].degrees()
-            if(d1 > d2):
-                result += coefficients[i]*Sn**(d1-d2)
-            elif(d2 > d1):
-                result += coefficients[i]*Sni**(d2-d1)
-            else:
-                result += coefficients[i]
-        return result
+            poly = operator.polynomial()
+            monomials = poly.monomials()
+            coefficients = poly.coefficients()
+            result = operator.parent().zero()
+
+            for i in range(len(monomials)):
+                d1,d2 = monomials[i].degrees()
+                if(d1 > d2):
+                    result += coefficients[i]*Sn**(d1-d2)
+                elif(d2 > d1):
+                    result += coefficients[i]*Sni**(d2-d1)
+                else:
+                    result += coefficients[i]
+            return result
+        elif isinstance(operator, OperatorAlgebra_element):
+            return operator.canonical()
+        else:
+            raise NotImplementedError(f"Impossible to simplify {operator} (type={operator.__class__})")
 
     def remove_Sni(self, operator):
         r'''
@@ -763,10 +778,10 @@ class PSBasis(Sequence):
         Sni = self.Sni(); Sn = self.Sn()
         if(is_Matrix(operator)):
             d = max(max(el.degree(self.Sni()) for el in row) for row in operator)
-            return Matrix(self.OSS(), [[self.reduce_SnSni((Sn**d)*el) for el in row] for row in operator])
+            return Matrix(self.OSS(), [[self.simplify_operator((Sn**d)*el) for el in row] for row in operator])
 
         d = operator.degree(Sni)
-        return self.OSS()(self.reduce_SnSni((Sn**d)*operator))
+        return self.OSS()(self.simplify_operator((Sn**d)*operator))
     
     ### COMPATIBILITY RELATED METHODS
     def set_compatibility(self, name, trans, sub=False, type=None):
@@ -827,7 +842,7 @@ class PSBasis(Sequence):
             # TODO: how to check the alpha?
             self.__compatibility[name] = (ZZ(A),ZZ(B),ZZ(m),alpha)
         elif(trans in self.OS()):
-            trans = self.reduce_SnSni(trans); Sn = self.Sn(); Sni = self.Sni(); n = self.n()
+            trans = self.simplify_operator(trans); Sn = self.Sn(); Sni = self.Sni(); n = self.n()
             A = trans.degree(Sn); B = trans.degree(Sni); trans = trans.polynomial()
             alpha = ([self.OB()(trans.coefficient({Sn:i}))(n=n-i) for i in range(A, 0, -1)] + 
                     [self.OB()(trans.constant_coefficient())] + 
@@ -1361,7 +1376,7 @@ class PSBasis(Sequence):
                     raise NotCompatibleError("The symbolic expression %s is not a polynomial" %operator)
                 operator = operator.polynomial(self.OB().base_ring())
                 recurrences = {str(v): self.recurrence(str(v), sections) for v in operator.variables()}
-                output = self.reduce_SnSni(operator(**recurrences))
+                output = self.simplify_operator(operator(**recurrences))
             elif(isinstance(operator, OreOperator)): # case of ore_algebra operator
                 mons, coeffs = poly_decomp(operator.polynomial())
                 # checking the type of coefficients and computing the final coefficients
@@ -1383,7 +1398,7 @@ class PSBasis(Sequence):
                 rec_mons = {str(v): self.recurrence(str(v), sections) for v in operator.parent().gens()}
                 mons = [m.change_ring(base_ring)(**rec_mons) for m in mons]
                 # computing the final recurrence operator
-                output = self.reduce_SnSni(sum(coeffs[i]*mons[i] for i in range(len(mons))))
+                output = self.simplify_operator(sum(coeffs[i]*mons[i] for i in range(len(mons))))
             else:
                 try:
                     poly = operator.parent().flattening_morphism()(operator)
@@ -1391,7 +1406,7 @@ class PSBasis(Sequence):
                     raise NotCompatibleError("The input %s is not a polynomial" %operator)
                 ## getting the recurrence for each generator
                 recurrences = {str(v): self.recurrence(str(v), sections) for v in poly.variables()}
-                output = self.reduce_SnSni(poly(**recurrences))
+                output = self.simplify_operator(poly(**recurrences))
         else: # the input is a name or a compatibility condition
             if(isinstance(operator, str)): # getting the compatibility condition for the str case
                 operator = self.compatibility(operator)
@@ -1415,11 +1430,11 @@ class PSBasis(Sequence):
             # We have to distinguish between m = 1 and m > 1
             if(m == 1): # we return an operator
                 recurrence = sum(alpha(0,i,n-i)*SN(-i) for i in range(-A,B+1))
-                output = self.reduce_SnSni(recurrence)
+                output = self.simplify_operator(recurrence)
             elif(m > 1):
                 output = Matrix(
                     [
-                        [self.reduce_SnSni(sum(
+                        [self.simplify_operator(sum(
                             alpha(j,i,self.n()+(r-i-j)//m)*SN((r-i-j)//m)
                             for i in range(-A,B+1) if ((r-i-j)%m == 0)
                         )) for j in range(m)
@@ -1881,6 +1896,61 @@ class BruteBasis(PSBasis):
     def _latex_(self):
         return r"Brute basis: \left(%s, %s, %s, \ldots\right)" %(latex(self[0]), latex(self[1]), latex(self[2]))
 
+class SequenceBasis(PSBasis):
+    r'''
+        Abstract class for basis only viewed as sequences.
+
+        Formal power series `f(x) \in \mathbb{K}[[x]]` can be also seen as sequences. Hence, a basis of the 
+        ring of formal power series can be defined using a bi-sequence, i.e., a sequence from `\mathbb{N}^2` to 
+        some field. This bi-sequence is exactly the one obtained by :func:`functional_seq`.
+
+        This class allows to represent basis of formal power series by given this bi-sequence.
+
+        INPUT:
+
+        * ``base``: a Sagemath structure for `\mathbb{K}`.
+        * ``sequence``: a :class:`~pseries_basis.misc.sequences.Sequence` of dimension 2, whose universe can be changed to ``base``.
+    '''
+    def __init__(self, base, sequence : Sequence, degree : bool = True):
+        if not isinstance(sequence, Sequence):
+            raise TypeError("The value for a sequence must be of class :class:`Sequence`")
+        if not sequence.dim == 2:
+            raise ValueError(f"The sequence must have 2 variables. It has {sequence.dim}")
+        self.__sequence = sequence.change_universe(base)
+
+        super().__init__(base, SequenceSet(1, base), degree)
+
+    @PSBasis.functional_seq.getter
+    def functional_seq(self) -> Sequence:
+        return self.__sequence
+
+    def _element(self, *indices):
+        return self.functional_seq.subsequence(indices[0])
+
+    def change_base(self, base):
+        return SequenceBasis(base, self.functional_seq, self.by_degree())
+
+    def shift_in(self, shift):
+        r'''
+            Method to apply shift to the second layer of this basis.
+
+            It is quite common to compute shifts for the elements of a basis for the formal power series ring. This method
+            allows to obtain the corresponding :class:`SequentialBasis` after performing the given shift to all elements
+            of the basis defined by ``self``.
+
+            INPUT:
+
+            * ``shift``: the intger defining the shift to be applied to the elements of ``self``.
+
+            OUTPUT:
+
+            A new :class:`SequenceBasis` whose elements are the elements of ``self`` after applying the given ``shift``.
+        '''
+        return SequenceBasis(self.base, self.functional_seq.shift(0,shift), self.by_degree())
+
+    def __repr__(self):
+        return f"SequenceBasis -- WARNING: this is an abstract class"
+
 class PolyBasis(PSBasis):
     r'''
         Abstract class for a polynomial power series basis. 
@@ -1968,4 +2038,4 @@ def check_compatibility(basis, operator, action, bound=100):
             for r in range(m)) 
         for k in range(mm, bound))
 
-__all__ = ["PSBasis", "BruteBasis", "PolyBasis", "OrderBasis", "check_compatibility"]
+__all__ = ["PSBasis", "BruteBasis", "SequenceBasis", "PolyBasis", "OrderBasis", "check_compatibility"]

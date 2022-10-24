@@ -146,6 +146,7 @@ from .psbasis import *
 from .factorial import *
 from .orthogonal import *
 from .order import *
+from .qbasis import *
 
 # fixing imports that were destroyed from these
 from sage.all import factorial, order # pylint: disable=unused-import

@@ -92,7 +92,7 @@ class OrthogonalBasis(PolyBasis):
             try: # we try to get the mixed relation for the orthogonal basis
                 _, a,b,c = self.get_mixed_equation()
                 N = self.n(); Sn = self.Sn()
-                self.set_derivation(Dx, self.reduce_SnSni(a*self.recurrence(X) + b + c(n=N+1)*Sn))
+                self.set_derivation(Dx, self.simplify_operator(a*self.recurrence(X) + b + c(n=N+1)*Sn))
             except NotImplementedError:
                 pass # there is nothing we can do
 
@@ -309,7 +309,7 @@ class OrthogonalBasis(PolyBasis):
                 coefficients = [self.recurrence(OrthogonalBasis._poly_coeff_by_dict(poly,{variable: i})) for i in range(m+1)]
                 monomials = [self.__compatibility_derivation(m,i) for i in range(m+1)]
 
-                output = self.reduce_SnSni(sum(coefficients[i]*monomials[i] for i in range(m+1)))
+                output = self.simplify_operator(sum(coefficients[i]*monomials[i] for i in range(m+1)))
                 if cleaned:
                     output = self.remove_Sni(output) # we remove the inverse shift
                     # we clean denominators
@@ -416,10 +416,10 @@ class OrthogonalBasis(PolyBasis):
         if(pow_Q < pow_D):
             raise ValueError("Incompatibility found because of not valid exponents")
         if(pow_Q > pow_D):
-            return self.reduce_SnSni(self.recurrence(Q**(pow_Q-pow_D))*self.__compatibility_derivation(pow_D, pow_D))
+            return self.simplify_operator(self.recurrence(Q**(pow_Q-pow_D))*self.__compatibility_derivation(pow_D, pow_D))
         n = pow_D
         if(n > 1):
-            return self.reduce_SnSni((self.__compatibility_derivation(1,1) - (n-1)*self.recurrence(Q.derivative()))*self.__compatibility_derivation(n-1,n-1))
+            return self.simplify_operator((self.__compatibility_derivation(1,1) - (n-1)*self.recurrence(Q.derivative()))*self.__compatibility_derivation(n-1,n-1))
         if(n == 1):
             return self.recurrence(self.__der_name)
         else: # last case is pow_Q == pow_D == 0 --> no operator
@@ -628,7 +628,7 @@ class LegendreBasis(JacobiBasis):
             See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
-        return self.reduce_SnSni((n*(n-1)/(2*n-1))*Sni - ((n+1)*(n+2)/(2*n+3))*Sn)
+        return self.simplify_operator((n*(n-1)/(2*n-1))*Sni - ((n+1)*(n+2)/(2*n+3))*Sn)
 
     def __repr__(self):
         return f"Legendre Basis ({self(0)}, {self(1)}, {self(2)},...)"
@@ -675,7 +675,7 @@ class TChebyshevBasis(OrthogonalBasis):
             See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
-        return self.reduce_SnSni(((n-1)/2)*Sni - ((n+1)/2)*Sn)
+        return self.simplify_operator(((n-1)/2)*Sni - ((n+1)/2)*Sn)
 
     def __repr__(self):
         return f"T-Chebyshev Basis ({self(0)}, {self(1)}, {self(2)},...)"
@@ -722,7 +722,7 @@ class UChebyshevBasis(OrthogonalBasis):
             See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
-        return self.reduce_SnSni(((3*n-1)/2)*Sni + ((n+1)/2)*Sn)
+        return self.simplify_operator(((3*n-1)/2)*Sni + ((n+1)/2)*Sn)
 
     def __repr__(self):
         return f"U-Chebyshev Basis ({self(0)}, {self(1)}, {self(2)},...)"
@@ -772,7 +772,7 @@ class LaguerreBasis(OrthogonalBasis):
             See method :func:`~pseries_basis.orthogonal.ortho_basis.OrthogonalBasis._first_compatibility` for further information.
         '''
         Sni = self.Sni(); n = self.n()
-        return self.reduce_SnSni(n*Sni - (n+self.alpha+1))
+        return self.simplify_operator(n*Sni - (n+self.alpha+1))
 
     def __repr__(self):
         return f"{self.alpha}-Laguerre Basis ({self(0)}, {self(1)}, {self(2)},...)"
