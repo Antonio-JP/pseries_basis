@@ -66,6 +66,11 @@ class OperatorAlgebraFactory(UniqueFactory):
 OperatorAlgebra = OperatorAlgebraFactory("pseries_basis.misc.noncom_rings.OperatorAlgebra")
 
 class OperatorAlgebra_element(FreeAlgebraElement):
+    def __init__(self, A, x):
+        super().__init__(A, x)
+
+        self.__canonical = None
+
     def is_canonical(self):
         gens = [str(g) for g in self.parent().gens()]
         def _is_canonical_monomial(monomial):
@@ -75,8 +80,10 @@ class OperatorAlgebra_element(FreeAlgebraElement):
         return all(_is_canonical_monomial(mon) for mon in self.monomial_coefficients().keys())
 
     def canonical(self):
-        mc_dict = self.monomial_coefficients()
-        return sum(mc_dict[m]*self.parent().canonical_monomial(m) for m in mc_dict)
+        if self.__canonical is None:
+            mc_dict = self.monomial_coefficients()
+            self.__canonical = sum(mc_dict[m]*self.parent().canonical_monomial(m) for m in mc_dict)
+        return self.__canonical
 
     def degrees(self):
         r'''
@@ -112,6 +119,56 @@ class OperatorAlgebra_element(FreeAlgebraElement):
         ind = gnames.index(var)
         return self.degrees()[ind]
             
+    def constant_coefficient(self):
+        r'''Method to return the constant coefficient of an operator'''
+        mon_dict = self.monomial_coefficients()
+        base = self.parent().base()
+        monoid = self.parent().monoid()
+        return mon_dict.get(monoid.one(), base.zero())
+
+    def coefficient(self, monomial):
+        if (not self.parent().is_complete_commutation()):
+            raise ValueError("The coefficient can only be computed from a canonical form")
+
+        canonical = self.canonical()
+        gens = self.parent().gens()
+        gnames = self.parent().variable_names()
+
+        if isinstance(monomial, dict): # the variables in dict must appear with this degree
+            if any(not el in gnames for el in gnames):
+                raise TypeError(f"Monomial {monomial} not valid for {self.parent()}")
+            result = self.parent().zero()
+            for mon, coeff in self.monomial_coefficients().items():
+                mon_list = [str(el) for el in mon.to_list()]
+                mon_degrees = [mon_list.count(g) for g in gnames]
+
+                # checking if it is a valid monomial
+                if all(monomial[g] == mon_degrees[gnames.index(g)] for g in monomial):
+                    result += coeff * prod(gens[i]**mon_degrees[i] for i in range(len(gnames)) if not gnames[i] in monomial)
+            return result
+        # otherwise, we cast the input to a list of degrees
+        if monomial in self.parent() or monomial in self.parent().base():
+            monomial = self.parent()(monomial)
+            if len(monomial) > 1:
+                raise TypeError(f"Monomial {monomial} not valid for {self.parent()}")
+            monomial = monomial.degrees()
+        elif monomial in self.parent().monoid():
+            monomial = monomial.to_list()
+            monomial = [monomial.count(g) for g in gnames]
+        elif (not isinstance(monomial, (list,tuple))) or (len(monomial) != len(gnames)) or any((not el in ZZ) or el < 0 for el in monomial):
+            raise TypeError(f"Monomial {monomial} not valid for {self.parent()}")
+        
+        if all(deg == 0 for deg in monomial):
+            return canonical.constant_coefficient()
+
+        result = self.parent().zero()
+        for (mon, coeff) in canonical.monomial_coefficients().items():
+            mon_list = [str(el) for el in mon.to_list()]
+            mon_degrees = [mon_list.count(g) for g in gnames]
+            if all(monomial[i] == mon_degrees[i] for i in range(len(gnames)) if monomial[i] > 0):
+                result += coeff * prod([gens[i]**mon_degrees[i] for i in range(len(gnames)) if monomial[i] == 0])
+
+        return result
 
     def __call__(self, **values):
         gens = [str(g) for g in self.parent().gens()]
@@ -249,6 +306,8 @@ class OperatorAlgebra_generic(FreeAlgebra_generic):
     def are_inverses(self, g1, g2):
         return self.relations.get(g1*g2, self.relations.get(g2*g1, 0)) == 1
 
-    
+    def __repr__(self) -> str:
+        return f"{'Operator algebra' if self.is_complete_commutation() else 'Non-commutative ring'} on {self.ngens()} generators {self.gens()} over [{self.base()}] with commutation rules:\n  " + "\n  ".join(f"{k} -> {v}" for (k,v) in self.relations.items()) 
+        
 
 
