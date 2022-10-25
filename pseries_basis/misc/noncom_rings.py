@@ -119,6 +119,9 @@ class OperatorAlgebra_element(FreeAlgebraElement):
         ind = gnames.index(var)
         return self.degrees()[ind]
             
+    def variables(self):
+        return tuple([v for v in self.parent().gens() if self.degree(v) > 0])
+
     def constant_coefficient(self):
         r'''Method to return the constant coefficient of an operator'''
         mon_dict = self.monomial_coefficients()
@@ -174,9 +177,9 @@ class OperatorAlgebra_element(FreeAlgebraElement):
         gens = [str(g) for g in self.parent().gens()]
         values = {k : self.parent(v) for (k,v) in values.items() if k in gens}
         def _evaluate_monomial(monomial, values):
-            return prod([values[str(el)] if str(el) in values else self.parent()(el) for el in monomial.to_list()])
+            return prod([values[str(el)] if str(el) in values else self.parent()(el) for el in monomial.to_list()], self.parent().one())
 
-        return sum([coeff*_evaluate_monomial(mon, values) for (mon, coeff) in self.monomial_coefficients().items()])
+        return sum([coeff*_evaluate_monomial(mon, values) for (mon, coeff) in self.monomial_coefficients().items()], self.parent().zero())
 
     def apply(self, element, substitutions):
         gens = self.parent().variable_names()
