@@ -150,3 +150,7 @@ from .qbasis import *
 
 # fixing imports that were destroyed from these
 from sage.all import factorial, order # pylint: disable=unused-import
+
+def pseries_bases_version():
+    import pkg_resources; 
+    return pkg_resources.get_distribution('pseries_basis').version
