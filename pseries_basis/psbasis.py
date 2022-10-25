@@ -30,6 +30,8 @@ r'''
     never be instantiated. For particular examples and test, look to the modules :mod:`~pseries_basis.factorial.factorial_basis`
     and :mod:`~pseries_basis.factorial.product_basis`.
 '''
+import logging
+logger = logging.getLogger(__name__)
 
 ## Sage imports
 from functools import reduce
@@ -1399,6 +1401,14 @@ class PSBasis(Sequence):
                 mons = [m.change_ring(base_ring)(**rec_mons) for m in mons]
                 # computing the final recurrence operator
                 output = self.simplify_operator(sum(coeffs[i]*mons[i] for i in range(len(mons))))
+            elif(isinstance(operator, OperatorAlgebra_element)): # case of an Operator algebra
+                rec_mons = {str(v) : self.recurrence(str(v), sections) for v in operator.variables()}
+                logger.warning(f"The coefficients of {operator} are not been converted using compatibilities -- Not yet implemented")
+                output = self.simplify_operator(
+                    sum(
+                        coeff*operator.parent()(mon)(**rec_mons).canonical() 
+                        for mon, coeff in operator.monomial_coefficients().items()
+                    ))
             else:
                 try:
                     poly = operator.parent().flattening_morphism()(operator)
@@ -1947,6 +1957,16 @@ class SequenceBasis(PSBasis):
             A new :class:`SequenceBasis` whose elements are the elements of ``self`` after applying the given ``shift``.
         '''
         return SequenceBasis(self.base, self.functional_seq.shift(0,shift), self.by_degree())
+
+    def mult_in(self, prod):
+        r'''
+            Method to multiply the inner sequences and obtain a new basis.
+
+            The usual behavior or the multiplication does not allow to do this if the multiplication is also a 
+            sequence. This method allows to express this other operation that is a multiplication for each of
+            the sequences inside.
+        '''
+        return SequenceBasis(self.base, LambdaSequence(lambda n,k : (prod*self[n])[k], self.base, 2), self.by_degree())
 
     def __repr__(self):
         return f"SequenceBasis -- WARNING: this is an abstract class"

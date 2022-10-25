@@ -2,7 +2,7 @@ r'''
     Module with the basic classes for implementing `q`-series.
 '''
 
-from sage.all import prod, PolynomialRing, QQ, ZZ, var, binomial
+from sage.all import prod, PolynomialRing, QQ, ZZ, var, binomial, cached_method
 
 from ..psbasis import SequenceBasis
 from ..misc.ore import get_qshift_algebra, get_double_qshift_algebra, has_variable
@@ -19,7 +19,7 @@ class QBasis(SequenceBasis):
         there is a parameter `q` whose field of rational functions is included in the ring of 
         coefficients for the formal pwoer series.
     '''
-    def __init__(self, base, sequence: Sequence, degree: bool = True, q_name: str = None):
+    def __init__(self, base, sequence: Sequence, degree: bool = True, q_name: str = "q"):
         # if the base has no q, we add it
         with_q, self.__q = has_variable(base, q_name)
         if not with_q:
@@ -128,14 +128,15 @@ class QBasis(SequenceBasis):
         '''
         return get_double_qshift_algebra("Sn", str(self.q()), "Q", base=self.base)[1][3]
     
-    def QPower(self):
+    @cached_method
+    def QPower(self, a : int = 1):
         r'''
             Method that obtains the corresponding sequence `1, q, q^2, \ldots` for the corresponding `q`.
 
             The multiplication by this sequence is the equivalent action related with the `Q` operator obtained 
             by `:func:`Q`.
         '''
-        return LambdaSequence(lambda n : self.q()**n, self.base)
+        return LambdaSequence(lambda n : self.q()**(a*n), self.base)
 
     def QFactorial(self):
         r'''
@@ -159,6 +160,9 @@ class QBasis(SequenceBasis):
 
     def shift_in(self, shift):
         return QBasis(self.base, self.functional_seq.shift(0, shift), self.by_degree, str(self.q()))
+
+    def mult_in(self, prod):
+        return QBasis(self.base, LambdaSequence(lambda n,k : (prod*self[n])[k], self.base, 2), self.by_degree())
 
     ## Reperesentation methods
     def __repr__(self):
@@ -198,7 +202,7 @@ class QBinomialBasis(QBasis):
         * ``c``: (0 by default) value for the coefficient `c`.
         * ``q_name``: ("q" by default) the name for the `q` parameter.
     '''
-    def __init__(self, base = QQ, a = 1, b = 0, c = 0, q_name = "q"):
+    def __init__(self, base = QQ, a = 1, b = 0, c = 0, q_name = "q", E_name = "Sn", Q_name = "Q"):
         # checking the input
         if not a in ZZ or a == 0:
             raise ValueError("The value for the parameter 'a' must be a non-zero integer")
@@ -210,6 +214,7 @@ class QBinomialBasis(QBasis):
         self.__a = ZZ(a)
         self.__b = ZZ(b)
         self.__c = ZZ(c)
+        self.__E_name = E_name; self.__Q_name = Q_name
 
         QBasis.__init__(self, base, LambdaSequence(lambda *n : 1, base, 2), False, q_name)
         seq = LambdaSequence(lambda m, n : qbinomial(a*n+b*m+c, m, self.q()), self.base, 2)
@@ -218,10 +223,18 @@ class QBinomialBasis(QBasis):
         self.__recurrences = {}
         if a > 0:
             Q = self.Q(); Sn = self.Sn(); q = self.q()
-            self.__recurrences['Ek'] = sum(binomial(a,i)*q**(a*i-i**2)*Q**(a-i)*Sn**(i) for i in range(a+1))
+            self.__recurrences[E_name] = sum(binomial(a,i)*q**(a*i-i**2)*Q**(a-i)*Sn**(i) for i in range(a+1))
         if a == 1 and b <= 1:
             Q = self.Q(); Sni = self.Sni(); q = self.q()
-            self.__recurrences['Q'] = q**(-c)*Q**(1-b) + q**(b-1-c)*Q**(1-b)*(Q - 1)*Sni
+            self.__recurrences[Q_name] = q**(-c)*Q**(1-b) + q**(b-1-c)*Q**(1-b)*(Q - 1)*Sni
+
+    def change_base(self, base):
+        return QBinomialBasis(base, self.__a, self.__b, self.__c, str(self.q()), self.__E_name, self.__Q_name)
+
+    def recurrence(self, operator, sections=None, cleaned=False):
+        if str(operator) in self.qrecurrences:
+            return self.qrecurrences[str(operator)]
+        return super().recurrence(operator,sections, cleaned)
 
     @property
     def qrecurrences(self):
