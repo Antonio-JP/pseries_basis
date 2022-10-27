@@ -77,9 +77,12 @@ class PSBasis(Sequence):
         self.__compatibility = {}
         self.__derivations = []
         self.__endomorphisms = []
+        self.__var_name = "x" if var_name is None else var_name
         
         if universe == None and degree is True:
-            universe = PolynomialRing(self.__base, 'x' if var_name is None else var_name)
+            universe = PolynomialRing(self.__base, self.__var_name)
+        elif universe is None:
+            universe = LambdaSequence(lambda n,k : 1, self.base, 2, True).parent()
         super().__init__(universe, 1)
 
     ### Getters from the module variable as objects of the class
@@ -173,6 +176,22 @@ class PSBasis(Sequence):
         '''
         return get_double_recurrence_algebra("n", "Sn", base=self.base)[1][2]
     
+    def recurrence_vars(self):
+        r'''
+            Method that returns all the variables involved in the recurrence operators (see :func:`OS`).
+
+            This method returns the variables and generators necessary to fully describe the recurrence operators obtained
+            through the method :func:`recurrence`. The order of the output is "inner-out", meaning the first variables are 
+            the most inner variables of the structure and the last elements are the outer most variables.
+
+            For example, if ``self.OS()`` returns the ring `\mathbb{K}(a,b)[x]\langle S, S^{-1}\rangle`, then this method will
+            return `(a,b,x,S,S^{-1})`.
+        '''
+        base_gens = self.base.gens()
+        if 1 in base_gens: base_gens = [] # no real generator
+        n, Sn, Sni = self.n(), self.Sn(), self.Sni()
+        return tuple([*base_gens, n, Sn, Sni])
+
     def is_hypergeometric(self, element):
         r'''
             Method to check if a symbolic expression is hypergeometric or not.
@@ -352,11 +371,11 @@ class PSBasis(Sequence):
         element = self.OB()(element)
 
         ## We check the denominator never vanishes on positive integers
-        if(any((m >= 0 and m in ZZ) for m in [root[0][0] for root in element.denominator().roots()])):
+        if(any((m >= 0 and m in ZZ) for m in [root[0] for root in element.denominator().roots()])):
             return False
 
         ## We check the numerator never vanishes on the positive integers
-        if(any((m >= 0 and m in ZZ) for m in [root[0][0] for root in element.numerator().roots()])):
+        if(any((m >= 0 and m in ZZ) for m in [root[0] for root in element.numerator().roots()])):
             return False
             
         return True
@@ -406,6 +425,10 @@ class PSBasis(Sequence):
     @property
     def base(self):
         return self.__base
+
+    @property
+    def var_name(self):
+        return self.__var_name
 
     def change_base(self, base):
         r'''
