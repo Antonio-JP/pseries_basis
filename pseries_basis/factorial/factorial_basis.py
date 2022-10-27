@@ -662,18 +662,19 @@ class SFactorialBasis(FactorialBasis):
             an = self.OB()(an(n=n))
         except TypeError: # an is not callable
             an = self.OB()(an) # original code for rational functions
-        if(not self.valid_factor(an(n=n+1))): # an can not be zero for n >= 1
+        if(not self.valid_factor((self.Sn()*an).coefficients()[0])): # an can not be zero for n >= 1
             raise ValueError("The leading coefficient for the extra factor must always be non-zero")
         self.__an = an
 
         ## Checking the argument `bn`
         try:
-            bn = self.OB()(bn(n=n)); self.__bn = bn
+            bn = self.OB()(bn(n=n))
         except TypeError: # bn is not callable
-            bn = self.OB()(bn); self.__bn = bn # original code for rational functions
+            bn = self.OB()(bn) # original code for rational functions
+        self.__bn = bn
 
         ## Initializing the FactorialBasis structure
-        super(SFactorialBasis,self).__init__(X, base)
+        FactorialBasis.__init__(self, X, base)
 
         ## Extra cached variables
         self.__cached_increasing = {}
@@ -824,6 +825,14 @@ class SFactorialBasis(FactorialBasis):
 
     def _latex_(self):
         return r"\text{Factorial basis }\left(%s,%s\right): \left\{%s,%s,%s,\ldots\right\}" %(latex(self.__an), latex(self.__bn), latex(self[0]), latex(self[1]), latex(self[2]))
+
+    @property
+    def symb_an(self):
+        return self.__an
+
+    @property
+    def symb_bn(self):
+        return self.__bn
 
     def root_sequence(self) -> Sequence:
         r'''
