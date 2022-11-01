@@ -1540,9 +1540,8 @@ class FallingBasis(SFactorialBasis):
         n = self.n()
         super(FallingBasis, self).__init__(a, b-c*(n-1), X)
 
-        Sn = self.Sn(); x = self[1].parent().gens()[0]
-        P = a*x+b+c
-        self.set_endomorphism(self.__E_name, self.recurrence(P)*Sn, True)
+        Sn = self.Sn(); n = self.n()
+        self.set_endomorphism(self.__E_name, c*(n+1)*Sn + 1, True)
 
     def change_base(self, base):
         return FallingBasis(
