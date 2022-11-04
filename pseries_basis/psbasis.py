@@ -77,9 +77,12 @@ class PSBasis(Sequence):
         self.__compatibility = {}
         self.__derivations = []
         self.__endomorphisms = []
+        self.__var_name = "x" if var_name is None else var_name
         
         if universe == None and degree is True:
-            universe = PolynomialRing(self.__base, 'x' if var_name is None else var_name)
+            universe = PolynomialRing(self.__base, self.__var_name)
+        elif universe is None:
+            universe = LambdaSequence(lambda n,k : 1, self.base, 2, True).parent()
         super().__init__(universe, 1)
 
     ### Getters from the module variable as objects of the class
@@ -154,7 +157,7 @@ class PSBasis(Sequence):
                 sage: B.Sn().parent()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_double_recurrence_algebra("n", "Sn", rational=True, base=self.base)[1][1]
+        return self.OS().gens()[0]
 
     def Sni(self):
         r'''
@@ -171,8 +174,24 @@ class PSBasis(Sequence):
                 sage: B.Sni().parent()
                 Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
         '''
-        return get_double_recurrence_algebra("n", "Sn", base=self.base)[1][2]
+        return self.OS().gens()[1]
     
+    def recurrence_vars(self):
+        r'''
+            Method that returns all the variables involved in the recurrence operators (see :func:`OS`).
+
+            This method returns the variables and generators necessary to fully describe the recurrence operators obtained
+            through the method :func:`recurrence`. The order of the output is "inner-out", meaning the first variables are 
+            the most inner variables of the structure and the last elements are the outer most variables.
+
+            For example, if ``self.OS()`` returns the ring `\mathbb{K}(a,b)[x]\langle S, S^{-1}\rangle`, then this method will
+            return `(a,b,x,S,S^{-1})`.
+        '''
+        base_gens = self.base.gens()
+        if 1 in base_gens: base_gens = [] # no real generator
+        n, Sn, Sni = self.n(), self.Sn(), self.Sni()
+        return tuple([*base_gens, n, Sn, Sni])
+
     def is_hypergeometric(self, element):
         r'''
             Method to check if a symbolic expression is hypergeometric or not.
@@ -328,7 +347,7 @@ class PSBasis(Sequence):
                 sage: B.valid_factor((n+1)/(n+2))
                 True
 
-            This allow to check if a hypergeometric element is valid as a scalar product (see emthod :func:`is_hypergeometric`)::
+            This allow to check if a hypergeometric element is valid as a scalar product (see method :func:`is_hypergeometric`)::
 
                 sage: hyper, quotient = B.is_hypergeometric(factorial(n))
                 sage: B.valid_factor(quotient)
@@ -352,11 +371,11 @@ class PSBasis(Sequence):
         element = self.OB()(element)
 
         ## We check the denominator never vanishes on positive integers
-        if(any((m >= 0 and m in ZZ) for m in [root[0][0] for root in element.denominator().roots()])):
+        if(any((m >= 0 and m in ZZ) for m in [root[0] for root in element.denominator().roots()])):
             return False
 
         ## We check the numerator never vanishes on the positive integers
-        if(any((m >= 0 and m in ZZ) for m in [root[0][0] for root in element.numerator().roots()])):
+        if(any((m >= 0 and m in ZZ) for m in [root[0] for root in element.numerator().roots()])):
             return False
             
         return True
@@ -406,6 +425,10 @@ class PSBasis(Sequence):
     @property
     def base(self):
         return self.__base
+
+    @property
+    def var_name(self):
+        return self.__var_name
 
     def change_base(self, base):
         r'''
@@ -786,6 +809,30 @@ class PSBasis(Sequence):
         return self.OSS()(self.simplify_operator((Sn**d)*operator))
     
     ### COMPATIBILITY RELATED METHODS
+    def _compatibility_from_recurrence(self, recurrence):
+        r'''
+            Method to obtain the compatibility condition from a recurrence equivalent.
+
+            This method allows the user (for compatibilities in 1 section) to provide the 
+            recurrence equation assocaited directly. This method can be overriden if the meaning
+            of the recurrences involved changes.
+
+            INPUT:
+
+            * ``recurrence``: an element in ``self.OS()`` simplified. 
+
+            OUTPUT:
+
+            A tuple `(A,B,m,\alpha_{i,j,k})` with the compatibility condition from the recurrence
+            (see the output of :func:`compatibility` for further information).
+        '''
+        Sn = self.Sn(); Sni = self.Sni(); n = self.n()
+        A = recurrence.degree(Sn); B = recurrence.degree(Sni); recurrence = recurrence.polynomial()
+        alpha = ([self.OB()(recurrence.coefficient({Sn:i}))(n=n-i) for i in range(A, 0, -1)] + 
+                [self.OB()(recurrence.constant_coefficient())] + 
+                [self.OB()(recurrence.coefficient({Sni:i}))(n=n+i) for i in range(1, B+1)])
+        return (ZZ(A), ZZ(B), ZZ(1), lambda _, j, k: alpha[j+A](n=k))
+
     def set_compatibility(self, name, trans, sub=False, type=None):
         r'''
             Method to set a new compatibility operator.
@@ -827,7 +874,7 @@ class PSBasis(Sequence):
         name = str(name)
         
         if(name in self.__compatibility and (not sub)):
-            print("The operator %s is already compatible with this basis -- no changes are done" %name)
+            print(f"The operator {name} is already compatible with this basis -- no changes are done" %name)
             return
         
         if(isinstance(trans, tuple)):
@@ -844,12 +891,7 @@ class PSBasis(Sequence):
             # TODO: how to check the alpha?
             self.__compatibility[name] = (ZZ(A),ZZ(B),ZZ(m),alpha)
         elif(trans in self.OS()):
-            trans = self.simplify_operator(trans); Sn = self.Sn(); Sni = self.Sni(); n = self.n()
-            A = trans.degree(Sn); B = trans.degree(Sni); trans = trans.polynomial()
-            alpha = ([self.OB()(trans.coefficient({Sn:i}))(n=n-i) for i in range(A, 0, -1)] + 
-                    [self.OB()(trans.constant_coefficient())] + 
-                    [self.OB()(trans.coefficient({Sni:i}))(n=n+i) for i in range(1, B+1)])
-            self.__compatibility[name] = (ZZ(A), ZZ(B), ZZ(1), lambda i, j, k: alpha[j+A](n=k))
+            self.__compatibility[name] = self._compatibility_from_recurrence(self.simplify_operator(trans))
 
         if type in ("endo", "der"):
             if name in self.__derivations:
@@ -1299,6 +1341,45 @@ class PSBasis(Sequence):
             
         return (a,b,Matrix([[alpha(i,j,self.n()) for j in range(-a,b+1)] for i in range(m)]))
 
+    def _recurrence_from_compatibility(self, compatibility):
+        r'''
+            Method that returns the recurrence from a compatibility condition.
+
+            This is the "basic" method for recurrences. Other recurrences (built from polynomials or similar) use this 
+            basic method. Hence, for changing the method to compute the recurrence from the compatibility condition, 
+            this is the method to change.
+        '''
+        if not isinstance(compatibility, (list, tuple)) or len(compatibility) != 4:
+            raise TypeError("The compatibility condition is not valid")
+
+        A,B,m,alpha = compatibility
+        ## We do the transformation
+        Sn = self.Sn(); Sni = self.Sni(); n = self.n()
+        def SN(index):
+            if(index == 0):
+                return 1
+            elif(index > 0):
+                return Sn**index
+            else:
+                return Sni**(-index)
+        
+        # We have to distinguish between m = 1 and m > 1
+        if(m == 1): # we return an operator
+            recurrence = sum(alpha(0,i,n-i)*SN(-i) for i in range(-A,B+1))
+            output = self.simplify_operator(recurrence)
+        elif(m > 1):
+            output = Matrix(
+                [
+                    [self.simplify_operator(sum(
+                        alpha(j,i,self.n()+(r-i-j)//m)*SN((r-i-j)//m)
+                        for i in range(-A,B+1) if ((r-i-j)%m == 0)
+                    )) for j in range(m)
+                    ] for r in range(m)
+                ])
+        else:
+            raise TypeError("The number of sections must be a positive integer")
+        return output
+
     def recurrence(self, operator, sections=None, cleaned=False):
         r'''
             Method to get the recurrence for a compatible operator.
@@ -1421,37 +1502,12 @@ class PSBasis(Sequence):
             if(isinstance(operator, str)): # getting the compatibility condition for the str case
                 operator = self.compatibility(operator)
          
-            A,B,m,alpha = operator
             
             ## Now we check the sections argument
             if(sections != None):
                 A,B,m,alpha = self.compatibility_sections((A,B,m,alpha), sections)
-
-            ## Now we do the transformation
-            Sn = self.Sn(); Sni = self.Sni(); n = self.n()
-            def SN(index):
-                if(index == 0):
-                    return 1
-                elif(index > 0):
-                    return Sn**index
-                else:
-                    return Sni**(-index)
-            
-            # We have to distinguish between m = 1 and m > 1
-            if(m == 1): # we return an operator
-                recurrence = sum(alpha(0,i,n-i)*SN(-i) for i in range(-A,B+1))
-                output = self.simplify_operator(recurrence)
-            elif(m > 1):
-                output = Matrix(
-                    [
-                        [self.simplify_operator(sum(
-                            alpha(j,i,self.n()+(r-i-j)//m)*SN((r-i-j)//m)
-                            for i in range(-A,B+1) if ((r-i-j)%m == 0)
-                        )) for j in range(m)
-                        ] for r in range(m)
-                    ])
-            else:
-                raise TypeError("The number of sections must be a positive integer")
+                
+            output = self._recurrence_from_compatibility(self, (A,B,m,alpha))
 
         ## Cleaning the output if required
         if cleaned:

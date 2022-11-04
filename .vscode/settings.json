@@ -12,8 +12,12 @@
     ],
     "cSpell.words": [
         "hadamard",
+        "Pochhammer",
         "pseries",
+        "qbinomial",
         "qfactorial",
-        "qshift"
+        "qpochhammer",
+        "qshift",
+        "symb"
     ]
 }

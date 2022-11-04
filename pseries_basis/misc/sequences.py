@@ -154,6 +154,19 @@ class Sequence(SetMorphism):
             except CoercionException:
                 return NotImplemented
         return NotImplemented
+
+    def __truediv__(self, other):
+        if isinstance(other, Sequence) and self.dim == other.dim:
+            universe = pushout(self.universe, other.universe)
+            alls = self.allow_sym and other.allow_sym
+            return LambdaSequence(lambda *n : self(*n) / other(*n), universe, dim = self.dim, allow_sym=alls)
+        elif not isinstance(other, Sequence):
+            try:
+                universe = pushout(self.universe, parent(other))
+                return LambdaSequence(lambda *n : self(*n) / other, universe, dim = self.dim, allow_sym=self.allow_sym)
+            except CoercionException:
+                return NotImplemented
+        return NotImplemented
         
     def __neg__(self):
         return LambdaSequence(lambda *n : -self(*n), self.universe, dim = self.dim, allow_sym=self.allow_sym) # pylint: disable=invalid-unary-operand-type
@@ -441,6 +454,20 @@ class ExpressionSequence(Sequence):
             except CoercionException:
                 return NotImplemented
         return super().__mul__(other)
+
+    def __truediv__(self, other):
+        if isinstance(other, ExpressionSequence) and self.dim == other.dim:
+            if [SR(v) for v in self.variables()] != [SR(v) for v in other.variables()]:
+                return NotImplemented
+            universe = pushout(self.universe, other.universe)
+            return ExpressionSequence(self.generic() / other.generic(), universe, self.variables())
+        elif not isinstance(other, Sequence):
+            try:
+                universe = pushout(self.universe, parent(other))
+                return ExpressionSequence(self.generic()/SR(other), universe, self.variables())
+            except CoercionException:
+                return NotImplemented
+        return super().__truediv__(other)
         
     def __neg__(self):
         return ExpressionSequence(-self.generic(), self.universe, self.variables())
