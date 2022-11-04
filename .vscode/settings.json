@@ -12,6 +12,8 @@
     ],
     "cSpell.words": [
         "hadamard",
-        "pseries"
+        "pseries",
+        "qfactorial",
+        "qshift"
     ]
 }

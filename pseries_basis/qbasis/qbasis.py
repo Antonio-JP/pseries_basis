@@ -2,7 +2,7 @@ r'''
     Module with the basic classes for implementing `q`-series.
 '''
 
-from sage.all import prod, PolynomialRing, QQ, ZZ, var, binomial, cached_method
+from sage.all import prod, PolynomialRing, QQ, ZZ, var, binomial, cached_method #pylint: disable=no-name-in-module
 
 from ..psbasis import SequenceBasis
 from ..misc.ore import get_qshift_algebra, get_double_qshift_algebra, has_variable
@@ -17,7 +17,7 @@ class QBasis(SequenceBasis):
 
         The ring of `q`-formal power series can be seen as the ring `\mathbb{K}(q)[[x]]`, where 
         there is a parameter `q` whose field of rational functions is included in the ring of 
-        coefficients for the formal pwoer series.
+        coefficients for the formal power series.
     '''
     def __init__(self, base, sequence: Sequence, degree: bool = True, q_name: str = "q"):
         # if the base has no q, we add it
@@ -150,7 +150,7 @@ class QBasis(SequenceBasis):
         '''
         return LambdaSequence(lambda n : qpochammer(a, n, self.q()), self.base)
 
-    ## Other ovewriten methods
+    ## Other overwritten methods
     def change_base(self, base):
         return QBasis(base, self.functional_seq, self.by_degree(), str(self.q()))
 
