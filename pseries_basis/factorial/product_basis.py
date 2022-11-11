@@ -131,7 +131,7 @@ class SievedBasis(FactorialBasis):
 
             L = (x+2)^2 E^2 - (11x^2+33x+25)E - (x+1)^3
 
-        This operator `L` is compàtible with the basis ``B2``. We can get then
+        This operator `L` is compatible with the basis ``B2``. We can get then
         the associated recurrence matrix. Taking the first column and the GCRD
         of its elements, we can see that if a formal power series `y(x) = \sum_n y_n x^n`
         that can be written in the form `y(x) = \sum_{n\geq 0}c_n\binom{x}{n}\binom{x+n}{2n}` satisfies
@@ -177,7 +177,7 @@ class SievedBasis(FactorialBasis):
         self.__init = init
         self.__cached_increasing = {}
 
-        ## Extendeding the required operators
+        ## Extending the required operators
         self.extend_compatibility_X()
 
         endomorphisms = list(reduce(lambda p, q : p.intersection(q), [set(factor.compatible_endomorphisms()) for factor in self.factors]))
@@ -425,7 +425,7 @@ class SievedBasis(FactorialBasis):
             WARNING:
 
             This method do not check whether the operator given is an endomorphism
-            or not. That remains as a user responsability.
+            or not. That remains as a user responsibility.
 
             TODO: add examples
         '''
@@ -460,7 +460,7 @@ class SievedBasis(FactorialBasis):
             WARNING:
 
             This method do not check whether the operator given is a derivation
-            or not. That remains as a user responsability.
+            or not. That remains as a user responsibility.
 
             TODO: add examples
         '''
@@ -842,7 +842,7 @@ class ProductBasis(SievedBasis):
 
             L = (x+2)^3 E^2 - (2*x + 3)(17x^2+51x+39)E + (x+1)^3
 
-        This operator `L` is compàtible with the basis ``B2``. We can get then
+        This operator `L` is compatible with the basis ``B2``. We can get then
         the associated recurrence matrix. Taking the first column and the GCRD
         of its elements, we can see that if a formal power series `y(x) = \sum_n y_n x^n`
         that can be written in the form `y(x) = \sum_{n\geq 0}c_n\binom{x+n}{2n}^2` satisfies

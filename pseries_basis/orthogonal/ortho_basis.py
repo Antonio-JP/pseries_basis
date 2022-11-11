@@ -7,7 +7,7 @@ r'''
 from sage.all import cached_method, Matrix, QQ, ZZ, lcm
 
 # Local imports
-from ..misc.ore import poly_decomp
+from ..misc.ore import poly_decomposition
 from ..psbasis import PSBasis, PolyBasis
 
 class OrthogonalBasis(PolyBasis):
@@ -60,7 +60,7 @@ class OrthogonalBasis(PolyBasis):
         ## Initializing the PolyBasis structure
         super().__init__(base, X)
 
-        ## Cheking the first element
+        ## Checking the first element
         init = self.base(init)
         if(init == 0):
             raise ValueError("The first polynomial must be non-zero")
@@ -102,7 +102,7 @@ class OrthogonalBasis(PolyBasis):
         r'''
             Static method for getting the coefficient of a monomial from a dictionary.
 
-            This method unifies the interace between univariate and multivariate polynomials
+            This method unifies the interface between univariate and multivariate polynomials
             in Sage.
         '''
         from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing as isMPoly
@@ -124,7 +124,7 @@ class OrthogonalBasis(PolyBasis):
         r'''
             Static method for getting the degree of polynomial.
 
-            This method unifies the interace between univariate and multivariate polynomials
+            This method unifies the interface between univariate and multivariate polynomials
             in Sage for the method ``degree``.
         '''
         from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing as isMPoly
@@ -286,7 +286,7 @@ class OrthogonalBasis(PolyBasis):
             See method :func:`~pseries_basis.psbasis.PSBasis.recurrence` for further information.
 
             In a first glance, this method tries the classical compatibility using the compatibility dictionary.
-            However, the derivation is not usually compatible with ``self``, but we may need a prefactor
+            However, the derivation is not usually compatible with ``self``, but we may need a pre-factor
             `Q(x)` (see method :func:`derivation_name`) to make the derivation compatible.
 
             Since for any `L \in \mathbb{Q}[x][\partial]` we have that `L \cdot f(x) = 0` if and only
@@ -313,7 +313,7 @@ class OrthogonalBasis(PolyBasis):
                 if cleaned:
                     output = self.remove_Sni(output) # we remove the inverse shift
                     # we clean denominators
-                    _, coeffs = poly_decomp(output.polynomial())
+                    _, coeffs = poly_decomposition(output.polynomial())
                     to_mult = lcm([el.denominator() for el in coeffs])
                     output = (to_mult * output).change_ring(self.OS().base().base())
                 
@@ -327,7 +327,7 @@ class OrthogonalBasis(PolyBasis):
             Name of the compatible derivation with this basis.
 
             This method returns the name of the 
-            associated derivativion with this basis. By definition, a set of Orthogonal 
+            associated derivation with this basis. By definition, a set of Orthogonal 
             polynomials satisfies a three term recurrence of the form  
 
             .. MATH::
@@ -358,7 +358,7 @@ class OrthogonalBasis(PolyBasis):
             Method to get compatibility with the associated derivation.
 
             This method returns the compatibility of the Orthogonal basis with the 
-            associated derivativion with this basis. By definition, a set of Orthogonal 
+            associated derivation with this basis. By definition, a set of Orthogonal 
             polynomials satisfies a three term recurrence of the form  
 
             .. MATH::
@@ -538,7 +538,7 @@ class GegenbauerBasis(OrthogonalBasis):
 
         INPUT:
             
-        * ``lambd``: a rational number greater than `-1/2` different from `0`
+        * ``L``: a rational number greater than `-1/2` different from `0` representing the parameter `\lambda`
         * ``X``: the name for the operator representing the multiplication by `x`. By default, this 
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
@@ -551,15 +551,15 @@ class GegenbauerBasis(OrthogonalBasis):
 
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
-    def __init__(self, lambd, X='x', Dx='Dx', base=QQ):
+    def __init__(self, L, X='x', Dx='Dx', base=QQ):
         PSBasis.__init__(self, base, var_name=X) # needed for getting ``self.n()``
-        if(not lambd in base or lambd <= -1/2 or lambd == 0):
+        if(not L in base or L <= -1/2 or L == 0):
             raise TypeError("The argument `alpha` must be a rational number greater than -1/2 different from 0")
-        self.__lambda = base(lambd); lambd = self.__lambda
+        self.__lambda = base(L); L = self.__lambda
         n = self.n()
 
-        an = 2*(n+lambd)/(n+1)
-        cn = (n+2*lambd-1)/(n+1)
+        an = 2*(n+L)/(n+1)
+        cn = (n+2*L-1)/(n+1)
 
         super().__init__(an,0,cn,X,Dx,base=base)
 
@@ -573,7 +573,7 @@ class GegenbauerBasis(OrthogonalBasis):
         Sni = self.Sni(); n = self.n(); Sn = self.Sn()
         a = self.__lambda
 
-        # operator got using the package ortho_poly_recution
+        # operator got using the package ortho_poly_reduction
         op = ((2*a + n)*(2*a + n + 1)/(2*(a + n + 1)))*Sn
         op += (n*(n - 1)/(2*(a + n - 1)))*Sni
 

@@ -201,7 +201,7 @@ def unroll_sequence(operator, init, bound=10):
 
     p = operator.coefficients()
     solution = init[:d]
-    ## Cheking the initial values
+    ## Checking the initial values
     if(len(solution) < d):
         raise ValueError("Not enough initial data was given")
 
@@ -230,7 +230,7 @@ def compute_in_basis(basis, sequence, section=1, shift=0, bound=10):
         of the basis, i.e., elements of the shape `b_{kF+j}`. By default, the parameters
         ``section`` and ``shift`` are prepared to consider the whole basis.
     '''
-    ## Cheking the section/shift arguments
+    ## Checking the section/shift arguments
     if(not (section in ZZ and section > 0)):
         raise ValueError("The section numbers must be a positive integer")
     if(not (shift in ZZ and shift >= 0)):
@@ -310,7 +310,7 @@ def guess_compatibility_E(basis, shift = 1, sections = None, A = None, bound_roo
 
         TODO: add examples?
     '''
-    ## Cheking the input for the sections
+    ## Checking the input for the sections
     F = 1
     if(isinstance(basis, SievedBasis)):
         if(sections != None and sections%basis.nsections() != 0):
@@ -359,18 +359,18 @@ def guess_rational_function(data, algebra):
     ## Getting the recurrence (error if not found)
     ann = guess(data, algebra)
     ## Computing rational solutions
-    solutions = ann.rational_solutions(); nsols = len(solutions)
+    solutions = ann.rational_solutions(); num_sols = len(solutions)
 
     ## Adjusting the solutions
-    if(nsols == 0):
+    if(num_sols == 0):
         raise ValueError("No rational solution found: no solution for a recurrence")
 
-    values = Matrix([[solutions[i][0](n=j) for i in range(nsols)] for j in range(len(data))])
+    values = Matrix([[solutions[i][0](n=j) for i in range(num_sols)] for j in range(len(data))])
     try:
         sol = values.solve_right(vector(data))
     except ValueError:
         raise ValueError("No rational solution found: the data does not match")
 
-    return sum(sol[i]*solutions[i][0] for i in range(nsols))
+    return sum(sol[i]*solutions[i][0] for i in range(num_sols))
 
 __all__ = ["DefiniteSumSolutions","GeneralizedBinomial", "multiset_inclusion", "guess_compatibility_E"]

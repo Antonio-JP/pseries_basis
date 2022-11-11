@@ -44,12 +44,13 @@ from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
 
 # ore_algebra imports
+from ore_algebra.ore_algebra import OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
 
-from pseries_basis.misc.noncom_rings import OperatorAlgebra_element
+from pseries_basis.misc.noncom_rings import OperatorAlgebra_generic, OperatorAlgebra_element
 
 # imports from this package
-from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, eval_ore_operator, poly_decomp, 
+from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, eval_ore_operator, poly_decomposition, 
                     get_rational_algebra, get_recurrence_algebra)
 from .misc.sequences import LambdaSequence, Sequence, SequenceSet
 
@@ -263,21 +264,21 @@ class PSBasis(Sequence):
 
         operator = element.operator()
         if(operator is add_vararg):
-            hypers = [self.is_hypergeometric(el) for el in element.operands()]
-            if(any(not el[0] for el in hypers)):
+            are_hyper = [self.is_hypergeometric(el) for el in element.operands()]
+            if(any(not el[0] for el in are_hyper)):
                 return (False, None)
-            return (True, sum([el[1] for el in hypers], 0))
+            return (True, sum([el[1] for el in are_hyper], 0))
         elif(operator is mul_vararg):
-            hypers = [self.is_hypergeometric(el) for el in element.operands()]
-            if(any(not el[0] for el in hypers)):
+            are_hyper = [self.is_hypergeometric(el) for el in element.operands()]
+            if(any(not el[0] for el in are_hyper)):
                 return (False, None)
-            return (True, prod([el[1] for el in hypers], 1))
+            return (True, prod([el[1] for el in are_hyper], 1))
         elif(operator is pow):
             base,exponent = element.operands()
             if(exponent in ZZ):
-                hyper, quotient = self.is_hypergeometric(base)
-                if(hyper):
-                    return (hyper, quotient**ZZ(exponent))
+                is_hyper, quotient = self.is_hypergeometric(base)
+                if(is_hyper):
+                    return (is_hyper, quotient**ZZ(exponent))
                 return (False, None)
         elif(operator is hypergeometric):
             a, b, n = element.operands()
@@ -735,9 +736,9 @@ class PSBasis(Sequence):
     def _simplify_operator(self, operator):
         r'''
             Method that actually simplifies the operator. This removes inverses operators and ensures all
-            the variables apepar in desirable order.
+            the variables appear in desirable order.
         '''
-        if isinstance(operator, OreOperator):
+        if isinstance(self.OS(), OreAlgebra_generic) and operator in self.OS():
             operator = self.OS()(str(operator))
             Sn = self.Sn(); Sni = self.Sni()
 
@@ -755,7 +756,7 @@ class PSBasis(Sequence):
                 else:
                     result += coefficients[i]
             return result
-        elif isinstance(operator, OperatorAlgebra_element):
+        elif isinstance(self.OS(), OperatorAlgebra_generic) and operator in self.OS():
             return operator.canonical()
         else:
             raise NotImplementedError(f"Impossible to simplify {operator} (type={operator.__class__})")
@@ -768,7 +769,7 @@ class PSBasis(Sequence):
             can be helpful to compute a holonomic operator and apply methods from the package
             :mod:`ore_algebra` to manipulate it.
 
-            We are usually interested in sequencessuch that when we apply an operator 
+            We are usually interested in sequences such that when we apply an operator 
             `L \in \mathbb{K}(n)[\sigma,\sigma^{-1}]` we obtain zero. In this sense, we can always
             find an operator `\tilde{L} \in \mathbb{K}(n)[\sigma]` that also annihilates the same object.
 
@@ -814,7 +815,7 @@ class PSBasis(Sequence):
             Method to obtain the compatibility condition from a recurrence equivalent.
 
             This method allows the user (for compatibilities in 1 section) to provide the 
-            recurrence equation assocaited directly. This method can be overriden if the meaning
+            recurrence equation associated directly. This method can be overridden if the meaning
             of the recurrences involved changes.
 
             INPUT:
@@ -841,7 +842,7 @@ class PSBasis(Sequence):
             by ``name``. The compatibility condition must be given as a tuple
             `(A, B, m, \alpha_{i,j,k})` where `A` is the lower bound for the compatibility,
             `B` is the upper bound for the compatibility and `m` is the number of sections
-            for the compatibility. In this way, we have tht the operator `L` defind by ``name``
+            for the compatibility. In this way, we have tht the operator `L` defined by ``name``
             satisfies:
 
             .. MATH::
@@ -1254,7 +1255,7 @@ class PSBasis(Sequence):
 
                 ## NOT UNICITY IN SAGE FOR UNIVARIATE POLYNOMIALS
                 ## The order of monomials and coefficients in univariate polynomials are different. That is why
-                ## we need to consider that special case and treat it appart:
+                ## we need to consider that special case and treat it apart:
                 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
                 if(is_PolynomialRing(operator.parent())):
                     mons.reverse() # just inverting the order of one of the list is enough
@@ -1461,7 +1462,7 @@ class PSBasis(Sequence):
                 recurrences = {str(v): self.recurrence(str(v), sections) for v in operator.variables()}
                 output = self.simplify_operator(operator(**recurrences))
             elif(isinstance(operator, OreOperator)): # case of ore_algebra operator
-                mons, coeffs = poly_decomp(operator.polynomial())
+                mons, coeffs = poly_decomposition(operator.polynomial())
                 # checking the type of coefficients and computing the final coefficients
                 if operator.parent().base().gens()[0] != 1:
                     base_ring = operator.parent().base().base_ring()
@@ -1505,9 +1506,9 @@ class PSBasis(Sequence):
             
             ## Now we check the sections argument
             if(sections != None):
-                A,B,m,alpha = self.compatibility_sections((A,B,m,alpha), sections)
+                operator = self.compatibility_sections(operator, sections)
                 
-            output = self._recurrence_from_compatibility(self, (A,B,m,alpha))
+            output = self._recurrence_from_compatibility(operator)
 
         ## Cleaning the output if required
         if cleaned:
@@ -1516,7 +1517,7 @@ class PSBasis(Sequence):
             else: # case with one operator
                 output = self.remove_Sni(output) # we remove the inverse shift
                 # we clean denominators
-                _, coeffs = poly_decomp(output.polynomial())
+                _, coeffs = poly_decomposition(output.polynomial())
                 to_mult = lcm([el.denominator() for el in coeffs])
                 output = (to_mult * output).change_ring(self.OS().base().base())
 
@@ -1526,7 +1527,7 @@ class PSBasis(Sequence):
         r'''
             Method to get the recurrence for a compatible operator.
 
-            This method computes a recurrence operator assocaited with a compatible operator with this basis
+            This method computes a recurrence operator associated with a compatible operator with this basis
             (see :func:`recurrence`). There are cases where the original operator was also a recurrence
             operator. In these cases, we are able to repeat the process of compatibility over and over.
 
@@ -1793,7 +1794,7 @@ class PSBasis(Sequence):
     def __scalar_extend_compatibilities(self, new_basis, factor):
         r'''
             Method to extend compatibilities to ``new_basis`` with a rational function or a method
-            that returns a rational function when feeded by `n` (see :func:`OB`)
+            that returns a rational function when fed by `n` (see :func:`OB`)
         '''
         compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
         for key in compatibilities:
@@ -1805,7 +1806,7 @@ class PSBasis(Sequence):
     def __scalar_hyper_extend_compatibilities(self, new_basis, factor, quotient): #pylint: disable=unused-argument
         r'''
             Method to extend compatibilities to ``new_basis`` with a rational function or a method
-            that returns a rational function when feeded by `n` (see :func:`OB`).
+            that returns a rational function when fed by `n` (see :func:`OB`).
 
             If ``factor`` (let say `f_n`) is hypergeometric with defining quotient given by ``quotient``
             (denoted by `q_n`), then we have for all `n \in \mathbb{N}` that:
@@ -1893,7 +1894,7 @@ class BruteBasis(PSBasis):
         * ``elements``: function or lambda method that takes one parameter `n` and return the `n`-th element
           of this basis.
         * ``base``: base domain for the sequences this basis represents.
-        * ``universe``: domain where the elements of the bais will be represented.
+        * ``universe``: domain where the elements of the basis will be represented.
         * ``degree``: indicates if it is a polynomial basis or an order basis.
         * ``var_name``: (only used if ``universe`` is None and ``degree`` is True) provides a name for the main variable
           of the polynomials that compose this basis.
@@ -1974,7 +1975,7 @@ class SequenceBasis(PSBasis):
 
         INPUT:
 
-        * ``base``: a Sagemath structure for `\mathbb{K}`.
+        * ``base``: a SageMath structure for `\mathbb{K}`.
         * ``sequence``: a :class:`~pseries_basis.misc.sequences.Sequence` of dimension 2, whose universe can be changed to ``base``.
     '''
     def __init__(self, base, sequence : Sequence, degree : bool = True):
@@ -1991,7 +1992,7 @@ class SequenceBasis(PSBasis):
         return self.__sequence
 
     def _element(self, *indices):
-        return self.functional_seq.subsequence(indices[0])
+        return self.functional_seq.subsequence(indices[0]) #pylint: disable=no-member
 
     def change_base(self, base):
         return SequenceBasis(base, self.functional_seq, self.by_degree())
@@ -2006,13 +2007,13 @@ class SequenceBasis(PSBasis):
 
             INPUT:
 
-            * ``shift``: the intger defining the shift to be applied to the elements of ``self``.
+            * ``shift``: the integer defining the shift to be applied to the elements of ``self``.
 
             OUTPUT:
 
             A new :class:`SequenceBasis` whose elements are the elements of ``self`` after applying the given ``shift``.
         '''
-        return SequenceBasis(self.base, self.functional_seq.shift(0,shift), self.by_degree())
+        return SequenceBasis(self.base, self.functional_seq.shift(0,shift), self.by_degree()) #pylint: disable=no-member
 
     def mult_in(self, prod):
         r'''
@@ -2091,7 +2092,7 @@ def check_compatibility(basis, operator, action, bound=100):
 
         This method takes a :class:`PSBasis`, an operator compatibility (either a tuple with the 
         compatibility data or the operator that must be compatible with the basis), an actions with the 
-        map for the opertator and a bound and checks that the induced compatibility identity holds for 
+        map for the operator and a bound and checks that the induced compatibility identity holds for 
         the first terms of the basis.
 
         INPUT:

@@ -8,16 +8,38 @@
         "pmatrix",
         "psbasis",
         "pylint",
-        "rmul"
+        "rmul",
+        "DREC",
+        "DQSHIFT",
+        "vararg",
+        "polydict",
+        "ecurrence"
     ],
     "cSpell.words": [
+        "Chebyshev",
+        "codomain",
+        "coeffs",
+        "endo",
+        "gcrd",
+        "Gegenbauer",
         "hadamard",
+        "homset",
+        "invertibility",
+        "Laguerre",
+        "multiset",
+        "nfactors",
+        "nsections",
         "Pochhammer",
         "pseries",
+        "qbasis",
         "qbinomial",
         "qfactorial",
         "qpochhammer",
         "qshift",
-        "symb"
+        "sageref",
+        "semiring",
+        "semirings",
+        "symb",
+        "UNICITY"
     ]
 }

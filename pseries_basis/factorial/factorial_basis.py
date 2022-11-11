@@ -126,7 +126,7 @@ class FactorialBasis(PolyBasis):
         r'''
             Method that returns the root sequence of the polynomial basis.
 
-            Since a factorial basis satisties that `P_n(x)` divides `P_{n+1}(x)` for all
+            Since a factorial basis satisfies that `P_n(x)` divides `P_{n+1}(x)` for all
             `n`, we have that the basis forms a sequence of polynomials with a persistent
             set of roots.
 
@@ -649,7 +649,7 @@ class SFactorialBasis(FactorialBasis):
     '''
     def __init__(self, an, bn, X='x', init=1, base=QQ):
         PolyBasis.__init__(self, base, X) # initializing some intermediate parts of the basis
-        ## Cheking the first element
+        ## Checking the first element
         init = self.base(init)
         if(init == 0):
             raise ValueError("The first polynomial must be non-zero")
@@ -1037,7 +1037,7 @@ class SFactorialBasis(FactorialBasis):
         return SFactorialBasis(
             self.an(n+shift),               # new linear coefficient for the basis
             self.bn(n+shift),               # new constant coefficient for the basis
-            X=str(self.universe.gens()[0]), # name of the polyno
+            X=str(self.universe.gens()[0]), # name of the polynomial variable
             base=self.base                  # base ring for the coefficients
         )
 
@@ -1497,7 +1497,7 @@ class FallingBasis(SFactorialBasis):
         Class for a Falling factorial Basis.
 
         This class represent the FactorialBasis formed by the falling factorial basis
-        for the power series ring `\mathbb{Q}[[x]]` with two extra paramenters `a` and `b`:
+        for the power series ring `\mathbb{Q}[[x]]` with two extra parameters `a` and `b`:
 
         .. MATH::
 

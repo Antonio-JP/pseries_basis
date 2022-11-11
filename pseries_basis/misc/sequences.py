@@ -1,5 +1,5 @@
 r'''
-    Module containing methods, strucutres and functions related with Sequences.
+    Module containing methods, structures and functions related with Sequences.
 
     A sequence is a function `f: \mathbb{N} \rightarrow \mathbb{K}` where the space `\mathbb{K}` is 
     called the *universe* of the sequence. The package :mod:`pseries_basis` is oriented towards 
@@ -8,9 +8,11 @@ r'''
     This module will create a framework for the whole package to manage, access and manipulate sequences
     in a generic fashion.
 '''
+from __future__ import annotations
+
 ## Sage imports
 from sage.all import (cached_method, oo, NaN, cartesian_product, cartesian_product_iterator, ZZ, parent, SR)
-from sage.categories.homset import Hom, Homset
+from sage.categories.homset import Homset
 from sage.categories.pushout import CoercionException, pushout
 from sage.categories.morphism import SetMorphism # pylint: disable=no-name-in-module
 from sage.categories.sets_cat import Sets
@@ -94,7 +96,7 @@ class Sequence(SetMorphism):
         raise NotImplementedError("Method '_element' not implemented")
 
     @cached_method
-    def shift(self, *shifts : int) -> "Sequence":
+    def shift(self, *shifts : int) -> Sequence:
         r'''
             Method to compute the shifted sequence given some shifting indices.
 
@@ -125,7 +127,7 @@ class Sequence(SetMorphism):
         '''
         return LambdaSequence(lambda *n : self(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim, allow_sym=self.allow_sym)
 
-    # basic arithmethic methods
+    # basic arithmetic methods
     def __add__(self, other):
         if not isinstance(other, Sequence) or self.dim != other.dim:
             return NotImplemented
@@ -171,7 +173,7 @@ class Sequence(SetMorphism):
     def __neg__(self):
         return LambdaSequence(lambda *n : -self(*n), self.universe, dim = self.dim, allow_sym=self.allow_sym) # pylint: disable=invalid-unary-operand-type
         
-    # reverse arithmethic methods
+    # reverse arithmetic methods
     def __radd__(self, other):
         return self.__add__(other)
     def __rsub__(self, other):
@@ -193,7 +195,7 @@ class Sequence(SetMorphism):
         else:
             return all(self(*term) == 0 for term in first_terms)
 
-    def almost_equals(self, other : 'Sequence', order=10) -> bool:
+    def almost_equals(self, other : Sequence, order=10) -> bool:
         r'''
             Method that checks if two sequences are equals at the beginning.
 
@@ -234,7 +236,7 @@ class Sequence(SetMorphism):
         else: # equality when elements lied in other ring
             return all(self(*term) == other(*term) for term in first_terms)
 
-    def subsequence(self, *vals : int) -> "Sequence":
+    def subsequence(self, *vals : int) -> Sequence:
         r'''
             Method to obtain a subsequence when having multiple arguments.
 
@@ -352,7 +354,7 @@ class ExpressionSequence(Sequence):
         This class computes a sequence by calling setting up an expression an a list of variables to be the variables of the
         sequence. This class can always be evaluated symbolically and a general expression can be obtained.
 
-        Several methods from :class:`Sequence`are overriden to take into account the use of :class:`ExpressionSequence` for 
+        Several methods from :class:`Sequence`are overridden to take into account the use of :class:`ExpressionSequence` for 
         arithmetic operation and similar methods that obtain new :class:`Sequence`
 
         INPUT:
@@ -420,7 +422,7 @@ class ExpressionSequence(Sequence):
 
         return ExpressionSequence(new_expr, self.universe, vars)
 
-    # basic arithmethic methods
+    # basic arithmetic methods
     def __add__(self, other):
         if not isinstance(other, ExpressionSequence) or self.dim != other.dim:
             return super().__add__(other)
