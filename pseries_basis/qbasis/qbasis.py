@@ -90,8 +90,9 @@ class QBasis(PSBasis):
             # if the base has no q, we add it
             with_q, self.__q = has_variable(base, q_name)
             if not with_q:
-                base = PolynomialRing(base, q_name).fraction_field()
-                self.__q = base.gens()[0]
+                base = PolynomialRing(base, q_name).flattening_morphism().codomain().fraction_field()
+                self.__q = base(q_name)
+
             PSBasis.__init__(self,base, universe, degree, var_name)
 
     ### Getters from the module variable as objects of the class
@@ -585,9 +586,9 @@ class QBinomialBasis(QSFactorialBasis):
 
     def change_base(self, base):
         return QBinomialBasis(
-            self.__a,                       # the dilation value does not change
             self.__b,                       # the shift value does not change
-            str(self.universe.gens()[0]),   # the name of the variable does not change
+            str(self.q()),                  # the name of the variable does not change
+            str(self.n()),                  # the name for the multiplication by `q^n`
             self.__E_name,                  # the name for the shifts does not change
             base                            # the base is set to the given value
         )
