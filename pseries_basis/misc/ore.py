@@ -259,14 +259,14 @@ def get_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E"
         A tuple `(A, (x, Q))` where `A` is the corresponding `q`-recurrence algebra, `x` is the 
         variable of the inner variable and `Q` the recurrence operator with `Q(x) = qx`.
     '''
-    if not (name_x, name_q, name_qshift, rational, base) in __CACHE_REC_ALGEBRAS:
+    if not (name_x, name_q, name_qshift, rational, base) in __CACHE_QSHIFT_ALGEBRA:
         with_q, q = has_variable(base, name_q)
         if not with_q: raise TypeError(f"The base ring [{base}] must have the variable {name_q}")
         PR, x = get_rational_algebra(name_x, base) if rational else get_polynomial_algebra(name_x, base)
         OE = OreAlgebra(PR, (name_qshift, lambda p : p(**{str(x) : q*x}), lambda _ : 0)); Q = OE.gens()[0]
-        __CACHE_REC_ALGEBRAS[(name_x, name_q, name_qshift, rational, base)] = (OE, (x,Q)) 
+        __CACHE_QSHIFT_ALGEBRA[(name_x, name_q, name_qshift, rational, base)] = (OE, (x,Q)) 
     
-    return __CACHE_REC_ALGEBRAS[(name_x, name_q, name_qshift, rational, base)]
+    return __CACHE_QSHIFT_ALGEBRA[(name_x, name_q, name_qshift, rational, base)]
 
 __CACHE_DQSHIFT_ALGEBRA = {}
 def get_double_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any]]:
@@ -291,14 +291,14 @@ def get_double_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : st
         variable of the inner variable and `E` the recurrence operator with `E(x) = x+1` and 
         `Ei` is the inverse recurrence operator, i.e., `Ei(x) = x-1`.
     '''
-    if not (name_x, name_q, name_qshift, rational, base) in __CACHE_DREC_ALGEBRAS:
+    if not (name_x, name_q, name_qshift, rational, base) in __CACHE_DQSHIFT_ALGEBRA:
         with_q, q = has_variable(base, name_q)
         if not with_q: raise TypeError(f"The base ring [{base}] must have the variable {name_q}")
         PR, x = get_rational_algebra(name_x, base) if rational else get_polynomial_algebra(name_x, base)
         OE = OreAlgebra(PR, (name_qshift, lambda p : p(**{str(x) : q*x}), lambda _ : 0), (name_qshift+"i", lambda p : p(**{str(x) : (1/q)*x}), lambda _ : 0)); E, Ei = OE.gens()
-        __CACHE_DREC_ALGEBRAS[(name_x, name_q, name_qshift, rational, base)] = (OE, (x,E,Ei)) 
+        __CACHE_DQSHIFT_ALGEBRA[(name_x, name_q, name_qshift, rational, base)] = (OE, (x,E,Ei)) 
     
-    return __CACHE_DREC_ALGEBRAS[(name_x, name_q, name_qshift, rational, base)]
+    return __CACHE_DQSHIFT_ALGEBRA[(name_x, name_q, name_qshift, rational, base)]
 
 # __CACHE_QSHIFT_ALGEBRA = {}
 # def get_qshift_algebra(name_shift : str = "S", name_q : str = "q", name_Q : str = "Q", base : _Fields.parent_class = QQ) -> Tuple[OperatorAlgebra_generic, Tuple[Any,Any,Any,Any]]:
