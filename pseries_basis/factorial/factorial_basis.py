@@ -659,7 +659,7 @@ class SFactorialBasis(FactorialBasis):
 
         ## Checking the argument `an`
         try:
-            an = self.OB()(an(n=n))
+            an = self.OB()(an(**{str(n): n}))
         except TypeError: # an is not callable
             an = self.OB()(an) # original code for rational functions
         if(not self.valid_factor((self.Sn()*an).coefficients()[0])): # an can not be zero for n >= 1
@@ -668,7 +668,7 @@ class SFactorialBasis(FactorialBasis):
 
         ## Checking the argument `bn`
         try:
-            bn = self.OB()(bn(n=n))
+            bn = self.OB()(bn(**{str(n): n}))
         except TypeError: # bn is not callable
             bn = self.OB()(bn) # original code for rational functions
         self.__bn = bn
