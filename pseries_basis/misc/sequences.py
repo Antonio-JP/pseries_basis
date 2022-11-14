@@ -87,6 +87,8 @@ class Sequence(SetMorphism):
             return NaN
         if (self.universe is None) or (self.allow_sym and not output in self.universe): # we allow None universe and also evaluation that do nto lie in the universe
             return output
+        elif output in (NaN, oo):
+            return output
         else:
             return self.universe(output)
 
