@@ -113,6 +113,24 @@ class QBasis(PSBasis):
     def Q(self):
         return self.n()
     
+    def is_q_hypergeometric(self, element):
+        r'''
+            Method to check if a symbolic expression is `q`-hypergeometric or not.
+
+            This method checks whether ``element`` is a symbolic expression or a function
+            with a parameter `n` that is hypergeometric. 
+
+            This method returns ``True`` or ``False`` and the quotient (if the output is hypergeometric)
+            or ``None`` otherwise.
+
+            INPUT:
+
+            * ``element``: the object that will be checked.
+
+            TODO: Add examples and implement the method to work also with some specific sequences.
+        '''
+        raise NotImplementedError("The `q`-hypergeometric checker is not yet implemented")
+
     def valid_factor(self, element):
         r'''
             Checks whether a rational function has poles or zeros in the positive integers.
@@ -344,6 +362,20 @@ class QBasis(PSBasis):
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         '''
         return LambdaSequence(lambda n : qpochhammer(a, n, self.q()), self.base)
+ 
+    def shift_in(self, shift):
+        raise NotImplementedError(f"Method 'shift_in' not implemented for class {self.__class__}")
+
+    def mult_in(self, prod):
+        r'''
+            TODO: Add documentation and examples to this method
+        '''
+        return QSequentialBasis(
+            self.base, # the base ring stays the same (with `q`)
+            LambdaSequence(lambda n,k : prod(k)*self.functional_seq(n,k), self.functional_seq.universe, 2), # the sequence that defines the product
+            self.by_degree(), # the by_degree attribute is the same
+            str(self.q()) # the name for `q` stays the same
+        )
 
     ## Reperesentation methods
     def __repr__(self):
@@ -408,6 +440,18 @@ class QFactorialBasis(FactorialBasis, QPolyBasis):
         QPolyBasis.__init__(self, base, var_name=X, q_name=q)
         super().__init__(X, self.base)
 
+    def _scalar_basis(self, factor) -> "QFactorialBasis":
+        r'''
+            TODO: Add documentation and examples
+        '''
+        return QScalarBasis(self, factor)
+
+    def _scalar_hypergeometric(self, factor, quotient) -> "QFactorialBasis":
+        r'''
+            TODO: Add documentation and examples
+        '''
+        return QScalarBasis(self, factor)
+
 class QSFactorialBasis(SFactorialBasis, QFactorialBasis):
     def __init__(self, an, bn, q='q', X='x', init=1, base=QQ):
         QFactorialBasis.__init__(self, q, X, base)
@@ -419,7 +463,7 @@ class QSFactorialBasis(SFactorialBasis, QFactorialBasis):
                 Sni = self.Sni(); qn = self.n(); q = self.q(); an = self.symb_an; bn = self.symb_bn
                 self.set_compatibility(X, -bn(**{str(qn) : q*qn})/an(**{str(qn) : q*qn}) + (1/an)*Sni) # pylint: disable=invalid-unary-operand-type
             except (AttributeError, TypeError) as e:
-                logger.info(f"Error with the compatibility with {X} --> {e}")
+                logger.info(f"Error with the compatibility with {X} -->\n\t{e}")
                 pass
 
     def linear_coefficient(self) -> Sequence:
@@ -430,13 +474,61 @@ class QSFactorialBasis(SFactorialBasis, QFactorialBasis):
         q = self.q()
         return LambdaSequence(lambda n : self.symb_bn(**{self.var_name : q**n}), self.base, allow_sym=False)
 
+    def shift_in(self, shift):
+        q = self.q()
+        return QSFactorialBasis(q**shift * self.symb_an, self.symb_bn, str(self.q()), str(self.n()), base = self.base)
+
 class QRootSequenceBasis(RootSequenceBasis, QFactorialBasis):
     def __init__(self, rho, cn, q='q', X='q_n', base=QQ):
         QFactorialBasis.__init__(self, q, X, base)
         super().__init__(rho, cn, X, self.base)
 
 class QScalarBasis(ScalarBasis, QFactorialBasis):
+    r'''
+        Class to represent the scaling of a `q`-factorial basis.
+
+        Let `\mathcal{B} = (B_k(n))_k` be a `q`-factorial basis (i.e., the element `B_k(n)` is 
+        a sequence that can be written as a polynomial of degree `k` in `q^n`). Then it is clear that
+        for any sequence `(c_k)_k \in \mathbb{K}(q)^\mathbb{N}`, the new sequence 
+
+        .. MATH::
+
+            C_k(n) = c_kB_k(n)
+
+        is again a `q`-factorial basis if:
+
+        * `c_k \neq 0` for all `k\in \mathbb{N}`,
+        * `c_k` is `q`-hypergeometric.
+
+        Moreover, if `L` is a `(A,B)`-compatible operator with `\mathcal{B}`, then `L` is also `(A,B)`-compatible
+        with the new scaled basis `\mathcal{C} = (C_k(n))_k`:
+
+        .. MATH::
+
+            \begin{array}{rcl}  L C_k(n) & = & c_kLB_k(n) = c_k \sum_{i=-A}^B B_{k+i}(n) = \sum_{i=-A}^B \frac{c_k}{c_{k+i}}c_{k+i}B_{k+i}(n)\\ & = & \sum_{i=-A}^B \frac{c_k}{c_{k+i}}C_{k+i}(n)\end{array}
+
+        This class allows the user to compute the sclaed basis given the original `q`-factorial basis `\mathcal{B}` 
+        and the sacling sequence `(c_k)_k`.
+
+        INPUT:
+
+        * ``basis``: a `q`-factorial basis to be scaled.
+        * ``scale``: a hypergeometric term (see :func:`QBasis.is_q_hypergeometric`)
+
+        EXAMPLES::
+
+            sage: from pseries_basis import *
+            sage: B = QBinomialBasis(); q = B.q(); qn = B.n()
+            sage: C = QScalarBasis(B, qn)
+            sage: 
+    '''
     def __init__(self, basis: QFactorialBasis, scale):
+        if not isinstance(basis, QFactorialBasis):
+            raise TypeError(f"The given basis must be a QFactorialBasis. Got {basis.__class__}")
+        is_hyper, _ = basis.is_q_hypergeometric(scale)
+        if not is_hyper:
+            raise TypeError(f"The given scaling sequence ([{scale}]) must be `q`-hypergeometric.")
+
         super().__init__(basis, scale)
 
 class QBinomialBasis(QSFactorialBasis):
@@ -502,6 +594,9 @@ class QBinomialBasis(QSFactorialBasis):
 
     def is_quasi_func_triangular(self):
         return self.__b >= 0
+
+    def shift_in(self, shift):
+        return QBinomialBasis(self.__b + shift, str(self.q()), str(self.n()), self.__E_name, self.base)
 
     def __repr__(self):
         upper = ["n"]
