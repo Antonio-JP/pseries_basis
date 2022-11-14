@@ -30,7 +30,6 @@ from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.fraction_field import FractionField_1poly_field
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 
-from .noncom_rings import OperatorAlgebra_element, OperatorAlgebra_generic
 from .sequences import Sequence, LambdaSequence
 
 _Fields = Fields.__classcall__(Fields)
@@ -40,13 +39,22 @@ _Fields = Fields.__classcall__(Fields)
 ### METHODS TO CATEGORIZE ALGEBRAS OF OPERATORS
 ###
 #############################################################################################
-def is_recurrence_algebra(algebra: Union[OreAlgebra_generic, OperatorAlgebra_generic]) -> bool:
+def is_recurrence_algebra(algebra: OreAlgebra_generic) -> bool:
     r'''
         Method to check whether an :class:`OreAlgebra_generic` has the first operator a shift operator.
     '''
-    return (isinstance(algebra, OreAlgebra_generic) and algebra.is_S()) or isinstance(algebra, OperatorAlgebra_generic)
+    return (isinstance(algebra, OreAlgebra_generic) and algebra.ngens() == 1 and algebra.is_S() != False)
 
-def is_double_recurrence_algebra(algebra: Union[OreAlgebra_generic, OperatorAlgebra_generic]) -> bool:
+def gens_recurrence_algebra(algebra: OreAlgebra_generic) -> Tuple[Any, Any]:
+    v = None
+    S, = algebra.gens()
+    for el in algebra.base().gens(): # looking for the variable where the shift acts
+        if S*el != el*S:
+            v = el
+            break
+    return (v, S)
+
+def is_double_recurrence_algebra(algebra: OreAlgebra_generic) -> bool:
     r'''
         Method to check whether if an :class:`OreAlgebra_generic` is a double directional operator ring.
 
@@ -65,24 +73,77 @@ def is_double_recurrence_algebra(algebra: Union[OreAlgebra_generic, OperatorAlge
         # they are the inverse of each other
         O, OI = algebra.gens()
         return all((OI*O*v).coefficients() == [v] for v in algebra.base().base().gens())
-    elif isinstance(algebra, OperatorAlgebra_generic):
-        gens = algebra.gens()
-        return any((gens[j]*gens[i]).canonical() == 1 for (i,j) in sum([[(i,j) for j in range(i+1,len(gens))] for i in range(len(gens))],[]))
     return False
 
-def is_differential_algebra(algebra: Union[OreAlgebra_generic, OperatorAlgebra_generic]) -> bool:
+def gens_double_recurrence_algebra(algebra: OreAlgebra_generic) -> Tuple[Any, Any, Any]:
+    v = None
+    S,Si = algebra.gens()
+    for el in algebra.base().gens(): # looking for the variable where the shift acts
+        if S*el != el*S:
+            v = el
+            break
+    return (v, S, Si)
+
+def is_differential_algebra(algebra: OreAlgebra_generic) -> bool:
     r'''
         Method to check whether an :class:`OreAlgebra_generic` has the first operator a differential operator.
     '''
     return isinstance(algebra, OreAlgebra_generic) and algebra.is_D()
 
-def is_based_polynomial(algebra: Union[OreAlgebra_generic, OperatorAlgebra_generic]) -> bool:
+def is_q_operator_algebra(algebra : OreAlgebra_generic, name_q : str = "q") -> bool:
+    r'''
+        Method to check whether an algebra behaves like one with Q-shifts operators.
+    '''
+    with_q, _ = has_variable(algebra.base(), name_q)
+    return with_q and isinstance(algebra, OreAlgebra_generic) and algebra.ngens() == 1 and algebra.is_Q() != False
+
+def gens_q_operator_algebra(algebra: OreAlgebra_generic, name_q : str = "q") -> Tuple[Any,Any,Any]:
+    _, q = has_variable(algebra.base(), name_q)
+    S, = algebra.gens()
+    v = None
+    for el in algebra.base().gens(): # looking for the variable where the shift acts
+        applied = S*el
+        if len(applied.coefficients()) == 1 and applied.coefficients()[0] == q*el:
+            v = el
+            break
+    return (q, v, S)
+
+def is_double_q_operator_algebra(algebra : OreAlgebra_generic, name_q : str = "q"):
+    r'''
+        Method to check whether an algebra behaves like one with Q-shifts operators.
+    '''
+    if isinstance(algebra, OreAlgebra_generic):
+        with_q, q = has_variable(algebra.base(), name_q)
+        if with_q and algebra.ngens() == 2:
+            S, Si = algebra.gens()
+            Q = None
+            for el in algebra.base().gens():
+                applied = S*el
+                if len(applied.coefficients()) == 1 and applied.coefficients()[0] == q*el:
+                    Q = applied
+            if Q != None and (not (S*Si*Q).coefficients()[0] != Q or (S*Q).coefficients()[0] != q*Q):
+                return False
+            return True
+    return False
+
+def gens_double_q_operator_algebra(algebra: OreAlgebra_generic, name_q : str = "q") -> Tuple[Any,Any,Any,Any]:
+    _, q = has_variable(algebra.base(), name_q)
+    S,Si = algebra.gens()
+    v = None
+    for el in algebra.base().gens(): # looking for the variable where the shift acts
+        applied = S*el
+        if len(applied.coefficients()) == 1 and applied.coefficients()[0] == q*el:
+            v = el
+            break
+    return (q, v, S, Si)
+
+def is_based_polynomial(algebra: OreAlgebra_generic) -> bool:
     r'''
         Method to check whether an :class:`OreAlgebra_generic` has the base ring as a polynomial ring.
     '''
     return any(is_poly(algebra.base()) for is_poly in (is_PolynomialRing, is_MPolynomialRing))
 
-def is_based_field(algebra: Union[OreAlgebra_generic, OperatorAlgebra_generic]) -> bool:
+def is_based_field(algebra: OreAlgebra_generic) -> bool:
     r'''
         Method to check whether an :class:`OreAlgebra_generic` has the base ring as a polynomial ring.
     '''
@@ -299,43 +360,12 @@ def get_double_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : st
         __CACHE_DQSHIFT_ALGEBRA[(name_x, name_q, name_qshift, rational, base)] = (OE, (x,E,Ei)) 
     
     return __CACHE_DQSHIFT_ALGEBRA[(name_x, name_q, name_qshift, rational, base)]
-
-def is_q_operator_algebra(algebra, name_q : str = "q"):
-    r'''
-        Method to check whether an algebra behaves like one with Q-shifts operators.
-    '''
-    if isinstance(algebra, OperatorAlgebra_generic):
-        with_q, q = has_variable(algebra.base(), name_q)
-        if not algebra.is_complete_commutation() or not with_q:
-            print("Error in format")
-            return None, None
-        gens = algebra.gens()
-        if len(gens) < 2:
-            print("Too few generators")
-            return None, None
-        if len(gens) >= 2:
-            #we need the first to be `Q` and the second to be `S`
-            if (gens[1]*gens[0]).canonical() != q*gens[0]*gens[1]:
-                print("Not valid commutation rule for 0 and 1")
-                return None, None
-        if len(gens) >= 3:
-            # now the third has to be S^-1
-            if (gens[2]*gens[1]).canonical() != algebra.one() or (gens[2]*gens[0]).canonical() != (1/q)*gens[0]*gens[2]:
-                print("Not valid commutation rule for 2")
-                return None, None
-        if len(gens) > 3:
-            print("Too many generators")
-            return None, None
-
-        return len(gens) == 3, (algebra, tuple([q, *gens]))
-    
-    return None, None
 #############################################################################################
 ###
 ### METHODS INVOLVING ORE ALGEBRAS AND OTHER STRUCTURES
 ###
 #############################################################################################
-def apply_operator_to_seq(operator : Union[OreOperator,OperatorAlgebra_element], sequence : Sequence) -> Sequence:
+def apply_operator_to_seq(operator : OreOperator, sequence : Sequence, **kwds) -> Sequence:
     r'''
         Method to apply an operator to a sequence.
         
@@ -347,56 +377,44 @@ def apply_operator_to_seq(operator : Union[OreOperator,OperatorAlgebra_element],
         * ``operator``: and operator with 1 generator (the shift) over the polynomial ring `\mathbb{R}[x]`.
         * ``seq``: a sequence in functional format. This means that we can call it with integer values and we 
           obtain the values of the sequence at each point.
+        * ``kwds``: optional named arguments. If "q_name" is given, we pass it to the q_operator checkers
           
         OUTPUT:
         
         A sequence in function format.
     '''
-    if isinstance(operator, OreOperator):
-        if len(operator.parent().gens()) > 1:
-            raise TypeError("Only ore operators with 1 generator are allowed: we assume is the natural shift")
+    q_name = kwds.get("q_name", "q")
+
+    if is_recurrence_algebra(operator.parent()):
+        v, S = gens_recurrence_algebra(operator.parent())
         coefficients = operator.coefficients(sparse=False)
-        
-        E = operator.parent().gens()[0]
-        v = None
-
-        for el in operator.parent().base().gens(): # looking for the variable where the shift acts
-            if E*el != el*E:
-                v = el
-                break
-
-        # found the shift variable
-        if v != None:
-            v = operator.parent().base().gens()[0]
-            R = operator.parent().base().base()
-            gen = lambda i : sum(coefficients[j](**{str(v):i})*sequence[i+j] for j in range(len(coefficients)))
-        else: # all the base ring are constants
-            R = operator.parent().base()
-            gen = lambda i : sum(coefficients[j]*sequence[i+j] for j in range(len(coefficients)))
-        
-        return LambdaSequence(gen, R)
-    elif isinstance(operator, OperatorAlgebra_element):
-        is_double, algebra = is_q_operator_algebra(operator.algebra())
-        if is_double is None:
-            raise ValueError(f"No valid q-algebra found for {operator}")
-        elif is_double:
-            _,(q,Q,S,Si) = algebra
-            QPower = LambdaSequence(lambda n : q**n, operator.parent().base(), allow_sym=True)
-            actions = {
-                str(S) : lambda an : an.shift(1), 
-                str(Si) : lambda an: an.shift(-1), 
-                str(Q) : lambda an : QPower * an
-            }
-        else:
-            _,(q,Q,S) = algebra
-            QPower = LambdaSequence(lambda n : q**n, operator.parent().base(), allow_sym=True)
-            actions = {str(S) : lambda an : an.shift(1), str(Q) : lambda an : QPower * an}
-                    
-        return operator.apply(sequence, actions)
+        R = operator.parent().base() if v is None else operator.parent().base().base()
+        gen = (lambda i : sum(coefficients[j]*sequence[i+j] for j in range(len(coefficients)))) if v is None else (lambda i : sum(coefficients[j](**{str(v): i})*sequence[i+j] for j in range(len(coefficients))))
+    elif is_q_operator_algebra(operator.parent(), q_name):
+        q, v, S = gens_q_operator_algebra(operator.parent(), q_name)
+        coefficients = operator.coefficients(sparse=False)
+        R = operator.parent().base() if v is None else operator.parent().base().base()
+        gen = (lambda i : sum(coefficients[j]*sequence[i+j] for j in range(len(coefficients)))) if v is None else (lambda i : sum(coefficients[j](**{str(v): q**i})*sequence[i+j] for j in range(len(coefficients))))
+    elif is_double_recurrence_algebra(operator.parent()):
+        v, S, Si = gens_double_recurrence_algebra(operator.parent())
+        monomials, coefficients = poly_decomposition(operator.polynomial())
+        _eval_monomial = lambda m, n : sequence(n+m.degree(S)-m.degree(Si))
+        _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v): n}))
+        R = operator.parent().base() if v is None else operator.parent().base().base()        
+        gen = lambda i : sum(_eval_monomial(monomials[j], i) * _eval_coeff(coefficients[j], i) for j in range(len(monomials)))
+    elif is_double_q_operator_algebra(operator.parent(), q_name):
+        q, v, S, Si = gens_double_q_operator_algebra(operator.parent(), q_name)
+        monomials, coefficients = poly_decomposition(operator.polynomial())
+        _eval_monomial = lambda m, n : sequence(n+m.degree(S)-m.degree(Si))
+        _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v): q**n}))
+        R = operator.parent().base() if v is None else operator.parent().base().base()        
+        gen = lambda i : sum(_eval_monomial(monomials[j], i) * _eval_coeff(coefficients[j], i) for j in range(len(monomials)))
     else:
         raise TypeError(f"Type {operator.__class__} not valid for method 'apply_operator_to_seq'")
 
-def required_init(operator : Union[OreOperator,OperatorAlgebra_element]) -> int:
+    return LambdaSequence(gen, R, 1, False)
+
+def required_init(operator : OreOperator) -> int:
     r'''
         Method to compute the number of required initial values for a sequence.
 
@@ -404,23 +422,74 @@ def required_init(operator : Union[OreOperator,OperatorAlgebra_element]) -> int:
         a solution to the recurrence operator. This method computes the maximal index we need to compute
         in order to have a fully defined sequence.
     '''
-    if isinstance(operator, OreOperator):
-        if is_based_field(operator.parent()): # rational function case
+    if is_recurrence_algebra(operator.parent()):
+        _, S = gens_recurrence_algebra(operator.parent())
+        dS = operator.polynomial().degree(S.polynomial())
+        if is_based_field(operator.parent()):
             _, coeffs = poly_decomposition(operator.polynomial())
-            to_check = lcm([el.denominator() for el in coeffs] + [operator.polynomial().lc().numerator()])
+            to_check = lcm([el.denominator() for el in coeffs] + [operator.polynomial().coefficient(S.polynomial()**dS).numerator()])
         elif is_based_polynomial(operator.parent()):
-            to_check = operator.polynomial().lc()
-        return max(-min([0]+[el[0]-1 for el in to_check.roots() if el[0] in ZZ]), operator.order())
-    elif isinstance(operator, OperatorAlgebra_element):
-        is_double, _ = is_q_operator_algebra(operator.parent())
-        if is_double is None:
-            raise TypeError(f"No valid q-algebra found for {operator}")
-        elif is_double:
-            _, dS, dSi = operator.degrees()
-            return dS + dSi
-        else:
-            _, dS = operator.degrees()
-            return dS
+            to_check = operator.polynomial().coefficient(S.polynomial()**dS)
+        return max(-min([0]+[el[0]-1 for el in to_check.roots() if el[0] in ZZ]), dS)
+    elif is_double_recurrence_algebra(operator.parent()):
+        _, S, Si = gens_double_recurrence_algebra(operator.parent())
+        dS = operator.polynomial().degree(S.polynomial()); dSi = operator.polynomial().degree(Si.polynomial())
+        if is_based_field(operator.parent()):
+            _, coeffs = poly_decomposition(operator.polynomial())
+            to_check = lcm([el.denominator() for el in coeffs] + [operator.polynomial().coefficient(S.polynomial()**dS).numerator()])
+        elif is_based_polynomial(operator.parent()):
+            to_check = operator.polynomial().coefficient(S.polynomial()**dS)
+        return max(-min([0]+[el[0]-1 for el in to_check.roots() if el[0] in ZZ]), dS+dSi)
+    elif is_q_operator_algebra(operator.parent()):
+        q, _, S = gens_recurrence_algebra(operator.parent())
+        dS = operator.polynomial().degree(S.polynomial())
+        if is_based_field(operator.parent()):
+            _, coeffs = poly_decomposition(operator.polynomial())
+            to_check = lcm([el.denominator() for el in coeffs] + [operator.polynomial().coefficient(S.polynomial()**dS).numerator()])
+        elif is_based_polynomial(operator.parent()):
+            to_check = operator.polynomial().coefficient(S.polynomial()**dS)
+
+        try:
+            roots_to_check = to_check.roots()
+            invalid_indices = []
+            for root in roots_to_check:
+                if root.numerator() == 1: 
+                    if len(root.denominator().coefficients()) == 1:
+                        invalid_indices.append(-root.denominator().degree(q))
+                elif root.denominator() == 1:
+                    if len(root.numerator().coefficients()) == 1:
+                        invalid_indices.append(root.numerator().degree(q))
+
+            bound_found = max(0,max(invalid_indices,default=0))
+        except:
+            bound_found = 0
+        
+        return max(bound_found, dS)
+    if is_double_q_operator_algebra(operator.parent()):
+        q, _, S, Si = gens_recurrence_algebra(operator.parent())
+        dS = operator.polynomial().degree(S.polynomial()); dSi = operator.polynomial().degree(Si.polynomial())
+        if is_based_field(operator.parent()):
+            _, coeffs = poly_decomposition(operator.polynomial())
+            to_check = lcm([el.denominator() for el in coeffs] + [operator.polynomial().coefficient(S.polynomial()**dS).numerator()])
+        elif is_based_polynomial(operator.parent()):
+            to_check = operator.polynomial().coefficient(S.polynomial()**dS)
+
+        try:
+            roots_to_check = to_check.roots()
+            invalid_indices = []
+            for root in roots_to_check:
+                if root.numerator() == 1: 
+                    if len(root.denominator().coefficients()) == 1:
+                        invalid_indices.append(-root.denominator().degree(q))
+                elif root.denominator() == 1:
+                    if len(root.numerator().coefficients()) == 1:
+                        invalid_indices.append(root.numerator().degree(q))
+
+            bound_found = max(0,max(invalid_indices,default=0))
+        except:
+            bound_found = 0
+        
+        return max(bound_found, dS+dSi)
     else:
         raise TypeError(f"Type {operator.__class__} not valid for method 'required_init'")
 
@@ -449,7 +518,7 @@ def eval_ore_operator(operator : OreOperator, ring=None,**values):
 ### SOME CLASSES RELATING WITH ORE ALGEBRAS
 ###
 #############################################################################################
-def solution(operator : Union[OreOperator, OperatorAlgebra_element], init, check_init=True) -> Sequence:
+def solution(operator : OreOperator, init, check_init=True) -> Sequence:
     r'''
         Method to generate a :class:`Sequence` solution to a recurrence operator
 
@@ -467,63 +536,49 @@ def solution(operator : Union[OreOperator, OperatorAlgebra_element], init, check
 
         A :class:`Sequence` with the solution to ``operator`` and initial values given by ``init``.
     '''
-    if isinstance(operator, OreOperator):
-        d = operator.order()
-        required = required_init(operator)
-        universe = operator.parent().base()
-        if len(init) < required:
-            raise ValueError(f"More data ({required}) is needed")
-            
-        from_init = required if check_init else len(init)
-        @cache
-        def __aux_sol(n):
-            if n < 0:
-                return 0
-            elif n < from_init:
-                return init[n]
-            else:
-                coeffs = operator.polynomial().coefficients(False)
-                lc = coeffs.pop()
-                return -sum(__aux_sol(n-d+i)*coeffs[i](n-d) for i in range(operator.order()))/lc(n-d)
-    elif isinstance(operator, OperatorAlgebra_element):
-        is_double, algebra = is_q_operator_algebra(operator.parent())
-        operator = operator.canonical()
-        required = required_init(operator)
-        universe = operator.parent().base()
-        if is_double is None:
-            raise TypeError(f"No valid q-algebra found for {operator}") 
-        elif is_double:
-            _,(q,_,S,Si) = algebra
-            dS = operator.degree(S); dSi = operator.degree(Si) 
-            dict_as_poly = {
-                **{i : operator.coefficient(S**i) for i in range(1,operator.degree(S)+1)}, 
-                **{-i : operator.coefficient(Si**i) for i in range(1,operator.degree(Si)+1)},
-                0 : operator.coefficient({str(S) : 0})
-            }
-        else:
-            _,(q,_,S) = algebra
-            dS = operator.degree(S); dSi = 0
-            dict_as_poly = {
-                **{i : operator.coefficient(S**i) for i in range(1,operator.degree(S)+1)}, 
-                0 : operator.coefficient({str(S) : 0})
-            }
-        from_init = required if check_init else len(init)
-        def _eval_coeff(i, n):
-            res = dict_as_poly[i](Q=q**n)
-            if not res in operator.parent().base():
-                res = res.constant_coefficient()
-            return res
-        @cache
-        def __aux_sol(n):
-            if n < 0:
-                return 0
-            elif n < from_init:
-                return init[n]
-            else:
-                return -sum(_eval_coeff(i, n-dS)*__aux_sol(n-dS+i) for i in range(-dSi, dS))/_eval_coeff(dS, n-dS)
+    if is_recurrence_algebra(operator.parent()):
+        v,S = gens_recurrence_algebra(operator.parent()); Si = 0
+        dS = operator.polynomial().degree(S.polynomial()); dSi = 0
+        _eval_coeff = None # TODO Add this
+    elif is_double_recurrence_algebra(operator.parent()):
+        v,S,Si = gens_double_recurrence_algebra(operator.parent())
+        dS = operator.polynomial().degree(S.polynomial()); dSi = operator.polynomial().degree(Si.polynomial())
+        _eval_coeff = None # TODO Add this
+    elif is_q_operator_algebra(operator.parent()):
+        q,v,S = gens_q_operator_algebra(operator.parent()); Si = 0
+        dS = operator.polynomial().degree(S.polynomial()); dSi = 0
+        _eval_coeff = None # TODO Add this
+    elif is_double_q_operator_algebra(operator.parent()):
+        q,v,S,Si = gens_double_q_operator_algebra(operator.parent())
+        dS = operator.polynomial().degree(S.polynomial()); dSi = operator.polynomial().degree(Si.polynomial())
+        _eval_coeff = None # TODO Add this
     else:
         raise TypeError(f"Type {operator.__class__} not valid for method 'solution'")
 
+    universe = operator.parent().base() if v is None else operator.parent().base().base()
+    required = required_init(operator)
+    if len(init) < required:
+        raise ValueError(f"More data ({required}) is needed")
+    from_init = required if check_init else len(init)
+
+    monomials, coefficients = poly_decomposition(operator.polynomial())
+    lc = None # TODO: Compute the leading coefficient and remove it from the list above
+
+    @cache
+    def __aux_sol(n):
+        def _eval_monomial(m, n):
+            if Si != None and m.degree(Si.polynomial()) > 0:
+                return __aux_sol(n-dS-m.degree(Si))
+            elif m.degree(S.polynomial()) > 0:
+                return __aux_sol(n-dS+m.degree(S))
+            else:
+                return __aux_sol(n-dS)
+        if n < 0: 
+            return 0
+        elif n < from_init:
+            return init[n]
+        else:
+            return -sum(_eval_coeff(coefficients[i], n-dS)*_eval_monomial(monomials[i], n) for i in range(-dSi, dS))/_eval_coeff(lc, n-dS)
     return LambdaSequence(__aux_sol, universe)
 
 class OreSequence(Sequence):
