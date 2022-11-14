@@ -15,7 +15,7 @@ r'''
     - *Author*: Antonio Jiménez-Pastor
     - *License*: GNU Public License v3.0
     - *Home page*: `<https://github.com/Antonio-JP/pseries_basis>`_
-    - *Documenation*: `<https://antonio-jp.github.io/pseries_basis/>`_
+    - *Documentation*: `<https://antonio-jp.github.io/pseries_basis/>`_
     - *Online demo*: `On Binder <https://mybinder.org/v2/gh/Antonio-JP/pseries_basis/master?labpath=notebooks%2Fpaper_examples.ipynb>`_
 
     **Main use-case**
@@ -57,7 +57,7 @@ r'''
 
     There are two different ways of installing the package into your SageMath distribution:
 
-    **Install from souce code**
+    **Install from source code**
     **********************************************************
 
     The package can be obtained from the public git repository on GitHub:
@@ -65,7 +65,7 @@ r'''
     * or by cloning the repository by `https <https://github.com/Antonio-JP/pseries_basis.git>`_,
     * or downloading the latest version in `zip <https://github.com/Antonio-JP/pseries_basis/archive/master.zip>`_ format.
 
-    After cloning or downloading the source cose, you may install it by running the following command line from the main folder of the repository::
+    After cloning or downloading the source code, you may install it by running the following command line from the main folder of the repository::
 
         $ make install
 
@@ -84,7 +84,7 @@ r'''
     **Loading the package**
     ***********************************************************
 
-    Once installed, the full functionality of the pacakge can be used after importing it with the command::
+    Once installed, the full functionality of the package can be used after importing it with the command::
 
         sage: from pseries_basis import *
 
@@ -122,9 +122,9 @@ r'''
     * ``ore_algebra`` (`GitHub ore\_algebra <https://github.com/mkauers/ore_algebra>`_): developed by `M. Kauers <http://www.kauers.de/>`_ and `M. Mezzarobba <http://marc.mezzarobba.net/>`_.
     * ``dd_functions`` (`GitHub dd\_functions <https://github.com/Antonio-JP/dd_functions>`_): developed by `A. Jiménez-Pastor <https://scholar.google.com/citations?user=1gq-jy4AAAAJ&hl=es>`_.
 
-    **Package under active developement**
+    **Package under active development**
 
-    This package is still under an active developement and further features will be included in future version of the code. This means that several bugs may exist or appear. 
+    This package is still under an active development and further features will be included in future version of the code. This means that several bugs may exist or appear. 
     We would thank anyone that, after detecting any error, would post it in the `issues page <https://github.com/Antonio-JP/pseries_basis/issues>`_ of the repository 
     using the label `bug <https://github.com/github/docs/labels/bug>`_.
 
@@ -134,7 +134,7 @@ r'''
     **Acknowledgements**
     ***********************************************************
 
-    This package has been developed with the finaltial support of the following insitutions:
+    This package has been developed with the financial support of the following institutions:
 
     * The Austrian Science Fund (FWF): by W1214-N15, project DK15.
     * The Oberösterreich region: by the Innovatives OÖ-2010 plus program.
@@ -152,5 +152,5 @@ from .qbasis import *
 from sage.all import factorial, order # pylint: disable=unused-import
 
 def pseries_bases_version():
-    import pkg_resources; 
+    import pkg_resources
     return pkg_resources.get_distribution('pseries_basis').version

@@ -92,12 +92,12 @@ class OperatorAlgebra_element(FreeAlgebraElement):
         if (not self.parent().is_complete_commutation()) or (not self.is_canonical()):
             raise ValueError("The degrees can only be computed from a canonical form")
 
-        gnames = self.parent().variable_names()
+        gen_names = self.parent().variable_names()
         def _degrees_canonical_monomial(monomial):
             monoid_list = [str(el) for el in monomial.to_list()]
-            return tuple([monoid_list.count(g) for g in gnames])
+            return tuple([monoid_list.count(g) for g in gen_names])
         degrees_by_monomial = [_degrees_canonical_monomial(m) for m in self.monomial_coefficients()]
-        return tuple([max(degrees_by_monomial[i][j] for i in range(len(degrees_by_monomial))) for j in range(len(gnames))])
+        return tuple([max(degrees_by_monomial[i][j] for i in range(len(degrees_by_monomial))) for j in range(len(gen_names))])
 
     def degree(self, var):
         r'''
@@ -108,15 +108,15 @@ class OperatorAlgebra_element(FreeAlgebraElement):
             * ``var``: either the index, the element in ``self.parent()`` or the name of the variable to be
               checked.
         '''
-        gnames = self.parent().variable_names()
+        gen_names = self.parent().variable_names()
         if var in ZZ:
-            var = gnames[var]
+            var = gen_names[var]
         elif var in self.parent():
             var = str(var)
-        if isinstance(var, str) and (not var in gnames):
+        if isinstance(var, str) and (not var in gen_names):
             raise ValueError(f"The name of the variable ({var}) must be valid for the ring {self.parent()}")
 
-        ind = gnames.index(var)
+        ind = gen_names.index(var)
         return self.degrees()[ind]
             
     def variables(self):
@@ -135,19 +135,19 @@ class OperatorAlgebra_element(FreeAlgebraElement):
 
         canonical = self.canonical()
         gens = self.parent().gens()
-        gnames = self.parent().variable_names()
+        gen_names = self.parent().variable_names()
 
         if isinstance(monomial, dict): # the variables in dict must appear with this degree
-            if any(not el in gnames for el in gnames):
+            if any(not el in gen_names for el in gen_names):
                 raise TypeError(f"Monomial {monomial} not valid for {self.parent()}")
             result = self.parent().zero()
             for mon, coeff in self.monomial_coefficients().items():
                 mon_list = [str(el) for el in mon.to_list()]
-                mon_degrees = [mon_list.count(g) for g in gnames]
+                mon_degrees = [mon_list.count(g) for g in gen_names]
 
                 # checking if it is a valid monomial
-                if all(monomial[g] == mon_degrees[gnames.index(g)] for g in monomial):
-                    result += coeff * prod(gens[i]**mon_degrees[i] for i in range(len(gnames)) if not gnames[i] in monomial)
+                if all(monomial[g] == mon_degrees[gen_names.index(g)] for g in monomial):
+                    result += coeff * prod(gens[i]**mon_degrees[i] for i in range(len(gen_names)) if not gen_names[i] in monomial)
             return result
         # otherwise, we cast the input to a list of degrees
         if monomial in self.parent() or monomial in self.parent().base():
@@ -157,8 +157,8 @@ class OperatorAlgebra_element(FreeAlgebraElement):
             monomial = monomial.degrees()
         elif monomial in self.parent().monoid():
             monomial = monomial.to_list()
-            monomial = [monomial.count(g) for g in gnames]
-        elif (not isinstance(monomial, (list,tuple))) or (len(monomial) != len(gnames)) or any((not el in ZZ) or el < 0 for el in monomial):
+            monomial = [monomial.count(g) for g in gen_names]
+        elif (not isinstance(monomial, (list,tuple))) or (len(monomial) != len(gen_names)) or any((not el in ZZ) or el < 0 for el in monomial):
             raise TypeError(f"Monomial {monomial} not valid for {self.parent()}")
         
         if all(deg == 0 for deg in monomial):
@@ -167,9 +167,9 @@ class OperatorAlgebra_element(FreeAlgebraElement):
         result = self.parent().zero()
         for (mon, coeff) in canonical.monomial_coefficients().items():
             mon_list = [str(el) for el in mon.to_list()]
-            mon_degrees = [mon_list.count(g) for g in gnames]
-            if all(monomial[i] == mon_degrees[i] for i in range(len(gnames)) if monomial[i] > 0):
-                result += coeff * prod([gens[i]**mon_degrees[i] for i in range(len(gnames)) if monomial[i] == 0])
+            mon_degrees = [mon_list.count(g) for g in gen_names]
+            if all(monomial[i] == mon_degrees[i] for i in range(len(gen_names)) if monomial[i] > 0):
+                result += coeff * prod([gens[i]**mon_degrees[i] for i in range(len(gen_names)) if monomial[i] == 0])
 
         return result
 

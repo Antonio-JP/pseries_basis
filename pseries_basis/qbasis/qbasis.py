@@ -4,12 +4,12 @@ r'''
 import logging
 logger = logging.getLogger(__name__)
 
-from sage.all import prod, PolynomialRing, QQ, ZZ, cached_method, Matrix, ceil
+from sage.all import prod, PolynomialRing, QQ, ZZ, cached_method, Matrix, ceil #pylint: disable=no-name-in-module
 
 from ..psbasis import PSBasis, PolyBasis, SequenceBasis
 from ..factorial.factorial_basis import FactorialBasis, RootSequenceBasis, SFactorialBasis, ScalarBasis
 from ..misc.ore import get_qshift_algebra, get_double_qshift_algebra, get_rational_algebra, has_variable
-from ..misc.sequences import ExpressionSequence, LambdaSequence, Sequence
+from ..misc.sequences import LambdaSequence, Sequence
 
 #######################################################################################################
 ### Classes for some basis of Q-series
@@ -377,7 +377,7 @@ class QBasis(PSBasis):
             str(self.q()) # the name for `q` stays the same
         )
 
-    ## Reperesentation methods
+    ## Representation methods
     def __repr__(self):
         return f"QBasis -- WARNING: this is an abstract class"
 
@@ -389,7 +389,7 @@ class QSequentialBasis(QBasis, SequenceBasis):
         QBasis.__init__(self, base, None, False, None, q_name)
         SequenceBasis.__init__(self, self.base, sequence, degree)
         
-    ## Other ovewriten methods
+    ## Other overwritten methods
     def change_base(self, base):
         return QSequentialBasis(base, self.functional_seq, self.by_degree(), str(self.q()))
 
@@ -403,7 +403,7 @@ class QSequentialBasis(QBasis, SequenceBasis):
     def mult_in(self, prod):
         return QSequentialBasis(self.base, LambdaSequence(lambda n,k : (prod*self[n])[k], self.base, 2), self.by_degree())
 
-    ## Reperesentation methods
+    ## Representation methods
     def __repr__(self):
         return f"QSequentialBasis -- WARNING: this is an abstract class"
 
@@ -622,7 +622,7 @@ def check_q_compatibility(basis : QBasis, operator, action, bound=100):
 
         This method takes a :class:`QBasis`, an operator compatibility (either a tuple with the 
         compatibility data or the operator that must be compatible with the basis), an actions with the 
-        map for the opertator and a bound and checks that the induced compatibility identity holds for 
+        map for the operator and a bound and checks that the induced compatibility identity holds for 
         the first terms of the basis.
 
         INPUT:

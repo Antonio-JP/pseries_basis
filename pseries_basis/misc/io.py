@@ -3,7 +3,7 @@ r'''
     File with some connections of the :mod:`pseries_basis` with other packages.
 
     The methods, classes and functionalities in this module are focused on the 
-    interation of sequences, basis, and solutions with things outside SageMath.
+    interaction of sequences, basis, and solutions with things outside SageMath.
 '''
 
 import logging
@@ -14,14 +14,14 @@ from sage.databases.oeis import OEISSequence
 
 from ore_algebra.ore_operator import OreOperator
 
-from .ore import poly_decomp, get_recurrence_algebra, solution, required_init
+from .ore import poly_decomposition, get_recurrence_algebra, solution, required_init
 from .sequences import LambdaSequence
 
 logger = logging.getLogger(__name__)
 
 def operator2file(operator : OreOperator, file : str):
     r'''
-        Method to write an :class:`~ore_algebra.ore_opeerator.OreOperator` into a file
+        Method to write an :class:`~ore_algebra.ore_operator.OreOperator` into a file
 
         This method writes down an Ore Operators to a file (given as argument) with a very
         simplistic format: each line is the coefficient of a monomial times the monomial itself.
@@ -32,7 +32,7 @@ def operator2file(operator : OreOperator, file : str):
         * ``file``: string with the path to the file were the operator will be written.
     '''
     with open(file, "w") as f:
-        mons, coeffs = poly_decomp(operator.polynomial())
+        mons, coeffs = poly_decomposition(operator.polynomial())
         for i in range(len(mons)):
             f.write(f"({coeffs[i]})*{mons[i]} {'+' if i < len(mons)-1 else ''}\n")
     return
@@ -75,7 +75,7 @@ class EnhOEISSequence(OEISSequence):
             This method reads from the formulas on the OEIS Sequence and computes a recurrence equation
             that is valid for this sequence (for all `n`). The computations in this method requires
             parsing and extracting information from the text of the formulas. We make use of some generic
-            formating in OEIS that does not always hold. Hence, sometimes this method returns ``None``
+            formatting in OEIS that does not always hold. Hence, sometimes this method returns ``None``
             even when the sequence is D-finite.
         '''
         formulas = [el for el in self.formulas() if el.find("ecurrence") >= 0]
@@ -171,12 +171,12 @@ class EnhOEISSequence(OEISSequence):
         OE, _ = get_recurrence_algebra('x', 'E')
         parts = [el.strip() for el in formula.split(".")[0].split(",")]
         # substitution reg
-        regs = [(r"a\(n\+(\d+)\)", r"E**(\1 + "+str(neg_order)+")"),
+        reg_expressions = [(r"a\(n\+(\d+)\)", r"E**(\1 + "+str(neg_order)+")"),
             (r"a\(n-(\d+)\)", r"E**(-\1 + "+str(neg_order)+")"),
             (r"a\(n\)", r"E**("+str(neg_order)+")"),
             (r"(\d+)n", r"\1*n")]
-        def __apply_iterative(regs, string):
-            for reg in regs:
+        def __apply_iterative(reg_expressions, string):
+            for reg in reg_expressions:
                 string = re.sub(*reg, string)
             return string
         for part in parts:
@@ -184,13 +184,13 @@ class EnhOEISSequence(OEISSequence):
             if part.find(" = ") > -1:
                 lhs, rhs = part.split(" = ")
                 try:
-                    lhs = __apply_iterative(regs, lhs)
+                    lhs = __apply_iterative(reg_expressions, lhs)
                     lhs = lhs.replace("n", f"(x+{neg_order})")
-                    rhs = __apply_iterative(regs, rhs)
+                    rhs = __apply_iterative(reg_expressions, rhs)
                     rhs = rhs.replace("n", f"(x+{neg_order})")
                 
                     output = OE(lhs) - OE(rhs)
-                    _, coeffs = poly_decomp(output.polynomial())
+                    _, coeffs = poly_decomposition(output.polynomial())
                     cleaned_denom = lcm([el.denominator() for el in coeffs])
                     return get_recurrence_algebra('x','E', rational=False)[0](cleaned_denom * output)
 
