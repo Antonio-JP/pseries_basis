@@ -573,18 +573,20 @@ def required_init(operator : OreOperator) -> int:
         When given a recurrence operator, we need some initial conditions to completely define 
         a solution to the recurrence operator. This method computes the maximal index we need to compute
         in order to have a fully defined sequence.
+
+        TODO: add examples
     '''
+    monomials, coeffs = poly_decomposition(operator.polynomial())
     if is_recurrence_algebra(operator.parent()):
         _, S, alpha = gens_recurrence_algebra(operator.parent())
         if (not alpha in ZZ) or alpha < 0: 
             raise ValueError(f"The shift must be a positive integer shift (got {alpha})")
         dS = operator.polynomial().degree(S.polynomial())
         if is_based_field(operator.parent()):
-            _, coeffs = poly_decomposition(operator.polynomial())
-            to_check = lcm([el.denominator() for el in coeffs] + [operator.polynomial().coefficient(S.polynomial()**dS).numerator()])
+            to_check = lcm([el.denominator() for el in coeffs] + [coeffs[monomials.index(S.polynomial()**dS)].numerator()])
         elif is_based_polynomial(operator.parent()):
-            to_check = operator.polynomial().coefficient(S.polynomial()**dS)
-        return max(-min([0]+[el[0]-1 for el in to_check.roots() if el[0] in ZZ]), alpha*dS)
+            to_check = coeffs[monomials.index(S.polynomial()**dS)]
+        output = max(-min([0]+[el[0]-1 for el in to_check.roots() if el[0] in ZZ]), alpha*dS)
     elif is_double_recurrence_algebra(operator.parent()):
         _, S, Si, alpha = gens_double_recurrence_algebra(operator.parent())
         if (not alpha in ZZ): 
@@ -593,21 +595,19 @@ def required_init(operator : OreOperator) -> int:
             S, Si, alpha = Si, S, -alpha
         dS = operator.polynomial().degree(S.polynomial()); dSi = operator.polynomial().degree(Si.polynomial())
         if is_based_field(operator.parent()):
-            _, coeffs = poly_decomposition(operator.polynomial())
-            to_check = lcm([el.denominator() for el in coeffs] + [operator.polynomial().coefficient(S.polynomial()**dS).numerator()])
+            to_check = lcm([el.denominator() for el in coeffs] + [coeffs[monomials.index(S.polynomial()**dS)].numerator()])
         elif is_based_polynomial(operator.parent()):
-            to_check = operator.polynomial().coefficient(S.polynomial()**dS)
-        return max(-min([0]+[el[0]-1 for el in to_check.roots() if el[0] in ZZ]), alpha*(dS+dSi))
+            to_check = coeffs[monomials.index(S.polynomial()**dS)]
+        output = max(-min([0]+[el[0]-1 for el in to_check.roots() if el[0] in ZZ]), alpha*(dS+dSi))
     elif is_qshift_algebra(operator.parent()):
         _, S, q = gens_recurrence_algebra(operator.parent())
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
         dS = operator.polynomial().degree(S.polynomial())
         if is_based_field(operator.parent()):
-            _, coeffs = poly_decomposition(operator.polynomial())
-            to_check = lcm([el.denominator() for el in coeffs] + [operator.polynomial().coefficient(S.polynomial()**dS).numerator()])
+            to_check = lcm([el.denominator() for el in coeffs] + [coeffs[monomials.index(S.polynomial()**dS)].numerator()])
         elif is_based_polynomial(operator.parent()):
-            to_check = operator.polynomial().coefficient(S.polynomial()**dS)
+            to_check = coeffs[monomials.index(S.polynomial()**dS)]
 
         try:
             roots_to_check = to_check.roots()
@@ -624,17 +624,16 @@ def required_init(operator : OreOperator) -> int:
         except:
             bound_found = 0
         
-        return max(bound_found, dS)
-    if is_double_qshift_algebra(operator.parent()):
+        output = max(bound_found, dS)
+    elif is_double_qshift_algebra(operator.parent()):
         _, S, Si, q = gens_recurrence_algebra(operator.parent())
         dS = operator.polynomial().degree(S.polynomial()); dSi = operator.polynomial().degree(Si.polynomial())
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
         if is_based_field(operator.parent()):
-            _, coeffs = poly_decomposition(operator.polynomial())
-            to_check = lcm([el.denominator() for el in coeffs] + [operator.polynomial().coefficient(S.polynomial()**dS).numerator()])
+            to_check = lcm([el.denominator() for el in coeffs] + [coeffs[monomials.index(S.polynomial()**dS)].numerator()])
         elif is_based_polynomial(operator.parent()):
-            to_check = operator.polynomial().coefficient(S.polynomial()**dS)
+            to_check = coeffs[monomials.index(S.polynomial()**dS)]
 
         try:
             roots_to_check = to_check.roots()
@@ -651,9 +650,11 @@ def required_init(operator : OreOperator) -> int:
         except:
             bound_found = 0
         
-        return max(bound_found, dS+dSi)
+        output = max(bound_found, dS+dSi)
     else:
         raise TypeError(f"Type {operator.__class__} not valid for method 'required_init'")
+
+    return int(output)
 
 def eval_ore_operator(operator : OreOperator, ring=None,**values):
     r'''
@@ -701,9 +702,11 @@ def solution(operator : OreOperator, init, check_init=True) -> Sequence:
         TODO: add examples
     '''
     if is_recurrence_algebra(operator.parent()):
-        v,S,alpha = gens_recurrence_algebra(operator.parent()); Si = 0
+        v,S,alpha = gens_recurrence_algebra(operator.parent()); Si = None
         if (not alpha in ZZ): 
             raise ValueError(f"The shift must be an integer shift (got {alpha})")
+        alpha = ZZ(alpha)
+
         dS = operator.polynomial().degree(S.polynomial()); dSi = 0
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : n}))
         _shift = lambda i : alpha*i
@@ -711,13 +714,16 @@ def solution(operator : OreOperator, init, check_init=True) -> Sequence:
         v,S,Si,alpha = gens_double_recurrence_algebra(operator.parent())
         if (not alpha in ZZ): 
             raise ValueError(f"The shift must be an integer shift (got {alpha})")
+        alpha = ZZ(alpha)
+
         dS = operator.polynomial().degree(S.polynomial()); dSi = operator.polynomial().degree(Si.polynomial())
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : n}))
         _shift = lambda i : alpha*i
     elif is_qshift_algebra(operator.parent()):
-        v,S,q = gens_qshift_algebra(operator.parent()); Si = 0
+        v,S,q = gens_qshift_algebra(operator.parent()); Si = None
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
+
         dS = operator.polynomial().degree(S.polynomial()); dSi = 0
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : q**n}))
         _shift = lambda i : i
@@ -725,6 +731,7 @@ def solution(operator : OreOperator, init, check_init=True) -> Sequence:
         q,v,S,Si = gens_double_qshift_algebra(operator.parent())
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
+
         dS = operator.polynomial().degree(S.polynomial()); dSi = operator.polynomial().degree(Si.polynomial())
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : q**n}))
         _shift = lambda i : i
@@ -779,6 +786,10 @@ class OreSequence(Sequence):
     @property
     def operator(self): return self.__operator
 
+    @cached_method
+    def required_init(self): 
+        return required_init(self.operator)
+
     @property
     def type(self):
         if is_recurrence_algebra(self.operator.parent()):
@@ -830,7 +841,7 @@ class OreSequence(Sequence):
         return method(self.operator.parent())[2]
 
     def _element(self, *indices: int):
-        return self.__sequence(*indices)
+        return self.__sequence._element(*indices)
 
     def _shift(self):
         if self.type.find("double") >= 0:
@@ -876,7 +887,7 @@ class OreSequence(Sequence):
         return OreSequence(self.operator, [-self(i) for i in range(required_init(self.operator))], self.universe)
 
     def __repr__(self) -> str:
-        return f"Sequence over [{self.universe}] defined by the {self.type} ({self.operator}) with initial values {self[:required_init(self.operator)]}."
+        return f"Sequence over [{self.universe}] defined by the {self.type} ({self.operator}) with initial values {self[:self.required_init()]}."
         
 ####################################################################################################
 ###
