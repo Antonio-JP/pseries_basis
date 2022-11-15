@@ -50,7 +50,8 @@ from ore_algebra.ore_operator import OreOperator
 from pseries_basis.misc.noncom_rings import OperatorAlgebra_generic, OperatorAlgebra_element
 
 # imports from this package
-from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, eval_ore_operator, poly_decomposition, 
+from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, is_qshift_algebra, 
+                    gens_recurrence_algebra, gens_qshift_algebra, eval_ore_operator, poly_decomposition, 
                     get_rational_algebra, get_recurrence_algebra)
 from .misc.sequences import LambdaSequence, Sequence, SequenceSet
 
@@ -1548,16 +1549,19 @@ class PSBasis(Sequence):
 
             TODO: Add examples and tests for this method
         '''
-        if not is_recurrence_algebra(operator.parent()):
-            raise TypeError("The iterative construction only valid for linear recurrences")
+        if is_recurrence_algebra(operator.parent()):
+            gens_getter = gens_recurrence_algebra
+        elif is_qshift_algebra(operator.parent()):
+            gens_getter = gens_qshift_algebra
+        else:
+            raise TypeError(f"The iterative construction not implemented for [{operator.parent()}]")
 
         comp = self.recurrence(operator, cleaned=True)
         if is_Matrix(comp):
             # TODO: check whether this make sense or not
             raise NotImplementedError("The compatibility has sections. Unable to go back to original ring")
 
-        E = operator.parent().gens()[0]
-        x = operator.parent().base().gens()[0]
+        x,E,_ = gens_getter(operator.parent())
         return eval_ore_operator(comp, operator.parent(), Sn = E, n = x, Sni = 1)
 
     def system(self, operator, sections=None):
