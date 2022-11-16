@@ -208,7 +208,7 @@ class QBasis(PSBasis):
         SN = lambda n : Sn**n if n > 0 else Sni**(-n) if n < 0 else 1        
         # We have to distinguish between m = 1 and m > 1
         if(m == 1): # we return an operator
-            recurrence = sum(alpha(0,i,q_n*q**(i))*SN(-i) for i in range(-A,B+1))
+            recurrence = sum(alpha(0,i,q_n*q**(-i))*SN(-i) for i in range(-A,B+1))
             output = self.simplify_operator(recurrence)
         elif(m > 1):
             output = Matrix(
@@ -600,19 +600,11 @@ class QBinomialBasis(QSFactorialBasis):
         return QBinomialBasis(self.__b + shift, str(self.q()), str(self.n()), self.__E_name, self.base)
 
     def __repr__(self):
-        upper = ["n"]
-        if self.__b != 0:
-            upper.append(f"{self.__b}")
-
         return f"Q-Binomial Basis [n{f' + {self.__b}' if self.__b != 0 else ''}; m]_q"
 
     def _latex_(self):
-        upper = [("" if self.__a == 1 else f"{self.__a}") + "n"]
-        if self.__b != 0:
-            upper.append(("" if self.__b == 1 else f"{self.__b}") + "m")
-        if self.__c != 0:
-            upper.append(f"{self.__c}")
-        return r"\left[\begin{array}{c} " + " + ".join(upper) + r"\\ m \end{array}\right]_q"
+        upper = f"n{f' + {self.__b}' if self.__b != 0 else ''}"
+        return r"\left[\begin{array}{c} " + upper + r"\\ m \end{array}\right]_q"
 
 #######################################################################################################
 ### Some useful functions and sequences
