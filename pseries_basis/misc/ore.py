@@ -23,10 +23,9 @@ from typing import Any, Tuple, Union # pylint: disable=unused-import
 from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
 
-from sage.all import QQ, ZZ, prod, lcm
+from sage.all import QQ, ZZ, prod, lcm, cached_method
 from sage.categories.fields import Fields
 from sage.categories.pushout import pushout
-from sage.misc.cachefunc import cached_method
 from sage.rings.polynomial.polynomial_ring import PolynomialRing_field, is_PolynomialRing
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.fraction_field import FractionField_1poly_field
@@ -890,7 +889,7 @@ class OreSequence(Sequence):
         return super().__mul__(other)
         
     def __neg__(self):
-        return OreSequence(self.operator, [-self(i) for i in range(required_init(self.operator))], self.universe)
+        return OreSequence(self.operator, [(-1)*self(i) for i in range(required_init(self.operator))], self.universe)
 
     def __repr__(self) -> str:
         return f"Sequence over [{self.universe}] defined by the {self.type} ({self.operator}) with initial values {self[:self.required_init()]}."
