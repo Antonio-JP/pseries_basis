@@ -43,17 +43,17 @@ class QBasis(PSBasis):
             Fraction Field of Univariate Polynomial Ring in q over Rational Field
             sage: B2 = QBasis(QQ['a'], var_name = "Q", q_name="b")
             sage: B2.OB() # the q_n appears for future uses in the recurrences
-            Fraction Field of Univariate Polynomial Ring in q_n over Fraction Field of Univariate Polynomial Ring in b over Univariate Polynomial Ring in a over Rational Field
+            Fraction Field of Univariate Polynomial Ring in q_n over Fraction Field of Multivariate Polynomial Ring in a, b over Rational Field
             sage: B2.universe # the Q is the variable interpreted as the `q^n` sequence
-            Univariate Polynomial Ring in Q over Fraction Field of Univariate Polynomial Ring in b over Univariate Polynomial Ring in a over Rational Field
+            Univariate Polynomial Ring in Q over Fraction Field of Multivariate Polynomial Ring in a, b over Rational Field
             sage: B2.n()
             q_n
             sage: B2.n().parent()
-            Fraction Field of Univariate Polynomial Ring in q_n over Fraction Field of Univariate Polynomial Ring in b over Univariate Polynomial Ring in a over Rational Field
+            Fraction Field of Univariate Polynomial Ring in q_n over Fraction Field of Multivariate Polynomial Ring in a, b over Rational Field
             sage: B2.q() # we have chosen that our `q` is called `b`
             b
-            sage. B2.q().parent()
-            Fraction Field of Univariate Polynomial Ring in b over Univariate Polynomial Ring in a over Rational Field
+            sage: B2.q().parent()
+            Fraction Field of Multivariate Polynomial Ring in a, b over Rational Field
 
         The operator rings for the recurrences that originally was defined using the natural shift `x \mapsto x+1`
         now can be defined with the shift `q_n \mapsto qq_n`. This can be done using the module :mod:`ore_algebra`.
@@ -69,12 +69,12 @@ class QBasis(PSBasis):
             Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in q_n over Fraction Field of Univariate Polynomial Ring in q over Rational Field
         
         Moreover, the method :func:`~pseries_basis.psbasis.PSBasis.recurrence_vars` includes the `q` name before the 
-        names corresponding to the variable name and the shifts::
+        names corresponding to the variable name and the shifts. This method also includes all variables that share ring with the `q`::
 
             sage: B.recurrence_vars()
             (q, q_n, Sn, Sni)
             sage: B2.recurrence_vars()
-            (b, q_n, Sn, Sni)
+            (a, b, q_n, Sn, Sni)
 
         INPUT:
 
@@ -131,9 +131,35 @@ class QBasis(PSBasis):
 
             * ``element``: the object that will be checked.
 
+            EXAMPLES::
+
+                sage: from pseries_basis import *
+                sage: B = QBasis(QQ); q,q_n,_,_ = B.recurrence_vars()
+                sage: B.is_q_hypergeometric(B.QPochhammer(B.q())) # (q;q)_n is q-hypergeometric
+                True, -q*q_n + 1
+
             TODO: Add examples and implement the method to work also with some specific sequences.
         '''
-        raise NotImplementedError("The `q`-hypergeometric checker is not yet implemented")
+        # Basic case of rational functions in self.OB()
+        if(element in self.OB()):
+            element = self.OB()(element); qn = self.n(); q = self.q()
+            return True, element(**{str(qn):q*qn})/element
+        elif isinstance(element, Sequence):
+            from ore_algebra import guess
+            shift = 5 # this is an arbitrary choice
+            try:
+                op = guess(element[shift:shift+10], self.OSS(), order = 1)
+                if op.order() == 1:
+                    op = self.remove_Sni(self.simplify_operator(self.Sni()**shift * op * self.Sn()**shift))
+                    return True, -op[0]/op[1]
+            except ValueError:
+                pass
+        else: # we assume the input is a Symbolic element
+            raise NotImplementedError("The `q`-hypergeometric checker for symbolic expressions is not yet implemented")
+        
+        return False, None
+
+
 
     def valid_factor(self, element):
         r'''
@@ -181,16 +207,18 @@ class QBasis(PSBasis):
         element = self.OB()(element)
 
         ## We check the denominator never vanishes on positive integers
-        for root in element.denominator().roots(): # checking if they are of the form q^m for positive m
-            if len(root[0].numerator().coefficients()) == 1 and root[0].denominator().is_one():
-                return False
-
-        ## We check the numerator never vanishes on the positive integers
-        for root in element.numerator().roots():
-            if len(root[0].numerator().coefficients()) == 1 and root[0].denominator().is_one():
-                return False
-            
-        return True
+        return not any(
+            ( # two possible conditions to return False
+                r == 1 or
+                ( # the second condition is the "and" of four conditions
+                  # we use "and" instead of "all" to avoid computing parts that make no sense
+                    r.numerator().degree() > 0 and
+                    len(r.numerator().coefficients()) == 1 and
+                    r.numerator().coefficients()[0] == 1 and
+                    r.denominator().is_one()
+                )
+            )
+        for r,_ in element.denominator().roots() + element.numerator().roots())
 
     ## Compatibility methods
     def _compatibility_from_recurrence(self, recurrence):
@@ -251,7 +279,8 @@ class QBasis(PSBasis):
             The returned sequence will be in the corresponding universe defined from the `q`-basis::
 
                 sage: B2 = QBasis(QQ['a'], var_name='b', q_name='c')
-                Sequence over [Fraction Field of Univariate Polynomial Ring in c over Univariate Polynomial Ring in a over Rational Field]: (1, c, c^2,...)
+                sage: B2.QPower()
+                Sequence over [Fraction Field of Multivariate Polynomial Ring in a, c over Rational Field]: (1, c, c^2,...)
 
             Check the class :class:`QPowerBasis` to see how to obtain a basis and compatibilities using these sequences.
         '''
@@ -288,7 +317,7 @@ class QBasis(PSBasis):
 
                 sage: B2 = QBasis(QQ['a'], var_name='b', q_name='c')
                 sage: B2.QNaturals()
-                Sequence over [Fraction Field of Univariate Polynomial Ring in c over Univariate Polynomial Ring in a over Rational Field]: (0, 1, c + 1,...)
+                Sequence over [Fraction Field of Multivariate Polynomial Ring in a, c over Rational Field]: (0, 1, c + 1,...)
         '''
         return LambdaSequence(lambda n : sum(self.q()**i for i in range(n)), self.base)
 
@@ -310,9 +339,9 @@ class QBasis(PSBasis):
                 sage: from pseries_basis import *
                 sage: B = QBasis(QQ)
                 sage: B.QFactorial()
-                Sequence over [Fraction Field of Univariate Polynomial Ring in q over Rational Field]: (0, 1, q + 1,...)
+                Sequence over [Fraction Field of Univariate Polynomial Ring in q over Rational Field]: (1, 1, q + 1,...)
                 sage: B.QFactorial()[:5]
-                [0, 1, q + 1, q^3 + 2*q^2 + 2*q + 1, q^6 + 3*q^5 + 5*q^4 + 6*q^3 + 5*q^2 + 3*q + 1]
+                [1, 1, q + 1, q^3 + 2*q^2 + 2*q + 1, q^6 + 3*q^5 + 5*q^4 + 6*q^3 + 5*q^2 + 3*q + 1]
 
             By definition, we have that the quotient of the shift and this sequence will be exactly
             the `q`-natural numbers::
@@ -324,7 +353,7 @@ class QBasis(PSBasis):
 
                 sage: B2 = QBasis(QQ['a'], var_name='b', q_name='c')
                 sage: B2.QFactorial()
-                Sequence over [Fraction Field of Univariate Polynomial Ring in c over Univariate Polynomial Ring in a over Rational Field]: (1, 1, c + 1,...)
+                Sequence over [Fraction Field of Multivariate Polynomial Ring in a, c over Rational Field]: (1, 1, c + 1,...)
         '''
         return LambdaSequence(lambda n : qfactorial(n, self.q()), self.base)
 
@@ -362,7 +391,7 @@ class QBasis(PSBasis):
                 
             We can check the general identity of the `q`-Pochhammer symbol relating with the `q`-factorial::
 
-                sage: (B.QPochammer(B.q())/LambdaSequence(lambda n : (1-B.q())**n, B.base) - B.QFactorial())[:10]
+                sage: (B.QPochhammer(B.q())/LambdaSequence(lambda n : (1-B.q())**n, B.base) - B.QFactorial())[:10]
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         '''
         return LambdaSequence(lambda n : qpochhammer(a, n, self.q()), self.base)
@@ -531,10 +560,8 @@ class QScalarBasis(QFactorialBasis, ScalarBasis):
 
         EXAMPLES::
 
-            sage: from pseries_basis import *
+            sage: from pseries_basis import *; from pseries_basis.qbasis.qbasis import QScalarBasis
             sage: B = QBinomialBasis(); q = B.q(); qn = B.n()
-            sage: C = QScalarBasis(B, qn)
-            sage: 
     '''
     def __init__(self, basis: QFactorialBasis = None, scale = None, **kwds):
         if not isinstance(basis, QFactorialBasis):
