@@ -60,7 +60,7 @@ def is_recurrence_algebra(algebra: OreAlgebra_generic) -> bool:
             False
             sage: is_recurrence_algebra(OreAlgebra(QQ[x], ('a', lambda p : p, lambda p : p.derivative())))
             False
-            sage: gens_recurrence_algebra(OreAlgebra(QQ[x], ('a', lambda p : p, lambda p : 0)))
+            sage: is_recurrence_algebra(OreAlgebra(QQ[x], ('a', lambda p : p, lambda p : 0)))
             True
     '''
     return gens_recurrence_algebra(algebra) != None
@@ -85,7 +85,7 @@ def gens_recurrence_algebra(algebra: OreAlgebra_generic) -> Tuple[Any, Any, Any]
             (x, a, 1)
             sage: R.<t> = QQ[]
             sage: gens_recurrence_algebra(OreAlgebra(R, ('b', lambda p : p(t = t+10), lambda p : 0)))
-            (t, a, 10)
+            (t, b, 10)
             sage: R.<x,y> = QQ[]
             sage: gens_recurrence_algebra(OreAlgebra(R, ('a', lambda p : p(x = y*x), lambda p : 0)))
             sage: gens_recurrence_algebra(OreAlgebra(QQ[x], ('a', lambda p : p, lambda p : p.derivative())))
