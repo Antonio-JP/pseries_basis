@@ -86,14 +86,17 @@ class QBasis(PSBasis):
           the sequence `(q^n)_n`.
         * ``q_name``: name for the `q` variable. If not in ``base``, it will be added as a rational function field.
     '''
-    def __init__(self, base, universe=None, degree=True, var_name = None, q_name="q"):
+    def __init__(self, base=QQ, universe=None, degree=True, var_name = None, q_name="q", **kwds):
             # if the base has no q, we add it
             with_q, self.__q = has_variable(base, q_name)
             if not with_q:
                 base = PolynomialRing(base, q_name).flattening_morphism().codomain().fraction_field()
                 self.__q = base(q_name)
 
-            PSBasis.__init__(self,base, universe, degree, var_name)
+            super().__init__(
+                base=base, universe=universe, degree=degree, var_name=var_name, # arguments for PSBasis
+                **kwds # arguments maybe used for multiinheritance
+            )
 
     ### Getters from the module variable as objects of the class
     def OB(self):
@@ -386,9 +389,11 @@ class QSequentialBasis(QBasis, SequenceBasis):
     r'''
         Class for `q`-formal power series given as a 2-dimensional sequence.
     '''
-    def __init__(self, base, sequence: Sequence, degree: bool = True, q_name: str = "q"):
-        QBasis.__init__(self, base, None, False, None, q_name)
-        SequenceBasis.__init__(self, self.base, sequence, degree)
+    def __init__(self, base, sequence: Sequence, degree: bool = True, q_name: str = "q", **kwds):
+        super().__init__(
+            base=base, universe=kwds.pop("universe", None), degree=degree, var_name=kwds.pop("var_name", None), q_name=q_name, # arguments for QBasis
+            sequence=sequence, **kwds# arguments for other builders (like SequenceBasis) allowing multi-inheritance
+        )
         
     ## Other overwritten methods
     def change_base(self, base):
@@ -420,10 +425,12 @@ class QPolyBasis(QBasis, PolyBasis):
         
         This class **must never** be instantiated.
     '''
-    def __init__(self, base=QQ, var_name="q_n", q_name = "q"):
-        QBasis.__init__(self, base, None, True, var_name, q_name)
-        PolyBasis.__init__(self, self.base, var_name)
-
+    def __init__(self, base=QQ, var_name="q_n", q_name = "q", **kwds):
+        super().__init__(
+            base=base, universe=kwds.pop("universe", None), degree=kwds.pop("degree", True), var_name=var_name, q_name=q_name, # arguments for QBasis
+            **kwds # other arguments (like PolyBasis)
+        )
+        
     @PSBasis.functional_seq.getter
     def functional_seq(self) -> Sequence:
         q = self.q()
@@ -436,10 +443,21 @@ class QPolyBasis(QBasis, PolyBasis):
     def __repr__(self):
         return "QPolyBasis -- WARNING: this is an abstract class"
 
-class QFactorialBasis(FactorialBasis, QPolyBasis):
-    def __init__(self, q='q', X='x', base=QQ):
-        QPolyBasis.__init__(self, base, var_name=X, q_name=q)
-        super().__init__(X, self.base)
+class QFactorialBasis(QPolyBasis, FactorialBasis):
+    def __init__(self, q_name='q', var_name='q_n', base=QQ, **kwds):
+        super().__init__(
+            base=base, var_name=var_name, q_name=q_name, # arguments for QPolyBasis
+            **kwds # arguments for other builders (in particular FactorialBasis)
+        )
+
+    def _create_compatibility_X(self):
+        if not self.has_compatibility(self.var_name):
+            try:
+                Sni = self.Sni(); qn = self.n(); q = self.q(); an = self.symb_an; bn = self.symb_bn
+                self.set_compatibility(self.var_name, -bn(**{str(qn) : q*qn})/an(**{str(qn) : q*qn}) + (1/an)*Sni) # pylint: disable=invalid-unary-operand-type
+            except (AttributeError, TypeError) as e:
+                logger.info(f"Error with the compatibility with {self.var_name} -->\n\t{e}")
+                pass
 
     def _scalar_basis(self, factor) -> "QFactorialBasis":
         r'''
@@ -453,38 +471,33 @@ class QFactorialBasis(FactorialBasis, QPolyBasis):
         '''
         return QScalarBasis(self, factor)
 
-class QSFactorialBasis(SFactorialBasis, QFactorialBasis):
-    def __init__(self, an, bn, q='q', X='x', init=1, base=QQ):
-        QFactorialBasis.__init__(self, q, X, base)
-        super().__init__(an, bn, X, init, self.base)
-
-        ## If the compatibility by X is not set, we create it here
-        if not self.has_compatibility(X):
-            try:
-                Sni = self.Sni(); qn = self.n(); q = self.q(); an = self.symb_an; bn = self.symb_bn
-                self.set_compatibility(X, -bn(**{str(qn) : q*qn})/an(**{str(qn) : q*qn}) + (1/an)*Sni) # pylint: disable=invalid-unary-operand-type
-            except (AttributeError, TypeError) as e:
-                logger.info(f"Error with the compatibility with {X} -->\n\t{e}")
-                pass
+class QSFactorialBasis(QFactorialBasis, SFactorialBasis):
+    def __init__(self, an=None, bn=None, q_name='q', var_name='x', init=1, base=QQ, **kwds):
+        super().__init__(
+            q_name=q_name, var_name=var_name, base=base, # arguments for QFactorialBasis
+            an=an, bn=bn, init=init, **kwds # arguments for other constructors (such as SFactorialBasis)
+        )
 
     def linear_coefficient(self) -> Sequence:
         q = self.q()
-        return LambdaSequence(lambda n : self.symb_an(**{self.var_name : q**n}), self.base, allow_sym=False)
+        return LambdaSequence(lambda n : self.symb_an(**{self.var_name : q**n}), self.base, allow_sym=False) # pylint: disable=not-callable
 
     def constant_coefficient(self) -> Sequence:
         q = self.q()
-        return LambdaSequence(lambda n : self.symb_bn(**{self.var_name : q**n}), self.base, allow_sym=False)
+        return LambdaSequence(lambda n : self.symb_bn(**{self.var_name : q**n}), self.base, allow_sym=False) # pylint: disable=not-callable
 
     def shift_in(self, shift):
         q = self.q()
         return QSFactorialBasis(q**shift * self.symb_an, self.symb_bn, str(self.q()), str(self.n()), base = self.base)
 
-class QRootSequenceBasis(RootSequenceBasis, QFactorialBasis):
-    def __init__(self, rho, cn, q='q', X='q_n', base=QQ):
-        QFactorialBasis.__init__(self, q, X, base)
-        super().__init__(rho, cn, X, self.base)
+class QRootSequenceBasis(QFactorialBasis, RootSequenceBasis):
+    def __init__(self, rho, cn, q_name='q', var_name='q_n', base=QQ, **kwds):
+        super().__init__(
+            q_name=q_name, var_name = var_name, base=base,# arguments for QFactorialBasis
+            rho=rho, cn=cn, **kwds# arguments for other builders (like RootSequenceBasis) allowing multi-inheritance
+        )
 
-class QScalarBasis(ScalarBasis, QFactorialBasis):
+class QScalarBasis(QFactorialBasis, ScalarBasis):
     r'''
         Class to represent the scaling of a `q`-factorial basis.
 
@@ -523,14 +536,17 @@ class QScalarBasis(ScalarBasis, QFactorialBasis):
             sage: C = QScalarBasis(B, qn)
             sage: 
     '''
-    def __init__(self, basis: QFactorialBasis, scale):
+    def __init__(self, basis: QFactorialBasis = None, scale = None, **kwds):
         if not isinstance(basis, QFactorialBasis):
             raise TypeError(f"The given basis must be a QFactorialBasis. Got {basis.__class__}")
         is_hyper, _ = basis.is_q_hypergeometric(scale)
         if not is_hyper:
             raise TypeError(f"The given scaling sequence ([{scale}]) must be `q`-hypergeometric.")
 
-        super().__init__(basis, scale)
+        super().__init__(
+            q_name = str(basis.q()), var_name = basis.var_name, base=basis.base, # arguments for QFactorialBasis
+            basis=basis, scale=scale, **kwds # arguments
+        )
 
 class QBinomialBasis(QSFactorialBasis):
     r'''
@@ -563,26 +579,26 @@ class QBinomialBasis(QSFactorialBasis):
         * ``base``: (`\mathbb{Q}` by default) base ring for the `q`-basis. Changing this allow to add some parameters to the computations.
         * ``b``: (0 by default) value for the coefficient `b`.
         * ``q``: ("q" by default) the name for the `q` parameter.
-        * ``X``: ("q_n" by default) the name of the polynomial variable. It represent the multiplication by :func:`QPower` (i.e., `q^n`).
+        * ``var_name``: ("q_n" by default) the name of the polynomial variable. It represent the multiplication by :func:`QPower` (i.e., `q^n`).
         * ``E``: ("E" by default) the name for the compatible shift with this basis.
     '''
-    def __init__(self, b=0, name_q='q', name_X='q_n', name_E='E', base=QQ):
-        QBasis.__init__(self, base, degree=True, var_name=name_X, q_name=name_q) # initializing some default variables for using ``self.q``
+    def __init__(self, b=0, q_name='q', var_name='q_n', name_E='E', base=QQ, **kwds):        
         if(not b in ZZ):
             raise b("The shift of the basis must be a natural number")
         b = ZZ(b)
         self.__b = b
         self.__E_name = name_E
 
-        qn = self.Q(); q = self.q(); Sn = self.Sn()
-        super(QBinomialBasis, self).__init__(
-            -(q**(b+1)/(qn*(1-qn))), 
-            1/(1-qn),
-            name_q,
-            name_X, 
-            base=self.base)
-
-        self.set_endomorphism(name_E, qn + Sn)
+        # we need to create a dummy (simpler) basis to obtain the values for `q` and `qn`
+        oself = QBasis(base, universe=None, degree=True, var_name=var_name, q_name = q_name)
+        qn = oself.Q(); q = oself.q()
+        # removing possible repeated arguments
+        kwds.pop("an",None); kwds.pop("bn",None); kwds.pop("init",None)
+        super().__init__(
+            an = -(q**(b+1)/(qn*(1-qn))), bn = 1/(1-qn), q_name = q_name, var_name = var_name, init = 1, base = base, # arguments for QSFactorialBasis
+            **kwds # other arguments for other builders (allow multi-inheritance)
+        )
+        self.set_endomorphism(name_E, qn + self.Sn(), True)
 
     def change_base(self, base):
         return QBinomialBasis(

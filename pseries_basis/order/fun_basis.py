@@ -21,22 +21,22 @@ class FunctionalBasis(OrderBasis):
         and `f'(0) \neq 0`
 
         INPUT:
-            - ``X``: the name for the operator representing the multiplication by `f(x)`.
+            - ``var_name``: the name for the operator representing the multiplication by `f(x)`.
     '''
-    def __init__(self, f, X='f'):
+    def __init__(self, f, var_name='f'):
         ## Initializing the PolyBasis structure
         super(FunctionalBasis,self).__init__()
 
         ## Adding the extra information
-        self.__fun_name = X
+        self.__fun_name = var_name
 
         if(f(x=0) != 0):
             raise ValueError("The first initial value of the function has to be zero. Found %s" %f(x=0))
         self.__function = f
 
-        ## The multiplication by X compatibility is given
+        ## The multiplication by var_name compatibility is given
         Sni = self.Sni()
-        self.set_compatibility(X, Sni)
+        self.set_compatibility(var_name, Sni)
 
     def _element(self, n):
         r'''

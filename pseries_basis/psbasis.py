@@ -73,7 +73,7 @@ class PSBasis(Sequence):
         * :func:`~PSBasis._element`.
         * :func:`~PSBasis._functional_matrix`.
     '''
-    def __init__(self, base, universe=None, degree=True, var_name=None):
+    def __init__(self, base, universe=None, degree=True, var_name=None, **_):
         self.__degree = degree
         self.__base = base
         self.__compatibility = {}
@@ -84,7 +84,7 @@ class PSBasis(Sequence):
         if universe == None and degree is True:
             universe = PolynomialRing(self.__base, self.__var_name)
         elif universe is None:
-            universe = LambdaSequence(lambda n,k : 1, self.base, 2, True).parent()
+            universe = LambdaSequence(lambda n,k : n+k, self.base, 2, True).parent()
         super().__init__(universe, 1)
 
     ### Getters from the module variable as objects of the class
@@ -876,7 +876,7 @@ class PSBasis(Sequence):
         name = str(name)
         
         if(name in self.__compatibility and (not sub)):
-            print(f"The operator {name} is already compatible with this basis -- no changes are done" %name)
+            print(f"The operator {name} is already compatible with this basis -- no changes are done")
             return
         
         if(isinstance(trans, tuple)):
@@ -884,11 +884,11 @@ class PSBasis(Sequence):
                 raise ValueError("The operator given has not the appropriate format: not a triplet")
             A, B, m, alpha = trans
             if((not A in ZZ) or A < 0):
-                raise ValueError("The lower bound parameter is not valid: %s" %A)
+                raise ValueError(f"The lower bound parameter is not valid: {A}")
             if((not B in ZZ) or B < 0):
-                raise ValueError("The upper bound parameter is not valid: %s" %B)
+                raise ValueError(f"The upper bound parameter is not valid: {B}")
             if((not m in ZZ) or m < 1):
-                raise ValueError("The number of sections is not valid: %s" %m)
+                raise ValueError(f"The number of sections is not valid: {m}")
 
             # TODO: how to check the alpha?
             self.__compatibility[name] = (ZZ(A),ZZ(B),ZZ(m),alpha)
@@ -2045,7 +2045,11 @@ class PolyBasis(PSBasis):
 
         * :func:`PSBasis.element`.
     '''
-    def __init__(self, base=QQ, var_name=None):
+    def __init__(self, base=QQ, var_name=None, **kwds):
+        super().__init__(
+            base=base, universe=kwds.pop("universe", None), degree=kwds.pop("degree", True), var_name=var_name, # arguments for PSBasis
+            **kwds # other arguments for other builders (allowing multi-inheritance)
+        )
         super(PolyBasis,self).__init__(base, None, True, var_name)
 
     @PSBasis.functional_seq.getter

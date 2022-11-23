@@ -37,7 +37,7 @@ class OrthogonalBasis(PolyBasis):
           element in `n` or a function or lambda expression that takes 1 argument.
         * ``cn``: the third coefficient of the three term recurrence. It can be either a rational
           element in `n` or a function or lambda expression that takes 1 argument.
-        * ``X``: the name for the operator representing the multiplication by `x`. By default, this 
+        * ``var_name``: the name for the operator representing the multiplication by `x`. By default, this 
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
@@ -56,9 +56,9 @@ class OrthogonalBasis(PolyBasis):
         * :func:`~OrthogonalBasis.get_mixed_equation`.
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
-    def __init__(self, an, bn, cn, X='x', Dx='Dx', init=1, base=QQ):
+    def __init__(self, an, bn, cn, var_name='x', Dx='Dx', init=1, base=QQ):
         ## Initializing the PolyBasis structure
-        super().__init__(base, X)
+        super().__init__(base, var_name)
 
         ## Checking the first element
         init = self.base(init)
@@ -81,9 +81,9 @@ class OrthogonalBasis(PolyBasis):
         except:
             if(cn(n=n) in self.OB()): self.__cn = cn
 
-        ## The multiplication by X compatibility is given
+        ## The multiplication by var_name compatibility is given
         Sni = self.Sni(); Sn = self.Sn()
-        self.set_compatibility(X, (cn(n=n+1)/an(n=n+1))*Sn - bn(n=n)/an(n=n) + (1/an(n=n-1))*Sni)
+        self.set_compatibility(var_name, (cn(n=n+1)/an(n=n+1))*Sn - bn(n=n)/an(n=n) + (1/an(n=n-1))*Sni)
 
         self.__der_name = Dx
         try:
@@ -92,7 +92,7 @@ class OrthogonalBasis(PolyBasis):
             try: # we try to get the mixed relation for the orthogonal basis
                 _, a,b,c = self.get_mixed_equation()
                 N = self.n(); Sn = self.Sn()
-                self.set_derivation(Dx, self.simplify_operator(a*self.recurrence(X) + b + c(n=N+1)*Sn))
+                self.set_derivation(Dx, self.simplify_operator(a*self.recurrence(var_name) + b + c(n=N+1)*Sn))
             except NotImplementedError:
                 pass # there is nothing we can do
 
@@ -444,7 +444,7 @@ class JacobiBasis(OrthogonalBasis):
 
         * ``alpha``: a rational number greater than -1
         * ``beta``: a rational number greater than -1
-        * ``X``: the name for the operator representing the multiplication by `x`.By default, this 
+        * ``var_name``: the name for the operator representing the multiplication by `x`.By default, this 
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
@@ -456,8 +456,8 @@ class JacobiBasis(OrthogonalBasis):
 
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
-    def __init__(self, alpha, beta, X='x', Dx='Dx', base=QQ):
-        PSBasis.__init__(self, base, var_name=X) # needed for getting ``self.n()``
+    def __init__(self, alpha, beta, var_name='x', Dx='Dx', base=QQ):
+        PSBasis.__init__(self, base, var_name=var_name) # needed for getting ``self.n()``
         if(not alpha in base or alpha <= -1):
             raise TypeError("The argument `alpha` must be a rational number greater than -1")
         self.__alpha = base(alpha); alpha = self.__alpha
@@ -472,7 +472,7 @@ class JacobiBasis(OrthogonalBasis):
         bn = (alpha**2 - beta**2)*(2*n + alpha + beta + 1)/(2*(n + 1)*(n + alpha + beta + 1)*(2*n + alpha + beta))
         cn = (n + alpha)*(n + beta)*(2*n + alpha + beta + 2)/((n + 1)*(n + alpha + beta + 1)*(2*n + alpha + beta))
 
-        super().__init__(an,bn,cn,X,Dx,base=base)
+        super().__init__(an,bn,cn,var_name,Dx,base=base)
 
     def _element(self, n):
         r'''
@@ -539,7 +539,7 @@ class GegenbauerBasis(OrthogonalBasis):
         INPUT:
             
         * ``L``: a rational number greater than `-1/2` different from `0` representing the parameter `\lambda`
-        * ``X``: the name for the operator representing the multiplication by `x`. By default, this 
+        * ``var_name``: the name for the operator representing the multiplication by `x`. By default, this 
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
@@ -551,8 +551,8 @@ class GegenbauerBasis(OrthogonalBasis):
 
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
-    def __init__(self, L, X='x', Dx='Dx', base=QQ):
-        PSBasis.__init__(self, base, var_name=X) # needed for getting ``self.n()``
+    def __init__(self, L, var_name='x', Dx='Dx', base=QQ):
+        PSBasis.__init__(self, base, var_name=var_name) # needed for getting ``self.n()``
         if(not L in base or L <= -1/2 or L == 0):
             raise TypeError("The argument `alpha` must be a rational number greater than -1/2 different from 0")
         self.__lambda = base(L); L = self.__lambda
@@ -561,7 +561,7 @@ class GegenbauerBasis(OrthogonalBasis):
         an = 2*(n+L)/(n+1)
         cn = (n+2*L-1)/(n+1)
 
-        super().__init__(an,0,cn,X,Dx,base=base)
+        super().__init__(an,0,cn,var_name,Dx,base=base)
 
     def _first_compatibility(self):
         r'''
@@ -605,7 +605,7 @@ class LegendreBasis(JacobiBasis):
 
         INPUT:
         
-        * ``X``: the name for the operator representing the multiplication by `x`. By default, this 
+        * ``var_name``: the name for the operator representing the multiplication by `x`. By default, this 
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
@@ -617,8 +617,8 @@ class LegendreBasis(JacobiBasis):
 
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
-    def __init__(self, X='x', Dx='Dx', base=QQ):
-        super().__init__(0,0,X,Dx,base)
+    def __init__(self, var_name='x', Dx='Dx', base=QQ):
+        super().__init__(0,0,var_name,Dx,base)
 
     def _first_compatibility(self):
         r'''
@@ -653,7 +653,7 @@ class TChebyshevBasis(OrthogonalBasis):
 
         INPUT:
         
-        * ``X``: the name for the operator representing the multiplication by `x`. By default, this 
+        * ``var_name``: the name for the operator representing the multiplication by `x`. By default, this 
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
@@ -664,8 +664,8 @@ class TChebyshevBasis(OrthogonalBasis):
 
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
-    def __init__(self, X='x', Dx='Dx'):
-        super(TChebyshevBasis, self).__init__(lambda n: 1 if n == 0 else 2,0,1,X,Dx,base=QQ)
+    def __init__(self, var_name='x', Dx='Dx'):
+        super(TChebyshevBasis, self).__init__(lambda n: 1 if n == 0 else 2,0,1,var_name,Dx,base=QQ)
 
     def _first_compatibility(self):
         r'''
@@ -700,7 +700,7 @@ class UChebyshevBasis(OrthogonalBasis):
 
         INPUT:
         
-        * ``X``: the name for the operator representing the multiplication by `x`. By default, this 
+        * ``var_name``: the name for the operator representing the multiplication by `x`. By default, this 
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
@@ -711,8 +711,8 @@ class UChebyshevBasis(OrthogonalBasis):
 
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
-    def __init__(self, X='x', Dx='Dx'):
-        super(UChebyshevBasis, self).__init__(2,0,1,X,Dx,base=QQ)
+    def __init__(self, var_name='x', Dx='Dx'):
+        super(UChebyshevBasis, self).__init__(2,0,1,var_name,Dx,base=QQ)
 
     def _first_compatibility(self):
         r'''
@@ -744,7 +744,7 @@ class LaguerreBasis(OrthogonalBasis):
         INPUT:
         
         * ``alpha``: rational value for parameter `\alpha`.
-        * ``X``: the name for the operator representing the multiplication by `x`. By default, this 
+        * ``var_name``: the name for the operator representing the multiplication by `x`. By default, this 
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
@@ -755,14 +755,14 @@ class LaguerreBasis(OrthogonalBasis):
 
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
     '''
-    def __init__(self, alpha, X='x', Dx='Dx'):
-        PSBasis.__init__(self, QQ, var_name=X) # needed for getting ``self.n()``
+    def __init__(self, alpha, var_name='x', Dx='Dx'):
+        PSBasis.__init__(self, QQ, var_name=var_name) # needed for getting ``self.n()``
         if(alpha < -1):
             raise ValueError("Laguerre polynomials require an alpha parameter of at least -1")
         self.alpha = alpha
 
         n = self.n()
-        super(LaguerreBasis, self).__init__(-1/(n+1),(2*n+alpha+1)/(n+1),(n+alpha)/(n+1),X,Dx,base=QQ)
+        super(LaguerreBasis, self).__init__(-1/(n+1),(2*n+alpha+1)/(n+1),(n+alpha)/(n+1),var_name,Dx,base=QQ)
 
     def _first_compatibility(self):
         r'''
@@ -793,7 +793,7 @@ class HermiteBasis(OrthogonalBasis):
 
         INPUT:
         
-        * ``X``: the name for the operator representing the multiplication by `x`. By default, this 
+        * ``var_name``: the name for the operator representing the multiplication by `x`. By default, this 
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
@@ -805,9 +805,9 @@ class HermiteBasis(OrthogonalBasis):
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
-    def __init__(self, X='x', Dx='Dx'):
-        PSBasis.__init__(self, QQ, var_name=X) # needed for getting ``self.n()``
-        super(HermiteBasis, self).__init__(2,0,2*self.n(),X,Dx,base=QQ)
+    def __init__(self, var_name='x', Dx='Dx'):
+        PSBasis.__init__(self, QQ, var_name=var_name) # needed for getting ``self.n()``
+        super(HermiteBasis, self).__init__(2,0,2*self.n(),var_name,Dx,base=QQ)
 
         n = self.n(); Sn = self.Sn()
         self.set_derivation(Dx, 2*(n+1)*Sn, True)
@@ -840,7 +840,7 @@ class HermitePBasis(OrthogonalBasis):
 
         INPUT:
 
-        * ``X``: the name for the operator representing the multiplication by `x`. By default, this 
+        * ``var_name``: the name for the operator representing the multiplication by `x`. By default, this 
           takes the value "x".
         * ``Dx``: the name for the operator representing the derivation w.r.t. `x`. By default, this 
           takes the value "Dx".
@@ -852,9 +852,9 @@ class HermitePBasis(OrthogonalBasis):
         * :func:`pseries_basis.orthogonal.ortho_basis.OrthogonalBasis.get_mixed_equation`.
         * :func:`~OrthogonalBasis._first_compatibility`.
     '''
-    def __init__(self, X='x', Dx='Dx'):
-        PSBasis.__init__(self, QQ, var_name=X) # needed for getting ``self.n()``
-        super(HermitePBasis, self).__init__(1,0,self.n(),X,Dx,base=QQ)
+    def __init__(self, var_name='x', Dx='Dx'):
+        PSBasis.__init__(self, QQ, var_name=var_name) # needed for getting ``self.n()``
+        super(HermitePBasis, self).__init__(1,0,self.n(),var_name,Dx,base=QQ)
 
         n = self.n(); Sn = self.Sn()
         self.set_derivation(Dx, (n+1)*Sn, True)

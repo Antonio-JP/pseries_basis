@@ -50,7 +50,7 @@ class SievedBasis(FactorialBasis):
         * ``factors``: the basis that build the sieved basis.
         * ``cycle``: a tuple of length `m` indicating which factor use in each step.
         * ``init``: value for the constant element of the basis.
-        * ``X``: name of the operator representing the multiplication by `x`.
+        * ``var_name``: name of the operator representing the multiplication by `x`.
 
         EXAMPLES::
 
@@ -151,7 +151,7 @@ class SievedBasis(FactorialBasis):
             sage: column[0].gcrd(*column[1:])
             (n + 1)*Sn - 4*n - 2
     '''
-    def __init__(self, factors, cycle, init=1, X='x'):
+    def __init__(self, factors, cycle, init=1, var_name='x'):
         ## Checking the input
         if(not type(factors) in (list,tuple)):
             raise TypeError("The factors must be either a list or a tuple")
@@ -171,7 +171,7 @@ class SievedBasis(FactorialBasis):
         base = reduce(lambda R,S : pushout(R,S), [factor.base for factor in factors])
 
         ## Calling the previous constructor
-        super().__init__(X, base)
+        super().__init__(var_name, base)
 
         ## Other cached elements
         self.__init = init
@@ -652,7 +652,7 @@ class SievedBasis(FactorialBasis):
         new_cycle = self.cycle[shift[1]:] + self.cycle[:shift[1]]
         indices = [self.index(shift, i) for i in range(self.nfactors())]
         new_basis = [self.factors[i].increasing_basis(indices[i]) for i in range(self.nfactors())]
-        return SievedBasis(new_basis, new_cycle, X=str(self.universe.gens()[0]))
+        return SievedBasis(new_basis, new_cycle, var_name=str(self.universe.gens()[0]))
      
     def compatible_division(self, operator):
         r'''
@@ -774,7 +774,7 @@ class ProductBasis(SievedBasis):
 
         * ``factors``: list of :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis` to build the :class:`ProductBasis`.
         * ``init``: value for the constant element of the basis.
-        * ``X``: name of the operator representing the multiplication by `x`.
+        * ``var_name``: name of the operator representing the multiplication by `x`.
 
         EXAMPLES::
 
@@ -862,8 +862,8 @@ class ProductBasis(SievedBasis):
             sage: column[0].gcrd(*column[1:])
             (n^2 + 2*n + 1)*Sn - 16*n^2 - 16*n - 4
     '''
-    def __init__(self, factors, init=1, X='x'):
-        super(ProductBasis, self).__init__(factors, list(range(len(factors))),init,X)
+    def __init__(self, factors, init=1, var_name='x'):
+        super(ProductBasis, self).__init__(factors, list(range(len(factors))),init,var_name)
 
     @cached_method
     def increasing_basis(self, shift) -> "ProductBasis":
@@ -894,7 +894,7 @@ class ProductBasis(SievedBasis):
         k, j = self.extended_quo_rem(shift, F)
         return ProductBasis(
             [factors[i].increasing_basis(k) for i in range(j, F)]+[factors[i].increasing_basis(k+1) for i in range(j)],
-            X=str(self.universe.gens()[0])
+            var_name=str(self.universe.gens()[0])
         )
 
     def __repr__(self):

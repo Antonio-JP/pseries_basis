@@ -26,23 +26,30 @@ class FactorialBasis(PolyBasis):
 
         INPUT:
 
-        * ``X``: the name for the main variable (the name for `x`)
+        * ``var_name``: the name for the main variable (the name for `x`)
         * ``base``: base ring where the coefficients `a_n`, `b_n` and ``init`` must belong.
         
         List of abstract methods:
 
         * :func:`pseries_basis.psbasis.PSBasis.element`.
     '''
-    def __init__(self, X='x', base=QQ):
-        super(FactorialBasis,self).__init__(base=base, var_name=X)
+    def __init__(self, var_name='x', base=QQ, **kwds):
+        super().__init__(
+            base = base, var_name = var_name, # arguments for PolyBasis
+            **kwds # arguments for other builders (allow multi-inheritance)
+        )
 
-        ## Creating the compatibility with the multiplication by X (if possible)
-        try:
-            Sni = self.Sni(); n = self.n(); an = self.an; bn = self.bn
-            self.set_compatibility(X, -bn(n+1)/an(n+1) + (1/an(n))*Sni) # pylint: disable=invalid-unary-operand-type
-        except (AttributeError, TypeError) as e:
-            logger.info(f"Error with the compatibility with {X} --> {e}")
-            pass
+        ## Creating the compatibility with the multiplication by var_name (if possible)
+        self._create_compatibility_X()
+
+    def _create_compatibility_X(self):
+        if not self.has_compatibility(self.var_name):
+            try:
+                Sni = self.Sni(); n = self.n(); an = self.an; bn = self.bn
+                self.set_compatibility(self.var_name, -bn(n+1)/an(n+1) + (1/an(n))*Sni) # pylint: disable=invalid-unary-operand-type
+            except (AttributeError, TypeError) as e:
+                logger.info(f"Error with the compatibility with {self.var_name} --> {e}")
+                pass
 
     def _scalar_basis(self, factor) -> "FactorialBasis":
         r'''
@@ -326,13 +333,13 @@ class FactorialBasis(PolyBasis):
                 sage: B.compatible_division('x')[2](0, 2, 5) # xB_5(x) / B_3(x)
                 1/20*x^3 - 7/20*x^2 + 3/5*x
                 sage: x = B[1].parent().gens()[0]
-                sage: all(all(x*B[i] / B[j] == B.compatible_division('x')[2](0,i-j,i) for j in range(0,i)) for i in range(50))
+                sage: all(all(x*B[i] / B[j] == B.compatible_division('x')[2](0,i-j,i) for j in range(0,i)) for i in range(30))
                 True
             
             We can also check other operators like the shift `x \mapsto x+1`. Here `A = 1`::
 
                 sage: A = B.A('E')
-                sage: all(all(B[i](x=x+1) / B[j] == B.compatible_division('E')[2](0,i-A-j,i) for j in range(0,i-1)) for i in range(50))
+                sage: all(all(B[i](x=x+1) / B[j] == B.compatible_division('E')[2](0,i-A-j,i) for j in range(0,i-1)) for i in range(30))
                 True
                 sage: B.compatible_division('E')[2](0,1,n)
                 (1/(n^2 - n))*x^2 + ((-n + 3)/(n^2 - n))*x + (-n + 2)/(n^2 - n)
@@ -615,7 +622,7 @@ class SFactorialBasis(FactorialBasis):
           be convertible to the ring obtained with :func:`~pseries_basis.psbasis.PSBasis.OB`.
         * ``bn``: the sequence of constant coefficients to build the factorial basis. It must 
           be convertible to the ring obtained with :func:`~pseries_basis.psbasis.PSBasis.OB`.
-        * ``X``: the name for the main variable (the name for `x`)
+        * ``var_name``: the name for the main variable (the name for `x`)
         * ``init``: the value of `P_0(x)`. Must be a constant in ``self.base``
         * ``base``: base ring where the coefficients `a_n`, `b_n` and ``init`` must belong.
 
@@ -647,8 +654,14 @@ class SFactorialBasis(FactorialBasis):
             ...
             ValueError: The leading coefficient for the extra factor must always be non-zero
     '''
-    def __init__(self, an, bn, X='x', init=1, base=QQ):
-        PolyBasis.__init__(self, base, X) # initializing some intermediate parts of the basis
+    def __init__(self, an=None, bn=None, var_name='x', init=1, base=QQ, **kwds):
+        if an is None or bn is None:
+            raise TypeError("The coefficients for `an` and `bn` must be both given (no default value for them)")
+        super().__init__(
+            var_name = var_name, base = base, # arguments for PolyBasis
+            **kwds # arguments for other xconstructors (allow multi-inheritance)
+        )
+
         ## Checking the first element
         init = self.base(init)
         if(init == 0):
@@ -673,8 +686,8 @@ class SFactorialBasis(FactorialBasis):
             bn = self.OB()(bn) # original code for rational functions
         self.__bn = bn
 
-        ## Initializing the FactorialBasis structure
-        FactorialBasis.__init__(self, X, base)
+        ## Creating the compatibility with the multiplication by var_name (if possible)
+        self._create_compatibility_X()
 
         ## Extra cached variables
         self.__cached_increasing = {}
@@ -779,7 +792,7 @@ class SFactorialBasis(FactorialBasis):
         return SFactorialBasis(
             self.an(n)*to_mult,             # the generic linear coefficient of the factorial basis
             self.bn(n)*to_mult,             # the generic constant coefficient of the factorial basis
-            X=str(self.universe.gens()[0]), # the name of the variable for the polynomials
+            var_name=str(self.universe.gens()[0]), # the name of the variable for the polynomials
             init=self[0]*factor(n=0),       # first element of the basis
             base=self.base                  # base ring for the coefficients
         )
@@ -815,7 +828,7 @@ class SFactorialBasis(FactorialBasis):
         return SFactorialBasis(
             self.an(n)*quotient(n=n-1),       # the generic linear coefficient of the factorial basis
             self.bn(n)*quotient(n=n-1),       # the generic constant coefficient of the factorial basis
-            X=str(self.universe.gens()[0]),   # the name of the variable for the polynomials
+            var_name=str(self.universe.gens()[0]),   # the name of the variable for the polynomials
             init=self[0]*factor(n=0),         # first element of the basis
             base=self.base                    # base ring for the coefficients
         )
@@ -1037,7 +1050,7 @@ class SFactorialBasis(FactorialBasis):
         return SFactorialBasis(
             self.an(n+shift),               # new linear coefficient for the basis
             self.bn(n+shift),               # new constant coefficient for the basis
-            X=str(self.universe.gens()[0]), # name of the polynomial variable
+            var_name=str(self.universe.gens()[0]), # name of the polynomial variable
             base=self.base                  # base ring for the coefficients
         )
 
@@ -1059,12 +1072,23 @@ class RootSequenceBasis(FactorialBasis):
         * ``rho``: the sequence of roots for the factorial basis.
         * ``cn``: the sequence of leading coefficients for the factorial basis. It must 
           be convertible to the ring obtained with :func:`~pseries_basis.psbasis.PSBasis.OB`.
-        * ``X``: the name for the operator representing the multiplication by `x`.
+        * ``var_name``: the name for the operator representing the multiplication by `x`.
         * ``base``: base ring where the coefficients `a_n`, `b_n` and ``init`` must belong.
 
-        TODO: add examples.
+        EXAMPLES::
+
+            sage: from pseries_basis import *
+            sage: RootSequenceBasis(lambda n : 0, lambda n : 1)[:5]
+            [1, x, x^2, x^3, x^4]
     '''
-    def __init__(self, rho, cn, X='x', base = QQ):
+    def __init__(self, rho = None, cn = None, var_name='x', base = QQ, **kwds):
+        if rho is None or cn is None:
+            raise TypeError("The coefficients for `rho` and `cn` must be both given (no default value for them)")
+        super().__init__(
+            var_name=var_name, base=base, # arguments for FactorialBasis
+            **kwds # arguments for other builders (allowing multi-inheritance)
+        )
+
         ## Checking the input of leading coefficient
         if(cn in self.OB() and self.valid_factor(self.OB()(cn))):
             self.__cn = self.OB()(cn)
@@ -1075,10 +1099,10 @@ class RootSequenceBasis(FactorialBasis):
 
         ## Saving the sequence of roots
         self.__rho = rho
-        
-        ## Initializing the PolyBasis structure
-        super(RootSequenceBasis,self).__init__(X, base)   
 
+        ## Creating the compatibility with the multiplication by var_name (if possible)
+        self._create_compatibility_X()
+        
         ## Other cached elements
         self.__cached_increasing = {}
 
@@ -1247,7 +1271,7 @@ class RootSequenceBasis(FactorialBasis):
         return RootSequenceBasis(
             lambda n : self.rho(n+shift),   # new root sequence
             lambda n : self.cn(n+shift),    # new sequence for leading coefficients    
-            X=str(self.universe.gens()[0]), # name of the polynomial variable
+            var_name=str(self.universe.gens()[0]), # name of the polynomial variable
             base=self.base                  # base ring for the coefficients
         )
 
@@ -1269,9 +1293,17 @@ class ScalarBasis(FactorialBasis):
         * ``scale``: a sequence of coefficients `(c_n)` valid as a scalar factor. It has to be 
           a hypergeometric sequence.
 
-        TODO: add examples
+        EXAMPLES::
+
+            sage: from pseries_basis import *
+            sage: n = var('n')
+            sage: B = ScalarBasis(PowerBasis(), factorial(n))
+            sage: B[:5]
+            [1, x, 2*x^2, 6*x^3, 24*x^4]
     '''
-    def __init__(self, basis : FactorialBasis, scale):
+    def __init__(self, basis : FactorialBasis = None, scale = None, **kwds):
+        if basis is None or scale is None:
+            raise TypeError("A basis and a scaling sequence must be provided")
         # Checking the basis argument
         if(not isinstance(basis, FactorialBasis)):
             raise TypeError("The basis to scale must be a Factorial basis")
@@ -1284,12 +1316,20 @@ class ScalarBasis(FactorialBasis):
         self.__quot = quot
                
         ## Setting data for the new basis
+        # removing possible repeated arguments
+        kwds.pop("var_name", None); kwds.pop("base", None)
         super().__init__(
-            str(basis.universe.gens()[0]),
-            basis.base
+            var_name=basis.var_name, base=basis.base,# arguments for FactorialBasis
+            **kwds # arguments for other builders (allowing multi-inheritance)
         )
+        
         self.__basis = basis
         self.__scale = scale
+        
+        ## Creating the compatibility with the multiplication by var_name (if possible)
+        self._create_compatibility_X()
+
+        ## Other caching variables
         self.__cached_increasing = {}
 
     @property
@@ -1517,7 +1557,7 @@ class FallingBasis(SFactorialBasis):
         * ``dilation``: the natural number corresponding to the parameter `a`.
         * ``shift``: the shift corresponding to the value `b`.
         * ``decay``: the value for `c`
-        * ``X``: the name for the operator representing the multiplication by `x`. If not given, we will
+        * ``var_name``: the name for the operator representing the multiplication by `x`. If not given, we will
           consider `x` as default.
         * ``E``: the name for the operator representing the shift of `x` by `c/a`. If not given, we will 
           consider "E" as default.
@@ -1525,8 +1565,7 @@ class FallingBasis(SFactorialBasis):
 
         TODO check the compatibility with shifts using the roots. Is there a generator of all compatibilities?
     '''
-    def __init__(self, dilation, shift, decay, X='x', E=None, base=QQ):
-        PolyBasis.__init__(self, base, X) # initializing some default variables for using ``self.n``
+    def __init__(self, dilation, shift, decay, var_name='x', E=None, base=QQ):
         if(not dilation in ZZ or dilation <= 0):
             raise ValueError("The dilation of the basis must be a natural number")
         dilation = ZZ(dilation); shift = base(shift); decay = base(decay)
@@ -1537,8 +1576,8 @@ class FallingBasis(SFactorialBasis):
         quot = c/a
         self.__E_name = E if E != None else "Id" if quot == 0 else 'E' if quot == 1 else f'E{quot}'.replace("-","_").replace("/", "__")
 
-        n = self.n()
-        super(FallingBasis, self).__init__(a, b-c*(n-1), X)
+        n = PolyBasis(base, var_name).n() # we need to create a dummy simple basis to create the `n`
+        super(FallingBasis, self).__init__(a, b-c*(n-1), var_name)
 
         Sn = self.Sn(); n = self.n()
         self.set_endomorphism(self.__E_name, c*(n+1)*Sn + 1, True)
@@ -1574,7 +1613,7 @@ class FallingBasis(SFactorialBasis):
             self.__a,                       # the dilation is the same
             self.__b - shift*self.__c,      # the starting shift has to be adapted
             self.__c,                       # the decay stays the same
-            X=str(self.universe.gens()[0]), # name of the main variable
+            var_name=str(self.universe.gens()[0]), # name of the main variable
             E=self.__E_name,                # the name for the shift does not change
             base = self.base                # the ring for the coefficients
             )
@@ -1627,7 +1666,7 @@ class PowerBasis(FallingBasis):
 
         * ``dilation``: the natural number corresponding to the value `a`.
         * ``shift``: the shift corresponding to the value `b`.
-        * ``X``: the name for the operator representing the multiplication by `x`. If not given, we will
+        * ``var_name``: the name for the operator representing the multiplication by `x`. If not given, we will
           consider `x` as default.
         * ``Dx``: the name for the operator representing the derivation by `x`. If not given, we will
           consider `Dx` as default.
@@ -1635,8 +1674,8 @@ class PowerBasis(FallingBasis):
         
         TODO: add examples
     '''
-    def __init__(self, dilation=1, shift=0, X='x', Dx='Dx', base=QQ):
-        super(PowerBasis, self).__init__(dilation,shift,0,X,'Id',base)
+    def __init__(self, dilation=1, shift=0, var_name='x', Dx='Dx', base=QQ):
+        super(PowerBasis, self).__init__(dilation,shift,0,var_name,'Id',base)
 
         self.__Dx_name = Dx
 
@@ -1708,14 +1747,14 @@ class BinomialBasis(SFactorialBasis):
 
         * ``dilation``: the natural number corresponding to the value `a`.
         * ``shift``: the shift corresponding to the value `b`.
-        * ``X``: the name for the operator representing the multiplication by `x`. If not given, we will
+        * ``var_name``: the name for the operator representing the multiplication by `x`. If not given, we will
           consider `x` as default.
         * ``E``: the name for the operator representing the shift of `x` by `1`. If not given, we will
           consider `E` as default. The operator of shift by `1/a` will be named by adding a `t` to the name.
         * ``base``: base ring where the coefficient `b` must belong.
     '''
-    def __init__(self, dilation=1, shift=0, X='x', E='E', base=QQ):
-        PolyBasis.__init__(self, base, X) # initializing some default variables for using ``self.n``
+    def __init__(self, dilation=1, shift=0, var_name='x', E='E', base=QQ):
+        PolyBasis.__init__(self, base, var_name) # initializing some default variables for using ``self.n``
         if(not dilation in ZZ or dilation <= 0):
             raise ValueError("The dilation of the basis must be a natural number")
         dilation = ZZ(dilation); shift = base(shift)
@@ -1724,7 +1763,7 @@ class BinomialBasis(SFactorialBasis):
         self.__E_name = E
 
         n = self.n()
-        super(BinomialBasis, self).__init__(a/n, (b-n + 1)/n, X, base=base)
+        super(BinomialBasis, self).__init__(a/n, (b-n + 1)/n, var_name, base=base)
 
         Sn = self.Sn()
         ## Adding the compatibility by $x \mapsto x+1/a$:
