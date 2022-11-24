@@ -553,9 +553,6 @@ class QScalarBasis(QFactorialBasis, ScalarBasis):
     def __init__(self, basis: QFactorialBasis = None, scale = None, **kwds):
         if not isinstance(basis, QFactorialBasis):
             raise TypeError(f"The given basis must be a QFactorialBasis. Got {basis.__class__}")
-        is_hyper, _ = basis.is_hypergeometric(scale)
-        if not is_hyper:
-            raise TypeError(f"The given scaling sequence ([{scale}]) must be `q`-hypergeometric.")
 
         super().__init__(
             q_name = str(basis.q()), var_name = basis.var_name, base=basis.base, # arguments for QFactorialBasis

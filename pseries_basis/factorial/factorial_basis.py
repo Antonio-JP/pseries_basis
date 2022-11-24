@@ -1304,13 +1304,6 @@ class ScalarBasis(FactorialBasis):
         # Checking the basis argument
         if(not isinstance(basis, FactorialBasis)):
             raise TypeError("The basis to scale must be a Factorial basis")
-
-        ## Checking the scaling factor
-        hyper, quot = basis.is_hypergeometric(scale)
-        if(not (hyper and basis.valid_factor(quot))):
-            raise TypeError("The scaling factor is not valid")
-        self.__scale = scale
-        self.__quot = quot
                
         ## Setting data for the new basis
         # removing possible repeated arguments
@@ -1320,8 +1313,14 @@ class ScalarBasis(FactorialBasis):
             **kwds # arguments for other builders (allowing multi-inheritance)
         )
         
-        self.__basis = basis
+
+        ## Checking the scaling factor
+        hyper, quot = basis.is_hypergeometric(scale)
+        if(not (hyper and basis.valid_factor(quot))):
+            raise TypeError("The scaling factor is not valid")
         self.__scale = scale
+        self.__quot = quot
+        self.__basis = basis
         
         ## Creating the compatibility with the multiplication by var_name (if possible)
         self._create_compatibility_X()
@@ -1336,11 +1335,14 @@ class ScalarBasis(FactorialBasis):
     @property
     def scale(self) -> Sequence:
         r'''Property for getting the scaling factor'''
-        return LambdaSequence(lambda n : self.__scale(n=n), self.base, allow_sym=True)
+        if isinstance(self.__scale, Sequence):
+            return self.__scale
+        else:
+            return LambdaSequence(lambda n : self.__scale(n=n), self.base, allow_sym=True)
     @property
     def quot(self) -> Sequence:
         r'''Property for getting the quotient of the scaling factor'''
-        return LambdaSequence(lambda n : self.__quot(n=n), self.base, allow_sym=True)
+        return self.scale.shift()/self.scale
 
     def change_base(self, base):
         return ScalarBasis(
