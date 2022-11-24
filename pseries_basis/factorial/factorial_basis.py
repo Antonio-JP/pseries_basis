@@ -598,9 +598,6 @@ class FactorialBasis(PolyBasis):
 
         return (A, B, m, lambda i,j,k: coeffs[i][j+A](n=k))
 
-    def __repr__(self):
-        return "FactorialBasis -- WARNING: this is an abstract class"
-
 class SFactorialBasis(FactorialBasis):
     r'''
         Class for representing a simple factorial basis.

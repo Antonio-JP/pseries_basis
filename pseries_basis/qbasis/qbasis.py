@@ -117,7 +117,7 @@ class QBasis(PSBasis):
     def Q(self):
         return self.n()
     
-    def is_q_hypergeometric(self, element):
+    def is_hypergeometric(self, element):
         r'''
             Method to check if a symbolic expression is `q`-hypergeometric or not.
 
@@ -135,7 +135,7 @@ class QBasis(PSBasis):
 
                 sage: from pseries_basis import *
                 sage: B = QBasis(QQ); q,q_n,_,_ = B.recurrence_vars()
-                sage: B.is_q_hypergeometric(B.QPochhammer(B.q())) # (q;q)_n is q-hypergeometric
+                sage: B.is_hypergeometric(B.QPochhammer(B.q())) # (q;q)_n is q-hypergeometric
                 True, -q*q_n + 1
 
             TODO: Add examples and implement the method to work also with some specific sequences.
@@ -158,8 +158,6 @@ class QBasis(PSBasis):
             raise NotImplementedError("The `q`-hypergeometric checker for symbolic expressions is not yet implemented")
         
         return False, None
-
-
 
     def valid_factor(self, element):
         r'''
@@ -410,10 +408,6 @@ class QBasis(PSBasis):
             str(self.q()) # the name for `q` stays the same
         )
 
-    ## Representation methods
-    def __repr__(self):
-        return f"QBasis -- WARNING: this is an abstract class"
-
 class QSequentialBasis(QBasis, SequenceBasis):
     r'''
         Class for `q`-formal power series given as a 2-dimensional sequence.
@@ -437,10 +431,6 @@ class QSequentialBasis(QBasis, SequenceBasis):
 
     def mult_in(self, prod):
         return QSequentialBasis(self.base, LambdaSequence(lambda n,k : (prod*self[n])[k], self.base, 2), self.by_degree())
-
-    ## Representation methods
-    def __repr__(self):
-        return f"QSequentialBasis -- WARNING: this is an abstract class"
 
 ## Transforming Polynomial bases to the `q`-setting
 class QPolyBasis(QBasis, PolyBasis):
@@ -468,9 +458,6 @@ class QPolyBasis(QBasis, PolyBasis):
     @PSBasis.evaluation_seq.getter
     def evaluation_seq(self) -> Sequence:
         raise NotImplementedError("The evaluation of `q`-series is not property defined")
-
-    def __repr__(self):
-        return "QPolyBasis -- WARNING: this is an abstract class"
 
 class QFactorialBasis(QPolyBasis, FactorialBasis):
     def __init__(self, q_name='q', var_name='q_n', base=QQ, **kwds):
@@ -566,7 +553,7 @@ class QScalarBasis(QFactorialBasis, ScalarBasis):
     def __init__(self, basis: QFactorialBasis = None, scale = None, **kwds):
         if not isinstance(basis, QFactorialBasis):
             raise TypeError(f"The given basis must be a QFactorialBasis. Got {basis.__class__}")
-        is_hyper, _ = basis.is_q_hypergeometric(scale)
+        is_hyper, _ = basis.is_hypergeometric(scale)
         if not is_hyper:
             raise TypeError(f"The given scaling sequence ([{scale}]) must be `q`-hypergeometric.")
 

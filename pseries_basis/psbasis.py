@@ -1875,7 +1875,7 @@ class PSBasis(Sequence):
     
     ### MAGIC REPRESENTATION METHODS
     def __repr__(self):
-        return "PSBasis -- WARNING: this is an abstract class"
+        return f"{self.__class__.__name__} -- WARNING: this is an abstract class"
     
     ### OTHER ALIASES FOR METHODS
     A = get_lower_bound #: alias for the method :func:`get_lower_bound`, according to notation in :arxiv:`2202.05550`
@@ -2029,9 +2029,6 @@ class SequenceBasis(PSBasis):
         '''
         return SequenceBasis(self.base, LambdaSequence(lambda n,k : (prod*self[n])[k], self.base, 2), self.by_degree())
 
-    def __repr__(self):
-        return f"SequenceBasis -- WARNING: this is an abstract class"
-
 class PolyBasis(PSBasis):
     r'''
         Abstract class for a polynomial power series basis. 
@@ -2090,9 +2087,6 @@ class OrderBasis(PSBasis):
 
     def is_quasi_func_triangular(self):
         return True
-
-    def __repr__(self):
-        return "OrderBasis -- WARNING: this is an abstract class"
 
 def check_compatibility(basis, operator, action, bound=100):
     r'''
