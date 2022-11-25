@@ -36,6 +36,7 @@ class Sequence(SetMorphism):
         self.__alls = allow_sym
         parent = SequenceSet(dim, universe)
         func = (lambda n : self.element(*n)) if dim > 1 else (lambda n : self.element(n))
+        self.__CACHE_ELEMENTS = {}
 
         super().__init__(parent, func)
 
@@ -81,20 +82,20 @@ class Sequence(SetMorphism):
         '''
         return LambdaSequence(lambda *n : self._element(*n), new_universe, dim=self.dim, allow_sym=self.allow_sym)
 
-    @cached_method
     def element(self, *indices : int):
-        try:
-            output = self._element(*indices)
-        except ZeroDivisionError:
-            return oo
-        except:
-            return NaN
-        if (self.universe is None) or (self.allow_sym and not output in self.universe): # we allow None universe and also evaluation that do nto lie in the universe
-            return output
-        elif output in (NaN, oo):
-            return output
-        else:
-            return self.universe(output)
+        if not tuple(indices) in self.__CACHE_ELEMENTS:
+            try:
+                output = self._element(*indices)
+            except ZeroDivisionError:
+                output = oo
+            except:
+                output = NaN
+
+            if (not ((self.universe is None) or (self.allow_sym and not output in self.universe))) and (not output in (NaN, oo)):
+                output = self.universe(output)
+            
+            self.__CACHE_ELEMENTS[tuple(indices)] = output
+        return self.__CACHE_ELEMENTS[tuple(indices)]
 
     def _element(self, *indices : int):
         raise NotImplementedError("Method '_element' not implemented")
