@@ -9,6 +9,7 @@ from sage.all import prod, PolynomialRing, QQ, ZZ, cached_method, Matrix, ceil #
 from ..psbasis import PSBasis, PolyBasis, SequenceBasis
 from ..factorial.factorial_basis import FactorialBasis, RootSequenceBasis, SFactorialBasis, ScalarBasis
 from ..misc.ore import get_qshift_algebra, get_double_qshift_algebra, get_rational_algebra, has_variable
+from ..misc.qsequences import QLambdaSequence, QSequence
 from ..misc.sequences import LambdaSequence, Sequence
 
 #######################################################################################################
@@ -282,7 +283,7 @@ class QBasis(PSBasis):
 
             Check the class :class:`QPowerBasis` to see how to obtain a basis and compatibilities using these sequences.
         '''
-        return LambdaSequence(lambda n : self.q()**(a*n), self.base)
+        return QLambdaSequence(lambda qn : qn**a, self.base, q_name = str(self.q()))
 
     @cached_method
     def QNaturals(self):
@@ -317,7 +318,8 @@ class QBasis(PSBasis):
                 sage: B2.QNaturals()
                 Sequence over [Fraction Field of Multivariate Polynomial Ring in a, c over Rational Field]: (0, 1, c + 1,...)
         '''
-        return LambdaSequence(lambda n : sum(self.q()**i for i in range(n)), self.base)
+        q = self.q()
+        return QLambdaSequence(lambda qn : (1-qn)/(1-q), self.base, q_name=str(q))
 
     @cached_method
     def QFactorial(self):
@@ -353,7 +355,8 @@ class QBasis(PSBasis):
                 sage: B2.QFactorial()
                 Sequence over [Fraction Field of Multivariate Polynomial Ring in a, c over Rational Field]: (1, 1, c + 1,...)
         '''
-        return LambdaSequence(lambda n : qfactorial(n, self.q()), self.base)
+        q = self.q()
+        return QLambdaSequence(lambda qn : qfactorial(qn,q), self.base, q_name = str(q))
 
     @cached_method
     def QPochhammer(self, a):
@@ -392,7 +395,7 @@ class QBasis(PSBasis):
                 sage: (B.QPochhammer(B.q())/LambdaSequence(lambda n : (1-B.q())**n, B.base) - B.QFactorial())[:10]
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         '''
-        return LambdaSequence(lambda n : qpochhammer(a, n, self.q()), self.base)
+        return QLambdaSequence(lambda qn : qpochhammer(a, qn, self.q()), self.base)
  
     def shift_in(self, shift):
         raise NotImplementedError(f"Method 'shift_in' not implemented for class {self.__class__}")
@@ -665,18 +668,22 @@ def check_q_compatibility(basis : QBasis, operator, action, bound=100):
             for r in range(m)) 
         for k in range(mm, bound))
 
-def qpochhammer(a, n : int, q):
-    '''Method for obtaining (a;q)_n'''
-    return prod(1-a*q**k for k in range(n))
+def qpochhammer(a, qn, q):
+    ''' Recursive definition of (a;q)_n'''
+    if qn == 1: # base case of q**0
+        return 1
+    return qpochhammer(a, qn/q, q) * (1-a*qn/q)
 
-def qfactorial(n:int, q):
-    '''Method for obtaining [n]_q! = (q;q)_n/(1-q)^n'''
-    return qpochhammer(q, n, q)/(1-q)**n
+def qfactorial(qn, q):
+    '''Recursive definition of [n]_q! = (q;q)_n/(1-q)^n'''
+    if qn == 1: # base case of q**0
+        return 1
+    return qfactorial(qn/q, q) * (1-qn)/(1-q)
 
-def qbinomial(n:int, m:int, q):
+def qbinomial(qn, qm, q):
     '''Method for obtaining [n,m]_q = [n]_q!/([m]_q![n-m]_q!)'''
-    if m < 0 or m > n:
+    if qm(**{str(q) : 2}) < 1 or (qn/qm)(**{str(q) : 2}) < 1: # base cases of m < 0 or n < m
         return 0
-    return qfactorial(n,q)/(qfactorial(m, q)*qfactorial(n-m, q))
+    return qfactorial(qn,q)/(qfactorial(qm, q)*qfactorial(qn/qm, q))
 
 __all__ = ["QBasis", "QSequentialBasis", "QBinomialBasis", "check_q_compatibility"]
