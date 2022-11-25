@@ -24,7 +24,7 @@ class QSequence(Sequence):
 
         self.__q = q
         super().__init__(
-            universe, dim=dim, allow_sym=allow_symb, # arguments for Sequence
+            universe=universe, dim=dim, allow_sym=allow_symb, # arguments for Sequence
             **kwds # other arguments (allowing multi-inheritance)
         )
 
