@@ -28,7 +28,9 @@ class Sequence(SetMorphism):
     r'''
         Main class for sequences. It defines a universe for its elements and a general interface to access the sequence.
     '''
-    def __init__(self, universe, dim : int =1, allow_sym = False):
+    def __init__(self, universe=None, dim : int =1, allow_sym = False):
+        if universe is None:
+            raise TypeError("The universe of a sequence must never be None")
         self.__universe = universe
         self.__dim = dim
         self.__alls = allow_sym
@@ -332,8 +334,11 @@ class LambdaSequence(Sequence):
             sage: F[:10]
             [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
     '''
-    def __init__(self, func, universe, dim = 1, allow_sym = False):
-        super().__init__(universe, dim=dim, allow_sym=allow_sym)
+    def __init__(self, func=None, universe=None, dim = 1, allow_sym = False, **kwds):
+        super().__init__(
+            universe, dim=dim, allow_sym=allow_sym, # arguments for Sequence
+            **kwds # other arguments for builders (allowing multi-inheritance)
+        )
 
         self.__func = func
 
@@ -382,13 +387,19 @@ class ExpressionSequence(Sequence):
             sage: F
             Sequence over [Integer Ring]: factorial(x)
     '''
-    def __init__(self, expr, universe, variables=None):
+    def __init__(self, expr=None, universe=None, variables=None, **kwds):
+        if expr == None:
+            raise TypeError("An ExpressionSequence requires an expression different than 'None'")
+            
         if not expr in SR:
             raise ValueError("The expression must be something we can convert to an expression")
         expr = SR(expr)
         variables = expr.variables() if variables is None else tuple(variables)
 
-        super().__init__(universe, len(variables), True)
+        super().__init__(
+            universe, len(variables), True # arguments for Sequence
+            **kwds # arguments for other builders (allowing multi-inheritance)
+        )
         self.__generic = expr
         self.__vars = variables
 
