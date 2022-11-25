@@ -390,7 +390,6 @@ class ExpressionSequence(Sequence):
     def __init__(self, expr=None, universe=None, variables=None, **kwds):
         if expr == None:
             raise TypeError("An ExpressionSequence requires an expression different than 'None'")
-            
         if not expr in SR:
             raise ValueError("The expression must be something we can convert to an expression")
         expr = SR(expr)

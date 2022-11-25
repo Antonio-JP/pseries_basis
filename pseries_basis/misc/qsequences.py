@@ -6,7 +6,7 @@ r'''
     appearance of the argument `n` in a `q`-sequence is not arbitrary, but always appearing in the form `q^n`.
 '''
 from .ore import has_variable
-from .sequences import Sequence, LambdaSequence
+from .sequences import Sequence, LambdaSequence, ExpressionSequence
 
 class QSequence(Sequence):
     r'''
@@ -44,5 +44,17 @@ class QLambdaSequence(QSequence, LambdaSequence):
             raise TypeError("The universe of a sequence must never be None")
         super().__init__(
             universe=universe, q_name=q_name, dim=dim, allow_symb=allow_sym, # arguments for QSequence
-            func=func, **kwds# arguments for other builders (like LambdaSequence) allowing multi-inheritance
+            func=func, **kwds # arguments for other builders (like LambdaSequence) allowing multi-inheritance
         )
+
+class QExpressionSequence(QSequence, ExpressionSequence):
+    r'''
+        Adaptation of :class:`.sequences.ExpressionSequence` to the `q`-sequences setting
+    '''
+    def __init__(self, expr=None, universe=None, variables=None, q_name="q", **kwds):
+        super().__init__(
+            universe=universe, q_name=q_name, dim=None,allow_symb=True, # arguments for QSequence
+            expr=expr, variables=variables, **kwds # arguments for other builders (like ExpressionSequence) allowing multi-inheritance    
+        )
+
+__all__ = ["QSequence", "QLambdaSequence", "QExpressionSequence"]
