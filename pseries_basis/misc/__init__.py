@@ -9,3 +9,4 @@ from .io import *
 from .noncom_rings import *
 from .ore import *
 from .sequences import *
+from .qsequences import *
