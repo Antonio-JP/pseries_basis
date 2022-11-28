@@ -16,6 +16,8 @@ from sage.categories.homset import Homset
 from sage.categories.pushout import CoercionException, pushout
 from sage.categories.morphism import SetMorphism # pylint: disable=no-name-in-module
 from sage.categories.sets_cat import Sets
+from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
+from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.structure.unique_representation import UniqueRepresentation
 
@@ -507,4 +509,164 @@ class ExpressionSequence(Sequence):
     def __repr__(self) -> str:
         return f"Sequence{f' in {self.__vars}' if self.dim > 1 else ''} over [{self.universe}]: {self.generic()}"
 
-__all__ = ["Sequence", "SequenceSet", "LambdaSequence", "ExpressionSequence"]
+class RationalSequence(Sequence):
+    def __init__(self, func=None, ring=None, variables=None, **kwds):
+        func, ring, variables, universe = RationalSequence._init_arguments(func, ring, variables)
+        self.__generic = func
+        self.__ring = ring
+        self.__variables = variables
+
+        # removing possible repeated arguments
+        kwds.pop("universe",None); kwds.pop("dim", None); kwds.pop("allow_sym", None)
+        super().__init__(
+            universe=universe, dim=len(self.__variables), allow_sym=True, # arguments for Sequence
+            **kwds # other arguments (allowing multi-inheritance)
+        )
+
+    @property
+    def generic(self):
+        r'''
+            Method that returns the generic function for this sequence as a rational function (or polynomial)
+
+            This method returns the function that defines this sequence. Use method :func:`variables` 
+            to obtain the list (in appropriate order) of variables that are used for this sequence.
+        '''
+        return self.__generic
+
+    @property
+    def variables(self):
+        r'''
+            Method that returns the variables of this sequence.
+
+            This method returns the (sorted) tuple of variables that defines this sequence. Use method :func:`generic` 
+            to obtain the defining function of this sequence.
+        '''
+        return self.__variables
+
+    @property
+    def ring(self):
+        return self.__ring
+
+    @staticmethod
+    def _init_arguments(func, ring, variables):
+        if func is None:
+            raise ValueError("A rational sequence require a function to be defined")
+        # checking the input to decide the universe and the dimension of the sequence
+        R = func.parent()
+        if ring != None:
+            R = pushout(R, ring)
+
+        if R.is_field(): # it may be a rational function space
+            if not (is_PolynomialRing(R.base()) or is_MPolynomialRing(R.base())):
+                raise TypeError("The ring of the given function must be a polynomial field or its field of fractions")
+        if variables == None:
+            variables = R.gens()
+        else:
+            gen_names = [str(g) for g in R.gens()]
+            
+            if any(str(v) not in gen_names for v in variables):
+                raise ValueError("The given variables are not in the ring provided with the function")
+            variables = tuple([R(str(v)) for v in variables])
+        universe = R.base_ring() if len(variables) == R.ngens() else R
+        return func, ring, variables, universe
+
+    def change_universe(self, new_universe):
+        if len(self.variables) != self.ring.ngens():
+            return RationalSequence(func=self.generic, ring=new_universe, variables=self.variables)
+        else:
+            return RationalSequence(func=self.generic.change_ring(new_universe), variables=self.variables)
+
+    def _element(self, *indices: int):
+        vars = self.variables
+        return self.generic(**{str(vars[i]) : indices[i] for i in range(len(indices))})
+
+    def _shift(self, *shifts):
+        vars = self.variables
+        evaluations = [vars[i] + shifts[i] for i in range(self.dim)]
+        new_expr = self.generic(**{str(vars[i]) : evaluations[i] for i in range(self.dim)})
+
+        return RationalSequence(func=new_expr, ring=self.ring, variables=vars)
+
+    # basic arithmetic methods
+    def __add__(self, other):
+        if not isinstance(other, RationalSequence) or self.dim != other.dim:
+            return super().__add__(other)
+
+        if [str(v) for v in self.variables] != [str(v) for v in other.variables]:
+            return NotImplemented
+
+        new_ring = pushout(self.ring, other.ring)
+        new_func = new_ring(self.generic) + new_ring(other.generic)
+        return RationalSequence(func=new_func, ring=new_ring, variables=self.variables)
+
+    def __sub__(self, other):
+        if not isinstance(other, RationalSequence) or self.dim != other.dim:
+            return super().__add__(other)
+
+        if [str(v) for v in self.variables] != [str(v) for v in other.variables]:
+            return NotImplemented
+
+        new_ring = pushout(self.ring, other.ring)
+        new_func = new_ring(self.generic) - new_ring(other.generic)
+        return RationalSequence(func=new_func, ring=new_ring, variables=self.variables)
+
+    def __mul__(self, other):
+        if isinstance(other, RationalSequence) and self.dim == other.dim:
+            if [str(v) for v in self.variables] != [str(v) for v in other.variables]:
+                return NotImplemented
+
+            new_ring = pushout(self.ring, other.ring)
+            new_func = new_ring(self.generic) * new_ring(other.generic)
+            return RationalSequence(func=new_func, ring=new_ring, variables=self.variables)
+        elif not isinstance(other, Sequence):
+            universe = pushout(self.universe, parent(other))
+            if len(self.variables) != self.ring.ngens():
+                new_ring = universe
+            else:
+                new_ring = self.ring.change_ring(universe)
+            new_func = new_ring(other)*new_ring(self.generic)
+            return RationalSequence(func=new_func, ring=new_ring, variables=self.variables)
+        return super().__mul__(other)
+
+    def __truediv__(self, other):
+        if isinstance(other, RationalSequence) and self.dim == other.dim:
+            if [str(v) for v in self.variables] != [str(v) for v in other.variables]:
+                return NotImplemented
+
+            new_ring = pushout(self.ring, other.ring)
+            new_func = new_ring(self.generic) / new_ring(other.generic)
+            return RationalSequence(func=new_func, ring=new_ring, variables=self.variables)
+        elif not isinstance(other, Sequence):
+            universe = pushout(self.universe, parent(other))
+            if len(self.variables) != self.ring.ngens():
+                new_ring = universe
+            else:
+                new_ring = self.ring.change_ring(universe)
+            new_func = new_ring(self.generic) / new_ring(other)
+            return RationalSequence(func=new_func, ring=new_ring, variables=self.variables)
+        return super().__truediv__(other)
+        
+    def __neg__(self):
+        return RationalSequence(func=-self.generic, ring=self.ring, variables=self.variables)
+    
+    def _subsequence(self, *vals):
+        vars = self.variables
+        new_expr = self.generic(**{str(vars[i]) : vals[i] for i in range(len(vals))}) 
+        rem_vars = vars[len(vals):]
+        return RationalSequence(func=new_expr, ring=self.ring, variables=rem_vars)
+
+    # equality and hash methods
+    def __eq__(self, other):
+        if not isinstance(other, RationalSequence):
+            return False
+        if [str(v) for v in self.variables()] != [str(v) for v in other.variables]:
+            return False
+        return self.generic == other.generic
+    
+    def __hash__(self):
+        return hash(self.__generic)
+
+    def __repr__(self) -> str:
+        return f"Sequence{f' in {self.variables}' if self.dim > 1 else ''} over [{self.universe}]: {self.generic}"
+
+__all__ = ["Sequence", "SequenceSet", "LambdaSequence", "ExpressionSequence", "RationalSequence"]
