@@ -4,12 +4,12 @@ r'''
 import logging
 logger = logging.getLogger(__name__)
 
-from sage.all import prod, PolynomialRing, QQ, ZZ, cached_method, Matrix, ceil #pylint: disable=no-name-in-module
+from sage.all import PolynomialRing, QQ, ZZ, cached_method, Matrix, ceil #pylint: disable=no-name-in-module
 
 from ..psbasis import PSBasis, PolyBasis, SequenceBasis
 from ..factorial.factorial_basis import FactorialBasis, RootSequenceBasis, SFactorialBasis, ScalarBasis
 from ..misc.ore import get_qshift_algebra, get_double_qshift_algebra, get_rational_algebra, has_variable
-from ..misc.qsequences import QLambdaSequence, QSequence
+from ..misc.qsequences import QLambdaSequence
 from ..misc.sequences import LambdaSequence, Sequence
 
 #######################################################################################################
@@ -96,7 +96,7 @@ class QBasis(PSBasis):
 
             super().__init__(
                 base=base, universe=universe, degree=degree, var_name=var_name, # arguments for PSBasis
-                **kwds # arguments maybe used for multiinheritance
+                **kwds # arguments maybe used for multi-inheritance
             )
 
     ### Getters from the module variable as objects of the class
@@ -540,8 +540,8 @@ class QScalarBasis(QFactorialBasis, ScalarBasis):
 
             \begin{array}{rcl}  L C_k(n) & = & c_kLB_k(n) = c_k \sum_{i=-A}^B B_{k+i}(n) = \sum_{i=-A}^B \frac{c_k}{c_{k+i}}c_{k+i}B_{k+i}(n)\\ & = & \sum_{i=-A}^B \frac{c_k}{c_{k+i}}C_{k+i}(n)\end{array}
 
-        This class allows the user to compute the sclaed basis given the original `q`-factorial basis `\mathcal{B}` 
-        and the sacling sequence `(c_k)_k`.
+        This class allows the user to compute the scaled basis given the original `q`-factorial basis `\mathcal{B}` 
+        and the scaling sequence `(c_k)_k`.
 
         INPUT:
 
