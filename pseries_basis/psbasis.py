@@ -30,6 +30,8 @@ r'''
     never be instantiated. For particular examples and test, look to the modules :mod:`~pseries_basis.factorial.factorial_basis`
     and :mod:`~pseries_basis.factorial.product_basis`.
 '''
+from __future__ import annotations
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -37,11 +39,14 @@ logger = logging.getLogger(__name__)
 from functools import reduce
 from sage.all import (ZZ, QQ, Matrix, cached_method, latex, factorial, 
                         SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
-                        block_matrix, vector, ceil)
+                        block_matrix, vector, ceil, Parent)
+from sage.matrix.matrix2 import Matrix as matrix_class #pylint: disable=no-name-in-module
+from sage.rings import ring 
 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.symbolic.operators import add_vararg, mul_vararg
-from sage.structure.element import is_Matrix # pylint: disable=no-name-in-module
+from sage.structure import element
+from typing import Any, Callable, Collection, TypeVar
 
 # ore_algebra imports
 from ore_algebra.ore_algebra import OreAlgebra_generic
@@ -55,6 +60,8 @@ from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurre
                     get_rational_algebra, get_recurrence_algebra)
 from .misc.sequences import LambdaSequence, Sequence, SequenceSet
 
+## Special types for PSBasis
+Compatibility = TypeVar("Compatibility", tuple[int,int,int,Callable[[int,int,int],element.Element]])
 
 class NotCompatibleError(TypeError): pass
 
@@ -73,13 +80,13 @@ class PSBasis(Sequence):
         * :func:`~PSBasis._element`.
         * :func:`~PSBasis._functional_matrix`.
     '''
-    def __init__(self, base, universe=None, degree=True, var_name=None, **_):
-        self.__degree = degree
-        self.__base = base
-        self.__compatibility = {}
-        self.__derivations = []
-        self.__endomorphisms = []
-        self.__var_name = "x" if var_name is None else var_name
+    def __init__(self, base: Parent, universe: Parent = None, degree: bool = True, var_name: str = None, **_):
+        self.__degree : bool = degree
+        self.__base : Parent = base
+        self.__compatibility : dict[str, Any] = {}
+        self.__derivations : list[str] = []
+        self.__endomorphisms : list[str] = []
+        self.__var_name : str = "x" if var_name is None else var_name
         
         if universe == None and degree is True:
             universe = PolynomialRing(self.__base, self.__var_name)
@@ -88,7 +95,7 @@ class PSBasis(Sequence):
         super().__init__(universe, 1)
 
     ### Getters from the module variable as objects of the class
-    def OB(self):
+    def OB(self) -> ring.Field:
         r'''
             Method to get the generic base ring for rational functions in `n`.
 
@@ -101,7 +108,7 @@ class PSBasis(Sequence):
         '''
         return get_rational_algebra('n', base=self.base)[0]
 
-    def n(self):
+    def n(self) -> element.Element:
         r'''
             Method to get the generic variable `n` for the recurrences.
 
@@ -116,7 +123,7 @@ class PSBasis(Sequence):
         '''
         return get_rational_algebra('n', base=self.base)[1]
 
-    def OS(self):
+    def OS(self) -> OreAlgebra_generic:
         r'''
             Method to get the generic variable :class:`~ore_algebra.OreAlgebra` for the shift 
             and inverse shift operators over the rational functions in `n`.
@@ -130,7 +137,7 @@ class PSBasis(Sequence):
         '''
         return get_double_recurrence_algebra("n", "Sn", rational=True, base=self.base)[0]
 
-    def OSS(self):
+    def OSS(self) -> OreAlgebra_generic:
         r'''
             Method to get the generic variable :class:`~ore_algebra.OreAlgebra` with only the direct shift 
             over the rational functions in `n`.
@@ -144,7 +151,7 @@ class PSBasis(Sequence):
         '''
         return get_recurrence_algebra("n", "Sn", rational=True, base=self.base)[0]
 
-    def Sn(self):
+    def Sn(self) -> OreOperator:
         r'''
             Method to get the generic variable for the direct shift operator.
 
@@ -161,7 +168,7 @@ class PSBasis(Sequence):
         '''
         return self.OS().gens()[0]
 
-    def Sni(self):
+    def Sni(self) -> OreOperator:
         r'''
             Method to get the generic variable for the inverse shift operator.
 
@@ -178,7 +185,7 @@ class PSBasis(Sequence):
         '''
         return self.OS().gens()[1]
     
-    def recurrence_vars(self):
+    def recurrence_vars(self) -> tuple[element.Element, OreOperator, OreOperator]:
         r'''
             Method that returns all the variables involved in the recurrence operators (see :func:`OS`).
 
@@ -194,7 +201,7 @@ class PSBasis(Sequence):
         n, Sn, Sni = self.n(), self.Sn(), self.Sni()
         return tuple([*base_gens, n, Sn, Sni])
 
-    def is_hypergeometric(self, element):
+    def is_hypergeometric(self, element: element.Element) -> bool:
         r'''
             Method to check if a symbolic expression is hypergeometric or not.
 
@@ -308,7 +315,7 @@ class PSBasis(Sequence):
         except:
             return (False, None)
 
-    def valid_factor(self, element):
+    def valid_factor(self, element: element.Element) -> True:
         r'''
             Checks whether a rational function has poles or zeros in the positive integers.
 
@@ -382,7 +389,7 @@ class PSBasis(Sequence):
             
         return True
 
-    def extended_quo_rem(self, n, k):
+    def extended_quo_rem(self, n: element.Element, k: element.Element) -> tuple[element.Element, element.Element]:
         r'''
             Extended version of quo_rem that works also for for rational functions.
 
@@ -425,14 +432,14 @@ class PSBasis(Sequence):
 
     ### BASIC METHODS
     @property
-    def base(self):
+    def base(self) -> ring.Ring:
         return self.__base
 
     @property
-    def var_name(self):
+    def var_name(self) -> str:
         return self.__var_name
 
-    def change_base(self, base):
+    def change_base(self, base : Parent) -> PSBasis:
         r'''
             Method to change the base ring to consider the coefficients.
 
@@ -440,7 +447,7 @@ class PSBasis(Sequence):
         '''
         raise NotImplementedError(f"Method `change_base` not implemented for {self.__class__}")
 
-    def by_degree(self):
+    def by_degree(self) -> bool:
         r'''
             Getter for the type of ordering of the basis.
             
@@ -448,7 +455,7 @@ class PSBasis(Sequence):
         '''
         return self.__degree
     
-    def by_order(self):
+    def by_order(self) -> bool:
         r'''
             Getter for the type of ordering of the basis.
             
@@ -478,7 +485,7 @@ class PSBasis(Sequence):
         '''
         raise NotImplementedError("Method functional_seq must be implemented in each subclass of PSBasis")
 
-    def functional_matrix(self, nrows, ncols=None):
+    def functional_matrix(self, nrows: int, ncols: int = None) -> matrix_class:
         r'''
             Method to get a matrix representation of the basis.
 
@@ -517,7 +524,7 @@ class PSBasis(Sequence):
 
         return Matrix([[self.functional_seq(i,j) for j in range(ncols)] for i in range(nrows)])
 
-    def is_quasi_func_triangular(self):
+    def is_quasi_func_triangular(self) -> bool:
         r'''
             Method to check whether a basis is quasi-triangular or not as a functional basis.
 
@@ -535,7 +542,7 @@ class PSBasis(Sequence):
         '''
         return False
 
-    def functional_to_self(self, sequence, size):
+    def functional_to_self(self, sequence: Sequence | Collection, size: int) -> matrix_class:
         r'''
             Matrix to convert a sequence from the canonical basis of `\mathbb{K}[[x]]` to ``self``.
 
@@ -594,7 +601,7 @@ class PSBasis(Sequence):
         '''
         raise NotImplementedError("Method evaluation_seq must be implemented in each subclass of PSBasis")
 
-    def evaluation_matrix(self, nrows, ncols=None):
+    def evaluation_matrix(self, nrows: int, ncols: int = None) -> matrix_class:
         r'''
             Method to get a matrix representation of the basis.
 
@@ -633,7 +640,7 @@ class PSBasis(Sequence):
 
         return Matrix([[self.evaluation_seq(i,j) for j in range(ncols)] for i in range(nrows)])
 
-    def is_quasi_eval_triangular(self):
+    def is_quasi_eval_triangular(self) -> bool:
         r'''
             Method to check whether a basis is quasi-triangular or not as an evaluation basis.
 
@@ -654,7 +661,7 @@ class PSBasis(Sequence):
         '''
         return False
 
-    def evaluation_to_self(self, sequence, size):
+    def evaluation_to_self(self, sequence: Sequence | Collection, size: int) -> matrix_class:
         r'''
             Matrix to convert a sequence from the evaluation basis of `\mathbb{K}[[x]]` to ``self``.
 
@@ -691,7 +698,7 @@ class PSBasis(Sequence):
         raise NotImplementedError("The pure quasi-triangular case not implemented yet.")
 
     ### AUXILIARY METHODS
-    def simplify_operator(self,operator):
+    def simplify_operator(self,operator: OreOperator) -> OreOperator:
         r'''
             Method to reduce operators with ``Sn`` and ``Sni``.
 
@@ -728,13 +735,13 @@ class PSBasis(Sequence):
                 sage: B.simplify_operator(Sni*Sn^2 - 3*Sni^2*Sn^3 + Sn)
                 -Sn
         '''
-        if(is_Matrix(operator)):
+        if(element.is_Matrix(operator)):
             base = operator.parent().base(); n = operator.nrows()
             return Matrix(base, [[self.simplify_operator(operator.coefficient((i,j))) for j in range(n)] for i in range(n)])
         
         return self._simplify_operator(operator)
 
-    def _simplify_operator(self, operator):
+    def _simplify_operator(self, operator: OreOperator) -> OreOperator:
         r'''
             Method that actually simplifies the operator. This removes inverses operators and ensures all
             the variables appear in desirable order.
@@ -762,7 +769,7 @@ class PSBasis(Sequence):
         else:
             raise NotImplementedError(f"Impossible to simplify {operator} (type={operator.__class__})")
 
-    def remove_Sni(self, operator):
+    def remove_Sni(self, operator: OreOperator) -> OreOperator:
         r'''
             Method to remove ``Sni`` from an operator. 
 
@@ -803,7 +810,7 @@ class PSBasis(Sequence):
                 Sn^2 + 2*Sn + 1
         '''
         Sni = self.Sni(); Sn = self.Sn()
-        if(is_Matrix(operator)):
+        if(element.is_Matrix(operator)):
             d = max(max(el.degree(self.Sni()) for el in row) for row in operator)
             return Matrix(self.OSS(), [[self.simplify_operator((Sn**d)*el) for el in row] for row in operator])
 
@@ -811,7 +818,7 @@ class PSBasis(Sequence):
         return self.OSS()(self.simplify_operator((Sn**d)*operator))
     
     ### COMPATIBILITY RELATED METHODS
-    def _compatibility_from_recurrence(self, recurrence):
+    def _compatibility_from_recurrence(self, recurrence: OreOperator) -> Compatibility:
         r'''
             Method to obtain the compatibility condition from a recurrence equivalent.
 
@@ -835,7 +842,7 @@ class PSBasis(Sequence):
                 [self.OB()(recurrence.coefficient({Sni:i}))(n=n+i) for i in range(1, B+1)])
         return (ZZ(A), ZZ(B), ZZ(1), lambda _, j, k: alpha[j+A](n=k))
 
-    def set_compatibility(self, name, trans, sub=False, type=None):
+    def set_compatibility(self, name: str, trans: OreOperator | Compatibility, sub: bool = False, type: None | str = None):
         r'''
             Method to set a new compatibility operator.
 
@@ -904,7 +911,7 @@ class PSBasis(Sequence):
             if type == "endo": self.__endomorphisms.append(name)
             if type == "der": self.__derivations.append(name)
 
-    def set_endomorphism(self, name, trans, sub=False):
+    def set_endomorphism(self, name: str, trans: OreOperator | Compatibility, sub: bool = False):
         r'''
             Method to set a new compatibility operator for an endomorphism.
 
@@ -921,7 +928,7 @@ class PSBasis(Sequence):
         '''
         self.set_compatibility(name, trans, sub, "endo")
 
-    def set_derivation(self, name, trans, sub=False):
+    def set_derivation(self, name: str, trans: OreOperator | Compatibility, sub: bool = False):
         r'''
             Method to set a new compatibility operator for a derivation.
 
@@ -939,7 +946,7 @@ class PSBasis(Sequence):
         self.set_compatibility(name, trans, sub, "der")
 
     @cached_method
-    def get_lower_bound(self, operator):
+    def get_lower_bound(self, operator: str | OreOperator) -> int:
         r'''
             Method to get the lower bound compatibility for an operator.
             
@@ -961,13 +968,13 @@ class PSBasis(Sequence):
         ## Case of the name
         compatibility = self.recurrence(operator)
         
-        if(is_Matrix(compatibility)):
+        if(element.is_Matrix(compatibility)):
             return self.compatibility(operator)[0]
             
         return compatibility.degree(self.Sn())
     
     @cached_method
-    def get_upper_bound(self, operator):
+    def get_upper_bound(self, operator: str | OreOperator) -> int:
         r'''
             Method to get the upper bound compatibility for an operator.
             
@@ -988,12 +995,12 @@ class PSBasis(Sequence):
         '''
         compatibility = self.recurrence(operator)
         
-        if(is_Matrix(compatibility)):
+        if(element.is_Matrix(compatibility)):
             return self.compatibility(operator)[0]
             
         return compatibility.degree(self.Sni())
         
-    def compatible_operators(self):
+    def compatible_operators(self) -> Collection[str]:
         r'''
             Method that returns a list with the compatible operators stored in the dictionary.
 
@@ -1026,19 +1033,19 @@ class PSBasis(Sequence):
         '''
         return self.__compatibility.keys()
 
-    def compatible_endomorphisms(self):
+    def compatible_endomorphisms(self) -> Collection[str]:
         r'''
             Method to get the registered endomorphisms compatible with ``self``.
         '''
         return self.__endomorphisms
 
-    def compatible_derivations(self):
+    def compatible_derivations(self) -> Collection[str]:
         r'''
             Method to get the registered derivations compatible with ``self``.
         '''
         return self.__derivations
 
-    def has_compatibility(self, operator):
+    def has_compatibility(self, operator: str | OreOperator) -> bool:
         r'''
             Method to know if an operator has compatibility with this basis.
 
@@ -1081,7 +1088,7 @@ class PSBasis(Sequence):
         '''
         return str(operator) in self.__compatibility
 
-    def compatibility_type(self, operator):
+    def compatibility_type(self, operator: str | OreOperator) -> None | str:
         r'''
             Method to know if an operator has compatibility of a specific type.
 
@@ -1139,7 +1146,7 @@ class PSBasis(Sequence):
         else:
             return None
         
-    def compatibility(self, operator):
+    def compatibility(self, operator: str | OreOperator) -> Compatibility:
         r'''
             Method to get the compatibility condition for an operator.
 
@@ -1305,7 +1312,7 @@ class PSBasis(Sequence):
                 if(i+j == l))
         return (A,B,m,__aux_prod2_case)
 
-    def compatibility_matrix(self, operator, sections=None):
+    def compatibility_matrix(self, operator: str | OreOperator, sections: int = None) -> matrix_class:
         r'''
             Method to get the compatibility condition in matrix form
 
@@ -1343,7 +1350,7 @@ class PSBasis(Sequence):
             
         return (a,b,Matrix([[alpha(i,j,self.n()) for j in range(-a,b+1)] for i in range(m)]))
 
-    def _recurrence_from_compatibility(self, compatibility):
+    def _recurrence_from_compatibility(self, compatibility: Compatibility) -> OreOperator:
         r'''
             Method that returns the recurrence from a compatibility condition.
 
@@ -1382,7 +1389,7 @@ class PSBasis(Sequence):
             raise TypeError("The number of sections must be a positive integer")
         return output
 
-    def recurrence(self, operator, sections=None, cleaned=False):
+    def recurrence(self, operator: str | OreOperator | Compatibility, sections: int = None, cleaned: bool = False) -> OreOperator | matrix_class:
         r'''
             Method to get the recurrence for a compatible operator.
             
@@ -1469,7 +1476,7 @@ class PSBasis(Sequence):
                     base_ring = operator.parent().base().base_ring()
                     rec_coeffs = {str(v): self.recurrence(str(v), sections) for v in operator.parent().base().gens()}
                     if is_based_field(operator.parent()):
-                        if any(is_Matrix(v) for v in rec_coeffs.values()):
+                        if any(element.is_Matrix(v) for v in rec_coeffs.values()):
                             if any(not c.denominator() in self.OS().base().base_ring() for c in coeffs):
                                 raise NotCompatibleError("Compatibility by sections when having denominators")
                             coeffs = [(1/self.OS().base().base_ring()(str(c.denominator()))) * c.numerator()(**rec_coeffs) for c in coeffs]
@@ -1513,7 +1520,7 @@ class PSBasis(Sequence):
 
         ## Cleaning the output if required
         if cleaned:
-            if is_Matrix(output): # case for several sections
+            if element.is_Matrix(output): # case for several sections
                 pass # TODO: implement this simplification --> remove Sni for rows and also denominators for rows
             else: # case with one operator
                 output = self.remove_Sni(output) # we remove the inverse shift
@@ -1524,7 +1531,7 @@ class PSBasis(Sequence):
 
         return output
 
-    def recurrence_orig(self, operator):
+    def recurrence_orig(self, operator: str | OreOperator | Compatibility) -> OreOperator:
         r'''
             Method to get the recurrence for a compatible operator.
 
@@ -1557,14 +1564,14 @@ class PSBasis(Sequence):
             raise TypeError(f"The iterative construction not implemented for [{operator.parent()}]")
 
         comp = self.recurrence(operator, cleaned=True)
-        if is_Matrix(comp):
+        if element.is_Matrix(comp):
             # TODO: check whether this make sense or not
             raise NotImplementedError("The compatibility has sections. Unable to go back to original ring")
 
         x,E,_ = gens_getter(operator.parent())
         return eval_ore_operator(comp, operator.parent(), Sn = E, n = x, Sni = 1)
 
-    def system(self, operator, sections=None):
+    def system(self, operator: str | OreOperator | Compatibility, sections: int = None):
         r'''
             Method to get a first order recurrence system associated with an operator.
 
@@ -1642,7 +1649,7 @@ class PSBasis(Sequence):
         return block_matrix(self.OB(), rows)
 
     @cached_method
-    def compatibility_sections(self, compatibility, sections):
+    def compatibility_sections(self, compatibility: str | OreOperator | Compatibility, sections : int) -> Compatibility:
         r'''
             Compute an extension of a compatibility for larger amount of sections.
             
@@ -1693,7 +1700,7 @@ class PSBasis(Sequence):
         return (A, B, sections, new_alpha)
     
     @cached_method
-    def compatibility_coefficient(self, operator):
+    def compatibility_coefficient(self, operator: str | OreOperator) -> Callable:
         r'''
             Method to get the compatibility coefficient.
             
@@ -1719,7 +1726,7 @@ class PSBasis(Sequence):
         '''
         return self.compatibility(operator)[3]
 
-    def scalar(self, factor):
+    def scalar(self, factor: element.Element) -> PSBasis:
         r'''
             Method to create an equivalent basis built by multiplying by a sequence of constants.
 
@@ -1757,7 +1764,7 @@ class PSBasis(Sequence):
              
         return new_basis
 
-    def _scalar_basis(self, factor):
+    def _scalar_basis(self, factor: element.Element) -> PSBasis:
         r'''
             Method that actually builds the structure for the new basis.
 
@@ -1775,7 +1782,7 @@ class PSBasis(Sequence):
         '''
         return BruteBasis(lambda n : self.element(n)*factor(n=n), self.by_degree())
 
-    def _scalar_hypergeometric(self, factor, quotient): #pylint: disable=unused-argument
+    def _scalar_hypergeometric(self, factor: element.Element, quotient: element.Element) -> PSBasis: #pylint: disable=unused-argument
         r'''
             Method that actually builds the structure for the new basis.
 
@@ -1795,7 +1802,7 @@ class PSBasis(Sequence):
         '''
         return BruteBasis(lambda n : self.element(n)*factor(n=n), self.by_degree())
 
-    def __scalar_extend_compatibilities(self, new_basis, factor):
+    def __scalar_extend_compatibilities(self, new_basis: PSBasis, factor: element.Element):
         r'''
             Method to extend compatibilities to ``new_basis`` with a rational function or a method
             that returns a rational function when fed by `n` (see :func:`OB`)
@@ -1807,7 +1814,7 @@ class PSBasis(Sequence):
             
         return
 
-    def __scalar_hyper_extend_compatibilities(self, new_basis, factor, quotient): #pylint: disable=unused-argument
+    def __scalar_hyper_extend_compatibilities(self, new_basis: PSBasis, factor: element.Element, quotient: element.Element): #pylint: disable=unused-argument
         r'''
             Method to extend compatibilities to ``new_basis`` with a rational function or a method
             that returns a rational function when fed by `n` (see :func:`OB`).
@@ -1918,11 +1925,11 @@ class BruteBasis(PSBasis):
             sage: all(B[i] == 0 for i in range(100))
             True
     '''
-    def __init__(self, elements, base, universe=None, degree=True, var_name=None):
+    def __init__(self, elements : Callable, base: Parent, universe: Parent = None, degree: bool = True, var_name: str = None):
         super().__init__(base, universe, degree, var_name)
         self.__get_element = elements
 
-    def change_base(self, base):
+    def change_base(self, base: Parent) -> BruteBasis:
         return BruteBasis(
             self.__get_element, 
             base, 
@@ -1932,7 +1939,7 @@ class BruteBasis(PSBasis):
         )
 
     @cached_method
-    def _element(self, n):
+    def _element(self, n: int) -> element.Element:
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -1941,7 +1948,7 @@ class BruteBasis(PSBasis):
         '''
         output = self.__get_element(n)
 
-        return output if self.universe is None else self.universe(output)
+        return output if self.universe is None else self.universe.__call__(output)
 
     @PSBasis.functional_seq.getter
     def functional_seq(self) -> Sequence:
@@ -1961,10 +1968,10 @@ class BruteBasis(PSBasis):
         else:
             return LambdaSequence(lambda k,n : self(k)(n), self.base, 2, False)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Brute basis: ({self[0]}, {self[1]}, {self[2]}, ...)"
 
-    def _latex_(self):
+    def _latex_(self) -> str:
         return r"Brute basis: \left(%s, %s, %s, \ldots\right)" %(latex(self[0]), latex(self[1]), latex(self[2]))
 
 class SequenceBasis(PSBasis):
@@ -1982,26 +1989,31 @@ class SequenceBasis(PSBasis):
         * ``base``: a SageMath structure for `\mathbb{K}`.
         * ``sequence``: a :class:`~pseries_basis.misc.sequences.Sequence` of dimension 2, whose universe can be changed to ``base``.
     '''
-    def __init__(self, base, sequence : Sequence, degree : bool = True):
+    def __init__(self, base: Parent, sequence : Sequence, degree : bool = True, **kwds):
         if not isinstance(sequence, Sequence):
             raise TypeError("The value for a sequence must be of class :class:`Sequence`")
         if not sequence.dim == 2:
             raise ValueError(f"The sequence must have 2 variables. It has {sequence.dim}")
         self.__sequence = sequence.change_universe(base)
 
-        super().__init__(base, SequenceSet(1, base), degree)
+        # removing possible repeated arguments
+        kwds.pop("universe")
+        super().__init__(
+            base, universe=SequenceSet(1, base), degree=degree, # arguments for PSBasis
+            **kwds # other arguments for other builders (allowing multi-inheritance)
+        )
 
     @PSBasis.functional_seq.getter
     def functional_seq(self) -> Sequence:
         return self.__sequence
 
-    def _element(self, *indices):
+    def _element(self, *indices: int) -> element.Element:
         return self.functional_seq.subsequence(indices[0]) #pylint: disable=no-member
 
-    def change_base(self, base):
+    def change_base(self, base: Parent) -> SequenceBasis:
         return SequenceBasis(base, self.functional_seq, self.by_degree())
 
-    def shift_in(self, shift):
+    def shift_in(self, shift: int) -> SequenceBasis:
         r'''
             Method to apply shift to the second layer of this basis.
 
@@ -2019,7 +2031,7 @@ class SequenceBasis(PSBasis):
         '''
         return SequenceBasis(self.base, self.functional_seq.shift(0,shift), self.by_degree()) #pylint: disable=no-member
 
-    def mult_in(self, prod):
+    def mult_in(self, prod: element.Element) -> SequenceBasis:
         r'''
             Method to multiply the inner sequences and obtain a new basis.
 
@@ -2042,7 +2054,7 @@ class PolyBasis(PSBasis):
 
         * :func:`PSBasis.element`.
     '''
-    def __init__(self, base=QQ, var_name=None, **kwds):
+    def __init__(self, base: Parent = QQ, var_name: str = None, **kwds):
         super().__init__(
             base=base, universe=kwds.pop("universe", None), degree=kwds.pop("degree", True), var_name=var_name, # arguments for PSBasis
             **kwds # other arguments for other builders (allowing multi-inheritance)
@@ -2057,7 +2069,7 @@ class PolyBasis(PSBasis):
     def evaluation_seq(self) -> Sequence:
         return LambdaSequence(lambda k,n : self[k](n), self.base, 2, False)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "PolyBasis -- WARNING: this is an abstract class"
 
 class OrderBasis(PSBasis):
@@ -2073,8 +2085,11 @@ class OrderBasis(PSBasis):
 
         * :func:`PSBasis.element`.
     '''
-    def __init__(self, base=QQ, universe=None):
-        super(OrderBasis,self).__init__(base, universe, False)
+    def __init__(self, base: Parent = QQ, universe: Parent = None, **kwds):
+        super(OrderBasis,self).__init__(
+            base, universe, False, # arguments for PSBasis
+            **kwds # other arguments for other builders (allowing multi-inheritance)
+        )
 
     @PSBasis.functional_seq.getter
     def functional_seq(self) -> Sequence:
@@ -2085,10 +2100,10 @@ class OrderBasis(PSBasis):
         else:
             return LambdaSequence(lambda k,n : self(k).derivative(times=n)(0)/factorial(n), self.base, 2, False)
 
-    def is_quasi_func_triangular(self):
+    def is_quasi_func_triangular(self) -> bool:
         return True
 
-def check_compatibility(basis, operator, action, bound=100):
+def check_compatibility(basis: PSBasis, operator: OreOperator | Compatibility, action: Callable, bound: int = 100) -> bool:
     r'''
         Method that checks that a compatibility formula holds for some examples.
 
