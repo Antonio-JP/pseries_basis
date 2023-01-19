@@ -61,7 +61,7 @@ from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurre
 from .misc.sequences import LambdaSequence, Sequence, SequenceSet
 
 ## Special types for PSBasis
-Compatibility = TypeVar("Compatibility", tuple[int,int,int,Callable[[int,int,int],element.Element]])
+Compatibility = TypeVar("Compatibility", tuple[int,int,int,Callable[[int,int,element.Element],element.Element]])
 
 class NotCompatibleError(TypeError): pass
 
