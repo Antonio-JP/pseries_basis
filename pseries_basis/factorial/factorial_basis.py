@@ -10,11 +10,13 @@ from ore_algebra.ore_operator import OreOperator
 from sage.all import prod, vector, ZZ, cached_method, QQ, Matrix, latex, Parent
 from sage.matrix.matrix2 import Matrix as matrix_class #pylint: disable=no-name-in-module
 from sage.structure import element
-from typing import Callable
+from typing import Callable, TypeVar
 
 # Local imports
 from ..misc.sequences import LambdaSequence, Sequence
 from ..psbasis import Compatibility, PolyBasis
+
+Divisibility = TypeVar("Divisibility", tuple[int,int,Callable[[int,int,element.Element],element.Element]])
 
 class FactorialBasis(PolyBasis):
     r'''
@@ -291,7 +293,7 @@ class FactorialBasis(PolyBasis):
         '''
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
 
-    def compatible_division(self, operator: str | OreOperator) -> tuple[int, int, Callable[[int,int,element.Element],element.Element]]:
+    def compatible_division(self, operator: str | OreOperator) -> Divisibility:
         r'''
             Method to get the division of a polynomial by other element of the basis after an operator.
 

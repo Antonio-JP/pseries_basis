@@ -1,17 +1,21 @@
 r'''
     Sage package for Product of Factorial Series Basis.
 '''
+from __future__ import annotations
+
 # Sage imports
 from functools import reduce
-from typing import Tuple
+from ore_algebra.ore_operator import OreOperator
 from sage.all import cached_method, prod, ZZ, vector, ceil
 from sage.categories.pushout import pushout
+from sage.structure import element
+from typing import Collection
 
 from pseries_basis.misc.sequences import LambdaSequence, Sequence
 
 # Local imports
-from .factorial_basis import FactorialBasis
-
+from ..psbasis import Compatibility
+from .factorial_basis import Divisibility, FactorialBasis
 
 class SievedBasis(FactorialBasis):
     r'''
@@ -151,7 +155,10 @@ class SievedBasis(FactorialBasis):
             sage: column[0].gcrd(*column[1:])
             (n + 1)*Sn - 4*n - 2
     '''
-    def __init__(self, factors, cycle, init=1, var_name='x'):
+    def __init__(self, 
+        factors : Collection[FactorialBasis], cycle: Collection[int], 
+        init: element.Element = 1, var_name: str = 'x'
+    ):
         ## Checking the input
         if(not type(factors) in (list,tuple)):
             raise TypeError("The factors must be either a list or a tuple")
@@ -193,7 +200,7 @@ class SievedBasis(FactorialBasis):
             except (NotImplementedError):
                 pass
 
-    def _element(self, n):
+    def _element(self, n: int) -> element.Element:
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -212,7 +219,7 @@ class SievedBasis(FactorialBasis):
         return self.__init*prod([self.factors[i].element(indices[i]) for i in range(self.nfactors())])
 
     @cached_method
-    def appear(self, i):
+    def appear(self, i: int) -> int:
         r'''
             Return the appearances of the basis `i` in the deciding cycle.
 
@@ -239,7 +246,7 @@ class SievedBasis(FactorialBasis):
             raise ValueError("The index must be between 0 and %d" %self.nfactors())
         return self.cycle.count(i)
 
-    def index(self, n, i):
+    def index(self, n: element.Element | list[element.Element, int] | tuple[element.Element, int], i: int) -> element.Element:
         r'''
             Returns the index of the `i`-th basis at the element `n`.
 
@@ -265,28 +272,28 @@ class SievedBasis(FactorialBasis):
             TODO: add examples
         '''
         ## Checking the input 'i' 
-        if(not i in ZZ):
+        if not i in ZZ:
             raise TypeError("The index must be an integer")
         i = ZZ(i)
         if((i < 0) or (i >= self.nfactors())):
             raise ValueError("The index must be between 0 and %d" %self.nfactors())
 
         ## Checking the input 'n' 
-        if(not type(n) in (list, tuple)):
+        if not isinstance(n, (list, tuple)):
             m,r = self.extended_quo_rem(n, self.nsections())
         else:
             m,r = n
-        if((not r in ZZ) or (r < 0) or (r >= self.nsections())):
+        if (not r in ZZ) or (r < 0) or (r >= self.nsections()) :
             raise ValueError("The value for 'n' must be compatible with taking module %d" %self.nsections())
 
         r = ZZ(r)
         s = self.cycle[:r].count(i)
         return self.appear(i)*m + s
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Sieved Basis {self.cycle} of the basis:" + "".join([f"\n\t- {f}" for f in self.factors])
 
-    def _latex_(self):
+    def _latex_(self) -> str:
         return (r"\prod_{%s}" %self.cycle)  + "".join([f._latex_() for f in self.factors])
 
     def root_sequence(self) -> Sequence:
@@ -341,15 +348,15 @@ class SievedBasis(FactorialBasis):
         return LambdaSequence(_lin_sb, self.base, allow_sym=False)
 
     @property
-    def factors(self) -> Tuple[FactorialBasis]:
+    def factors(self) -> tuple[FactorialBasis]:
         r'''Property to get the factors of the :class:`SievedBasis`'''
         return self.__factors
     @property
-    def cycle(self) -> Tuple[int]:
+    def cycle(self) -> tuple[int]:
         r'''Property to get the deciding cycle of the :class:`SievedBasis`'''
         return self.__cycle
 
-    def nfactors(self):
+    def nfactors(self) -> int:
         r'''
             Method to get the number of factors of the sieved basis.
 
@@ -364,7 +371,7 @@ class SievedBasis(FactorialBasis):
         '''
         return len(self.factors)
 
-    def nsections(self):
+    def nsections(self) -> int:
         r'''
             Method to get the number of sections of the sieved basis.
 
@@ -379,7 +386,7 @@ class SievedBasis(FactorialBasis):
         '''
         return len(self.cycle)
 
-    def extend_compatibility_X(self):
+    def extend_compatibility_X(self) -> Compatibility:
         r'''
             Method to extend the compatibility of the multiplication by `x`.
 
@@ -402,7 +409,7 @@ class SievedBasis(FactorialBasis):
 
         return self.compatibility(X)
 
-    def extend_compatibility_E(self, name):
+    def extend_compatibility_E(self, name: str) -> Compatibility:
         r'''
             Method to extend the compatibility of an endomorphism.
 
@@ -437,7 +444,7 @@ class SievedBasis(FactorialBasis):
 
         return self.compatibility(name)
 
-    def extend_compatibility_D(self, name):
+    def extend_compatibility_D(self, name: str) -> Compatibility:
         r'''
             Method to extend the compatibility of a derivation.
 
@@ -472,7 +479,7 @@ class SievedBasis(FactorialBasis):
 
         return self.compatibility(name)
 
-    def _extend_compatibility_X(self):
+    def _extend_compatibility_X(self) -> Compatibility:
         r'''
             Method that extend the compatibility of multiplication by `x`.
 
@@ -503,7 +510,7 @@ class SievedBasis(FactorialBasis):
         
         return (0,1,m*T,new_alphas)
 
-    def _extend_compatibility_E(self, E):
+    def _extend_compatibility_E(self, E: str) -> Compatibility:
         r'''
             Method that extend the compatibility of an endomorphism `E`.
 
@@ -532,7 +539,7 @@ class SievedBasis(FactorialBasis):
 
         return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
 
-    def _extend_compatibility_D(self, D):
+    def _extend_compatibility_D(self, D: str) -> Compatibility:
         r'''
             Method that extend the compatibility of a derivation `D`.
 
@@ -561,7 +568,7 @@ class SievedBasis(FactorialBasis):
         
         return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
 
-    def increasing_polynomial(self, src, diff=None, dst=None):
+    def increasing_polynomial(self, src: element.Element, diff : int = None, dst: int = None) -> element.Element:
         r'''
             Returns the increasing factorial for the factorial basis.
 
@@ -614,7 +621,7 @@ class SievedBasis(FactorialBasis):
         return self.__cached_increasing[(k,r,diff)]
 
     @cached_method
-    def increasing_basis(self, shift) -> "SievedBasis":
+    def increasing_basis(self, shift: int) -> SievedBasis:
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
@@ -654,7 +661,7 @@ class SievedBasis(FactorialBasis):
         new_basis = [self.factors[i].increasing_basis(indices[i]) for i in range(self.nfactors())]
         return SievedBasis(new_basis, new_cycle, var_name=str(self.universe.gens()[0]))
      
-    def compatible_division(self, operator):
+    def compatible_division(self, operator: str | OreOperator) -> Divisibility:
         r'''
             Method to get the division of a polynomial by other element of the basis after an operator.
 
@@ -682,13 +689,13 @@ class SievedBasis(FactorialBasis):
         else:
             return self._compatible_division_X(operator)
 
-    def _compatible_division_X(self, operator):
+    def _compatible_division_X(self, operator: str | OreOperator) -> Divisibility:
         r'''
             Method o compute the compatible division for multiplication operators.
         '''
         raise NotImplementedError("_compatible_division_X not implemented for Sieved Basis")
 
-    def _compatible_division_D(self, operator):
+    def _compatible_division_D(self, operator: str | OreOperator) -> Divisibility:
         r'''
             Method o compute the compatible division for derivations.
         '''
@@ -724,7 +731,7 @@ class SievedBasis(FactorialBasis):
             
         return (m*A, m*T,new_D)
 
-    def _compatible_division_E(self, operator):
+    def _compatible_division_E(self, operator: str | OreOperator) -> Divisibility:
         r'''
             Method o compute the compatible division for endomorphisms.
         '''
@@ -752,9 +759,9 @@ class SievedBasis(FactorialBasis):
             
         return (m*A, m*T,new_D)
 
-    def is_quasi_func_triangular(self):
+    def is_quasi_func_triangular(self) -> bool:
         return all(basis.is_quasi_func_triangular() for basis in self.factors)
-    def is_quasi_eval_triangular(self):
+    def is_quasi_eval_triangular(self) -> bool:
         return all(basis.is_quasi_eval_triangular() for basis in self.factors)
 
 class ProductBasis(SievedBasis):
@@ -862,11 +869,11 @@ class ProductBasis(SievedBasis):
             sage: column[0].gcrd(*column[1:])
             (n^2 + 2*n + 1)*Sn - 16*n^2 - 16*n - 4
     '''
-    def __init__(self, factors, init=1, var_name='x'):
+    def __init__(self, factors : Collection[FactorialBasis], init: element.Element=1, var_name: str = 'x'):
         super(ProductBasis, self).__init__(factors, list(range(len(factors))),init,var_name)
 
     @cached_method
-    def increasing_basis(self, shift) -> "ProductBasis":
+    def increasing_basis(self, shift: element.Element) -> ProductBasis:
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
@@ -897,10 +904,10 @@ class ProductBasis(SievedBasis):
             var_name=str(self.universe.gens()[0])
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "ProductBasis" + "".join([f"\n\t- {f}" for f in self.factors])
 
-    def _latex_(self):
+    def _latex_(self) -> str:
         return "".join([f._latex_() for f in self.factors])
 
 __all__ = ["SievedBasis", "ProductBasis"]   
