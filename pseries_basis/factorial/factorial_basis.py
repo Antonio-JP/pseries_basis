@@ -1,17 +1,20 @@
 r'''
     Sage package for Factorial Series Basis.
 '''
+from __future__ import annotations
 
 import logging
 logger = logging.getLogger(__name__)
 
-# sage imports
-from sage.all import prod, vector, ZZ, cached_method, QQ, Matrix, latex
-
-from pseries_basis.misc.sequences import LambdaSequence, Sequence
+from ore_algebra.ore_operator import OreOperator
+from sage.all import prod, vector, ZZ, cached_method, QQ, Matrix, latex, Parent
+from sage.matrix.matrix2 import Matrix as matrix_class #pylint: disable=no-name-in-module
+from sage.structure import element
+from typing import Callable
 
 # Local imports
-from ..psbasis import PolyBasis
+from ..misc.sequences import LambdaSequence, Sequence
+from ..psbasis import Compatibility, PolyBasis
 
 class FactorialBasis(PolyBasis):
     r'''
@@ -33,7 +36,7 @@ class FactorialBasis(PolyBasis):
 
         * :func:`pseries_basis.psbasis.PSBasis.element`.
     '''
-    def __init__(self, var_name='x', base=QQ, **kwds):
+    def __init__(self, var_name: str = 'x', base : Parent = QQ, **kwds):
         super().__init__(
             base = base, var_name = var_name, # arguments for PolyBasis
             **kwds # arguments for other builders (allow multi-inheritance)
@@ -51,7 +54,7 @@ class FactorialBasis(PolyBasis):
                 logger.info(f"Error with the compatibility with {self.var_name} --> {e}")
                 pass
 
-    def _scalar_basis(self, factor) -> "FactorialBasis":
+    def _scalar_basis(self, factor: element.Element) -> FactorialBasis:
         r'''
             Method that actually builds the structure for the new basis.
 
@@ -90,7 +93,7 @@ class FactorialBasis(PolyBasis):
         '''
         return ScalarBasis(self, factor)
         
-    def _scalar_hypergeometric(self, factor, quotient) -> "FactorialBasis":
+    def _scalar_hypergeometric(self, factor: element.Element, quotient: element.Element) -> FactorialBasis:
         r'''
             Method that actually builds the structure for the new basis.
 
@@ -238,7 +241,7 @@ class FactorialBasis(PolyBasis):
     cn : Sequence = property(lambda self: self.leading_coefficient()) #: alias property for the leading coefficient sequence (see :func:`~FactorialBasis.constant_coefficient`)
 
     ## Method related with equivalence of Proposition 1
-    def increasing_polynomial(self, *args, **kwds):
+    def increasing_polynomial(self, *args, **kwds) -> element.Element:
         r'''
             Returns the increasing factorial for the factorial basis.
 
@@ -257,7 +260,7 @@ class FactorialBasis(PolyBasis):
         '''
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
 
-    def increasing_basis(self, shift) -> "FactorialBasis":
+    def increasing_basis(self, shift: int) -> FactorialBasis:
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
@@ -288,7 +291,7 @@ class FactorialBasis(PolyBasis):
         '''
         raise NotImplementedError("Method from FactorialBasis not implemented (Abstract method)")
 
-    def compatible_division(self, operator):
+    def compatible_division(self, operator: str | OreOperator) -> tuple[int, int, Callable[[int,int,element.Element],element.Element]]:
         r'''
             Method to get the division of a polynomial by other element of the basis after an operator.
 
@@ -361,7 +364,7 @@ class FactorialBasis(PolyBasis):
         
         return (A, m, lambda r,s,n : sum(alpha(r,i,n)*self.increasing_polynomial(n*m+r-A-s,dst=n*m+r+i) for i in range(-A,B+1)))
 
-    def matrix_ItP(self, src, size):
+    def matrix_ItP(self, src: element.Element, size: int) -> matrix_class:
         r'''
             Method to get the matrix for converting from the increasing basis to the power basis.
 
@@ -423,7 +426,7 @@ class FactorialBasis(PolyBasis):
         return Matrix(dest, [[polys[j][i] for j in range(size)] for i in range(size)])
 
     @cached_method
-    def matrix_PtI(self, src, size):
+    def matrix_PtI(self, src: element.Element, size: int) -> matrix_class:
         r'''
             Method for getting the matrix from the power basis to the increasing basis.
 
@@ -475,7 +478,7 @@ class FactorialBasis(PolyBasis):
         '''
         return self.matrix_ItP(src,size).inverse()
 
-    def equiv_DtC(self, compatibility):
+    def equiv_DtC(self, compatibility: str | OreOperator | Compatibility) -> Compatibility:
         r'''
             Method to get the equivalence condition for a compatible operator.
 
@@ -538,7 +541,7 @@ class FactorialBasis(PolyBasis):
 
         return (A, B, m, lambda i,j,k: coeffs[i][j](n=k))
 
-    def equiv_CtD(self, division):
+    def equiv_CtD(self, division: Compatibility) -> Compatibility:
         r'''
             Method to get the equivalence condition for a compatible operator.
 
@@ -651,7 +654,11 @@ class SFactorialBasis(FactorialBasis):
             ...
             ValueError: The leading coefficient for the extra factor must always be non-zero
     '''
-    def __init__(self, an=None, bn=None, var_name='x', init=1, base=QQ, **kwds):
+    def __init__(self, 
+        an : Callable | element.Element = None, bn : Callable | element.Element = None, 
+        var_name: str = 'x', init: element.Element = 1, base : Parent = QQ, 
+        **kwds
+    ):
         if an is None or bn is None:
             raise TypeError("The coefficients for `an` and `bn` must be both given (no default value for them)")
         super().__init__(
@@ -689,7 +696,7 @@ class SFactorialBasis(FactorialBasis):
         ## Extra cached variables
         self.__cached_increasing = {}
 
-    def change_base(self, base):
+    def change_base(self, base : Parent) -> SFactorialBasis:
         return SFactorialBasis(
             self.__an,                      # the new linear coefficients stay the same
             self.__bn,                      # the new constant coefficients stay the same
@@ -698,7 +705,7 @@ class SFactorialBasis(FactorialBasis):
             base                            # the base is set to the given base
         )
 
-    def _element(self, n):
+    def _element(self, n : int) -> element.Element:
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -744,7 +751,7 @@ class SFactorialBasis(FactorialBasis):
         else:
             raise IndexError("The index must be a non-negative integer")
 
-    def _scalar_basis(self, factor) -> FactorialBasis:
+    def _scalar_basis(self, factor: element.Element) -> SFactorialBasis:
         r'''
             Method that actually builds the structure for the new basis.
 
@@ -794,7 +801,7 @@ class SFactorialBasis(FactorialBasis):
             base=self.base                  # base ring for the coefficients
         )
         
-    def _scalar_hypergeometric(self, factor, quotient) -> FactorialBasis:
+    def _scalar_hypergeometric(self, factor: element.Element, quotient: element.Element) -> SFactorialBasis:
         r'''
             Method that actually builds the structure for the new basis.
 
@@ -830,18 +837,18 @@ class SFactorialBasis(FactorialBasis):
             base=self.base                    # base ring for the coefficients
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Factorial basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])
 
-    def _latex_(self):
+    def _latex_(self) -> str:
         return r"\text{Factorial basis }\left(%s,%s\right): \left\{%s,%s,%s,\ldots\right\}" %(latex(self.__an), latex(self.__bn), latex(self[0]), latex(self[1]), latex(self[2]))
 
     @property
-    def symb_an(self):
+    def symb_an(self) -> Callable | element.Element:
         return self.__an
 
     @property
-    def symb_bn(self):
+    def symb_bn(self) -> Callable | element.Element:
         return self.__bn
 
     def root_sequence(self) -> Sequence:
@@ -934,7 +941,7 @@ class SFactorialBasis(FactorialBasis):
         '''
         return LambdaSequence(lambda n : self.__an(n=n), self.base, allow_sym=True)
 
-    def increasing_polynomial(self, src, diff=None, dst=None):
+    def increasing_polynomial(self, src: int | element.Element, diff: int = None, dst: int = None) -> element.Element:
         r'''
             Returns the increasing factorial for the factorial basis.
 
@@ -1021,7 +1028,7 @@ class SFactorialBasis(FactorialBasis):
         return self.__cached_increasing[(n,d)]
 
     @cached_method
-    def increasing_basis(self, shift) -> FactorialBasis:
+    def increasing_basis(self, shift: int) -> SFactorialBasis:
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
@@ -1078,7 +1085,11 @@ class RootSequenceBasis(FactorialBasis):
             sage: RootSequenceBasis(lambda n : 0, lambda n : 1)[:5]
             [1, x, x^2, x^3, x^4]
     '''
-    def __init__(self, rho = None, cn = None, var_name='x', base = QQ, **kwds):
+    def __init__(self, 
+        rho: Callable | element.Element = None, cn: Callable | element.Element = None, 
+        var_name: str = 'x', base: Parent = QQ, 
+        **kwds
+    ):
         if rho is None or cn is None:
             raise TypeError("The coefficients for `rho` and `cn` must be both given (no default value for them)")
         super().__init__(
@@ -1103,7 +1114,7 @@ class RootSequenceBasis(FactorialBasis):
         ## Other cached elements
         self.__cached_increasing = {}
 
-    def change_base(self, base):
+    def change_base(self, base : Parent) -> RootSequenceBasis:
         return RootSequenceBasis(
             self.__rho,                     # the root sequences does not change
             self.__cn,                      # the leading coefficient sequence does not change
@@ -1111,7 +1122,7 @@ class RootSequenceBasis(FactorialBasis):
             base                            # the base ring is set to the given value
         )
 
-    def _element(self, n):
+    def _element(self, n: int) -> element.Element:
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -1143,10 +1154,10 @@ class RootSequenceBasis(FactorialBasis):
         else:
             raise IndexError("The index must be a non-negative integer")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Factorial basis: (%s, %s, %s, ...)" %(self[0],self[1],self[2])
 
-    def _latex_(self):
+    def _latex_(self) -> str:
         return r"\text{Factorial basis }\left(r:%s,lc:%s\right): \left\{%s,%s,%s,\ldots\right\}" %(latex(self.__rho), latex(self.__cn), latex(self[0]), latex(self[1]), latex(self[2]))
 
     def root_sequence(self) -> Sequence:
@@ -1200,7 +1211,7 @@ class RootSequenceBasis(FactorialBasis):
         cn = self.cn
         return LambdaSequence(lambda n : cn(n)/cn(n-1), self.base, allow_sym=True)
 
-    def increasing_polynomial(self, src, diff=None, dst=None):
+    def increasing_polynomial(self, src: int | element.Element, diff: int = None, dst: int = None) -> element.Element:
         r'''
             Returns the increasing factorial for the factorial basis.
 
@@ -1253,7 +1264,7 @@ class RootSequenceBasis(FactorialBasis):
         return self.__cached_increasing[(n,d)]
 
     @cached_method
-    def increasing_basis(self, shift) -> "RootSequenceBasis":
+    def increasing_basis(self, shift: int) -> RootSequenceBasis:
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
@@ -1298,7 +1309,7 @@ class ScalarBasis(FactorialBasis):
             sage: B[:5]
             [1, x, 2*x^2, 6*x^3, 24*x^4]
     '''
-    def __init__(self, basis : FactorialBasis = None, scale = None, **kwds):
+    def __init__(self, basis : FactorialBasis = None, scale: Callable | element.Element = None, **kwds):
         if basis is None or scale is None:
             raise TypeError("A basis and a scaling sequence must be provided")
         # Checking the basis argument
@@ -1344,13 +1355,13 @@ class ScalarBasis(FactorialBasis):
         r'''Property for getting the quotient of the scaling factor'''
         return self.scale.shift()/self.scale
 
-    def change_base(self, base):
+    def change_base(self, base : Parent) -> ScalarBasis:
         return ScalarBasis(
             self.basis.change_base(base),   # the basic basis is the same but with the changed base ring
             self.__scale                    # the scale factor does not change
         )
 
-    def _element(self, n):
+    def _element(self, n: int) -> element.Element:
         r'''
             Method to return the `n`-th element of the basis.
 
@@ -1368,10 +1379,10 @@ class ScalarBasis(FactorialBasis):
         '''
         return self.basis.element(n)*self.scale(n)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Scalar product of [%s] by [%s] (%s, %s, %s,...)" %(self.basis, self.scale, self[0], self[1], self[2])
 
-    def _latex_(self):
+    def _latex_(self) -> str:
         return r"\left(%s\right)_n \cdot \left(%s\right)" %(latex(self.scale), latex(self.basis))
 
     def root_sequence(self) -> Sequence:
@@ -1438,7 +1449,7 @@ class ScalarBasis(FactorialBasis):
         '''
         return (self.basis.an)*(self.quot.shift(-1))
 
-    def increasing_polynomial(self, src, diff=None, dst=None):
+    def increasing_polynomial(self, src: int | element.Element, diff: int = None, dst: int = None) -> element.Element:
         r'''
             Returns the increasing factorial for the factorial basis.
 
@@ -1502,7 +1513,7 @@ class ScalarBasis(FactorialBasis):
         return self.__cached_increasing[(n,d)]
         
     @cached_method
-    def increasing_basis(self, shift) -> FactorialBasis:
+    def increasing_basis(self, shift: int) -> ScalarBasis:
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
@@ -1523,10 +1534,10 @@ class ScalarBasis(FactorialBasis):
 
         return ScalarBasis(self.basis.increasing_basis(shift), new_scale)
 
-    def is_quasi_eval_triangular(self):
+    def is_quasi_eval_triangular(self) -> bool:
         return self.basis.is_quasi_eval_triangular()
 
-    def is_quasi_func_triangular(self):
+    def is_quasi_func_triangular(self) -> bool:
         return self.basis.is_quasi_func_triangular()   
 ###############################################################
 ### EXAMPLES OF PARTICULAR FACTORIAL BASIS
@@ -1564,7 +1575,7 @@ class FallingBasis(SFactorialBasis):
 
         TODO check the compatibility with shifts using the roots. Is there a generator of all compatibilities?
     '''
-    def __init__(self, dilation, shift, decay, var_name='x', E=None, base=QQ):
+    def __init__(self, dilation: int, shift: element.Element, decay: element.Element, var_name: str = 'x', E: str = None, base: Parent = QQ):
         if(not dilation in ZZ or dilation <= 0):
             raise ValueError("The dilation of the basis must be a natural number")
         dilation = ZZ(dilation); shift = base(shift); decay = base(decay)
@@ -1581,7 +1592,7 @@ class FallingBasis(SFactorialBasis):
         Sn = self.Sn(); n = self.n()
         self.set_endomorphism(self.__E_name, c*(n+1)*Sn + 1, True)
 
-    def change_base(self, base):
+    def change_base(self, base: Parent) -> FallingBasis:
         return FallingBasis(
             self.__a,                       # the dilation does not change
             self.__b,                       # the shift does not change
@@ -1592,7 +1603,7 @@ class FallingBasis(SFactorialBasis):
         )
 
     @cached_method
-    def increasing_basis(self, shift) -> "FallingBasis":
+    def increasing_basis(self, shift: int | element.Element) -> "FallingBasis":
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
@@ -1617,7 +1628,7 @@ class FallingBasis(SFactorialBasis):
             base = self.base                # the ring for the coefficients
             )
 
-    def default_shift(self):
+    def default_shift(self) -> element.Element:
         r'''
             Method that returns the action of the compatible shift over the main variable.
 
@@ -1632,7 +1643,7 @@ class FallingBasis(SFactorialBasis):
         x = self.universe.gens()[0]
         return x+self.__c/self.__a
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         a = self.__a; b = self.__b; c = self.__c
         if(c == -1):
             return f"Raising Factorial Basis (1, {self[1]}, {self[1]}({self[1]}+1),...)"
@@ -1640,7 +1651,7 @@ class FallingBasis(SFactorialBasis):
             return F"Falling Factorial Basis (1, {self[1]}, {self[1]}({self[1]}-1),...)"
         return f"General ({a},{b},{c})-Falling Factorial Basis ({self[0]}, {self[1]}, {self[2]},...)"
 
-    def _latex_(self):
+    def _latex_(self) -> str:
         a = self.__a; b = self.__b; c = self.__c
         x = self.universe.gens()[0]
         if(c == -1):
@@ -1673,7 +1684,7 @@ class PowerBasis(FallingBasis):
         
         TODO: add examples
     '''
-    def __init__(self, dilation=1, shift=0, var_name='x', Dx='Dx', base=QQ):
+    def __init__(self, dilation : int = 1, shift: element.Element = 0, var_name: str = 'x', Dx: str = 'Dx', base: Parent = QQ):
         super(PowerBasis, self).__init__(dilation,shift,0,var_name,'Id',base)
 
         self.__Dx_name = Dx
@@ -1681,7 +1692,7 @@ class PowerBasis(FallingBasis):
         n = self.n(); Sn = self.Sn(); a = self.linear_coefficient()[0]
         self.set_derivation(Dx, a*(n+1)*Sn)
 
-    def change_base(self, base):
+    def change_base(self, base : Parent) -> PowerBasis:
         return PowerBasis(
             self.an(0),                     # the dilation value does not change
             self.bn(0),                     # the shift value does not change
@@ -1691,7 +1702,7 @@ class PowerBasis(FallingBasis):
         )
 
     @cached_method
-    def increasing_basis(self, shift) -> "PowerBasis":
+    def increasing_basis(self, shift: int | element.Element) -> PowerBasis:
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
@@ -1708,21 +1719,21 @@ class PowerBasis(FallingBasis):
 
         return self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         a = self.an(0); b = self.bn(0)
         if(a == 1 and b == 0):
             return f"Power Basis {self[1]}^n"
         else:
             return f"({a},{b})-Power Basis ({self[1]})^n"
 
-    def _latex_(self):
+    def _latex_(self) -> str:
         a = self.an(0); b = self.bn(0)
         if(a == 1 and b == 0):
             return r"\left\{%s^n\right\}_{n \geq 0}" %self.element(1)
         else:
             return r"\left\{(%s)^n\right\}_{n \geq 0}" %self.element(1)
 
-    def is_quasi_func_triangular(self):
+    def is_quasi_func_triangular(self) -> bool:
         return self.bn(0) == 0
 
 class BinomialBasis(SFactorialBasis):
@@ -1752,7 +1763,7 @@ class BinomialBasis(SFactorialBasis):
           consider `E` as default. The operator of shift by `1/a` will be named by adding a `t` to the name.
         * ``base``: base ring where the coefficient `b` must belong.
     '''
-    def __init__(self, dilation=1, shift=0, var_name='x', E='E', base=QQ):
+    def __init__(self, dilation: int = 1, shift: element.Element = 0, var_name: str = 'x', E: str = 'E', base: Parent = QQ):
         PolyBasis.__init__(self, base, var_name) # initializing some default variables for using ``self.n``
         if(not dilation in ZZ or dilation <= 0):
             raise ValueError("The dilation of the basis must be a natural number")
@@ -1770,7 +1781,7 @@ class BinomialBasis(SFactorialBasis):
         ## Adding the compatibility by $x \mapsto x+1$ (simply powering the previous compatibility)
         self.set_endomorphism(E, (Sn+1)**a)
 
-    def change_base(self, base):
+    def change_base(self, base: Parent) -> BinomialBasis:
         return BinomialBasis(
             self.__a,                       # the dilation value does not change
             self.__b,                       # the shift value does not change
@@ -1779,15 +1790,15 @@ class BinomialBasis(SFactorialBasis):
             base                            # the base is set to the given value
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         x = self.universe.gens()[0]
         return "Binomial basis (%s) choose n" %(self.__a*x + self.__b)
 
-    def _latex_(self):
+    def _latex_(self) -> str:
         x = self.universe.gens()[0]
         return r"\left\{\binom{%s}{n}\right\}_{n\geq 0}" %(self.__a*x+self.__b)
 
-    def is_quasi_eval_triangular(self):
+    def is_quasi_eval_triangular(self) -> bool:
         return self.__b in ZZ and self.__b >= 0
 
 __all__ = ["FactorialBasis", "SFactorialBasis", "RootSequenceBasis", "ScalarBasis", "FallingBasis", "PowerBasis", "BinomialBasis"]
