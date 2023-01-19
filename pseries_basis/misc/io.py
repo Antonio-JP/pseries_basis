@@ -15,7 +15,7 @@ from sage.databases.oeis import OEISSequence
 from ore_algebra.ore_operator import OreOperator
 
 from .ore import poly_decomposition, get_recurrence_algebra, solution, required_init
-from .sequences import LambdaSequence
+from .sequences import Sequence, LambdaSequence
 
 logger = logging.getLogger(__name__)
 
@@ -55,20 +55,20 @@ class EnhOEISSequence(OEISSequence):
         * ``ident``: either a string with the A identifier of the sequence or a :class:`OEISSequence`.
     '''
     @staticmethod
-    def __classcall__(cls, ident):
+    def __classcall__(cls, ident : str | OEISSequence):
         if isinstance(ident, OEISSequence):
             ident = ident.id()
         return super(EnhOEISSequence, cls).__classcall__(cls, ident)
 
     @cached_method
-    def is_dfinite(self):
+    def is_dfinite(self) -> bool:
         r'''
             Method to check whether a sequence is D-finite or not.
         '''
         return not (self.dfinite_recurrence() is None)
 
     @cached_method
-    def dfinite_recurrence(self):
+    def dfinite_recurrence(self) -> OreOperator:
         r'''
             Method to compute a difference D-finite recurrence for an OEIS Sequence
 
@@ -109,7 +109,7 @@ class EnhOEISSequence(OEISSequence):
         logger.info(f"dfinite_recurrence: no recurrence operator found for OEIS sequence {self.id()}")
         return None
 
-    def order(self):
+    def order(self) -> int:
         r'''
             Method to get the order of a D-finite OEIS sequence (if it is D-finite)
         '''
@@ -118,14 +118,14 @@ class EnhOEISSequence(OEISSequence):
         raise TypeError("The sequence is not D-finite")
 
     @property
-    def sequence(self):
+    def sequence(self) -> Sequence:
         off = self.offsets()[0]
         if self.is_dfinite():
             d = required_init(self.dfinite_recurrence())
             return solution(self.dfinite_recurrence(),tuple(off*[0] + list(self.first_terms(d+1))))
         return LambdaSequence(lambda n : self.first_terms(n+1-off)[-1] if n >= off else None, ZZ)
 
-    def check_consistency(self, bound=10):
+    def check_consistency(self, bound: int = 10) -> bool:
         r'''
             Method to check the consistency between the generated sequence and the terms in the OEIS database
 
@@ -139,7 +139,7 @@ class EnhOEISSequence(OEISSequence):
             return tuple(self.sequence[off:off+bound]) == self.first_terms(bound)
         return True
 
-    def __find_several_first(self, string, *to_find, start=0):
+    def __find_several_first(self, string : str, *to_find : str, start: int = 0) -> int:
         r'''
             Finds one of the strings to find returning the first appearance of them. It returns -1 if none appears.
         '''
@@ -149,7 +149,7 @@ class EnhOEISSequence(OEISSequence):
             return -1
         return min(pos)
 
-    def __analyze_formula(self, formula, start_pos):
+    def __analyze_formula(self, formula: str, start_pos: int) -> OreOperator:
         n = var('n')
         # getting the part of the formula until a "with" a "." or the end of the line
         end_pos = self.__find_several_first(formula, ".", " with", ",", "[", start = start_pos)
@@ -167,7 +167,7 @@ class EnhOEISSequence(OEISSequence):
             logger.info(f"dfinite_recurrence: no valid arguments in the formula")
         return None
 
-    def __extract_recurrence(self, formula, neg_order):
+    def __extract_recurrence(self, formula: str, neg_order: int) -> OreOperator:
         OE, _ = get_recurrence_algebra('x', 'E')
         parts = [el.strip() for el in formula.split(".")[0].split(",")]
         # substitution reg
