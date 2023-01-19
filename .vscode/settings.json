@@ -13,6 +13,8 @@
         "DQSHIFT",
         "vararg",
         "polydict",
+        "qsequences",
+        "oself",
         "ecurrence"
     ],
     "cSpell.words": [
@@ -26,6 +28,7 @@
         "homset",
         "invertibility",
         "Laguerre",
+        "lclm",
         "multiset",
         "nfactors",
         "nsections",
