@@ -13,27 +13,31 @@ r'''
     This module offers a unified access to these two types of operators and will allow other classes
     in :mod:`pseries_basis`.
 '''
+from __future__ import annotations
 
 try: # python 3.9 or higher
     from functools import cache
 except ImportError: #python 3.8 or lower
     from functools import lru_cache as cache
-from typing import Any, Tuple, Union # pylint: disable=unused-import
+from typing import Collection, TypeVar
 
 from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
 
-from sage.all import QQ, ZZ, prod, lcm, cached_method
+from sage.all import QQ, ZZ, prod, lcm, cached_method, Parent
 from sage.categories.fields import Fields
 from sage.categories.pushout import pushout
 from sage.rings.polynomial.polynomial_ring import PolynomialRing_field, is_PolynomialRing
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.fraction_field import FractionField_1poly_field
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
+from sage.rings.ring import Algebra # pylint: disable=no-name-in-module
+from sage.structure import element
 
 from .sequences import Sequence, LambdaSequence
 
 _Fields = Fields.__classcall__(Fields)
+Element = TypeVar("Element", element.Element)
 
 #############################################################################################
 ###
@@ -66,7 +70,7 @@ def is_recurrence_algebra(algebra: OreAlgebra_generic) -> bool:
     return gens_recurrence_algebra(algebra) != None
 
 @cache
-def gens_recurrence_algebra(algebra: OreAlgebra_generic) -> Tuple[Any, Any, Any]:
+def gens_recurrence_algebra(algebra: OreAlgebra_generic) -> tuple[Element, Element, Element]:
     r'''
         Method that returns the information about a recurrence ore algebra.
 
@@ -124,7 +128,7 @@ def is_double_recurrence_algebra(algebra: OreAlgebra_generic) -> bool:
     return gens_double_recurrence_algebra(algebra) != None
 
 @cache
-def gens_double_recurrence_algebra(algebra: OreAlgebra_generic) -> Tuple[Any, Any, Any, Any]:
+def gens_double_recurrence_algebra(algebra: OreAlgebra_generic) -> tuple[Element, Element, Element, Element]:
     r'''
         Method that returns the information about a double recurrence ore algebra.
 
@@ -178,7 +182,7 @@ def is_qshift_algebra(algebra : OreAlgebra_generic, name_q : str = None) -> bool
     return gens_qshift_algebra(algebra, name_q) != None
 
 @cache
-def gens_qshift_algebra(algebra: OreAlgebra_generic, name_q : str = None) -> Tuple[Any,Any,Any]:
+def gens_qshift_algebra(algebra: OreAlgebra_generic, name_q : str = None) -> tuple[Element,Element,Element]:
     r'''
         Method that returns the information about a `q`-shift recurrence ore algebra.
 
@@ -232,7 +236,7 @@ def is_double_qshift_algebra(algebra : OreAlgebra_generic, name_q : str = None):
     return gens_double_qshift_algebra(algebra, name_q) != None
 
 @cache
-def gens_double_qshift_algebra(algebra: OreAlgebra_generic, name_q : str = None) -> Tuple[Any,Any,Any,Any]:
+def gens_double_qshift_algebra(algebra: OreAlgebra_generic, name_q : str = None) -> tuple[Element,Element,Element,Element]:
     r'''
         Method that returns the information about a double `q`-shift ore algebra.
 
@@ -298,7 +302,7 @@ def is_based_field(algebra: OreAlgebra_generic) -> bool:
     '''
     return algebra.base().is_field() and (algebra.base().base_ring() != algebra.base())
 
-def has_variable(algebra, name):
+def has_variable(algebra: Algebra, name: str) -> bool:
     r'''
         Method to check whether an algebra has a generator or not.
     '''
@@ -316,7 +320,7 @@ def has_variable(algebra, name):
 ###
 #############################################################################################
 __CACHE_POLY_ALGEBRAS = {}
-def get_polynomial_algebra(name_x: str = "x", base : _Fields.parent_class = QQ) -> Tuple[PolynomialRing_field, Any]:
+def get_polynomial_algebra(name_x: str = "x", base : _Fields.parent_class = QQ) -> tuple[PolynomialRing_field, Element]:
     r'''
         Method to get always the same Polynomial Ring
 
@@ -339,7 +343,7 @@ def get_polynomial_algebra(name_x: str = "x", base : _Fields.parent_class = QQ) 
     
     return __CACHE_POLY_ALGEBRAS[(name_x, base)]
 
-def get_rational_algebra(name_x: str = "x", base : _Fields.parent_class = QQ) -> Tuple[FractionField_1poly_field, Any]:
+def get_rational_algebra(name_x: str = "x", base : _Fields.parent_class = QQ) -> tuple[FractionField_1poly_field, Element]:
     r'''
         Method to get always the same fraction field of a Polynomial Ring
 
@@ -360,7 +364,7 @@ def get_rational_algebra(name_x: str = "x", base : _Fields.parent_class = QQ) ->
     return (R.fraction_field(), R.fraction_field()(x))
 
 __CACHE_REC_ALGEBRAS = {}
-def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any]]:
+def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> tuple[OreAlgebra_generic, tuple[Element, Element]]:
     r'''
         Method to get always the same ore algebra
 
@@ -389,7 +393,7 @@ def get_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational 
     return __CACHE_REC_ALGEBRAS[(name_x, name_shift, rational, base)]
 
 __CACHE_DREC_ALGEBRAS = {}
-def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any, Any]]:
+def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> tuple[OreAlgebra_generic, tuple[Element, Element, Element]]:
     r'''
         Method to get always the same ore algebra
 
@@ -419,7 +423,7 @@ def get_double_recurrence_algebra(name_x : str = "x", name_shift : str = "E", ra
     return __CACHE_DREC_ALGEBRAS[(name_x, name_shift, rational, base)]
 
 __CACHE_DER_ALGEBRAS = {}
-def get_differential_algebra(name_x : str = "x", name_der : str = "Dx", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any]]:
+def get_differential_algebra(name_x : str = "x", name_der : str = "Dx", rational : bool = True, base : _Fields.parent_class = QQ) -> tuple[OreAlgebra_generic, tuple[Element, Element]]:
     r'''
         Method to get always the same ore algebra
 
@@ -448,7 +452,7 @@ def get_differential_algebra(name_x : str = "x", name_der : str = "Dx", rational
     return __CACHE_DER_ALGEBRAS[(name_x, name_der, rational, base)]
 
 __CACHE_QSHIFT_ALGEBRA = {}
-def get_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any]]:
+def get_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> tuple[OreAlgebra_generic, tuple[Element, Element]]:
     r'''
         Method to get always the same ore algebra
 
@@ -479,7 +483,7 @@ def get_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E"
     return __CACHE_QSHIFT_ALGEBRA[(name_x, name_q, name_qshift, rational, base)]
 
 __CACHE_DQSHIFT_ALGEBRA = {}
-def get_double_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> Tuple[OreAlgebra_generic, Tuple[Any, Any]]:
+def get_double_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> tuple[OreAlgebra_generic, tuple[Element, Element]]:
     r'''
         Method to get always the same ore algebra
 
@@ -596,7 +600,7 @@ def required_init(operator : OreOperator) -> int:
         _, S, Si, alpha = gens_double_recurrence_algebra(operator.parent()); S = S.polynomial(); Si = Si.polynomial()
         if (not alpha in ZZ): 
             raise ValueError(f"The shift must be an integer shift (got {alpha})")
-        elif alpha < 0: # we shitch the shift and its inverse
+        elif alpha < 0: # we switch the shift and its inverse
             S, Si, alpha = Si, S, -alpha
         dS = operator.polynomial().degree(S); dSi = operator.polynomial().degree(Si)
         if is_based_field(operator.parent()):
@@ -661,7 +665,7 @@ def required_init(operator : OreOperator) -> int:
 
     return int(output)
 
-def eval_ore_operator(operator : OreOperator, ring=None,**values):
+def eval_ore_operator(operator : OreOperator, ring: Parent = None, **values: Element) -> Element:
     r'''
         Method to evaluate ore operators
         
@@ -686,7 +690,7 @@ def eval_ore_operator(operator : OreOperator, ring=None,**values):
 ### SOME CLASSES RELATING WITH ORE ALGEBRAS
 ###
 #############################################################################################
-def solution(operator : OreOperator, init, check_init=True) -> Sequence:
+def solution(operator: OreOperator, init: Collection[Element], check_init=True) -> Sequence:
     r'''
         Method to generate a :class:`Sequence` solution to a recurrence operator
 
@@ -780,7 +784,7 @@ class OreSequence(Sequence):
 
         TODO: Implement or use other class for this idea
     '''
-    def __init__(self, operator, init, universe=None):
+    def __init__(self, operator : OreOperator, init: Collection[Element], universe: Parent = None):
         self.__sequence = solution(operator, init, True)
         self.__operator = operator
 
@@ -789,14 +793,14 @@ class OreSequence(Sequence):
         super().__init__(universe, 1, False)
 
     @property
-    def operator(self): return self.__operator
+    def operator(self) -> OreOperator: return self.__operator
 
     @cached_method
-    def required_init(self): 
+    def required_init(self) -> int: 
         return required_init(self.operator)
 
     @property
-    def type(self):
+    def type(self) -> str:
         if is_recurrence_algebra(self.operator.parent()):
             return "recurrence"
         elif is_double_recurrence_algebra(self.operator.parent()):
@@ -808,9 +812,8 @@ class OreSequence(Sequence):
         else:
             return "none"
 
-
     @cached_method
-    def op_gen(self):
+    def op_gen(self) -> OreOperator:
         r'''
             Method that returns the main operator of the Ore Algebra associated to this sequence
         '''
@@ -828,7 +831,7 @@ class OreSequence(Sequence):
         return method(self.operator.parent())[1]
 
     @cached_method
-    def op_gen_inv(self):
+    def op_gen_inv(self) -> OreOperator:
         r'''
             Method that returns the main operator of the Ore Algebra associated to this sequence
         '''
@@ -845,10 +848,10 @@ class OreSequence(Sequence):
 
         return method(self.operator.parent())[2]
 
-    def _element(self, *indices: int):
+    def _element(self, *indices: int) -> Element:
         return self.__sequence._element(*indices)
 
-    def _shift(self):
+    def _shift(self) -> OreSequence:
         if self.type.find("double") >= 0:
             # since we can have the inverse shift, we multiply by it
             Si = self.op_gen_inv()
@@ -861,7 +864,7 @@ class OreSequence(Sequence):
         new_init = [self(i+1) for i in range(required_init(new_operator))]
         return OreSequence(new_operator, new_init, self.universe)
 
-    def __add__(self, other):
+    def __add__(self, other) -> Sequence:
         if self.type.find("double") < 0 and self.type != "none" and isinstance(other, OreSequence) and self.operator.parent() == other.operator.parent():
             # This is the only case we can use the methods from Ore Algebra
             new_operator = self.operator.lclm(other.operator)
@@ -870,7 +873,7 @@ class OreSequence(Sequence):
             return OreSequence(new_operator, new_init, pushout(self.universe, other.universe))
         return super().__add__(other)
 
-    def __sub__(self, other):
+    def __sub__(self, other) -> Sequence:
         if self.type.find("double") < 0 and self.type != "none" and isinstance(other, OreSequence) and self.operator.parent() == other.operator.parent():
             # This is the only case we can use the methods from Ore Algebra
             new_operator = self.operator.lclm(other.operator)
@@ -879,7 +882,7 @@ class OreSequence(Sequence):
             return OreSequence(new_operator, new_init, pushout(self.universe, other.universe))
         return super().__sub__(other)
 
-    def __mul__(self, other):
+    def __mul__(self, other) -> Sequence:
         if self.type.find("double") < 0 and self.type != "none" and isinstance(other, OreSequence) and self.operator.parent() == other.operator.parent():
             # This is the only case we can use the methods from Ore Algebra
             new_operator = self.operator.symmetric_product(other.operator)
@@ -888,7 +891,7 @@ class OreSequence(Sequence):
             return OreSequence(new_operator, new_init, pushout(self.universe, other.universe))
         return super().__mul__(other)
         
-    def __neg__(self):
+    def __neg__(self) -> OreSequence:
         return OreSequence(self.operator, [(-1)*self(i) for i in range(required_init(self.operator))], self.universe)
 
     def __repr__(self) -> str:
@@ -899,7 +902,7 @@ class OreSequence(Sequence):
 ### AUXILIARY METHODS
 ###
 ####################################################################################################
-def poly_decomposition(polynomial):
+def poly_decomposition(polynomial : Element) -> tuple[list[Element],list[Element]]:
     r'''
         Method that splits a polynomial into a lists of monomials and a list of coefficients indexed in 
         such a way that summing through both lists gives the original polynomial.
