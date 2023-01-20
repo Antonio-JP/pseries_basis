@@ -37,7 +37,7 @@ from sage.structure import element
 from .sequences import Sequence, LambdaSequence
 
 _Fields = Fields.__classcall__(Fields)
-Element = TypeVar("Element", element.Element)
+Element = element.Element
 
 #############################################################################################
 ###

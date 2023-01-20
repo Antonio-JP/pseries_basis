@@ -46,7 +46,7 @@ from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure import element
-from typing import Any, Callable, Collection, TypeVar
+from typing import Any, Callable, Collection
 
 # ore_algebra imports
 from ore_algebra.ore_algebra import OreAlgebra_generic
@@ -61,7 +61,7 @@ from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurre
 from .misc.sequences import LambdaSequence, Sequence, SequenceSet
 
 ## Special types for PSBasis
-Compatibility = TypeVar("Compatibility", tuple[int,int,int,Callable[[int,int,element.Element],element.Element]])
+Compatibility = tuple[int,int,int,Callable[[int,int,element.Element],element.Element]]
 
 class NotCompatibleError(TypeError): pass
 

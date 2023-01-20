@@ -668,7 +668,7 @@ def check_q_compatibility(basis : QBasis, operator, action, bound=100):
             for r in range(m)) 
         for k in range(mm, bound))
 
-def qpochhammer(a, qn, q):
+def qpochhammer(a, qn, q): # TODO: fix this to allow other `q` (or maybe not)
     ''' Recursive definition of (a;q)_n'''
     if qn == 1: # base case of q**0
         return 1
