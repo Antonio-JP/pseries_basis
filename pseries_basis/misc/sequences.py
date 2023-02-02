@@ -10,6 +10,9 @@ r'''
 '''
 from __future__ import annotations
 
+from functools import reduce
+from typing import Collection
+
 ## Sage imports
 from sage.all import (cached_method, oo, NaN, cartesian_product, cartesian_product_iterator, ZZ, parent, SR)
 from sage.categories.homset import Homset
@@ -257,6 +260,10 @@ class Sequence(SetMorphism):
             This method build the corresponding subsequence for the given values in ``vals``.
             If the number of values is more than the number of inputs, then we return the value
             of the sequence at the given position.
+
+            TODO: Add the option for more sparese subsequences: if vals is given as a sequence over
+            `\mathbb{N}, then we can still build a subsequence from it. This is more on the line of 
+            a sparse subsequence.
         '''
         if len(vals) >= self.dim:
             return self.element(*vals[:self.dim])
@@ -269,6 +276,9 @@ class Sequence(SetMorphism):
             Return the actual subsequence (see :func:`subsequence`). Can assume ``vals`` is a list of appropriate length and type.
         '''
         return LambdaSequence(lambda *n: self.element(*vals, *n), self.universe, dim=self.dim-len(vals), allow_sym=True)
+
+    def interlace(self, *others : Sequence, dim_to_interlace: int = 0):
+        return InterlacingSequence(self, *others, dim_to_interlace=dim_to_interlace)
 
     def __repr__(self) -> str:
         if self.dim == 1:
@@ -669,4 +679,59 @@ class RationalSequence(Sequence):
     def __repr__(self) -> str:
         return f"Sequence{f' in {self.variables}' if self.dim > 1 else ''} over [{self.universe}]: {self.generic}"
 
-__all__ = ["Sequence", "SequenceSet", "LambdaSequence", "ExpressionSequence", "RationalSequence"]
+class InterlacingSequence(Sequence):
+    r'''
+        Interlaced sequence.
+
+        This sequence computes the interlacing among several sequences in one of its dimensions.
+
+        EXAMPLES::
+
+            sage: from sage.pseries_basis import *
+            sage: fact = LambdaSequence(lambda n : factorial(n), QQ)
+            sage: zero = LambdaSequence(lambda n : 0, ZZ)
+            sage: InterlacingSequence(fact, zero)[:10]
+            [1, 0, 1, 0, 2, 0, 6, 0, 24, 0]
+    '''
+    def __init__(self, *sequences: Sequence, dim_to_interlace: int = 0, **kwds):
+        if len(sequences) == 1 and isinstance(sequences[0], Collection):
+            sequences = sequences[0]
+
+        if len(sequences) == 0:
+            raise TypeError("Interlacing of sequences is defined for at least one sequence")
+
+        # we check the dimension of all sequences
+        dim = sequences[0].dim
+        if [seq.dim for seq in sequences].count(dim) != len(sequences):
+            raise TypeError("The dimension for interlacing sequences must be the same")
+        
+        # we compute a common universe        
+        universe = reduce(lambda p,q : pushout(p,q), [seq.universe for seq in sequences])
+
+        # we compute if we can compute the symbolic expression for the interlaced sequence
+        allow_sym = all(seq.allow_sym for seq in sequences)
+
+        # we check the dimension to interlace:
+        if dim_to_interlace < 0 or dim_to_interlace >= len(sequences):
+            raise ValueError("The dimension to interlace must be valid")
+        self.__sequences = tuple(sequences)
+        self.__to_interlace = dim_to_interlace
+
+        # Removing possible duplicated arguments
+        kwds.pop("universe", None); kwds.pop("dim", None); kwds.pop("allow_symb", None)
+        super().__init__(
+            universe, dim, allow_sym, # arguments for Sequence
+            **kwds                    # arguments for possible multi-inheritance
+        )
+
+    @property
+    def sequences(self) -> tuple[Sequence]: return self.__sequences
+    @property
+    def interlacing(self) -> int: return self.__to_interlace
+
+    def _element(self, *indices: int):
+        r = indices[self.__to_interlace]%len(self.sequences)
+        indices = list(indices); indices[self.__to_interlace] //= len(self.sequences)
+        return self.sequences[r].element(*indices)
+
+__all__ = ["Sequence", "SequenceSet", "LambdaSequence", "ExpressionSequence", "RationalSequence", "InterlacingSequence"]
