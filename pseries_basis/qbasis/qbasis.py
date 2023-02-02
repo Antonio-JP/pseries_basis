@@ -4,13 +4,36 @@ r'''
 import logging
 logger = logging.getLogger(__name__)
 
-from sage.all import PolynomialRing, QQ, ZZ, cached_method, Matrix, ceil #pylint: disable=no-name-in-module
+from sage.all import PolynomialRing, QQ, ZZ, cached_method, Matrix, ceil, parent #pylint: disable=no-name-in-module
+from sage.categories.pushout import pushout
+from sage.structure import element
 
 from ..psbasis import PSBasis, PolyBasis, SequenceBasis
 from ..factorial.factorial_basis import FactorialBasis, RootSequenceBasis, SFactorialBasis, ScalarBasis
 from ..misc.ore import get_qshift_algebra, get_double_qshift_algebra, get_rational_algebra, has_variable
 from ..misc.qsequences import QLambdaSequence
 from ..misc.sequences import LambdaSequence, Sequence
+
+Element = element.Element
+
+#######################################################################################################
+### Private methods of this module
+#######################################################################################################
+def __polyvar_log(poly, var):
+    r'''Compute the `n` for ``poly == var**n` for a variable ``var`` of a polynomial ring'''
+    if not poly in var.parent():
+        raise ValueError(f"[polyvar_log] {poly} is not a polynomial in {var}")
+    poly = var.parent()(poly)
+    rems = []
+    while not poly.is_constant():
+        rems.append(poly%var)
+        poly = poly//var
+    if all(el == 0 for el in rems) and poly == 1:
+        return len(rems)
+    elif poly != 1:
+        raise ValueError(f"[polyvar_log] The leading coefficient of {poly} was not 1")
+    else:
+        raise ValueError(f"{poly} was not of the form {var}^n")
 
 #######################################################################################################
 ### Classes for some basis of Q-series
@@ -318,8 +341,9 @@ class QBasis(PSBasis):
                 sage: B2.QNaturals()
                 Sequence over [Fraction Field of Multivariate Polynomial Ring in a, c over Rational Field]: (0, 1, c + 1,...)
         '''
-        q = self.q()
-        return QLambdaSequence(lambda qn : (1-qn)/(1-q), self.base, q_name=str(q))
+        # q = self.q()
+        # return QLambdaSequence(lambda qn : (1-qn)/(1-q), self.base, q_name=str(q))
+        return QNaturalSequence(self.q())
 
     @cached_method
     def QFactorial(self):
@@ -355,8 +379,9 @@ class QBasis(PSBasis):
                 sage: B2.QFactorial()
                 Sequence over [Fraction Field of Multivariate Polynomial Ring in a, c over Rational Field]: (1, 1, c + 1,...)
         '''
-        q = self.q()
-        return QLambdaSequence(lambda qn : qfactorial(qn,q), self.base, q_name = str(q))
+        # q = self.q()
+        # return QLambdaSequence(lambda qn : qfactorial(qn,q), self.base, q_name = str(q))
+        return QFactorialSequence(self.q())
 
     @cached_method
     def QPochhammer(self, a):
@@ -395,7 +420,8 @@ class QBasis(PSBasis):
                 sage: (B.QPochhammer(B.q())/LambdaSequence(lambda n : (1-B.q())**n, B.base) - B.QFactorial())[:10]
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         '''
-        return QLambdaSequence(lambda qn : qpochhammer(a, qn, self.q()), self.base)
+        # return QLambdaSequence(lambda qn : qpochhammer(a, qn, self.q()), self.base)
+        return QPochhammerSequence(a, self.q())
  
     def shift_in(self, shift):
         raise NotImplementedError(f"Method 'shift_in' not implemented for class {self.__class__}")
@@ -668,22 +694,50 @@ def check_q_compatibility(basis : QBasis, operator, action, bound=100):
             for r in range(m)) 
         for k in range(mm, bound))
 
-def qpochhammer(a, qn, q): # TODO: fix this to allow other `q` (or maybe not)
-    ''' Recursive definition of (a;q)_n'''
-    if qn == 1: # base case of q**0
-        return 1
-    return qpochhammer(a, qn/q, q) * (1-a*qn/q)
+def qpochhammer(a: Element, b: Element, n: int) -> Element: # TODO: fix this to allow other `q` (or maybe not)
+    r'''Recursive definition of `(a;b)_n`'''
+    if n < 0: return 0
+    elif n == 0: return 1
+    return qpochhammer(a, b, n-1) * (1 - a*b**(n-1))
 
-def qfactorial(qn, q):
-    '''Recursive definition of [n]_q! = (q;q)_n/(1-q)^n'''
-    if qn == 1: # base case of q**0
-        return 1
-    return qfactorial(qn/q, q) * (1-qn)/(1-q)
+def QPochhammerSequence(a: Element, b: Element) -> Sequence:
+    universe = pushout(parent(a), parent(b))
+    return LambdaSequence(lambda n : qpochhammer(a, b, n), universe, 1)
 
-def qbinomial(qn, qm, q):
-    '''Method for obtaining [n,m]_q = [n]_q!/([m]_q![n-m]_q!)'''
-    if qm(**{str(q) : 2}) < 1 or (qn/qm)(**{str(q) : 2}) < 1: # base cases of m < 0 or n < m
-        return 0
-    return qfactorial(qn,q)/(qfactorial(qm, q)*qfactorial(qn/qm, q))
+def qnatural(n: int, q: Element) -> Element:
+    r'''Definition of the [n]_q natural numbers'''
+    return (1-q**n)/(1-q)
 
-__all__ = ["QBasis", "QSequentialBasis", "QBinomialBasis", "check_q_compatibility"]
+def QNaturalSequence(q: Element) -> Sequence:
+    return LambdaSequence(lambda n : qnatural(n, q), parent(q), 1)
+
+def qfactorial(n: int, q: Element) -> Element:
+    r'''Recursive definition of `[n]_q!'''
+    if n < 0: return 0
+    if n == 0: return 1
+    return qfactorial(n-1, q) * (1-q**n)/(1-q)
+
+def QFactorialSequence(q: Element) -> Sequence:
+    return LambdaSequence(lambda n : qfactorial(n, q), parent(q), 1)
+
+def __polyvar_log(poly, var):
+    r'''Compute the `n` for ``poly == var**n` for a variable ``var`` of a polynomial ring'''
+    if not poly in var.parent():
+        raise ValueError(f"[polyvar_log] {poly} is not a polynomial in {var}")
+    poly = var.parent()(poly)
+    rems = []
+    while not poly.is_constant():
+        rems.append(poly%var)
+        poly = poly//var
+    if all(el == 0 for el in rems) and poly == 1:
+        return len(rems)
+    elif poly != 1:
+        raise ValueError(f"[polyvar_log] The leading coefficient of {poly} was not 1")
+    else:
+        raise ValueError(f"{poly} was not of the form {var}^n")
+
+__all__ = [
+    "QBasis", "QSequentialBasis", "QBinomialBasis", ## type of basis
+    "check_q_compatibility", "qpochhammer", "qnatural", "qfactorial", # utility functions
+    "QPochhammerSequence", "QNaturalSequence", "QFactorialSequence", # special sequences
+    ]
