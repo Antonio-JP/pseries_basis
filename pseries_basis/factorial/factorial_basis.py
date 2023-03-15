@@ -1605,7 +1605,7 @@ class FallingBasis(SFactorialBasis):
         )
 
     @cached_method
-    def increasing_basis(self, shift: int | element.Element) -> "FallingBasis":
+    def increasing_basis(self, shift: int | element.Element) -> FallingBasis:
         r'''
             Method to get the structure for the `n`-th increasing basis.
 
