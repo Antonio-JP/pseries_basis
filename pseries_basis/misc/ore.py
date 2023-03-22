@@ -172,6 +172,22 @@ def is_differential_algebra(algebra: OreAlgebra_generic) -> bool:
     '''
     return isinstance(algebra, OreAlgebra_generic) and algebra.is_D()
 
+def __get_power_q(element, q):
+    r'''Check whether element is a power of q'''
+    element = q.parent()(element)
+
+    if element.parent().is_field(): # fraction field
+        if not element.denominator() == 1:
+            return -1
+        element = element.numerator()
+    if not q in element.parent().gens():
+        return -1
+    if len(element.coefficients()) > 1 or element.coefficients()[0] != 1:
+        return -1
+    
+    return element.degree() if is_PolynomialRing(element.parent()) else element.degree(q)
+         
+
 def is_qshift_algebra(algebra : OreAlgebra_generic, name_q : str = None) -> bool:
     r'''
         Method to check whether an algebra behaves like one with Q-shifts operators.
@@ -217,13 +233,14 @@ def gens_qshift_algebra(algebra: OreAlgebra_generic, name_q : str = None) -> tup
                 if applied_S.coefficients()[0] % v != 0: # it is not a multiple of v
                     return None
                 quot = applied_S.coefficients()[0]//v
-                if q != None and quot != q: # the required `q` is not the one obtained
+                power = -1 if q is None else __get_power_q(quot, q)
+                if q != None and power < 0: # the required `q` is not the one obtained
                     return None
                 elif not quot in algebra.base().base_ring(): # it is not a `q`-shift
                     return None
                 else:
-                    found = (v, q if q != None else quot)
-        return (None, S, q) if found is None else (found[0], S, found[1])
+                    found = (v, q if q != None else quot, power if q != None else 1)
+        return (None, S, q, 1) if found is None else (found[0], S, found[1], found[2])
     return None
 
 def is_double_qshift_algebra(algebra : OreAlgebra_generic, name_q : str = None):
@@ -275,18 +292,19 @@ def gens_double_qshift_algebra(algebra: OreAlgebra_generic, name_q : str = None)
                 if coeff % v != 0: # it is not a multiple of v
                     return None
                 quot = coeff/v
-                if q != None and quot != q: # the required `q` is not the one obtained
+                power = -1 if q == None else __get_power_q(quot, q)
+                if q != None and power < 0: # the required `q` is not the one obtained
                     return None
                 elif not quot in algebra.base().base_ring(): # it is not a `q`-shift
                     return None
                 else:
-                    found = (v, q if q != None else algebra.base().base_ring()(quot))
+                    found = (v, q if q != None else algebra.base().base_ring()(quot), power if q != None else 1)
             applied_SSi = (S*Si*v, Si*S*v)
             # both double applications must be the identity
             if any(len(el.coefficients()) != 1 or el.coefficients()[0] != v for el in applied_SSi):
                 return None
 
-        return (None, S, Si, q) if found is None else (found[0], S, Si, found[1])
+        return (None, S, Si, q, 1) if found is None else (found[0], S, Si, found[1], found[2])
 
     return None
 
@@ -452,7 +470,7 @@ def get_differential_algebra(name_x : str = "x", name_der : str = "Dx", rational
     return __CACHE_DER_ALGEBRAS[(name_x, name_der, rational, base)]
 
 __CACHE_QSHIFT_ALGEBRA = {}
-def get_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> tuple[OreAlgebra_generic, tuple[Element, Element]]:
+def get_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E", power: int = 1, rational : bool = True, base : _Fields.parent_class = QQ) -> tuple[OreAlgebra_generic, tuple[Element, Element]]:
     r'''
         Method to get always the same ore algebra
 
@@ -473,17 +491,20 @@ def get_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E"
         A tuple `(A, (x, Q))` where `A` is the corresponding `q`-recurrence algebra, `x` is the 
         variable of the inner variable and `Q` the recurrence operator with `Q(x) = qx`.
     '''
-    if not (name_x, name_q, name_qshift, rational, base) in __CACHE_QSHIFT_ALGEBRA:
+    if not power in ZZ or power < 0:
+        raise ValueError("The value for the power must be a non-negative integer")
+    power = ZZ(power)
+    if not (name_x, name_q, name_qshift, power, rational, base) in __CACHE_QSHIFT_ALGEBRA:
         with_q, q = has_variable(base, name_q)
         if not with_q: raise TypeError(f"The base ring [{base}] must have the variable {name_q}")
         PR, x = get_rational_algebra(name_x, base) if rational else get_polynomial_algebra(name_x, base)
-        OE = OreAlgebra(PR, (name_qshift, lambda p : p(**{str(x) : q*x}), lambda _ : 0)); Q = OE.gens()[0]
-        __CACHE_QSHIFT_ALGEBRA[(name_x, name_q, name_qshift, rational, base)] = (OE, (x,Q)) 
+        OE = OreAlgebra(PR, (name_qshift, lambda p : p(**{str(x) : (q**power)*x}), lambda _ : 0)); Q = OE.gens()[0]
+        __CACHE_QSHIFT_ALGEBRA[(name_x, name_q, name_qshift, power, rational, base)] = (OE, (x,Q)) 
     
-    return __CACHE_QSHIFT_ALGEBRA[(name_x, name_q, name_qshift, rational, base)]
+    return __CACHE_QSHIFT_ALGEBRA[(name_x, name_q, name_qshift, power, rational, base)]
 
 __CACHE_DQSHIFT_ALGEBRA = {}
-def get_double_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E", rational : bool = True, base : _Fields.parent_class = QQ) -> tuple[OreAlgebra_generic, tuple[Element, Element]]:
+def get_double_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : str = "E", power: int = 1, rational : bool = True, base : _Fields.parent_class = QQ) -> tuple[OreAlgebra_generic, tuple[Element, Element]]:
     r'''
         Method to get always the same ore algebra
 
@@ -505,14 +526,17 @@ def get_double_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : st
         variable of the inner variable and `E` the recurrence operator with `E(x) = x+1` and 
         `Ei` is the inverse recurrence operator, i.e., `Ei(x) = x-1`.
     '''
-    if not (name_x, name_q, name_qshift, rational, base) in __CACHE_DQSHIFT_ALGEBRA:
+    if not power in ZZ or power < 0:
+        raise ValueError("The value for the power must be a non-negative integer")
+    power = ZZ(power)
+    if not (name_x, name_q, name_qshift, power, rational, base) in __CACHE_DQSHIFT_ALGEBRA:
         with_q, q = has_variable(base, name_q)
         if not with_q: raise TypeError(f"The base ring [{base}] must have the variable {name_q}")
         PR, x = get_rational_algebra(name_x, base) if rational else get_polynomial_algebra(name_x, base)
-        OE = OreAlgebra(PR, (name_qshift, lambda p : p(**{str(x) : q*x}), lambda _ : 0), (name_qshift+"i", lambda p : p(**{str(x) : (1/q)*x}), lambda _ : 0)); E, Ei = OE.gens()
-        __CACHE_DQSHIFT_ALGEBRA[(name_x, name_q, name_qshift, rational, base)] = (OE, (x,E,Ei)) 
+        OE = OreAlgebra(PR, (name_qshift, lambda p : p(**{str(x) : (q**power)*x}), lambda _ : 0), (name_qshift+"i", lambda p : p(**{str(x) : (1/(q**power))*x}), lambda _ : 0)); E, Ei = OE.gens()
+        __CACHE_DQSHIFT_ALGEBRA[(name_x, name_q, name_qshift, power, rational, base)] = (OE, (x,E,Ei)) 
     
-    return __CACHE_DQSHIFT_ALGEBRA[(name_x, name_q, name_qshift, rational, base)]
+    return __CACHE_DQSHIFT_ALGEBRA[(name_x, name_q, name_qshift, power, rational, base)]
 #############################################################################################
 ###
 ### METHODS INVOLVING ORE ALGEBRAS AND OTHER STRUCTURES
@@ -546,12 +570,12 @@ def apply_operator_to_seq(operator : OreOperator, sequence : Sequence, **kwds) -
         R = operator.parent().base() if v is None else operator.parent().base().base_ring()
         gen = (lambda i : sum(coefficients[j]*sequence[i+alpha*j] for j in range(len(coefficients)))) if v is None else (lambda i : sum(coefficients[j](**{str(v): i})*sequence[i+alpha*j] for j in range(len(coefficients))))
     elif is_qshift_algebra(operator.parent(), q_name):
-        v, S, q = gens_qshift_algebra(operator.parent(), q_name)
+        v, S, q, p = gens_qshift_algebra(operator.parent(), q_name)
         if q is None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
         coefficients = operator.coefficients(sparse=False)
         R = operator.parent().base() if v is None else operator.parent().base().base_ring()
-        gen = (lambda i : sum(coefficients[j]*sequence[i+j] for j in range(len(coefficients)))) if v is None else (lambda i : sum(coefficients[j](**{str(v): q**i})*sequence[i+j] for j in range(len(coefficients))))
+        gen = (lambda i : sum(coefficients[j]*sequence[i+j] for j in range(len(coefficients)))) if v is None else (lambda i : sum(coefficients[j](**{str(v): q**(p*i)})*sequence[i+j] for j in range(len(coefficients))))
     elif is_double_recurrence_algebra(operator.parent()):
         v, S, Si, alpha = gens_double_recurrence_algebra(operator.parent())
         if not alpha in ZZ: 
@@ -562,12 +586,12 @@ def apply_operator_to_seq(operator : OreOperator, sequence : Sequence, **kwds) -
         R = operator.parent().base() if v is None else operator.parent().base().base_ring()        
         gen = lambda i : sum(_eval_monomial(monomials[j], i) * _eval_coeff(coefficients[j], i) for j in range(len(monomials)))
     elif is_double_qshift_algebra(operator.parent(), q_name):
-        v, S, Si, q = gens_double_qshift_algebra(operator.parent(), q_name)
+        v, S, Si, q, p = gens_double_qshift_algebra(operator.parent(), q_name)
         if q is None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
         monomials, coefficients = poly_decomposition(operator.polynomial()); S = S.polynomial(); Si = Si.polynomial()
         _eval_monomial = lambda m, n : sequence(n+m.degree(S)-m.degree(Si))
-        _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v): q**n}))
+        _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v): q**(p*n)}))
         R = operator.parent().base() if v is None else operator.parent().base().base_ring()        
         gen = lambda i : sum(_eval_monomial(monomials[j], i) * _eval_coeff(coefficients[j], i) for j in range(len(monomials)))
     else:
@@ -609,7 +633,7 @@ def required_init(operator : OreOperator) -> int:
             to_check = coeffs[monomials.index(S**dS)]
         output = max(-min([0]+[el[0]-1 for el in to_check.roots() if el[0] in ZZ]), alpha*(dS+dSi))
     elif is_qshift_algebra(operator.parent()):
-        _, S, q = gens_qshift_algebra(operator.parent()); S = S.polynomial()
+        _, S, q, p = gens_qshift_algebra(operator.parent()); S = S.polynomial()
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
         dS = operator.polynomial().degree(S)
@@ -624,10 +648,10 @@ def required_init(operator : OreOperator) -> int:
             for root in roots_to_check:
                 if root.numerator() == 1: 
                     if len(root.denominator().coefficients()) == 1:
-                        invalid_indices.append(-root.denominator().degree(q))
+                        invalid_indices.append(-p*root.denominator().degree(q))
                 elif root.denominator() == 1:
                     if len(root.numerator().coefficients()) == 1:
-                        invalid_indices.append(root.numerator().degree(q))
+                        invalid_indices.append(p*root.numerator().degree(q))
 
             bound_found = max(0,max(invalid_indices,default=0))
         except:
@@ -635,7 +659,7 @@ def required_init(operator : OreOperator) -> int:
         
         output = max(bound_found, dS)
     elif is_double_qshift_algebra(operator.parent()):
-        _, S, Si, q = gens_double_qshift_algebra(operator.parent()); S = S.polynomial(); Si = Si.polynomial()
+        _, S, Si, q, p = gens_double_qshift_algebra(operator.parent()); S = S.polynomial(); Si = Si.polynomial()
         dS = operator.polynomial().degree(S); dSi = operator.polynomial().degree(Si)
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
@@ -650,10 +674,10 @@ def required_init(operator : OreOperator) -> int:
             for root in roots_to_check:
                 if root.numerator() == 1: 
                     if len(root.denominator().coefficients()) == 1:
-                        invalid_indices.append(-root.denominator().degree(q))
+                        invalid_indices.append(-p*root.denominator().degree(q))
                 elif root.denominator() == 1:
                     if len(root.numerator().coefficients()) == 1:
-                        invalid_indices.append(root.numerator().degree(q))
+                        invalid_indices.append(p*root.numerator().degree(q))
 
             bound_found = max(0,max(invalid_indices,default=0))
         except:
@@ -729,20 +753,20 @@ def solution(operator: OreOperator, init: Collection[Element], check_init=True) 
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : n}))
         _shift = lambda i : alpha*i
     elif is_qshift_algebra(operator.parent()):
-        v,S,q = gens_qshift_algebra(operator.parent()); S = S.polynomial(); Si = None
+        v,S,q,p = gens_qshift_algebra(operator.parent()); S = S.polynomial(); Si = None
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
 
         dS = operator.polynomial().degree(S); dSi = 0
-        _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : q**n}))
+        _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : q**(p*n)}))
         _shift = lambda i : i
     elif is_double_qshift_algebra(operator.parent()):
-        v,S,Si,q = gens_double_qshift_algebra(operator.parent()); S = S.polynomial(); Si = Si.polynomial()
+        v,S,Si,q,p = gens_double_qshift_algebra(operator.parent()); S = S.polynomial(); Si = Si.polynomial()
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
 
         dS = operator.polynomial().degree(S); dSi = operator.polynomial().degree(Si)
-        _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : q**n}))
+        _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : q**(p*n)}))
         _shift = lambda i : i
     else:
         raise TypeError(f"Type {operator.__class__} not valid for method 'solution'")

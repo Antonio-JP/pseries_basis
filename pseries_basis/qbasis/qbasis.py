@@ -110,12 +110,16 @@ class QBasis(PSBasis):
           the sequence `(q^n)_n`.
         * ``q_name``: name for the `q` variable. If not in ``base``, it will be added as a rational function field.
     '''
-    def __init__(self, base=QQ, universe=None, degree=True, var_name = None, q_name="q", **kwds):
+    def __init__(self, base=QQ, universe=None, degree=True, var_name = None, q_name="q", power=1, **kwds):
             # if the base has no q, we add it
             with_q, self.__q = has_variable(base, q_name)
             if not with_q:
                 base = PolynomialRing(base, q_name).flattening_morphism().codomain().fraction_field()
                 self.__q = base(q_name)
+
+            if not power in ZZ or power < 0:
+                raise ValueError("The given power (setting the base) must be a non-negative integer")
+            self.__power = ZZ(power)
 
             super().__init__(
                 base=base, universe=universe, degree=degree, var_name=var_name, # arguments for PSBasis
@@ -133,10 +137,10 @@ class QBasis(PSBasis):
         return self.__q
 
     def OS(self):
-        return get_double_qshift_algebra(str(self.n()), str(self.q()), "Sn", base=self.base)[0]
+        return get_double_qshift_algebra(str(self.n()), str(self.q()), "Sn", power = self.__power, base=self.base)[0]
 
     def OSS(self):
-        return get_qshift_algebra(str(self.n()), str(self.q()), "Sn", base=self.base)[0]
+        return get_qshift_algebra(str(self.n()), str(self.q()), "Sn", power=self.__power, base=self.base)[0]
 
     def Q(self):
         return self.n()
