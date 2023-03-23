@@ -1,5 +1,5 @@
 
-# **Inverse Zeibelger Problem in Sage** 
+# **Inverse Zeilberger Problem in Sage** 
 
 ``pseries_basis`` is a [SageMath](https://www.sagemath.org) package that allow to transform linear operators to compute definite-sum solutions of differential or recurrence equations.
 
