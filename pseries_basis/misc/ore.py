@@ -174,8 +174,16 @@ def is_differential_algebra(algebra: OreAlgebra_generic) -> bool:
 
 def __get_power_q(element, q):
     r'''Check whether element is a power of q'''
-    element = q.parent()(element)
+    ## Trying to cast element to the ring of q
+    try:
+        try:
+            element = q.parent()(element)
+        except TypeError:
+            element = q.parent()(str(element))
+    except:
+        return -1
 
+    ## Trying to compute the corresponding power
     if element.parent().is_field(): # fraction field
         if not element.denominator() == 1:
             return -1
@@ -230,16 +238,23 @@ def gens_qshift_algebra(algebra: OreAlgebra_generic, name_q : str = None) -> tup
             elif applied_S.coefficients() != [v]: # S does not commute with v
                 if found: # more than one generator is not commuting
                     return None
-                if applied_S.coefficients()[0] % v != 0: # it is not a multiple of v
+                coeff = applied_S.coefficients()[0]
+                if is_based_field(algebra):
+                    coeff = algebra.base().base()(coeff); v = algebra.base().base()(v)
+
+                if found: # more than one generator is not commuting
                     return None
-                quot = applied_S.coefficients()[0]//v
-                power = -1 if q is None else __get_power_q(quot, q)
+                if coeff % v != 0: # it is not a multiple of v
+                    return None
+                quot = coeff//v
+                
+                power = -1 if q == None else __get_power_q(quot, q)
                 if q != None and power < 0: # the required `q` is not the one obtained
                     return None
                 elif not quot in algebra.base().base_ring(): # it is not a `q`-shift
                     return None
                 else:
-                    found = (v, q if q != None else quot, power if q != None else 1)
+                    found = (v, q if q != None else algebra.base().base_ring()(quot), power if q != None else 1)
         return (None, S, q, 1) if found is None else (found[0], S, found[1], found[2])
     return None
 
@@ -714,7 +729,7 @@ def eval_ore_operator(operator : OreOperator, ring: Parent = None, **values: Ele
 ### SOME CLASSES RELATING WITH ORE ALGEBRAS
 ###
 #############################################################################################
-def solution(operator: OreOperator, init: Collection[Element], check_init=True) -> Sequence:
+def solution(operator: OreOperator, init: Collection[Element], check_init=True, **kwds) -> Sequence:
     r'''
         Method to generate a :class:`Sequence` solution to a recurrence operator
 
@@ -752,7 +767,7 @@ def solution(operator: OreOperator, init: Collection[Element], check_init=True) 
         dS = operator.polynomial().degree(S); dSi = operator.polynomial().degree(Si)
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : n}))
         _shift = lambda i : alpha*i
-    elif is_qshift_algebra(operator.parent()):
+    elif is_qshift_algebra(operator.parent(), **kwds):
         v,S,q,p = gens_qshift_algebra(operator.parent()); S = S.polynomial(); Si = None
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
@@ -760,7 +775,7 @@ def solution(operator: OreOperator, init: Collection[Element], check_init=True) 
         dS = operator.polynomial().degree(S); dSi = 0
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : q**(p*n)}))
         _shift = lambda i : i
-    elif is_double_qshift_algebra(operator.parent()):
+    elif is_double_qshift_algebra(operator.parent(), **kwds):
         v,S,Si,q,p = gens_double_qshift_algebra(operator.parent()); S = S.polynomial(); Si = Si.polynomial()
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
