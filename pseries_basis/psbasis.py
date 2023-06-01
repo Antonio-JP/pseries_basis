@@ -238,9 +238,15 @@ class Compatibility:
         for l in range(-A, B+1):
             for s in range(self.m):
                 if self.action_type == "homomorphism":
-                    coeffs[l,s] = sum(self.action(other[i,s])*self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1))
+                    coeffs[l,s] = sum(
+                        [self.action(other[i,s])*self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1)], 
+                        LambdaSequence(lambda *n: 0, universe=QQ, allow_sym=True, dim=2 if self.__dependency else 1)
+                    )
                 elif self.action_type == "derivation":
-                    coeffs[l,s] = self.action(other[l,s]) + sum(other[i,s] * self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1))
+                    coeffs[l,s] = self.action(other[l,s]) + sum(
+                        [other[i,s] * self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1)],
+                        LambdaSequence(lambda *n: 0, universe=QQ, allow_sym=True, dim=2 if self.__dependency else 1)                        
+                    )
 
         ## Creating the action (if possible)
         if self.action != None and other.action != None:
@@ -250,6 +256,16 @@ class Compatibility:
             action = None; action_type = None
             
         return Compatibility(A, B, self.m, coeffs, action=action, action_type=action_type, _dependency = self.__dependency)
+
+    def scale(self, factor: Sequence) -> Compatibility:
+        if factor.dim != 2 and self.__dependency:
+            raise ValueError("Incompatible sequence for sacle product")
+        elif factor.dim != 1 and not self.__dependency:
+            raise ValueError("Incompatible sequence for sacle product")
+        
+        A = self.A; B = self.B; m = self.m
+        coeffs = {(i,s) : factor.linear_subsequence(0, m, s)*self[i,s] for i in range(-A, B+1) for s in range(m)}
+        return Compatibility(A, B, m, coeffs, action=self.action, action_type=self.action_type, _dependency = self.__dependency)
 
 class NotCompatibleError(TypeError): pass
 
