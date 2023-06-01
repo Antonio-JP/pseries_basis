@@ -14,7 +14,7 @@ from typing import Callable
 
 # Local imports
 from ..misc.sequences import LambdaSequence, Sequence
-from ..psbasis import Compatibility, PolyBasis
+from ..psbasis import TypeCompatibility, PolyBasis
 
 Divisibility = tuple[int,int,Callable[[int,int,element.Element],element.Element]]
 
@@ -361,7 +361,7 @@ class FactorialBasis(PolyBasis):
 
             TODO: add more examples with some sectioned compatibility
         '''
-        ## Compatibility of ``operator``
+        ## TypeCompatibility of ``operator``
         A, B, m, alpha = self.compatibility(operator)
         
         return (A, m, lambda r,s,n : sum(alpha(r,i,n)*self.increasing_polynomial(n*m+r-A-s,dst=n*m+r+i) for i in range(-A,B+1)))
@@ -480,7 +480,7 @@ class FactorialBasis(PolyBasis):
         '''
         return self.matrix_ItP(src,size).inverse()
 
-    def equiv_DtC(self, compatibility: str | OreOperator | Compatibility) -> Compatibility:
+    def equiv_DtC(self, compatibility: str | OreOperator | TypeCompatibility) -> TypeCompatibility:
         r'''
             Method to get the equivalence condition for a compatible operator.
 
@@ -543,7 +543,7 @@ class FactorialBasis(PolyBasis):
 
         return (A, B, m, lambda i,j,k: coeffs[i][j](n=k))
 
-    def equiv_CtD(self, division: Compatibility) -> Compatibility:
+    def equiv_CtD(self, division: TypeCompatibility) -> TypeCompatibility:
         r'''
             Method to get the equivalence condition for a compatible operator.
 

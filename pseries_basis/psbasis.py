@@ -35,7 +35,7 @@ from __future__ import annotations
 import logging
 logger = logging.getLogger(__name__)
 
-## Sage imports
+from collections.abc import Sequence as SequenceType, Mapping, Callable
 from functools import reduce
 from sage.all import (ZZ, QQ, Matrix, cached_method, latex, factorial, 
                         SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
@@ -46,7 +46,7 @@ from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.symbolic.operators import add_vararg, mul_vararg
 from sage.structure import element
-from typing import Any, Callable, Collection
+from typing import Any, Collection
 
 # ore_algebra imports
 from ore_algebra.ore_algebra import OreAlgebra_generic
@@ -61,7 +61,195 @@ from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurre
 from .misc.sequences import LambdaSequence, Sequence, SequenceSet
 
 ## Special types for PSBasis
-Compatibility = tuple[int,int,int,Callable[[int,int,element.Element],element.Element]]
+TypeCompatibility = tuple[int,int,int,Callable[[int,int,element.Element],element.Element]]
+class Compatibility:
+    r'''
+        Class representing a compatibility condition in sections.
+
+        This class compiles access methods to the compatibility conditions and general combination of these comaptibilities to 
+        allow a more simple codification of some parts of this module.
+
+        INPUT:
+
+        * ``A``: the lower bound for the compatibility
+        * ``B``: the upper bound for the compatibility
+        * ``m``: number of sections for the compatibility
+        * ``coeffs``: the object representing the coefficients. They have to be indexed with two indices (i,s) such that
+        
+        .. MATH::
+
+            L B_{rm + s}(n) = \sum_{i=-A}^B \text{coeffs[i,s]}(r,i) B_{rm+s+i}(n)
+
+        * ``action``: a function that takes a sequence and return what the operator would do over that sequence. ``None`` is allowed here.
+        * ``_dependency``: indicates whether the compatibility depends on `r` or not.
+
+        In general, we would like to have the coefficients only depending on `n`. The dependency on `r` will provide several issues
+        when computing with the compatibility.
+    '''
+    def __init__(self, A: int, B: int, m: int, coeffs, *, action: Callable[[Sequence], Sequence] = None, action_type: str = None, _dependency: bool = False):
+        if A < 0: raise TypeError(f"The lower bound given ({A}) must be non-negative")
+        if B < 0: raise TypeError(f"The upper bound given ({B}) must be non-negative")
+        if m < 1: raise TypeError(f"The number of sections ({m}) must be positive")
+        self.__lower: int = A
+        self.__upper: int = B
+        self.__nsections: int = m
+        self.__dependency: bool = _dependency
+        
+        self.__coeffs: dict[tuple[int,int], Sequence] = dict()
+        ## We process the coefficients
+        if isinstance(coeffs, SequenceType): # coefficients given as lists
+            # Putting as double list in case of m=1 and having a simple list
+            if m == 1 and (
+                (A + B + 1 > m and len(coeffs) == A+B+1) or # 
+                (A + B + 1 == m and not isinstance(coeffs[0], SequenceType)) # special case when 1 coefficient only is necessary with 1 section
+            ):
+                coeffs = [coeffs]
+
+            if len(coeffs) != m:
+                raise TypeError(f"The coefficients with {m} sections must be a list with {m} elements.")
+            elif any(not isinstance(coeff, SequenceType) for coeff in coeffs):
+                raise TypeError(f"The coefficients with {m} sections must be a list with {m} lists.")
+            elif any(len(coeff) != A+B+1 for coeff in coeffs):
+                raise TypeError(f"The coefficients with {m} sections must be a list of {m} lists with {A+B+1} elements.")
+            else:
+                self.__coeffs.update({(i,j) : self.__process_coefficient(coeffs[i][j]) for i in range(m) for j in range(-A, B+1)})
+        elif isinstance(coeffs, Mapping):
+            self.__coeffs.update({(j,i): self.__process_coefficient(coeffs.get((j,i), ZZ(0))) for i in range(m) for j in range(-A, B+1)})
+        elif isinstance(coeffs, Callable):
+            self.__coeffs.update({(j,i): self.__process_coefficient(coeffs(j,i)) for i in range(m) for j in range(-A, B+1)})
+
+        ## Saving the arguments relating to the actual operator
+        self.__action: Callable[[Sequence], Sequence] = action
+        if self.__action != None and action_type == None:
+            raise TypeError("Required specification for the action")
+        elif self.__action != None and not action_type in ("homomorphism", "derivation", "unknown"):
+            raise TypeError("The type for the action must be either 'homomorphism', 'derivation' or 'unknown'")
+        self.__action_type: str = action_type
+
+    def __process_coefficient(self, coeff):
+        if isinstance(coeff, Sequence): # if given a sequence we check dimensions and adjust if possible
+            if self.__dependency and coeff.dim == 1:
+                coeff = LambdaSequence(lambda _, n: coeff(n), universe=coeff.universe, dim = 2, allow_sym = coeff.allow_sym)
+            elif self.__dependency and coeff.dim > 2:
+                raise TypeError(f"Obtained a sequence of dimension {coeff.dim} when only dimension 2 is allowed")
+            elif (not self.__dependency) and coeff.dim > 1:
+                raise TypeError(f"Obtained a sequence of dimension {coeff.dim} when only dimension 1 is allowed")
+        elif callable(coeff): # if callable, we assume it will work for the corresponding arguments (1 or 2)
+            if self.__dependency:
+                coeff = LambdaSequence(lambda k,n : coeff(k,n), universe= coeff(0,0), dim = 2, allow_sym = True)
+            else:
+                coeff = LambdaSequence(lambda n : coeff(n), universe= coeff(0), dim = 1, allow_sym = True)
+        else: # we assume it is a constant
+            coeff = LambdaSequence(lambda *_: coeff, universe = coeff.parent(), dim = 2 if self.__dependency else 1, allow_sym=True)
+        return coeff
+
+    @property
+    def upper(self): return self.__upper
+    @property
+    def lower(self): return self.__lower
+    @property
+    def nsections(self): return self.__nsections
+    A = upper; B = lower; m = nsections #: aliases for some properties
+
+    @property
+    def action(self): return self.__action
+    @property
+    def action_type(self): return self.__action_type
+
+    def __getitem__(self, item):
+        if item in ZZ and self.m == 1: # only one element given
+            item = (item, 0)
+
+        if len(item) != 2:
+            raise KeyError("Only tuples allowed for getting compatibility coefficients")
+        elif item[1] < 0 or item[1] >= self.m:
+            raise KeyError(f"Compatibility with {self.m} sections. Can not access section {item[0]}")
+        elif item[0] < -self.A or item[0] > self.B:
+            return self.__process_coefficient(ZZ(0))
+        else:
+            return self.__coeffs[item]
+
+    def in_sections(self, new_sections: int) -> Compatibility:
+        r'''
+            Method to compute the compatibility condition with respect to more sections.
+        '''
+        if new_sections % self.m != 0:
+            raise ValueError(f"Impossible to extend to {new_sections} (not a multiple of {self.m})")
+        
+        A = self.A; B = self.B
+        a = new_sections // self.m # proportion to new sections
+        action = self.action; action_type = self.action_type
+
+        coeffs = dict()
+        for i in range(-A, B+1):
+            for s in range(new_sections):
+                s0,s1 = ZZ(s).quo_rem(self.m)
+                coeffs[i,s] = self[i,s1].linear_subsequence(0, a, s0)
+
+        return Compatibility(A, B, new_sections, coeffs, action=action, action_type=action_type, _dependency=self.__dependency)
+
+
+    def add(self, other: Compatibility) -> Compatibility:
+        r'''
+            Method to compute the compatibility of the sum of the two compatibilities.
+        '''
+        if not isinstance(other, Compatibility):
+            try:
+                other = Compatibility(*other)
+            except:
+                raise TypeError("Require a compatibility to compute the addition")
+        elif other.m != self.m:
+            new_sections = lcm(self.m, other.m)
+            return self.in_sections(new_sections).mul(other.in_sections(new_sections))
+        elif other.__dependency != self.__dependency:
+            raise ValueError("Incompatible dimension for coefficients between compatibilities")
+        
+        ## Creating the elements for the comptatility
+        A = max(self.A, other.A); B = max(self.B, other.B)
+        coeffs = {(j,i) : self[j,i] + other[j,i] for i in range(self.m) for j in range(-A, B+1)}
+
+        ## Creating the action (if possible)
+        if self.action != None and other.action != None:
+            action = lambda S : self.action(S) + other.action(S)
+            action_type = self.action_type if self.action_type == other.action_type else "unknown"
+        else:
+            action = None; action_type = None
+
+        return Compatibility(A, B, self.m, coeffs, action=action, action_type=action_type, _dependency = self.__dependency)
+    
+    def mul(self, other: Compatibility) -> Compatibility:
+        r'''
+            Method to compute the compatibility of the sum of the two compatibilities.
+        '''
+        if not isinstance(other, Compatibility):
+            try:
+                other = Compatibility(*other)
+            except:
+                raise TypeError("Require a compatibility to compute the addition")
+        elif other.m != self.m:
+            new_sections = lcm(self.m, other.m)
+            return self.in_sections(new_sections).mul(other.in_sections(new_sections))
+        elif other.__dependency != self.__dependency:
+            raise ValueError("Incompatible dimension for coefficients between compatibilities")
+
+        ## Creating the elements for the comptatility
+        A = self.A + other.A; B = self.B + other.B
+        coeffs = dict()
+        for l in range(-A, B+1):
+            for s in range(self.m):
+                if self.action_type == "homomorphism":
+                    coeffs[l,s] = sum(self.action(other[i,s])*self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1))
+                elif self.action_type == "derivation":
+                    coeffs[l,s] = self.action(other[l,s]) + sum(other[i,s] * self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1))
+
+        ## Creating the action (if possible)
+        if self.action != None and other.action != None:
+            action = lambda S : self.action(other.action(S)) # composition of the maps
+            action_type = "homomorphism" if self.action_type == "homomorphism" and self.action_type == other.action_type else "unknown"
+        else:
+            action = None; action_type = None
+            
+        return Compatibility(A, B, self.m, coeffs, action=action, action_type=action_type, _dependency = self.__dependency)
 
 class NotCompatibleError(TypeError): pass
 
@@ -818,7 +1006,7 @@ class PSBasis(Sequence):
         return self.OSS()(self.simplify_operator((Sn**d)*operator))
     
     ### COMPATIBILITY RELATED METHODS
-    def _compatibility_from_recurrence(self, recurrence: OreOperator) -> Compatibility:
+    def _compatibility_from_recurrence(self, recurrence: OreOperator) -> TypeCompatibility:
         r'''
             Method to obtain the compatibility condition from a recurrence equivalent.
 
@@ -842,7 +1030,7 @@ class PSBasis(Sequence):
                 [self.OB()(recurrence.coefficient({Sni:i}))(n=n+i) for i in range(1, B+1)])
         return (ZZ(A), ZZ(B), ZZ(1), lambda _, j, k: alpha[j+A](n=k))
 
-    def set_compatibility(self, name: str, trans: OreOperator | Compatibility, sub: bool = False, type: None | str = None):
+    def set_compatibility(self, name: str, trans: OreOperator | TypeCompatibility, sub: bool = False, type: None | str = None):
         r'''
             Method to set a new compatibility operator.
 
@@ -911,7 +1099,7 @@ class PSBasis(Sequence):
             if type == "endo": self.__endomorphisms.append(name)
             if type == "der": self.__derivations.append(name)
 
-    def set_endomorphism(self, name: str, trans: OreOperator | Compatibility, sub: bool = False):
+    def set_endomorphism(self, name: str, trans: OreOperator | TypeCompatibility, sub: bool = False):
         r'''
             Method to set a new compatibility operator for an endomorphism.
 
@@ -928,7 +1116,7 @@ class PSBasis(Sequence):
         '''
         self.set_compatibility(name, trans, sub, "endo")
 
-    def set_derivation(self, name: str, trans: OreOperator | Compatibility, sub: bool = False):
+    def set_derivation(self, name: str, trans: OreOperator | TypeCompatibility, sub: bool = False):
         r'''
             Method to set a new compatibility operator for a derivation.
 
@@ -1146,7 +1334,7 @@ class PSBasis(Sequence):
         else:
             return None
         
-    def compatibility(self, operator: str | OreOperator) -> Compatibility:
+    def compatibility(self, operator: str | OreOperator) -> TypeCompatibility:
         r'''
             Method to get the compatibility condition for an operator.
 
@@ -1350,7 +1538,7 @@ class PSBasis(Sequence):
             
         return (a,b,Matrix([[alpha(i,j,self.n()) for j in range(-a,b+1)] for i in range(m)]))
 
-    def _recurrence_from_compatibility(self, compatibility: Compatibility) -> OreOperator:
+    def _recurrence_from_compatibility(self, compatibility: TypeCompatibility) -> OreOperator:
         r'''
             Method that returns the recurrence from a compatibility condition.
 
@@ -1389,7 +1577,7 @@ class PSBasis(Sequence):
             raise TypeError("The number of sections must be a positive integer")
         return output
 
-    def recurrence(self, operator: str | OreOperator | Compatibility, sections: int = None, cleaned: bool = False) -> OreOperator | matrix_class:
+    def recurrence(self, operator: str | OreOperator | TypeCompatibility, sections: int = None, cleaned: bool = False) -> OreOperator | matrix_class:
         r'''
             Method to get the recurrence for a compatible operator.
             
@@ -1478,7 +1666,7 @@ class PSBasis(Sequence):
                     if is_based_field(operator.parent()):
                         if any(element.is_Matrix(v) for v in rec_coeffs.values()):
                             if any(not c.denominator() in self.OS().base().base_ring() for c in coeffs):
-                                raise NotCompatibleError("Compatibility by sections when having denominators")
+                                raise NotCompatibleError("TypeCompatibility by sections when having denominators")
                             coeffs = [(1/self.OS().base().base_ring()(str(c.denominator()))) * c.numerator()(**rec_coeffs) for c in coeffs]
                         else:
                             coeffs = [c.numerator()(**rec_coeffs)*(1/self.OS().base()(str(c.denominator()(**rec_coeffs)))) for c in coeffs]            
@@ -1531,7 +1719,7 @@ class PSBasis(Sequence):
 
         return output
 
-    def recurrence_orig(self, operator: str | OreOperator | Compatibility) -> OreOperator:
+    def recurrence_orig(self, operator: str | OreOperator | TypeCompatibility) -> OreOperator:
         r'''
             Method to get the recurrence for a compatible operator.
 
@@ -1571,7 +1759,7 @@ class PSBasis(Sequence):
         x,E,_ = gens_getter(operator.parent())
         return eval_ore_operator(comp, operator.parent(), Sn = E, n = x, Sni = 1)
 
-    def system(self, operator: str | OreOperator | Compatibility, sections: int = None):
+    def system(self, operator: str | OreOperator | TypeCompatibility, sections: int = None):
         r'''
             Method to get a first order recurrence system associated with an operator.
 
@@ -1649,7 +1837,7 @@ class PSBasis(Sequence):
         return block_matrix(self.OB(), rows)
 
     @cached_method
-    def compatibility_sections(self, compatibility: str | OreOperator | Compatibility, sections : int) -> Compatibility:
+    def compatibility_sections(self, compatibility: str | OreOperator | TypeCompatibility, sections : int) -> TypeCompatibility:
         r'''
             Compute an extension of a compatibility for larger amount of sections.
             
@@ -2103,7 +2291,7 @@ class OrderBasis(PSBasis):
     def is_quasi_func_triangular(self) -> bool:
         return True
 
-def check_compatibility(basis: PSBasis, operator: OreOperator | Compatibility, action: Callable, bound: int = 100) -> bool:
+def check_compatibility(basis: PSBasis, operator: OreOperator | TypeCompatibility, action: Callable, bound: int = 100) -> bool:
     r'''
         Method that checks that a compatibility formula holds for some examples.
 

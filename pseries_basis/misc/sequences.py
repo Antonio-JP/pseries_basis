@@ -280,6 +280,14 @@ class Sequence(SetMorphism):
     def interlace(self, *others : Sequence, dim_to_interlace: int = 0):
         return InterlacingSequence(self, *others, dim_to_interlace=dim_to_interlace)
 
+    def linear_subsequence(self, index: int, scale: int, shift: int):
+        if index < 0 or index >= self.dim: raise IndexError(f"The index given must be in the dimension ({self.dim}). Got {index}")
+        if scale <= 0 or not scale in ZZ: raise ValueError(f"The scale must be a positive integer. Got {scale}")
+        if shift < 0 or not shift in ZZ: raise ValueError(f"The shift given must be a non-negative integer. Got {shift}")
+        change_index = lambda *n : tuple(n[i] if i != index else n[i]*scale+shift for i in range(len(n)))
+
+        return LambdaSequence(lambda *n : self(*change_index(*n)), self.universe, self.dim, self.allow_sym)
+
     def __repr__(self) -> str:
         if self.dim == 1:
             return f"Sequence over [{self.universe}]: ({self[0]}, {self[1]}, {self[2]},...)"

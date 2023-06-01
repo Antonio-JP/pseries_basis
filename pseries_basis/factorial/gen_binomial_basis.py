@@ -14,14 +14,14 @@ from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.structure import element
 from typing import Collection
 
-from ..psbasis import PSBasis, check_compatibility, Compatibility
+from ..psbasis import PSBasis, check_compatibility, TypeCompatibility
 from .factorial_basis import FactorialBasis,FallingBasis,BinomialBasis
 from .product_basis import SievedBasis, ProductBasis
 
 ##################################################################################################################
 ### DEFINITE SUM SOLUTIONS METHOD (see article)
 ##################################################################################################################
-def DefiniteSumSolutions(operator: str | OreOperator | Compatibility, *input: int | list[int]) -> OreOperator:
+def DefiniteSumSolutions(operator: str | OreOperator | TypeCompatibility, *input: int | list[int]) -> OreOperator:
     r'''
         Petkovšek's algorithm for transforming operators into recurrence equations.
         

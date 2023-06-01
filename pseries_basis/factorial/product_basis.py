@@ -14,7 +14,7 @@ from typing import Collection
 from pseries_basis.misc.sequences import LambdaSequence, Sequence
 
 # Local imports
-from ..psbasis import Compatibility
+from ..psbasis import TypeCompatibility
 from .factorial_basis import Divisibility, FactorialBasis
 
 class SievedBasis(FactorialBasis):
@@ -386,7 +386,7 @@ class SievedBasis(FactorialBasis):
         '''
         return len(self.cycle)
 
-    def extend_compatibility_X(self) -> Compatibility:
+    def extend_compatibility_X(self) -> TypeCompatibility:
         r'''
             Method to extend the compatibility of the multiplication by `x`.
 
@@ -409,7 +409,7 @@ class SievedBasis(FactorialBasis):
 
         return self.compatibility(X)
 
-    def extend_compatibility_E(self, name: str) -> Compatibility:
+    def extend_compatibility_E(self, name: str) -> TypeCompatibility:
         r'''
             Method to extend the compatibility of an endomorphism.
 
@@ -444,7 +444,7 @@ class SievedBasis(FactorialBasis):
 
         return self.compatibility(name)
 
-    def extend_compatibility_D(self, name: str) -> Compatibility:
+    def extend_compatibility_D(self, name: str) -> TypeCompatibility:
         r'''
             Method to extend the compatibility of a derivation.
 
@@ -479,7 +479,7 @@ class SievedBasis(FactorialBasis):
 
         return self.compatibility(name)
 
-    def _extend_compatibility_X(self) -> Compatibility:
+    def _extend_compatibility_X(self) -> TypeCompatibility:
         r'''
             Method that extend the compatibility of multiplication by `x`.
 
@@ -510,7 +510,7 @@ class SievedBasis(FactorialBasis):
         
         return (0,1,m*T,new_alphas)
 
-    def _extend_compatibility_E(self, E: str) -> Compatibility:
+    def _extend_compatibility_E(self, E: str) -> TypeCompatibility:
         r'''
             Method that extend the compatibility of an endomorphism `E`.
 
@@ -539,7 +539,7 @@ class SievedBasis(FactorialBasis):
 
         return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
 
-    def _extend_compatibility_D(self, D: str) -> Compatibility:
+    def _extend_compatibility_D(self, D: str) -> TypeCompatibility:
         r'''
             Method that extend the compatibility of a derivation `D`.
 
