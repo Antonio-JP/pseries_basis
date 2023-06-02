@@ -223,7 +223,7 @@ class Compatibility:
     
     def mul(self, other: Compatibility) -> Compatibility:
         r'''
-            Method to compute the compatibility of the sum of the two compatibilities.
+            Method to compute the compatibility of the composition of the two compatibilities.
         '''
         if not isinstance(other, Compatibility):
             try:
@@ -255,7 +255,7 @@ class Compatibility:
         ## Creating the action (if possible)
         if self.action != None and other.action != None:
             action = lambda S : self.action(other.action(S)) # composition of the maps #pylint: disable=not-callable
-            action_type = "homomorphism" if self.action_type == "homomorphism" and self.action_type == other.action_type else "unknown"
+            action_type = "homomorphism" if (self.action_type == "homomorphism" and self.action_type == other.action_type) else "unknown"
         else:
             action = None; action_type = None
             
