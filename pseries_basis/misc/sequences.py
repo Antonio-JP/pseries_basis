@@ -11,12 +11,13 @@ r'''
 from __future__ import annotations
 
 from functools import reduce
+from itertools import product
 from typing import Collection
 
 ## Sage imports
-from sage.all import (cached_method, oo, NaN, cartesian_product, cartesian_product_iterator, ZZ, parent, SR)
+from sage.all import (cached_method, oo, NaN, cartesian_product, latex, ZZ, parent, SR)
 from sage.categories.homset import Homset
-from sage.categories.pushout import CoercionException, pushout
+from sage.categories.pushout import pushout
 from sage.categories.morphism import SetMorphism # pylint: disable=no-name-in-module
 from sage.categories.sets_cat import Sets
 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
@@ -32,8 +33,23 @@ _Sets = Sets.__classcall__(Sets)
 class Sequence(SetMorphism):
     r'''
         Main class for sequences. It defines a universe for its elements and a general interface to access the sequence.
+
+        Methods that need to be implemented in extended classes (abstract methods):
+
+        * ``_element``
+        
+        Methods that can be extended for more refined results:
+        
+        * :func:`as_self`: allow better coercion between classes of sequences. If changing this method, these methods should also be updated:
+          - :func:`_add_`
+          - :func:`_sub_`
+          - :func:`_mul_`
+          - :func:`_truediv_`
+        * :func:`_shift`: allow a way of creating shifts using different classes
+        * :func:`_subsequence`: allow a way of building subsequences using different classes
+        * :func:`_linear_subsequence`: allow a way of building subsequences using different classes
     '''
-    def __init__(self, universe=None, dim : int =1, allow_sym = False):
+    def __init__(self, universe = None, dim : int = 1, allow_sym : bool = False):
         if universe is None:
             raise TypeError("The universe of a sequence must never be None")
         self.__universe = universe
@@ -45,6 +61,14 @@ class Sequence(SetMorphism):
 
         super().__init__(parent, func)
 
+    #############################################################################
+    ## Static Properties
+    #############################################################################
+    EQUALITY_BOUND = 10
+
+    #############################################################################
+    ## Object properties
+    #############################################################################
     @property
     def universe(self): 
         r'''
@@ -61,24 +85,47 @@ class Sequence(SetMorphism):
     def allow_sym(self) -> bool:
         return self.__alls
 
-    def __getitem__(self, key):
-        if isinstance(key, (tuple, list)):
-            return [self[k] for k in key]
-        elif isinstance(key, slice):
-            res = []
-            st = 0 if key.start is None else key.start # we start at 0 if not given beginning
-            # the ending must be given, otherwise, we raise an error
-            if key.stop is None: raise TypeError("The ending of a slice must be fixed (to guarantee the end of the method)")
-            end = key.stop
-            jump = 1 if key.step is None else key.step # the step is, by default, 1
-            
-            for i in range(st, end, jump):
-                res.append(self[i])
-            return res
-        return self.element(key)
+    #############################################################################
+    ## Casting methods
+    #############################################################################
+    @staticmethod
+    def coerced_op(seq1, seq2, operation: str):
+        r'''
+            Method to convert sequences to a common type in order to apply some operation 
 
-    def __call__(self, *input):
-        return self.element(*input)
+            This method tries to convert sequences to different classes to get better 
+            or more refined outputs of some operations.
+
+            * If no sequences are given, we raise an error.
+            * If only one sequence is given, we treat the other as a constant sequence (see :class:`ConstantSequence`)
+            * Then we proceed as follows:
+              1. We ask ``seq1`` if it recognizes ``seq2``. If it does, we apply the operation with the transformed sequence.
+              2. Otherwise, we ask ``seq2`` if it recognizes ``seq1``. We do as in (1).
+              3. If we can not relate the sequence, we fall back to default implementation in :class:`Sequence`.
+        '''
+        if not isinstance(seq1, Sequence) and not isinstance(seq2, Sequence):
+            raise TypeError("At least one sequence must be given for applying an operation")
+        elif not isinstance(seq1, Sequence):
+            universe = pushout(seq1.parent(), seq2.universe)
+            seq1 = ConstantSequence(seq1, universe=universe, dim = seq2.dim, allow_sym = True)
+        elif not isinstance(seq2, Sequence):
+            universe = pushout(seq1.universe, seq2.parent())
+            seq2 = ConstantSequence(seq2, universe=universe, dim = seq1.dim, allow_sym = True)
+
+        ## Now ``seq1`` and ``seq2`` are :class:`Sequence`
+        if seq1.dim != seq2.dim:
+            raise TypeError(f"The dimensions between sequences do not match ({seq1.dim} vs {seq2.dim})")
+        
+        try: # seq1 tries to recognize seq2
+            seq1, seq2 = seq1.as_self(seq2)
+            return getattr(seq1, operation)(seq2)
+        except NotImplementedError:
+            try: # seq2 tries to recognize seq1
+                seq2, seq1 = seq2.as_self(seq1)
+                return getattr(seq2, operation)(seq1)
+            except NotImplementedError:
+                # We fall back to default behavior
+                return getattr(Sequence, operation)(seq1,seq2)
 
     def change_universe(self, new_universe):
         r'''
@@ -87,6 +134,15 @@ class Sequence(SetMorphism):
         '''
         return LambdaSequence(lambda *n : self._element(*n), new_universe, dim=self.dim, allow_sym=self.allow_sym)
 
+    def as_self(self, other: Sequence) -> tuple[Sequence, Sequence]:
+        r'''
+            Method to try and recognize a sequence of the same type so the operations in ``self.__class__`` work properly.
+        '''
+        raise NotImplementedError("By default, a sequence does not recognize anyone.")
+    
+    #############################################################################
+    ## Element methods
+    #############################################################################
     def element(self, *indices : int):
         if not tuple(indices) in self.__CACHE_ELEMENTS:
             try:
@@ -96,8 +152,12 @@ class Sequence(SetMorphism):
             except:
                 output = NaN
 
-            if (not ((self.universe is None) or (self.allow_sym and not output in self.universe))) and (not output in (NaN, oo)):
-                output = self.universe(output)
+            if not output in (NaN, oo):
+                try:
+                    output = self.universe(output) #pylint: disable=not-callable
+                except Exception as e:
+                    if not self.allow_sym:
+                        raise e
             
             self.__CACHE_ELEMENTS[tuple(indices)] = output
         return self.__CACHE_ELEMENTS[tuple(indices)]
@@ -105,6 +165,9 @@ class Sequence(SetMorphism):
     def _element(self, *indices : int):
         raise NotImplementedError("Method '_element' not implemented")
 
+    #############################################################################
+    ## Operation methods
+    #############################################################################
     @cached_method
     def shift(self, *shifts : int) -> Sequence:
         r'''
@@ -137,60 +200,139 @@ class Sequence(SetMorphism):
         '''
         return LambdaSequence(lambda *n : self(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim, allow_sym=self.allow_sym)
 
-    # basic arithmetic methods
-    def __add__(self, other):
-        if not isinstance(other, Sequence) or self.dim != other.dim:
-            return NotImplemented
+    def subsequence(self, *vals : int) -> Sequence:
+        r'''
+            Method to obtain a subsequence when having multiple arguments.
 
-        universe = pushout(self.universe, other.universe)
-        alls = self.allow_sym and other.allow_sym
-        return LambdaSequence(lambda *n : self(*n) + other(*n), universe, dim = self.dim, allow_sym=alls)
+            When we have a sequence `f: \mathbb{N}^k \rightarrow R`, we can fix the first 
+            arguments `(a_1,\ldots, a_t)` and build a new sequence by:
+
+            .. MATH::
+
+                \tilde{f}(n_1,\ldots, n_{k-t}) = f(a_1,\ldots,a_t,n_1,\ldots,n_{k-t})
+
+            This method build the corresponding subsequence for the given values in ``vals``.
+            If the number of values is more than the number of inputs, then we return the value
+            of the sequence at the given position.
+
+            TODO: Add the option for more sparse subsequences: if vals is given as a sequence over
+            `\mathbb{N}, then we can still build a subsequence from it. This is more on the line of 
+            a sparse subsequence.
+        '''
+        if len(vals) >= self.dim:
+            return self.element(*vals[:self.dim])
+        elif any(not v in ZZ for v in vals):
+            raise TypeError("The values for subsequences must be integers")
+        return self._subsequence(*vals)
+
+    def _subsequence(self, *vals): 
+        r'''
+            Return the actual subsequence (see :func:`subsequence`). Can assume ``vals`` is a list of appropriate length and type.
+        '''
+        return LambdaSequence(lambda *n: self.element(*vals, *n), self.universe, dim=self.dim-len(vals), allow_sym=True)
+
+    def interlace(self, *others : Sequence, dim_to_interlace: int = 0):
+        return InterlacingSequence(self, *others, dim_to_interlace=dim_to_interlace)
+
+    def linear_subsequence(self, index: int, scale: int, shift: int):
+        r'''Method to compute a linear subsequence of ``self``'''
+        if index < 0 or index >= self.dim: raise IndexError(f"The index given must be in the dimension ({self.dim}). Got {index}")
+        if scale <= 0 or not scale in ZZ: raise ValueError(f"The scale must be a positive integer. Got {scale}")
+        if shift < 0 or not shift in ZZ: raise ValueError(f"The shift given must be a non-negative integer. Got {shift}")
+
+        return self._linear_subsequence(index,scale,shift)
+    
+    def _linear_subsequence(self, index:int, scale:int, shift: int) -> Sequence:
+        r'''Method to actually compute the new subsequence. It assumes the arguments to be valid.'''
+        change_index = lambda *n : tuple(n[i] if i != index else n[i]*scale+shift for i in range(len(n)))
+
+        return LambdaSequence(lambda *n : self(*change_index(*n)), self.universe, self.dim, self.allow_sym)
+
+    ## Arithmetic methods
+    ## These methods defines the default behavior when the sequences do not recognize each other
+    def _add_(self, other: Sequence) -> Sequence:
+        new_universe = pushout(self.universe, other.universe)
+        return LambdaSequence(lambda *n: self(*n) + other(*n), universe = new_universe, dim = self.dim)
+    
+    def _sub_(self, other: Sequence) -> Sequence:
+        new_universe = pushout(self.universe, other.universe)
+        return LambdaSequence(lambda *n: self(*n) - other(*n), universe = new_universe, dim = self.dim)
+    
+    def _neg_(self) -> Sequence:
+        return LambdaSequence(lambda *n : -self(*n), self.universe, dim = self.dim, allow_sym=self.allow_sym) # pylint: disable=invalid-unary-operand-type
+    
+    def _mul_(self, other: Sequence) -> Sequence:
+        new_universe = pushout(self.universe, other.universe)
+        return LambdaSequence(lambda *n: self(*n) * other(*n), universe = new_universe, dim = self.dim)
+        
+    def _truediv_(self, other: Sequence) -> Sequence:
+        new_universe = pushout(self.universe, other.universe)
+        return LambdaSequence(lambda *n: self(*n) / other(*n), universe = new_universe, dim = self.dim)
+    
+    #############################################################################
+    ## Magic methods for Python
+    #############################################################################
+    # Arithmetic methods
+    def __add__(self, other):
+        try:
+            return Sequence.coerced_op(self, other, "_add_")
+        except:
+            return NotImplemented
 
     def __sub__(self, other):
-        if not isinstance(other, Sequence) or self.dim != other.dim:
+        try:
+            return Sequence.coerced_op(self, other, "_sub_")
+        except:
             return NotImplemented
 
-        universe = pushout(self.universe, other.universe)
-        alls = self.allow_sym and other.allow_sym
-        return LambdaSequence(lambda *n : self(*n) - other(*n), universe, dim = self.dim, allow_sym=alls)
-
     def __mul__(self, other):
-        if isinstance(other, Sequence) and self.dim == other.dim:
-            universe = pushout(self.universe, other.universe)
-            alls = self.allow_sym and other.allow_sym
-            return LambdaSequence(lambda *n : self(*n) * other(*n), universe, dim = self.dim, allow_sym=alls)
-        elif not isinstance(other, Sequence):
-            try:
-                universe = pushout(self.universe, parent(other))
-                return LambdaSequence(lambda *n : self(*n) * other, universe, dim = self.dim, allow_sym=self.allow_sym)
-            except CoercionException:
-                return NotImplemented
-        return NotImplemented
+        try:
+            return Sequence.coerced_op(self, other, "_mul_")
+        except:
+            return NotImplemented
 
     def __truediv__(self, other):
-        if isinstance(other, Sequence) and self.dim == other.dim:
-            universe = pushout(self.universe, other.universe)
-            alls = self.allow_sym and other.allow_sym
-            return LambdaSequence(lambda *n : self(*n) / other(*n), universe, dim = self.dim, allow_sym=alls)
-        elif not isinstance(other, Sequence):
-            try:
-                universe = pushout(self.universe, parent(other))
-                return LambdaSequence(lambda *n : self(*n) / other, universe, dim = self.dim, allow_sym=self.allow_sym)
-            except CoercionException:
-                return NotImplemented
-        return NotImplemented
+        try:
+            return Sequence.coerced_op(self, other, "_truediv_")
+        except:
+            return NotImplemented
         
     def __neg__(self):
-        return LambdaSequence(lambda *n : -self(*n), self.universe, dim = self.dim, allow_sym=self.allow_sym) # pylint: disable=invalid-unary-operand-type
+        return self._neg_()
         
-    # reverse arithmetic methods
-    def __radd__(self, other):
-        return self.__add__(other)
-    def __rsub__(self, other):
-        return self.__sub__(other)
-    def __rmul__(self, other):
-        return self.__mul__(other)
+    # Reverse arithmetic methods
+    def __radd__(self, other): return self.__add__(other)
+    def __rsub__(self, other): return self.__sub__(other)
+    def __rmul__(self, other): return self.__mul__(other)
+    def __rtruediv__(self, other): 
+        try:
+            return Sequence.coerced_op(other, self, "_truediv_")
+        except:
+            return NotImplemented
 
+    # Methods to get elements
+    def __getitem__(self, key):
+        if isinstance(key, (tuple, list)):
+            return [self[k] for k in key]
+        elif isinstance(key, slice):
+            res = []
+            st = 0 if key.start is None else key.start # we start at 0 if not given beginning
+            # the ending must be given, otherwise, we raise an error
+            if key.stop is None: raise TypeError("The ending of a slice must be fixed (to guarantee the end of the method)")
+            end = key.stop
+            jump = 1 if key.step is None else key.step # the step is, by default, 1
+            
+            for i in range(st, end, jump):
+                res.append(self[i])
+            return res
+        return self.element(key)
+
+    def __call__(self, *input):
+        return self.element(*input)
+
+    #############################################################################
+    ## Equality and checking methods
+    #############################################################################
     def almost_zero(self, order=10) -> bool:
         r'''
             Method that checks if a sequence is zero at the beginning.
@@ -199,7 +341,7 @@ class Sequence(SetMorphism):
             elements of the sequence are equal to zero. This is helpful in some sequence to guarantee that the whole 
             sequence is exactly zero.
         '''
-        first_terms = cartesian_product_iterator(self.parent().dimension()*[range(order)])
+        first_terms = product(range(order), repeat=self.dim)
         if isinstance(self.universe, SequenceSet):
             return all(self(*term).almost_zero(order) for term in first_terms)
         else:
@@ -240,54 +382,21 @@ class Sequence(SetMorphism):
                 sage: Fib.almost_equals(Fac, 4)
                 False
         '''
-        first_terms = cartesian_product_iterator(self.parent().dimension()*[range(order)])
+        first_terms = product(range(order), repeat=self.dim)
         if isinstance(self.universe, SequenceSet): # equality if the codomain are more sequences
             return all(self(*term).almost_equals(other(*term), order) for term in first_terms)
         else: # equality when elements lied in other ring
             return all(self(*term) == other(*term) for term in first_terms)
 
-    def subsequence(self, *vals : int) -> Sequence:
-        r'''
-            Method to obtain a subsequence when having multiple arguments.
-
-            When we have a sequence `f: \mathbb{N}^k \rightarrow R`, we can fix the first 
-            arguments `(a_1,\ldots, a_t)` and build a new sequence by:
-
-            .. MATH::
-
-                \tilde{f}(n_1,\ldots, n_{k-t}) = f(a_1,\ldots,a_t,n_1,\ldots,n_{k-t})
-
-            This method build the corresponding subsequence for the given values in ``vals``.
-            If the number of values is more than the number of inputs, then we return the value
-            of the sequence at the given position.
-
-            TODO: Add the option for more sparese subsequences: if vals is given as a sequence over
-            `\mathbb{N}, then we can still build a subsequence from it. This is more on the line of 
-            a sparse subsequence.
-        '''
-        if len(vals) >= self.dim:
-            return self.element(*vals[:self.dim])
-        elif any(not v in ZZ for v in vals):
-            raise TypeError("The values for subsequences must be integers")
-        return self._subsequence(*vals)
-
-    def _subsequence(self, *vals): 
-        r'''
-            Return the actual subsequence (see :func:`subsequence`). Can assume ``vals`` is a list of appropriate length and type.
-        '''
-        return LambdaSequence(lambda *n: self.element(*vals, *n), self.universe, dim=self.dim-len(vals), allow_sym=True)
-
-    def interlace(self, *others : Sequence, dim_to_interlace: int = 0):
-        return InterlacingSequence(self, *others, dim_to_interlace=dim_to_interlace)
-
-    def linear_subsequence(self, index: int, scale: int, shift: int):
-        if index < 0 or index >= self.dim: raise IndexError(f"The index given must be in the dimension ({self.dim}). Got {index}")
-        if scale <= 0 or not scale in ZZ: raise ValueError(f"The scale must be a positive integer. Got {scale}")
-        if shift < 0 or not shift in ZZ: raise ValueError(f"The shift given must be a non-negative integer. Got {shift}")
-        change_index = lambda *n : tuple(n[i] if i != index else n[i]*scale+shift for i in range(len(n)))
-
-        return LambdaSequence(lambda *n : self(*change_index(*n)), self.universe, self.dim, self.allow_sym)
-
+    def __eq__(self, other: Sequence) -> bool:
+        r'''Checking for partial equality'''
+        if not isinstance(other, Sequence):
+            return False
+        return self.almost_equals(other, order=Sequence.EQUALITY_BOUND)
+    
+    #############################################################################
+    ## Representation methods
+    #############################################################################
     def __repr__(self) -> str:
         if self.dim == 1:
             return f"Sequence over [{self.universe}]: ({self[0]}, {self[1]}, {self[2]},...)"
@@ -328,6 +437,53 @@ class SequenceSet(Homset,UniqueRepresentation):
 ###########################################################################################
 ### Specific implementations of the class Sequence
 ###########################################################################################
+class ConstantSequence(Sequence):
+    r'''Class defining constant sequences'''
+    def __init__(self, constant, universe=None, dim: int = 1, **kwds):
+        super().__init__(universe, dim, kwds.pop("allow_sym", True), **kwds)
+        self.__constant = self.universe(constant) #pylint: disable=not-callable
+
+    ### ABSTRACT METHODS
+    def _element(self, *indices : int):
+        return self.__constant
+    
+    ### RECOMMENDED METHODS TO OVERWRITE
+    def _shift(self, *shifts) -> ConstantSequence:
+        return self
+    
+    def _subsequence(self, *vals) -> ConstantSequence: 
+        return self
+    
+    def _linear_subsequence(self, index:int, scale:int, shift: int) -> ConstantSequence:
+        return self
+    
+    ### OTHER METHODS OVERWRITTEN
+    def change_universe(self, new_universe) -> ConstantSequence:
+        return ConstantSequence(self.__constant, new_universe, dim=self.dim)
+    
+    #############################################################################
+    ## Equality methods
+    #############################################################################
+    def __eq__(self, other):
+        if not isinstance(other, ConstantSequence):
+            return super().__eq__(other)
+        return self.__constant == other.__constant
+    
+    def __hash__(self):
+        return hash(self.__constant)
+
+    #############################################################################
+    ## Representation methods
+    #############################################################################
+    def __repr__(self) -> str:
+        if self.dim == 1:
+            return f"Constant sequence over [{self.universe}]: {self.__constant}"
+        else:
+            return f"Constant sequence with {self.dim} variables over [{self.universe}]: {self.__constant}"
+        
+    def _latex_(self) -> str:
+        return latex(self.__constant)
+    
 class LambdaSequence(Sequence):
     r'''
         Simplest implementation of :class:`Sequence`.
@@ -363,13 +519,16 @@ class LambdaSequence(Sequence):
 
         self.__func = func
 
+    ### ABSTRACT METHODS
     def _element(self, *indices : int):
         return self.__func(*indices)
 
-    # equality and hash methods
+    #############################################################################
+    ## Equality methods
+    #############################################################################
     def __eq__(self, other):
         if not isinstance(other, LambdaSequence):
-            return False
+            return super().__eq__(other)
         return self.__func == other.__func
     
     def __hash__(self):
@@ -417,7 +576,7 @@ class ExpressionSequence(Sequence):
         variables = expr.variables() if variables is None else tuple(variables)
 
         super().__init__(
-            universe, len(variables), True # arguments for Sequence
+            universe, len(variables), True, # arguments for Sequence
             **kwds # arguments for other builders (allowing multi-inheritance)
         )
         self.__generic = expr
@@ -441,13 +600,12 @@ class ExpressionSequence(Sequence):
         '''
         return self.__vars
 
-    def change_universe(self, new_universe):
-        return ExpressionSequence(self.generic(), new_universe, self.variables())
-
+    ### ABSTRACT METHODS
     def _element(self, *indices: int):
         vars = self.variables()
         return self.generic()(**{str(vars[i]) : indices[i] for i in range(len(indices))})
 
+    ### RECOMMENDED METHODS TO OVERWRITE
     def _shift(self, *shifts):
         vars = self.variables()
         evaluations = [vars[i] + shifts[i] for i in range(self.dim)]
@@ -455,68 +613,60 @@ class ExpressionSequence(Sequence):
 
         return ExpressionSequence(new_expr, self.universe, vars)
 
-    # basic arithmetic methods
-    def __add__(self, other):
-        if not isinstance(other, ExpressionSequence) or self.dim != other.dim:
-            return super().__add__(other)
-
-        if [SR(v) for v in self.variables()] != [SR(v) for v in other.variables()]:
-            return NotImplemented
-
-        universe = pushout(self.universe, other.universe)
-        return ExpressionSequence(self.generic() + other.generic(), universe, self.variables())
-
-    def __sub__(self, other):
-        if not isinstance(other, ExpressionSequence) or self.dim != other.dim:
-            return super().__add__(other)
-
-        if [SR(v) for v in self.variables()] != [SR(v) for v in other.variables()]:
-            return NotImplemented
-
-        universe = pushout(self.universe, other.universe)
-        return ExpressionSequence(self.generic() - other.generic(), universe, self.variables())
-
-    def __mul__(self, other):
-        if isinstance(other, ExpressionSequence) and self.dim == other.dim:
-            if [SR(v) for v in self.variables()] != [SR(v) for v in other.variables()]:
-                return NotImplemented
-            universe = pushout(self.universe, other.universe)
-            return ExpressionSequence(self.generic() * other.generic(), universe, self.variables())
-        elif not isinstance(other, Sequence):
-            try:
-                universe = pushout(self.universe, parent(other))
-                return ExpressionSequence(SR(other)*self.generic(), universe, self.variables())
-            except CoercionException:
-                return NotImplemented
-        return super().__mul__(other)
-
-    def __truediv__(self, other):
-        if isinstance(other, ExpressionSequence) and self.dim == other.dim:
-            if [SR(v) for v in self.variables()] != [SR(v) for v in other.variables()]:
-                return NotImplemented
-            universe = pushout(self.universe, other.universe)
-            return ExpressionSequence(self.generic() / other.generic(), universe, self.variables())
-        elif not isinstance(other, Sequence):
-            try:
-                universe = pushout(self.universe, parent(other))
-                return ExpressionSequence(self.generic()/SR(other), universe, self.variables())
-            except CoercionException:
-                return NotImplemented
-        return super().__truediv__(other)
-        
-    def __neg__(self):
-        return ExpressionSequence(-self.generic(), self.universe, self.variables())
-    
     def _subsequence(self, *vals):
         vars = self.variables()
         new_expr = self.generic(**{str(vars[i]) : vals[i] for i in range(len(vals))}) 
         rem_vars = vars[len(vals):]
         return ExpressionSequence(new_expr, self.universe, rem_vars)
+    
+    def _linear_subsequence(self, index:int, scale:int, shift: int) -> Sequence:
+        r'''Method to actually compute the new subsequence. It assumes the arguments to be valid.'''
+        variable = self.variables()[index]
+        new_generic = self.generic()(**{str(variable) : scale*variable + shift})
 
-    # equality and hash methods
+        return ExpressionSequence(new_generic, self.universe, self.variables())
+    
+    ### OVERWRITING METHODS FOR COERCION
+    def as_self(self, other: Sequence) -> tuple[Sequence, Sequence]:
+        universe = pushout(self.universe, other.universe)
+        if isinstance(other, ConstantSequence):
+            return self.change_universe(universe), ExpressionSequence(other[0], universe, self.variables())
+        elif isinstance(other, LambdaSequence):
+            try:
+                other_generic = other(*self.variables())
+                if other_generic in (NaN, oo):
+                    raise NotImplementedError("LambdaSequence not valid for an expression")
+                return self.change_universe(universe), ExpressionSequence(other_generic, universe, self.variables())
+            except:
+                raise NotImplementedError("LambdaSequence not valid for an expression")
+        elif isinstance(other, ExpressionSequence):
+            if [SR(v) for v in self.variables()] != [SR(v) for v in other.variables()]:
+                raise NotImplementedError("The variable names are different between ExpressionSequences")
+            return self.change_universe(universe), other.change_universe(universe)
+        else:
+            raise NotImplementedError(f"Class {other.__class__} not recognized by ExpressionSequence")
+        
+    def _add_(self, other: ExpressionSequence) -> ExpressionSequence:
+        return ExpressionSequence(self.generic() + other.generic(), self.universe, self.variables())
+    def _sub_(self, other: ExpressionSequence) -> ExpressionSequence:
+        return ExpressionSequence(self.generic() - other.generic(), self.universe, self.variables())
+    def _mul_(self, other: ExpressionSequence) -> ExpressionSequence:
+        return ExpressionSequence(self.generic() * other.generic(), self.universe, self.variables())
+    def _truediv_(self, other: ExpressionSequence) -> ExpressionSequence:
+        return ExpressionSequence(self.generic() / other.generic(), self.universe, self.variables())
+    def _neg_(self):
+        return ExpressionSequence(-self.generic(), self.universe, self.variables())
+
+    ### OTHER METHODS OVERWRITTEN
+    def change_universe(self, new_universe):
+        return ExpressionSequence(self.generic(), new_universe, self.variables())
+
+    #############################################################################
+    ## Equality methods
+    #############################################################################
     def __eq__(self, other):
         if not isinstance(other, ExpressionSequence):
-            return False
+            return super().__eq__(other)
         if [SR(v) for v in self.variables()] != [SR(v) for v in other.variables()]:
             return False
         return bool(self.generic() == other.generic())
@@ -524,8 +674,14 @@ class ExpressionSequence(Sequence):
     def __hash__(self):
         return hash(self.__generic)
 
+    #############################################################################
+    ## Representation methods
+    #############################################################################
     def __repr__(self) -> str:
         return f"Sequence{f' in {self.__vars}' if self.dim > 1 else ''} over [{self.universe}]: {self.generic()}"
+    
+    def _latex_(self) -> str:
+        return r"\left(" + latex(self.generic()) + r"\right)_{" + ",".join(latex(v) for v in self.variables()) + r" \in \mathbb{N}}"
 
 class RationalSequence(Sequence):
     def __init__(self, func=None, ring=None, variables=None, **kwds):
@@ -742,4 +898,4 @@ class InterlacingSequence(Sequence):
         indices = list(indices); indices[self.__to_interlace] //= len(self.sequences)
         return self.sequences[r].element(*indices)
 
-__all__ = ["Sequence", "SequenceSet", "LambdaSequence", "ExpressionSequence", "RationalSequence", "InterlacingSequence"]
+__all__ = ["Sequence", "SequenceSet", "LambdaSequence", "ConstantSequence", "ExpressionSequence", "RationalSequence", "InterlacingSequence"]

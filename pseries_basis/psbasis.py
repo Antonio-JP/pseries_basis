@@ -58,7 +58,7 @@ from pseries_basis.misc.noncom_rings import OperatorAlgebra_generic, OperatorAlg
 from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, is_qshift_algebra, 
                     gens_recurrence_algebra, gens_qshift_algebra, eval_ore_operator, poly_decomposition, 
                     get_rational_algebra, get_recurrence_algebra)
-from .misc.sequences import LambdaSequence, Sequence, SequenceSet
+from .misc.sequences import LambdaSequence, ConstantSequence, Sequence, SequenceSet
 
 ## Special types for PSBasis
 TypeCompatibility = tuple[int,int,int,Callable[[int,int,element.Element],element.Element]]
@@ -140,7 +140,7 @@ class Compatibility:
             else:
                 coeff = LambdaSequence(lambda n : coeff(n), universe= coeff(0), dim = 1, allow_sym = True)
         else: # we assume it is a constant
-            coeff = LambdaSequence(lambda *_: coeff, universe = coeff.parent(), dim = 2 if self.__dependency else 1, allow_sym=True)
+            coeff = ConstantSequence(coeff, universe = coeff.parent(), dim = 2 if self.__dependency else 1)
         return coeff
 
     @property
@@ -150,6 +150,10 @@ class Compatibility:
     @property
     def nsections(self): return self.__nsections
     A = upper; B = lower; m = nsections #: aliases for some properties
+
+    def data(self):
+        r'''Return the compatibility data (`A`, `B`, `m`)'''
+        return self.A, self.B, self.m
 
     @property
     def action(self) -> Callable[[Sequence], Sequence]: return self.__action
@@ -240,12 +244,12 @@ class Compatibility:
                 if self.action_type == "homomorphism":
                     coeffs[l,s] = sum(
                         [self.action(other[i,s])*self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1)], #pylint: disable=not-callable
-                        LambdaSequence(lambda *n: 0, universe=QQ, allow_sym=True, dim=2 if self.__dependency else 1)
+                        ZZ(0)
                     )
                 elif self.action_type == "derivation":
                     coeffs[l,s] = self.action(other[l,s]) + sum(                                                             #pylint: disable=not-callable
                         [other[i,s] * self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1)],
-                        LambdaSequence(lambda *n: 0, universe=QQ, allow_sym=True, dim=2 if self.__dependency else 1)                        
+                        ZZ(0)  
                     )
 
         ## Creating the action (if possible)
