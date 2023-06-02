@@ -66,7 +66,7 @@ class Compatibility:
     r'''
         Class representing a compatibility condition in sections.
 
-        This class compiles access methods to the compatibility conditions and general combination of these comaptibilities to 
+        This class compiles access methods to the compatibility conditions and general combination of these compatibilities to 
         allow a more simple codification of some parts of this module.
 
         INPUT:
@@ -152,7 +152,7 @@ class Compatibility:
     A = upper; B = lower; m = nsections #: aliases for some properties
 
     @property
-    def action(self): return self.__action
+    def action(self) -> Callable[[Sequence], Sequence]: return self.__action
     @property
     def action_type(self): return self.__action_type
 
@@ -204,13 +204,13 @@ class Compatibility:
         elif other.__dependency != self.__dependency:
             raise ValueError("Incompatible dimension for coefficients between compatibilities")
         
-        ## Creating the elements for the comptatility
+        ## Creating the elements for the compatibility
         A = max(self.A, other.A); B = max(self.B, other.B)
         coeffs = {(j,i) : self[j,i] + other[j,i] for i in range(self.m) for j in range(-A, B+1)}
 
         ## Creating the action (if possible)
         if self.action != None and other.action != None:
-            action = lambda S : self.action(S) + other.action(S)
+            action = lambda S : self.action(S) + other.action(S) #pylint: disable=not-callable
             action_type = self.action_type if self.action_type == other.action_type else "unknown"
         else:
             action = None; action_type = None
@@ -232,25 +232,25 @@ class Compatibility:
         elif other.__dependency != self.__dependency:
             raise ValueError("Incompatible dimension for coefficients between compatibilities")
 
-        ## Creating the elements for the comptatility
+        ## Creating the elements for the compatibility
         A = self.A + other.A; B = self.B + other.B
         coeffs = dict()
         for l in range(-A, B+1):
             for s in range(self.m):
                 if self.action_type == "homomorphism":
                     coeffs[l,s] = sum(
-                        [self.action(other[i,s])*self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1)], 
+                        [self.action(other[i,s])*self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1)], #pylint: disable=not-callable
                         LambdaSequence(lambda *n: 0, universe=QQ, allow_sym=True, dim=2 if self.__dependency else 1)
                     )
                 elif self.action_type == "derivation":
-                    coeffs[l,s] = self.action(other[l,s]) + sum(
+                    coeffs[l,s] = self.action(other[l,s]) + sum(                                                             #pylint: disable=not-callable
                         [other[i,s] * self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1)],
                         LambdaSequence(lambda *n: 0, universe=QQ, allow_sym=True, dim=2 if self.__dependency else 1)                        
                     )
 
         ## Creating the action (if possible)
         if self.action != None and other.action != None:
-            action = lambda S : self.action(other.action(S)) # composition of the maps
+            action = lambda S : self.action(other.action(S)) # composition of the maps #pylint: disable=not-callable
             action_type = "homomorphism" if self.action_type == "homomorphism" and self.action_type == other.action_type else "unknown"
         else:
             action = None; action_type = None
@@ -259,9 +259,9 @@ class Compatibility:
 
     def scale(self, factor: Sequence) -> Compatibility:
         if factor.dim != 2 and self.__dependency:
-            raise ValueError("Incompatible sequence for sacle product")
+            raise ValueError("Incompatible sequence for scale product")
         elif factor.dim != 1 and not self.__dependency:
-            raise ValueError("Incompatible sequence for sacle product")
+            raise ValueError("Incompatible sequence for scale product")
         
         A = self.A; B = self.B; m = self.m
         coeffs = {(i,s) : factor.linear_subsequence(0, m, s)*self[i,s] for i in range(-A, B+1) for s in range(m)}
