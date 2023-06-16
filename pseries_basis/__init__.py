@@ -140,6 +140,19 @@ r'''
     * The Oberösterreich region: by the Innovatives OÖ-2010 plus program.
     * The Île-de-France region: by the project "XOR".
 '''
+import logging, sys
+
+## Configuring logger for this package
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+fh = logging.FileHandler(f"{__name__}.log")
+ch = logging.StreamHandler(sys.stderr)
+fh.setFormatter(formatter); ch.setFormatter(formatter)
+logger.addHandler(fh); logger.addHandler(ch)
+logger.propagate = False
+# logger.setLevel(logging.DEBUG) # setting up a level for logging
+
 
 from .misc import *
 from .psbasis import *
