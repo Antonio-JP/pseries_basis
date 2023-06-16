@@ -30,7 +30,7 @@ class Sequence(SetMorphism):
 
         To extend this class to a more detailed type of sequence, we need to do the following:
         
-        * Call the class method :func:`register_class` with the desired classes we want to be directly below.
+        * Override the class method :func:`register_class` with the desired classes we want to be directly below.
         * Implement the following methods:
           - :func:`_change_class`: receives a class (given when registering the sequence class) and cast the current sequence to the new class.
           - :func:`_neg_`: implement the negation of a sequence for a given class.
@@ -44,22 +44,12 @@ class Sequence(SetMorphism):
           - :func:`_element` to adjust how the sequence is computed.
           - :func:`_shift` to adjust the output of the shifted sequence.
           - :func:`_subsequence` to adjust the output of the subsequence.
-          - :func:`_slice` to adjust the output of the sliced sequence.
-
-        Methods that can be extended for more refined results:
-        
-        * ``_element``
-        * :func:`as_self`: allow better coercion between classes of sequences. If changing this method, these methods should also be updated:
-          - :func:`_add_`
-          - :func:`_sub_`
-          - :func:`_mul_`
-          - :func:`_truediv_`
-        * :func:`_shift`: allow a way of creating shifts using different classes
-        * :func:`_subsequence`: allow a way of building subsequences using different classes
-        * :func:`_linear_subsequence`: allow a way of building subsequences using different classes
+          - :func:`_slicing` to adjust the output of the sliced sequence.
 
         This class inherits from :class:`sage.categories.morphism.SetMorphism`allowing us to use methods such as
         ``domain`` and ``codomain``, ``__call__``, etc.
+
+        However, we have overriden the method __mul__ to fit better to the parent-element Sage framework.
     '''
     def __init__(self, sequence: Callable, universe = None, dim : int = 1, *, _extend_by_zero=False):
         if universe is None:
@@ -79,7 +69,11 @@ class Sequence(SetMorphism):
     CLASSES_GRAPH: DiGraph = DiGraph(loops=False, multiedges=False, weighted=False, data_structure="sparse")
 
     @classmethod
-    def resgister_class(cls, *super_classes):
+    def resgister_class(cls):
+        cls._resgister_class()
+
+    @classmethod
+    def _resgister_class(cls, *super_classes):
         if len(super_classes) == 0 and cls != Sequence:
             super_classes = [Sequence]
         if not cls in Sequence.CLASSES_GRAPH.vertices(sort=False):
@@ -222,12 +216,16 @@ class Sequence(SetMorphism):
 
             The given names are used as variable names.
         '''
+        
         if len(names) == 0: # if nothing provided we create default names
             names = ["n"] if self.dim == 1 else [f"n_{i}" for i in range(1,self.dim+1)]
         if len(names) < self.dim:
             raise TypeError(f"Insufficient variables names provided")
         names = var(names) # we create the variables
-        return SR(self.element(*names[:self.dim], _generic=True))
+        result = SR(self.element(*names[:self.dim], _generic=True))
+        if result is NaN:
+            raise ValueError("Impossible to compute generic expression for a sequence.")
+        return result
     
     def __getitem__(self, key):
         if isinstance(key, (tuple, list)):
@@ -287,54 +285,106 @@ class Sequence(SetMorphism):
         '''
         return Sequence(lambda *n : self._element(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim)
 
-#     def subsequence(self, *vals : int) -> Sequence:
-#         r'''
-#             Method to obtain a subsequence when having multiple arguments.
+    def slicing(self, *vals : tuple[int,int]) -> Sequence:
+        r'''
+            Method to obtain a slice of a sequence.
 
-#             When we have a sequence `f: \mathbb{N}^k \rightarrow R`, we can fix the first 
-#             arguments `(a_1,\ldots, a_t)` and build a new sequence by:
+            When we have a sequence `f: \mathbb{N}^k \rightarrow R`, we can fix some of the arguments 
+            arguments `(a_1,\ldots, a_t)` and build a new sequence by:
 
-#             .. MATH::
+            .. MATH::
 
-#                 \tilde{f}(n_1,\ldots, n_{k-t}) = f(a_1,\ldots,a_t,n_1,\ldots,n_{k-t})
+                \tilde{f}(n_1,\ldots, n_{k-t}) = f(a_1,\ldots,a_t,n_1,\ldots,n_{k-t})
 
-#             This method build the corresponding subsequence for the given values in ``vals``.
-#             If the number of values is more than the number of inputs, then we return the value
-#             of the sequence at the given position.
+            This method build the corresponding slicing sequence where the dimension has been reduced
+            consequently.
 
-#             TODO: Add the option for more sparse subsequences: if vals is given as a sequence over
-#             `\mathbb{N}, then we can still build a subsequence from it. This is more on the line of 
-#             a sparse subsequence.
-#         '''
-#         if len(vals) >= self.dim:
-#             return self.element(*vals[:self.dim])
-#         elif any(not v in ZZ for v in vals):
-#             raise TypeError("The values for subsequences must be integers")
-#         return self._subsequence(*vals)
+            INPUT:
 
-#     def _subsequence(self, *vals): 
-#         r'''
-#             Return the actual subsequence (see :func:`subsequence`). Can assume ``vals`` is a list of appropriate length and type.
-#         '''
-#         return Sequence(lambda *n: self.element(*vals, *n), self.universe, dim=self.dim-len(vals), allow_sym=True)
+            * A list of tuples `(i,n)` such that we will fix the `i`-th entry to take the value `n`.
+        '''
+        if any(0 < i or i <= self.dim or not n in ZZ for (i,n) in vals):
+            raise ValueError(f"Slicing require as input a list of tuples (i,n) with valid indices `i` and integers `n`")
+        values = dict(vals)
 
-#     def interlace(self, *others : Sequence, dim_to_interlace: int = 0):
-#         return InterlacingSequence(self, *others, dim_to_interlace=dim_to_interlace)
-
-#     def linear_subsequence(self, index: int, scale: int, shift: int):
-#         r'''Method to compute a linear subsequence of ``self``'''
-#         if index < 0 or index >= self.dim: raise IndexError(f"The index given must be in the dimension ({self.dim}). Got {index}")
-#         if scale <= 0 or not scale in ZZ: raise ValueError(f"The scale must be a positive integer. Got {scale}")
-#         if shift < 0 or not shift in ZZ: raise ValueError(f"The shift given must be a non-negative integer. Got {shift}")
-
-#         return self._linear_subsequence(index,scale,shift)
+        if len(vals) >= self.dim: # we do not have a sequence but an element
+            return self.element(*[values[i] for i in range(self.dim)])
+        
+        return self._slicing(values)
     
-#     def _linear_subsequence(self, index:int, scale:int, shift: int) -> Sequence:
-#         r'''Method to actually compute the new subsequence. It assumes the arguments to be valid.'''
-#         change_index = lambda *n : tuple(n[i] if i != index else n[i]*scale+shift for i in range(len(n)))
+    def _slicing(self, values: dict[int,int]):
+        def to_original_input(n: list):
+            result = []
+            for i in range(self.dim):
+                if i in values:
+                    result.append(values[i])
+                else:
+                    result.append(n.pop(0))
+            return result
+        return Sequence(lambda *n: self._element(to_original_input(n)), self.universe, self.dim)
 
-#         return Sequence(lambda *n : self(*change_index(*n)), self.universe, self.dim, self.allow_sym)
+    def subsequence(self, *vals: tuple[int, Sequence]) -> Sequence:
+        r'''
+            Method to compute a subsequence of a given sequence.
 
+            This allows to substitute the arguments of the current sequence by another sequence over the integers.
+            This is the equivalent as the composition of two functions and, hence, we require that the 
+            composed function maps integers to integers.
+
+            This allows to obtain sparse subsequences, linear subsequences, etc.
+
+            INPUT:
+
+            * A list of tuples indicating the subsequence to be taken. It can have several formats:
+              - `(i, f: \mathbb{N} \rightarrow \mathbb{N}): changes the index `i` by the sequence `f`.
+              - `(i, (a,b))`: transforms the `i`-th index of the sequence linearly by taking the subsequence `ai+b`.
+
+            OUTPUT:
+
+            The corresponding subsequence after taking the consideration of the input.
+        '''
+        final_input = []
+        for value in vals:
+            i, seq = value
+            if not i in ZZ or i < 0 or i >= self.dim:
+                raise IndexError(f"[subsequence] The given index is not valid (got {i}). It must be a non-negative integer smaller than {self.dim}")
+            if isinstance(seq, (list,tuple)):
+                if len(seq) != 2:
+                    raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
+                elif any((not el in ZZ) for el in seq):
+                    raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
+                a, b = seq
+                final_input.append([(i,),Sequence(lambda n : a*n+b, ZZ, 1)])
+            else: 
+                final_input.append((i,seq))
+                
+        for value in final_input:
+            index, seq = value
+            if (not index in ZZ) or index < 0 or index >= self.dim:
+                raise ValueError(f"[subsequence] Indices are given wrongly: they need to be non-negative integers smaller than {self.dim}")
+            elif not isinstance(seq, Sequence):
+                raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be a sequence")
+            elif seq.dim != 1:
+                raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to match the dimension of the indices (got: {seq.dim}, expected: {1})")
+            elif pushout(seq.universe, ZZ) != ZZ:
+                raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be sequences over integers")
+            
+        return self._subsequence(dict(final_input))
+    
+    def _subsequence(self, final_input: dict[int, Sequence]):
+        return Sequence(lambda *n : self._element(*[final_input[i](n[i]) if i in final_input else n[i] for i in range(self.dim)]), self.universe, self.dim)
+
+    def interlace(self, *others : Sequence, dim_to_interlace: int = 0):
+        raise NotImplementedError("Method 'interlacing' not yet implemented.")
+
+    def linear_subsequence(self, index: int, scale: int, shift: int):
+        r'''Method to compute a linear subsequence of ``self``'''
+        if index < 0 or index >= self.dim: raise IndexError(f"The index given must be in the dimension ({self.dim}). Got {index}")
+        if scale <= 0 or not scale in ZZ: raise ValueError(f"The scale must be a positive integer. Got {scale}")
+        if shift < 0 or not shift in ZZ: raise ValueError(f"The shift given must be a non-negative integer. Got {shift}")
+
+        return self._subsequence((index,(scale,shift)))
+    
     #############################################################################
     ## Arithmetic methods
     #############################################################################
