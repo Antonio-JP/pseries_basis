@@ -570,5 +570,3 @@ class SequenceFunctor(ConstructionFunctor):
     
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.__dim == other.__dim
-
-    
