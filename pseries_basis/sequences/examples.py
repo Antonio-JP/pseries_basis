@@ -7,7 +7,7 @@ r'''
 from .base import Sequence
 
 from functools import lru_cache
-from sage.all import binomial, factorial, parent, ZZ
+from sage.all import binomial, factorial, NaN, parent, ZZ
 from sage.categories.pushout import pushout
 
 Factorial = Sequence(factorial, ZZ, 1)
@@ -21,6 +21,9 @@ def Fibonacci(a = 1, b = 1):
     '''
     universe = pushout(ZZ,pushout(parent(a), parent(b)))
     @lru_cache(maxsize=None)
-    def __fib(n: int): return __fib(n-1) + __fib(n-2) if n > 1 else a if n == 0 else b
+    def __fib(n: int): 
+        if not n in ZZ or n < 0:
+            return NaN
+        return __fib(n-1) + __fib(n-2) if n > 1 else a if n == 0 else b
 
     return Sequence(__fib, universe, 1)
