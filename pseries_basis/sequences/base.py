@@ -1,4 +1,139 @@
+r'''
+    Base module for Sequence
 
+    This module contains the basic structures for Sequences and their interation with the category and parent-element 
+    framework of SageMath. We include the main definition for a class for sequence and a specific case for Constant
+    Sequence.
+
+    All other types of sequences will inherit from the main class :class:`Sequence` and must define a relation among other
+    previously implemented sequence in order to provide appropriate conversion among different types of sequences. This is somehow
+    similar to the inheritance or coercion systems from Python or SageMath, but adding an extra layer of flexibility when 
+    implementing sequences within the same ring.
+
+    More specifically, we define a Parent structure (see :class:`SequenceSet`) that will include all
+    the sequences of a fixed dimension ovver a fixed ring in SageMath. This, together with the Construction Functor
+    :class:`SequenceFunctor` will allow to interact with different objects in SageMath transforming them
+    into sequences that can be then computed with in this framework.
+
+    When implementing different types of sequences that all belong to the same parent :class:`SequenceSet`,
+    we needed to provide a way to interact even if the classes are different between the sequences. For example,
+    we may use the simple sequence given by a callable in Python. However, we may consider simpler types of 
+    sequences given by a Polynomial, or a Sage Expression (see :mod:`.element`). We could even consider 
+    sequences defined via recurrence equations. 
+
+    That is the reason we provided a system that will allow to register different classes of sequences and 
+    the interations among them are automatically define. Essentially, when a new class is instantiated, we 
+    register this class into a directed graph, where the edges define conversions that can be perform. Then, 
+    when two sequences meet in an operation and need to be merged, we find the minimal common structure (always 
+    existing since the "callable" base definition is always available) that can represent both structures
+    and we then perform the operation at that level.
+
+    One particular instance of a class of sequence that is the oposite to the callable sequence is the 
+    Constant Sequence. This sequence can be converted to any type of sequence and it is used as a base case for
+    all other sequences.
+
+    Basic sequences from callables
+    ==================================================
+    
+    We can easily take any callable with appropriate number of arguments and transform it into a sequence within the 
+    framework of this module. We only need to use the :class:`Sequence` class::
+
+        sage: from pseries_basis.sequences import *
+        sage: Fac = Sequence(factorial, ZZ, 1)
+        sage: def fib(n): return 1 if n == 0 else (1 if n==1 else fib(n-1) + fib(n-2)) # Fibonacci function
+        sage: Fib = Sequence(fib, QQ, 1)
+        sage: Fac
+        Sequence over [Integer Ring]: (1, 1, 2,...)
+        sage: Fib
+        Sequence over [Rational Field]: (1, 1, 2,...)
+        sage: (Fac + Fib)[:5]
+        [2, 2, 4, 9, 29]
+        sage: (Fac - Fib)[:5]
+        [0, 0, 0, 3, 19]
+        sage: (Fac * Fib)[:5]
+        [1, 1, 4, 18, 120]
+        sage: (Fac / Fib)[:5]
+        [1, 1, 1, 2, 24/5]
+        sage: (Fac % Fib)[:5]
+        [0, 0, 0, 0, 4]
+        sage: (Fac // Fib)[:5]
+        [1, 1, 1, 2, 4]
+
+    The relation between a constant sequence and a callable sequence will always go to a callable sequence. This is handled automatically::
+
+        sage: Seq2 = ConstantSequence(2, ZZ, 1)
+        sage: Seq2[:10]
+        [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+        sage: Fib + Seq2
+        Sequence over [Rational Field]: (3, 3, 4,...)
+        sage: Seq2 + Fib
+        Sequence over [Rational Field]: (3, 3, 4,...)
+        sage: Fib * Seq2
+        Sequence over [Rational Field]: (2, 2, 4,...)
+        sage: Seq2 * Fib
+        Sequence over [Rational Field]: (2, 2, 4,...)
+        sage: Fib % Seq2
+        Sequence over [Rational Field]: (1, 1, 0,...)
+
+    The coercion will also work with more complexes types of SageMath rings::
+
+        sage: a = NumberField(QQ["a"]("a^2 - 2"), "a").gens()[0]
+        sage: SeqA = ConstantSequence(a, a.parent(), 1)
+        sage: Seq2 + SeqA
+        Sequence over [Number Field in a with defining polynomial a^2 - 2]: (a + 2, a + 2, a + 2,...)
+        sage: SeqA * Fac
+        Sequence over [Number Field in a with defining polynomial a^2 - 2]: (a, a, 2*a,...)
+        sage: SeqA**2 == Seq2
+        True
+
+    We can also use any element that can be coerced into the sequence space::
+
+        sage: a + Fac * 2
+        Sequence over [Number Field in a with defining polynomial a^2 - 2]: (a + 2, a + 2, a + 4,...)
+        sage: a * Fac * a == 2*Fac
+        True
+
+    Special operations of sequences
+    ==================================================
+
+    Sequences has many operations defined over them. In particular, the shift operation allows to move the sequence back and forth::
+
+        sage: Fib.shift(5)
+        Sequence over [Integer Ring]: (8, 13, 21,...)
+        sage: Fib.shift(5) == Fibonacci(Fib(5), Fib(6))
+        True
+
+    When considering multivariate sequences, the shift operation can be defined to any of its coefficients::
+
+        sage: Binomial.generic("n", "k")
+        binomial(n, k)
+        sage: Binomial.shift(1,3).generic("n", "k")
+        binomial(n + 1, k + 3)
+
+    We can also consider subsequences of any given sequence. A subsequence is defined as a new sequence of the same dimension but where we 
+    take the elements of the original sequence in a specific order::
+
+        sage: Binomial.subsequence((1,Fac)).generic("n", "k")
+        binomial(n, factorial(k)
+        sage: Fac.subsequence((0,Sequence(lambda n: n//2, ZZ, 1)))[:10] # repeated Factorial sequence
+        [1, 1, 1, 1, 2, 2, 6, 6, 24, 24]
+        sage: Fib.subsequence((0,Sequence(lambda n: n**2 + 2*n + 1, ZZ, 1)))[:10] # quadratic sparse Fibonnaci sequence
+        [1, 5, 55, 1597, 121393, 24157817, 12586269025, 17167680177565, 61305790721611591, 573147844013817084101]
+
+    The final operation we provide for any sequence is the slicing operation. This is equivalent to the subsequence operation
+    when one of the arguments is constant and, hence, removed. Namely, a slice of a sequence is another sequence with **fewer**
+    dimension than the original sequence. In the case of slicing *too much* we return just the corresponding element::
+
+        sage: Fac.slicing(5) == Fac(5)
+        True
+        sage: Binomial.slicing((0,4)).generic("k")
+        binomial(4, k)
+        sage: Binomial.slicing((1, 10)).generic("n")
+        binomial(n, 10)
+        sage: Binomial.slicing((0,5), (1,3)) == Binomial((5,3))
+        True
+
+'''
 from __future__ import annotations
 
 import logging
@@ -30,9 +165,10 @@ class Sequence(SetMorphism):
 
         To extend this class to a more detailed type of sequence, we need to do the following:
         
-        * Override the class method :func:`register_class` with the desired classes we want to be directly below.
+        * Override the class method :func:`register_class` with the desired classes we want to be directly below and above
         * Implement the following methods:
           - :func:`_change_class`: receives a class (given when registering the sequence class) and cast the current sequence to the new class.
+          - :func:`_change_from_class`: class method that receives a sequence in a different class and transform into the current class. 
           - :func:`_neg_`: implement the negation of a sequence for a given class.
           - :func:`_final_add`: implement the addition for two sequences of the same parent and class.
           - :func:`_final_sub`: implement the difference for two sequences of the same parent and class.
@@ -70,16 +206,29 @@ class Sequence(SetMorphism):
 
     @classmethod
     def resgister_class(cls):
+        if len(Sequence.CLASSES_GRAPH) == 0: ## adding the base of Sequence and ConstantSequence
+            Sequence.CLASSES_GRAPH.add_vertex(Sequence)
+            Sequence.CLASSES_GRAPH.add_vertex(ConstantSequence)
+            logger.debug(f"[Sequence - register] Adding edge ({ConstantSequence}) -> ({Sequence})")
+            Sequence.CLASSES_GRAPH.add_edge(ConstantSequence, Sequence)
         cls._resgister_class()
 
     @classmethod
-    def _resgister_class(cls, *super_classes):
-        if len(super_classes) == 0 and cls != Sequence:
+    def _resgister_class(cls, super_classes: list = None, sub_classes: list = None):
+        if (super_classes == None or len(super_classes) == 0) and cls != Sequence:
             super_classes = [Sequence]
+        if (sub_classes == None or len(sub_classes) == 0) and cls != ConstantSequence:
+            sub_classes = [ConstantSequence]
         if not cls in Sequence.CLASSES_GRAPH.vertices(sort=False):
             Sequence.CLASSES_GRAPH.add_vertex(cls)
             for sup_class in super_classes:
+                logger.debug(f"[Sequence - register] Adding edge ({cls}) -> ({sup_class})")
                 Sequence.CLASSES_GRAPH.add_edge(cls, sup_class)
+            for sub_class in sub_classes:
+                logger.debug(f"[Sequence - register] Adding edge ({sup_class}) -> ({cls})")
+                Sequence.CLASSES_GRAPH.add_edge(sub_class, cls)
+        else:
+            logger.debug(f"[Sequence - register] Trying to register repeatedly a sequence class ({cls})")
 
     @staticmethod
     def MinimalCommonClass(cls1, cls2):
@@ -93,7 +242,7 @@ class Sequence(SetMorphism):
         to_check = [cls1]
         while len(to_check) > 0:
             current = to_check.pop(0)
-            for v in Sequence.CLASSES_GRAPH.neighbor_iterator(current):
+            for v in Sequence.CLASSES_GRAPH.neighbor_out_iterator(current):
                 if not v in depth:
                     depth[v] = depth[current] + 1
                     to_check.append(v)
@@ -101,14 +250,14 @@ class Sequence(SetMorphism):
         # now we do a breadth search from cls2 until we find something like in 1
         to_check = [cls2]
         while len(to_check) > 0:
-            found_intersection = [v for v in to_check if v not in depth]
+            found_intersection = [v for v in to_check if v in depth]
             if len(found_intersection) > 0: # we return the minimum intersection
                 depths = [depth[v] for v in found_intersection]
                 return found_intersection[depths.index(min(depths))]
             else: # not found yet. we check next layer of vertices
-                to_check = sum([[v for v in Sequence.CLASSES_GRAPH.neighbor_iterator(w)] for w in to_check],[])
+                to_check = sum([Sequence.CLASSES_GRAPH.neighbors_out(v) for v in to_check],[])
 
-        logger.warning(f"No common class found for {cls1} and {cls2}. Returning default class")
+        logger.debug(f"No common class found for {cls1} and {cls2}. Returning default class")
         return Sequence
 
     ### Other static attributes
@@ -158,7 +307,7 @@ class Sequence(SetMorphism):
         to_check = [self.__class__]; prev_class = dict()
         while len(to_check) > 0 and (not goal_class in to_check):
             current = to_check.pop(0)
-            for v in Sequence.CLASSES_GRAPH.neighbor_iterator(current):
+            for v in Sequence.CLASSES_GRAPH.neighbor_out_iterator(current):
                 to_check.append(v); prev_class[v] = current
                 if v == goal_class: break
             else: # if we do not break, we are not finished
@@ -173,11 +322,18 @@ class Sequence(SetMorphism):
         
         current = self
         for cls in path_to_goal:
-            current = current._change_class(cls)
+            try:
+                current = current._change_class(cls)
+            except NotImplementedError:
+                current = cls._change_from_class(current)
         return current
     
     def _change_class(self, _):
         raise NotImplementedError(f"For base Sequence, no call to _change_class should be done.")
+    
+    @classmethod
+    def _change_from_class(self, sequence: Sequence):
+        return Sequence(lambda *n : sequence._element(*n), sequence.universe, sequence.dim)
         
     #############################################################################
     ## Element methods
@@ -303,7 +459,7 @@ class Sequence(SetMorphism):
 
             * A list of tuples `(i,n)` such that we will fix the `i`-th entry to take the value `n`.
         '''
-        if any(0 < i or i <= self.dim or not n in ZZ for (i,n) in vals):
+        if any(0 < i or i >= self.dim or not n in ZZ for (i,n) in vals):
             raise ValueError(f"Slicing require as input a list of tuples (i,n) with valid indices `i` and integers `n`")
         values = dict(vals)
 
@@ -314,14 +470,14 @@ class Sequence(SetMorphism):
     
     def _slicing(self, values: dict[int,int]):
         def to_original_input(n: list):
-            result = []
+            result = []; read = 0
             for i in range(self.dim):
                 if i in values:
                     result.append(values[i])
                 else:
-                    result.append(n.pop(0))
+                    result.append(n[read]); read += 1
             return result
-        return Sequence(lambda *n: self._element(to_original_input(n)), self.universe, self.dim)
+        return Sequence(lambda *n: self._element(*to_original_input(n)), self.universe, self.dim - len(values))
 
     def subsequence(self, *vals: tuple[int, Sequence]) -> Sequence:
         r'''
@@ -372,7 +528,7 @@ class Sequence(SetMorphism):
         return self._subsequence(dict(final_input))
     
     def _subsequence(self, final_input: dict[int, Sequence]):
-        return Sequence(lambda *n : self._element(*[final_input[i](n[i]) if i in final_input else n[i] for i in range(self.dim)]), self.universe, self.dim)
+        return Sequence(lambda *n : self._element(*[final_input[i]._element(n[i]) if i in final_input else n[i] for i in range(self.dim)]), self.universe, self.dim)
 
     def interlace(self, *others : Sequence, dim_to_interlace: int = 0):
         raise NotImplementedError("Method 'interlacing' not yet implemented.")
@@ -392,6 +548,16 @@ class Sequence(SetMorphism):
         return Element.__mul__(self, other)
     def composition(self, other): # implements the multiplication as a map (i.e., composition)
         return self._composition(other)
+
+    def __pow__(self, power: int):
+        if not power in ZZ or power < 0:
+            raise ValueError("Power must be a non-negative integer for Sequences")
+        if power == 0:
+            return ConstantSequence(1, self.universe, self.dim)
+        elif power == 1:
+            return self
+        else:
+            return self * self**(power-1)
 
     def __coerce_into_common_class__(self, other: Sequence):
         r'''We assume ``other`` is in the same parent as ``self``. Hence it is a :class:`Sequence`'''
@@ -517,6 +683,44 @@ class Sequence(SetMorphism):
         else:
             return f"Sequence with {self.dim} variables over [{self.universe}]"
 
+class ConstantSequence(Sequence):
+    def __init__(self, value, universe=None, dim: int = 1, *, _extend_by_zero=True):
+        super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
+        self.__value = self.universe(value)
+
+    def _change_class(self, cls):
+        raise NotImplementedError(f"Class {cls} not recognized from a ConstantSequence")
+    @classmethod
+    def _change_from_class(self, sequence: Sequence):
+        raise NotImplementedError(f"Class {sequence.__class__} not recognized from ConstantSequence")
+
+    def _neg_(self) -> ConstantSequence:
+        return ConstantSequence(-self.__value, self.universe, self.dim)
+    
+    def _final_add(self, other: ConstantSequence) -> ConstantSequence:
+        return ConstantSequence(self.__value + other.__value, self.universe, self.dim)
+    def _final_sub(self, other: ConstantSequence) -> ConstantSequence:
+        return ConstantSequence(self.__value - other.__value, self.universe, self.dim)
+    def _final_mul(self, other: ConstantSequence) -> ConstantSequence:
+        return ConstantSequence(self.__value * other.__value, self.universe, self.dim)
+    def _final_div(self, other: ConstantSequence) -> ConstantSequence:
+        return ConstantSequence(self.__value / other.__value, self.universe, self.dim)
+    def _final_mod(self, other: ConstantSequence) -> ConstantSequence:
+        return ConstantSequence(self.__value % other.__value, self.universe, self.dim)
+    def _final_floordiv(self, other: ConstantSequence) -> ConstantSequence:
+        return ConstantSequence(self.__value // other.__value, self.universe, self.dim)
+
+    def _element(self, *_: int):
+        return self.__value
+    def _shift(self, *_: int):
+        return self
+    def _subsequence(self, _: dict[int, Sequence]):
+        return self
+    def _slicing(self, values: dict[int, int]):
+        if len(values) >= self.dim:
+            return self.__value
+        return ConstantSequence(self.__value, self.universe, self.dim - len(values))
+
 class SequenceSet(Homset,UniqueRepresentation):
     r'''
         Class for the set of sequences. We implement more coercion methods to allow more operations for sequences.
@@ -536,9 +740,9 @@ class SequenceSet(Homset,UniqueRepresentation):
     ## Category and coercion methods
     def _element_constructor_(self, x, check=None, **options):
         if x in self.codomain():
-            return Sequence(lambda *_ : x, self.codomain(), dim=self.dimension()) ## TODO: Change for constant sequence
+            return ConstantSequence(x, self.codomain(), dim=self.dimension()) 
         elif parent(x).has_coerce_map_from(self.codomain()):
-            return Sequence(lambda *_: x, pushout(self.codomain(), parent(x)), dim=self.dimension()) ## TODO: Change for constant sequence
+            return ConstantSequence(x, self.codomain(), dim=self.dimension()) 
         elif isinstance(x, Sequence) and x.dim == self.dimension():
             return x.change_universe(self.codomain())
         

@@ -32,4 +32,5 @@ r'''
 '''
 from .base import *
 from .element import *
+from .examples import *
 from .qsequences import *

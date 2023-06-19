@@ -22,8 +22,6 @@ r'''
 '''
 from __future__ import annotations
 
-from collections.abc import Callable
-
 from pseries_basis.sequences.base import Sequence
 from .base import Sequence
 
@@ -32,50 +30,4 @@ class ExpressionSequence(Sequence):
 
 class RationalSequence(Sequence):
     pass
-
-class ConstantSequence(Sequence):
-    def __init__(self, value, universe=None, dim: int = 1, *, _extend_by_zero=True):
-        super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
-        self.__value = self.universe(value)
-
-    @classmethod
-    def _resgister_class(cls, *super_classes):
-        return super()._resgister_class(Sequence, ExpressionSequence, RationalSequence)
-    
-    def _change_class(self, cls):
-        if cls == ExpressionSequence:
-            raise NotImplementedError("Cast to ExpressionSequence not yet implemented")
-        elif cls == RationalSequence:
-            raise NotImplementedError("Cast to RationalSequence not yet implemented")
-        elif cls == Sequence:
-            return Sequence(lambda *n: self.__value, self.universe, self.dim)
-        else:
-            raise NotImplementedError(f"Class {cls} not recognized from a ConstantSequence")
-
-    def _neg_(self) -> ConstantSequence:
-        return ConstantSequence(-self.__value, self.universe, self.dim)
-    
-    def _final_add(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value + other.__value, self.universe, self.dim)
-    def _final_sub(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value - other.__value, self.universe, self.dim)
-    def _final_mul(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value * other.__value, self.universe, self.dim)
-    def _final_div(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value / other.__value, self.universe, self.dim)
-    def _final_mod(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value % other.__value, self.universe, self.dim)
-    def _final_floordiv(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value // other.__value, self.universe, self.dim)
-
-    def _element(self, *indices: int):
-        return self.__value
-    def _shift(self, *shifts):
-        return self
-    def _subsequence(self, final_input: dict[int, Sequence]):
-        return self
-    def _slicing(self, values: dict[int, int]):
-        if len(values) >= self.dim:
-            return self.__value
-        return ConstantSequence(self.__value, self.universe, self.dim - len(values))
     
