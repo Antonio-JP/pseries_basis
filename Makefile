@@ -11,10 +11,10 @@ PACKAGE=pseries_basis
 all: install lint doc test
 	
 # Installing commands
-install:
+install: clean_dist
 	$(SAGE) -pip install --upgrade .
 
-no-deps:
+no-deps: clean_dist
 	$(SAGE) -pip install --upgrade --no-deps .
 
 uninstall:
@@ -55,6 +55,10 @@ clean_doc:
 	@echo "Cleaning documentation"
 	@cd docsrc && $(SAGE) -sh -c "make clean"
 	
+clean_dist:
+	@echo "Cleaning installation files"
+	@rm -rf ./build
+
 clean_pyc:
 	@echo "Cleaning the Python precompiled files (.pyc)"
 	@find . -name "*.pyc" -exec rm {} +

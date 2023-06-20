@@ -39,6 +39,7 @@ setup(
                 "pseries_basis.misc",
                 "pseries_basis.order",
                 "pseries_basis.orthogonal",
+                "pseries_basis.sequences",
                 "pseries_basis.qbasis"],
     setup_requires   = [],
     install_requires = ['ore_algebra @ git+https://github.com/mkauers/ore_algebra.git',
