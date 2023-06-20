@@ -40,12 +40,11 @@ r'''
 
         sage: from pseries_basis.sequences import *
         sage: Fac = Sequence(factorial, ZZ, 1)
-        sage: def fib(n): return 1 if n == 0 else (1 if n==1 else fib(n-1) + fib(n-2)) # Fibonacci function
-        sage: Fib = Sequence(fib, QQ, 1)
+        sage: Fib = Fibonacci()
         sage: Fac
         Sequence over [Integer Ring]: (1, 1, 2,...)
         sage: Fib
-        Sequence over [Rational Field]: (1, 1, 2,...)
+        Sequence over [Integer Ring]: (1, 1, 2,...)
         sage: (Fac + Fib)[:5]
         [2, 2, 4, 9, 29]
         sage: (Fac - Fib)[:5]
@@ -65,15 +64,15 @@ r'''
         sage: Seq2[:10]
         [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
         sage: Fib + Seq2
-        Sequence over [Rational Field]: (3, 3, 4,...)
+        Sequence over [Integer Ring]: (3, 3, 4,...)
         sage: Seq2 + Fib
-        Sequence over [Rational Field]: (3, 3, 4,...)
+        Sequence over [Integer Ring]: (3, 3, 4,...)
         sage: Fib * Seq2
-        Sequence over [Rational Field]: (2, 2, 4,...)
+        Sequence over [Integer Ring]: (2, 2, 4,...)
         sage: Seq2 * Fib
-        Sequence over [Rational Field]: (2, 2, 4,...)
+        Sequence over [Integer Ring]: (2, 2, 4,...)
         sage: Fib % Seq2
-        Sequence over [Rational Field]: (1, 1, 0,...)
+        Sequence over [Integer Ring]: (1, 1, 0,...)
 
     The coercion will also work with more complexes types of SageMath rings::
 
@@ -114,7 +113,7 @@ r'''
     take the elements of the original sequence in a specific order::
 
         sage: Binomial.subsequence((1,Fac)).generic("n", "k")
-        binomial(n, factorial(k)
+        binomial(n, factorial(k))
         sage: Fac.subsequence((0,Sequence(lambda n: n//2, ZZ, 1)))[:10] # repeated Factorial sequence
         [1, 1, 1, 1, 2, 2, 6, 6, 24, 24]
         sage: Fib.subsequence((0,Sequence(lambda n: n**2 + 2*n + 1, ZZ, 1)))[:10] # quadratic sparse Fibonnaci sequence
@@ -124,12 +123,12 @@ r'''
     when one of the arguments is constant and, hence, removed. Namely, a slice of a sequence is another sequence with **fewer**
     dimension than the original sequence. In the case of slicing *too much* we return just the corresponding element::
 
-        sage: Fac.slicing(5) == Fac(5)
+        sage: Fac.slicing((0,5)) == Fac(5)
         True
         sage: Binomial.slicing((0,4)).generic("k")
         binomial(4, k)
         sage: Binomial.slicing((1, 10)).generic("n")
-        binomial(n, 10)
+        1/3628800*(n - 1)*(n - 2)*(n - 3)*(n - 4)*(n - 5)*(n - 6)*(n - 7)*(n - 8)*(n - 9)*n
         sage: Binomial.slicing((0,5), (1,3)) == Binomial((5,3))
         True
 
@@ -356,9 +355,10 @@ class Sequence(SetMorphism):
             except:
                 output = NaN
 
-            if not output in (NaN, oo):
+            if (not output is NaN) and (not output is oo):
                 try:
                     output = self.universe(output) #pylint: disable=not-callable
+                    if self.universe == SR: output = output.simplify_full()
                 except Exception as e:
                     if not _generic:
                         raise e
@@ -382,7 +382,7 @@ class Sequence(SetMorphism):
             raise TypeError(f"Insufficient variables names provided")
         names = var(names) # we create the variables
         result = SR(self.element(*names[:self.dim], _generic=True))
-        if result is NaN:
+        if result.has(NaN):
             raise ValueError("Impossible to compute generic expression for a sequence.")
         return result
     
@@ -462,7 +462,7 @@ class Sequence(SetMorphism):
 
             * A list of tuples `(i,n)` such that we will fix the `i`-th entry to take the value `n`.
         '''
-        if any(0 < i or i >= self.dim or not n in ZZ for (i,n) in vals):
+        if any(i < 0 or i >= self.dim or not n in ZZ for (i,n) in vals):
             raise ValueError(f"Slicing require as input a list of tuples (i,n) with valid indices `i` and integers `n`")
         values = dict(vals)
 
@@ -565,8 +565,9 @@ class Sequence(SetMorphism):
     def __coerce_into_common_class__(self, other: Sequence):
         r'''We assume ``other`` is in the same parent as ``self``. Hence it is a :class:`Sequence`'''
         common_class = Sequence.MinimalCommonClass(self.__class__, other.__class__)
-        self_casted = self.change_class(common_class, **self.extra_info())
-        other_casted = other.change_class(common_class, **other.extra_info())
+        all_info = self.extra_info(); all_info.update(other.extra_info())
+        self_casted = self.change_class(common_class, **all_info)
+        other_casted = other.change_class(common_class, **all_info)
 
         return (common_class, (self_casted, other_casted))
 
@@ -584,6 +585,9 @@ class Sequence(SetMorphism):
         return sc._final_mul(oc)
         
     def _div_(self, other: Sequence) -> Sequence:
+        if not self.universe.is_field():
+            self = self.change_universe(self.universe.fraction_field())
+            other = other.change_universe(other.universe.fraction_field())
         _, (sc, oc) = self.__coerce_into_common_class__(other)
         return sc._final_div(oc)
     
@@ -628,7 +632,7 @@ class Sequence(SetMorphism):
         if isinstance(self.universe, SequenceSet):
             return all(self(*term).almost_zero(order) for term in first_terms)
         else:
-            return all(self(*term) == 0 for term in first_terms)
+            return all(bool(self(*term) == 0) for term in first_terms)
 
     def almost_equals(self, other : Sequence, order=10) -> bool:
         r'''
@@ -669,12 +673,17 @@ class Sequence(SetMorphism):
         if isinstance(self.universe, SequenceSet): # equality if the codomain are more sequences
             return all(self(*term).almost_equals(other(*term), order) for term in first_terms)
         else: # equality when elements lied in other ring
-            return all(self(*term) == other(*term) for term in first_terms)
+            return all(bool(self(*term) == other(*term)) for term in first_terms)
 
     def __eq__(self, other: Sequence) -> bool:
         r'''Checking for partial equality'''
         if not isinstance(other, Sequence):
-            return False
+            try:
+                R = pushout(self.parent(), other.parent())
+                self = R(self); other = R(other)
+                return self == other
+            except:
+                return False
         return self.almost_equals(other, order=Sequence.EQUALITY_BOUND)
     
     #############################################################################
@@ -820,3 +829,5 @@ class SequenceFunctor(ConstructionFunctor):
     
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.__dim == other.__dim
+
+__all__=["Sequence", "ConstantSequence"]
