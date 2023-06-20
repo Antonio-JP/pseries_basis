@@ -565,8 +565,8 @@ class Sequence(SetMorphism):
     def __coerce_into_common_class__(self, other: Sequence):
         r'''We assume ``other`` is in the same parent as ``self``. Hence it is a :class:`Sequence`'''
         common_class = Sequence.MinimalCommonClass(self.__class__, other.__class__)
-        self_casted = self.change_class(common_class, **self.info())
-        other_casted = other.change_class(common_class, **other.info())
+        self_casted = self.change_class(common_class, **self.extra_info())
+        other_casted = other.change_class(common_class, **other.extra_info())
 
         return (common_class, (self_casted, other_casted))
 
@@ -677,6 +677,49 @@ class Sequence(SetMorphism):
             return False
         return self.almost_equals(other, order=Sequence.EQUALITY_BOUND)
     
+    #############################################################################
+    ## Other methods
+    #############################################################################
+    def is_polynomial(self) -> bool:
+        r'''Method to check if a sequence is polynomial'''
+        try:
+            expr = SR(self.generic()).simplify_full()
+            return all(expr.is_polynomial(x) for x in expr.variables())
+        except:
+            return False
+    def as_polynomial(self) -> Sequence:
+        r'''Method to cast a sequence to a polynomial sequence'''
+        if self.is_polynomial():
+            from .element import RationalSequence
+            return RationalSequence(SR(self.generic()).simplify_full(), self.generic().variables(), self.universe)
+        else:
+            raise ValueError(f"{self} is not a polynomial sequence.")
+    def is_rational(self) -> bool:
+        r'''Method to check if a sequence is rational'''
+        try:
+            return SR(self.generic()).simplify_full().is_rational_expression()
+        except:
+            return False
+    def as_rational(self) -> Sequence:
+        r'''Method to cast a sequence to a rational sequence'''
+        if self.is_rational():
+            from .element import RationalSequence
+            return RationalSequence(SR(self.generic()).simplify_full(), self.generic().variables(), self.universe)
+        else:
+            raise ValueError(f"{self} is not a polynomial sequence.")
+        
+    def is_hypergeometric(self, index: int = None) -> tuple[bool, Sequence]:
+        r'''Method to check if a sequence is hypergeometric or not'''
+        if index == None:
+            if self.dim == 1:
+                index = 0
+            else:
+                raise TypeError("Sequence.is_hypergeometric() missing 1 required positional argument: 'index'")
+        quotient = self.shift(tuple([1 if i == index else 0 for i in range(self.dim)])) / self
+        if quotient.is_rational():
+            return True, quotient.as_rational()
+        return False, None
+
     #############################################################################
     ## Representation methods
     #############################################################################
