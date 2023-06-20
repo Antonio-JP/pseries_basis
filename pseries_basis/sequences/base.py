@@ -260,6 +260,9 @@ class Sequence(SetMorphism):
         logger.debug(f"No common class found for {cls1} and {cls2}. Returning default class")
         return Sequence
 
+    def extra_info(self) -> dict:
+        return dict()
+
     ### Other static attributes
     EQUALITY_BOUND: int = 50
 
@@ -290,7 +293,7 @@ class Sequence(SetMorphism):
         '''
         return Sequence(lambda *n : self._element(*n), new_universe, dim=self.dim)
 
-    def change_class(self, goal_class):
+    def change_class(self, goal_class, **extra_info):
         r'''
             This method transforms the current sequence to an equivalent sequence
             in a different (but compatible) class. This method defines how to 
@@ -323,16 +326,16 @@ class Sequence(SetMorphism):
         current = self
         for cls in path_to_goal:
             try:
-                current = current._change_class(cls)
+                current = current._change_class(cls, **extra_info)
             except NotImplementedError:
-                current = cls._change_from_class(current)
+                current = cls._change_from_class(current, **extra_info)
         return current
     
-    def _change_class(self, _):
-        raise NotImplementedError(f"For base Sequence, no call to _change_class should be done.")
+    def _change_class(self, cls, **extra_info): # pylint: disable=unused-argument
+        raise NotImplementedError(f"For {self.__class__}, class {cls} not recognized.")
     
     @classmethod
-    def _change_from_class(self, sequence: Sequence):
+    def _change_from_class(self, sequence: Sequence, **extra_info): # pylint: disable=unused-argument
         return Sequence(lambda *n : sequence._element(*n), sequence.universe, sequence.dim)
         
     #############################################################################
@@ -562,8 +565,8 @@ class Sequence(SetMorphism):
     def __coerce_into_common_class__(self, other: Sequence):
         r'''We assume ``other`` is in the same parent as ``self``. Hence it is a :class:`Sequence`'''
         common_class = Sequence.MinimalCommonClass(self.__class__, other.__class__)
-        self_casted = self.change_class(common_class)
-        other_casted = other.change_class(common_class)
+        self_casted = self.change_class(common_class, **self.info())
+        other_casted = other.change_class(common_class, **other.info())
 
         return (common_class, (self_casted, other_casted))
 
@@ -688,10 +691,10 @@ class ConstantSequence(Sequence):
         super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
         self.__value = self.universe(value)
 
-    def _change_class(self, cls):
+    def _change_class(self, cls, **extra_info): # pylint: disable=unused-argument
         raise NotImplementedError(f"Class {cls} not recognized from a ConstantSequence")
     @classmethod
-    def _change_from_class(self, sequence: Sequence):
+    def _change_from_class(self, sequence: Sequence, **extra_info): # pylint: disable=unused-argument
         raise NotImplementedError(f"Class {sequence.__class__} not recognized from ConstantSequence")
 
     def _neg_(self) -> ConstantSequence:

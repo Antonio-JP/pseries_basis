@@ -28,7 +28,10 @@ from __future__ import annotations
 from pseries_basis.sequences.base import Sequence
 
 from .base import ConstantSequence, Sequence
-from sage.all import Expression, SR
+from sage.all import Expression, PolynomialRing, SR
+from sage.rings.fraction_field import is_FractionField
+from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
+from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
 
 class ExpressionSequence(Sequence):
     r'''
@@ -99,16 +102,19 @@ class ExpressionSequence(Sequence):
         return cls._resgister_class([Sequence], [ConstantSequence])
 
     @classmethod
-    def _change_from_class(self, sequence: Sequence):
+    def _change_from_class(cls, sequence: Sequence, **extra_info):
         if isinstance(sequence, ConstantSequence):
             return ExpressionSequence(
                 SR(sequence.element(*[0 for _ in range(sequence.dim)])), 
-                variables=[f"n_{i}" for i in range(sequence.dim)] if sequence.dim > 1 else ["n"], 
+                variables=extra_info.get("variables", [f"n_{i}" for i in range(sequence.dim)] if sequence.dim > 1 else ["n"]), 
                 universe=sequence.universe, 
                 _extend_by_zero=sequence._Sequence__extend_by_zero
             )
         else:
             raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of ExpressionSequence")
+        
+    def extra_info(self) -> dict:
+        return {"variables": self.variables()}
 
     ## Methods fro sequence arithmetic
     def _neg_(self) -> ExpressionSequence:
@@ -224,4 +230,222 @@ class ExpressionSequence(Sequence):
         return self.__variables
 
 class RationalSequence(Sequence):
-    pass
+    r'''
+        Class for sequences defined by a Rational function.
+
+        These sequences are defined using a rational function that, when it is evaluated, we obtain the corresponding element 
+        in the sequence. If the sequence contains several variables, then higer dimensional sequences can be generated.
+        We also allow to only specify some of the variables to left other variables as parameters.
+
+        INPUT:
+
+        * ``rational``: rational expression defining the sequence. It must be either in a polynomial ring or a fraction
+          field of a polynomial ring. The base field is not important for defining the sequence.
+        * ``variables`` (optional): a list/tuple of variables in the parent of ``rational`` that specifies the variables
+          that are consiedered indices of the sequence. If ``None`` is given, all variables in the parent are considered.
+        * ``universe`` (optional): the parent structure that contains the elements of the sequence. By default, the universe 
+          is not necessary and it is set to the remaining parent structure from the parent of ``rational`` after removing
+          the variables in ``variables``. If given, it may raise errors when evaluating the sequence.
+        
+        EXAMPLES::
+
+            sage: from pseries_basis.sequences import *
+            sage: R.<x,y> = QQ[]
+            sage: P = (x+y)/(x-y)
+            sage: poly = RationalSequence(P, [x]); poly
+            sage: poly[:5]
+            [-1, (1 + y)/(1 - y), (2 + y)/(2 - y), (3 + y)/(3 - y), (4 + y)/(4 - y)]
+
+        If we do not provide the list of variables, then we considered all variables as variables of the sequence::
+
+            sage: poly2 = RationalSequence(P); poly2
+            sage: poly2((10, 5)) # (10+5)/(10-5)
+            3
+
+        On top of this class we find the Expression sequences. When we operate whe these, we lose the information of the rational expression 
+        and fall into the symbolic ring::
+
+            TODO: add examples with Expression sequences
+
+        Conversely, on the bottom of this class we always find the class :class:`ConstantSequence` which will always convert into 
+        an ExpressionSequence with the same variables::
+
+            TODO: add examples with constant sequences.
+
+        Additionally with the usual restrictions for computing with sequences, :class:`RationalSequence` has an extra restriction
+        to compute with these sequences. Namely, we require that the polynomial rings used to define the sequence are compatible
+        for operations::
+
+            TODO: add examples with arithmetics on RationalSequence. Show error when variables do not match.
+
+        We can also compue any other operation over sequences as defined in :class:`Sequence`::
+
+            TODO: add examples using :func:`~.base.Sequence.subsequence`, :func:`~.base.Sequence.slicing`, :func:`~.base.Sequence.shift`
+    '''
+    def __init__(self, rational, variables=None, universe=None, *, _extend_by_zero=False):
+        ## Checking rational is a rational expression
+        R = rational.parent()
+        if is_FractionField(R):
+            R = R.base()
+        if not (is_PolynomialRing(R) or is_MPolynomialRing(R)):
+            if universe is None or variables is None:
+                raise TypeError(f"Incomplete information: 'rational' was not a rational expression and 'universe'/'variables' was not given.")
+            else:
+                R = PolynomialRing(universe, [str(v) for v in variables])
+                variables = R.gens()
+        else:
+            variables = [R(v) for v in variables]
+            if any(v not in R.gens() for v in variables):
+                raise TypeError("Incorrect information: a variable requested is not a generator of the polynomial ring.")
+        
+        F = R.fraction_field()
+        rational = F(rational)
+
+        ## Storing the data for the sequence
+        self.__generic = rational
+        self.__F = F
+        self.__variables = variables
+        dim = len(variables)
+
+        ## Computing the remaining universe
+        if universe == None:
+            universe = R.remove_var(variables)
+            universe = R.fraction_field() if not R.is_field() else R
+            
+        super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
+
+    ## Methods for the casting of seqeunces
+    @classmethod
+    def resgister_class(cls):
+        return cls._resgister_class([ExpressionSequence], [ConstantSequence])
+    
+    def extra_info(self) -> dict:
+        return {"variables": self.variables(), "F": self.__F}
+    
+    def _change_class(self, cls, **extra_info):
+        if cls == ExpressionSequence:
+            return ExpressionSequence(
+                self.__generic,
+                self.variables(),
+                self.universe,
+                _extend_by_zero = self._Sequence__extend_by_zero
+            )
+        else:
+            return super()._change_class(cls, **extra_info)
+
+    @classmethod
+    def _change_from_class(cls, sequence: Sequence, **extra_info):
+        if isinstance(sequence, ConstantSequence):
+            return RationalSequence(
+                (sequence.element(*[0 for _ in range(sequence.dim)])), 
+                variables = extra_info.get("variables", [f"n_{i}" for i in range(sequence.dim)] if sequence.dim > 1 else ["n"]), 
+                universe=sequence.universe, 
+                _extend_by_zero=sequence._Sequence__extend_by_zero
+            )
+        else:
+            raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of ExpressionSequence")
+
+    ## Methods fro sequence arithmetic
+    def _neg_(self) -> RationalSequence:
+        return RationalSequence(
+            self.generic()._neg_(), 
+            variables=self.variables(),  
+            _extend_by_zero=self._Sequence__extend_by_zero
+        )
+
+    def _final_add(self, other: RationalSequence) -> RationalSequence:
+        if self.variables() != other.variables():
+            return NotImplemented
+
+        return RationalSequence(
+            self.generic() + other.generic(), 
+            variables=self.variables(), 
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+        )
+    def _final_sub(self, other: RationalSequence) -> RationalSequence:
+        if self.variables() != other.variables():
+            return NotImplemented
+
+        return RationalSequence(
+            self.generic() - other.generic(), 
+            variables=self.variables(), 
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+        )
+    def _final_mul(self, other: RationalSequence) -> RationalSequence:
+        if self.variables() != other.variables():
+            return NotImplemented
+
+        return RationalSequence(
+            self.generic() * other.generic(), 
+            variables=self.variables(), 
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+        )
+    def _final_div(self, other: RationalSequence) -> RationalSequence:
+        if self.variables() != other.variables():
+            return NotImplemented
+
+        return RationalSequence(
+            self.generic() / other.generic(), 
+            variables=self.variables(), 
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+        )
+    def _final_mod(self, other: RationalSequence) -> RationalSequence:
+        if self.variables() != other.variables():
+            return NotImplemented
+
+        return RationalSequence(
+            self.generic() % other.generic(), 
+            variables=self.variables(), 
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+        )
+    def _final_floordiv(self, other: RationalSequence) -> RationalSequence:
+        if self.variables() != other.variables():
+            return NotImplemented
+
+        return RationalSequence(
+            self.generic() // other.generic(), 
+            variables=self.variables(), 
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+        )
+
+    ## Methods for operations on Sequences
+    def _element(self, *indices: int):
+        return self.__generic(**{str(v) : i for (v,i) in zip(self.variables(), indices)})
+
+    def _shift(self, *shifts):
+        return RationalSequence(
+            self.__generic(**{str(v): v + i for (v,i) in zip(self.variables(), shifts)}), 
+            variables=self.variables(), 
+            _extend_by_zero=self._Sequence__extend_by_zero
+        )
+    def _subsequence(self, final_input: dict[int, Sequence]):
+        try:
+            vars = self.variables()
+            generics = {i : seq.generic(str(vars[i])) for (i,seq) in final_input.items()}
+            return RationalSequence(
+                self.__generic(**{str(vars[i]): gen for (i,gen) in generics.items()}), 
+                variables=self.variables(), 
+                universe=self.universe, 
+                _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values())
+            )
+        except:
+            return super()._subsequence(final_input)
+    def _slicing(self, values: dict[int, int]):
+        vars = self.variables()
+        rem_vars = [vars[i] for i in range(self.dim) if not i in values]
+        return RationalSequence(
+            self.__generic(**{str(vars[i]): val for (i,val) in values.items()}), 
+            variables=rem_vars, 
+            universe=self.universe, 
+            _extend_by_zero=self._Sequence__extend_by_zero
+        )
+
+    ## Other overriden methods
+    def generic(self, *names: str):
+        if len(names) == 0:
+            return self.__generic
+        return super().generic(*names)
+
+    ## Other methods
+    def variables(self):
+        return self.__variables
