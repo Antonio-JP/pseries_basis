@@ -3,6 +3,7 @@
         "coeff",
         "mapsto",
         "mathbb",
+        "multiedges",
         "ncols",
         "nrows",
         "pmatrix",
@@ -26,13 +27,16 @@
         "Gegenbauer",
         "hadamard",
         "homset",
+        "homsets",
         "invertibility",
         "Laguerre",
         "lclm",
+        "longrightarrow",
         "multiset",
         "nfactors",
         "nsections",
         "Pochhammer",
+        "poset",
         "pseries",
         "qbasis",
         "qbinomial",
@@ -44,5 +48,6 @@
         "semirings",
         "symb",
         "UNICITY"
-    ]
+    ],
+    "python.linting.pylintPath": "pylint"
 }

@@ -2,7 +2,7 @@ r'''
     Module with the specific type of sequences that are used in the module :mod:`.base`.
 
     Since each of these are extension of the class :class:`~.base.Sequence`, they all inherit
-    from this calss and fills the requirements to work properly in the Sequences setting:
+    from this class and fills the requirements to work properly in the Sequences setting:
 
     * Override the class method :func:`register_class` with the desired classes we want to be directly below.
     * Implement the following methods:
@@ -26,7 +26,7 @@ r'''
 from __future__ import annotations
 
 from .base import ConstantSequence, Sequence
-from sage.all import Expression, PolynomialRing, var, SR
+from sage.all import Expression, PolynomialRing, var, SR #pylint: disable=no-name-in-module
 from sage.rings.fraction_field import is_FractionField
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
@@ -110,7 +110,7 @@ class ExpressionSequence(Sequence):
             sage: ExpYX / ExpX == e^y
             True
 
-        We can also compupe any other operation over sequences as defined in :class:`Sequence`::
+        We can also compute any other operation over sequences as defined in :class:`Sequence`::
 
             sage: Exp = ExpressionSequence(exp(x-y), universe=SR); Exp
             Sequence with 2 variables over [Symbolic Ring]
@@ -134,10 +134,10 @@ class ExpressionSequence(Sequence):
 
         super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
 
-    ## Methods for the casting of seqeunces
+    ## Methods for the casting of sequences
     @classmethod
-    def resgister_class(cls):
-        return cls._resgister_class([Sequence], [ConstantSequence])
+    def register_class(cls):
+        return cls._register_class([Sequence], [ConstantSequence])
 
     @classmethod
     def _change_from_class(cls, sequence: Sequence, **extra_info):
@@ -257,7 +257,7 @@ class ExpressionSequence(Sequence):
             _extend_by_zero=self._Sequence__extend_by_zero
         )
 
-    ## Other overriden methods
+    ## Other overridden methods
     def generic(self, *names: str):
         if len(names) == 0:
             return self.__generic
@@ -272,7 +272,7 @@ class RationalSequence(Sequence):
         Class for sequences defined by a Rational function.
 
         These sequences are defined using a rational function that, when it is evaluated, we obtain the corresponding element 
-        in the sequence. If the sequence contains several variables, then higer dimensional sequences can be generated.
+        in the sequence. If the sequence contains several variables, then higher dimensional sequences can be generated.
         We also allow to only specify some of the variables to left other variables as parameters.
 
         INPUT:
@@ -280,7 +280,7 @@ class RationalSequence(Sequence):
         * ``rational``: rational expression defining the sequence. It must be either in a polynomial ring or a fraction
           field of a polynomial ring. The base field is not important for defining the sequence.
         * ``variables`` (optional): a list/tuple of variables in the parent of ``rational`` that specifies the variables
-          that are consiedered indices of the sequence. If ``None`` is given, all variables in the parent are considered.
+          that are considered indices of the sequence. If ``None`` is given, all variables in the parent are considered.
         * ``universe`` (optional): the parent structure that contains the elements of the sequence. By default, the universe 
           is not necessary and it is set to the remaining parent structure from the parent of ``rational`` after removing
           the variables in ``variables``. If given, it may raise errors when evaluating the sequence.
@@ -318,7 +318,7 @@ class RationalSequence(Sequence):
 
             TODO: add examples with arithmetics on RationalSequence. Show error when variables do not match.
 
-        We can also compue any other operation over sequences as defined in :class:`Sequence`::
+        We can also compute any other operation over sequences as defined in :class:`Sequence`::
 
             TODO: add examples using :func:`~.base.Sequence.subsequence`, :func:`~.base.Sequence.slicing`, :func:`~.base.Sequence.shift`
     '''
@@ -354,10 +354,10 @@ class RationalSequence(Sequence):
             
         super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
 
-    ## Methods for the casting of seqeunces
+    ## Methods for the casting of sequences
     @classmethod
-    def resgister_class(cls):
-        return cls._resgister_class([ExpressionSequence], [ConstantSequence])
+    def register_class(cls):
+        return cls._register_class([ExpressionSequence], [ConstantSequence])
     
     def extra_info(self) -> dict:
         return {"variables": self.variables(), "F": self.__F}
@@ -480,7 +480,7 @@ class RationalSequence(Sequence):
             _extend_by_zero=self._Sequence__extend_by_zero
         )
 
-    ## Other overriden methods
+    ## Other overridden methods
     def generic(self, *names: str):
         if len(names) == 0:
             return self.__generic

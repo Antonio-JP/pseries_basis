@@ -1,7 +1,7 @@
 r'''
     Base module for Sequence
 
-    This module contains the basic structures for Sequences and their interation with the category and parent-element 
+    This module contains the basic structures for Sequences and their interaction with the category and parent-element 
     framework of SageMath. We include the main definition for a class for sequence and a specific case for Constant
     Sequence.
 
@@ -11,7 +11,7 @@ r'''
     implementing sequences within the same ring.
 
     More specifically, we define a Parent structure (see :class:`SequenceSet`) that will include all
-    the sequences of a fixed dimension ovver a fixed ring in SageMath. This, together with the Construction Functor
+    the sequences of a fixed dimension over a fixed ring in SageMath. This, together with the Construction Functor
     :class:`SequenceFunctor` will allow to interact with different objects in SageMath transforming them
     into sequences that can be then computed with in this framework.
 
@@ -22,13 +22,13 @@ r'''
     sequences defined via recurrence equations. 
 
     That is the reason we provided a system that will allow to register different classes of sequences and 
-    the interations among them are automatically define. Essentially, when a new class is instantiated, we 
+    the interactions among them are automatically define. Essentially, when a new class is instantiated, we 
     register this class into a directed graph, where the edges define conversions that can be perform. Then, 
     when two sequences meet in an operation and need to be merged, we find the minimal common structure (always 
     existing since the "callable" base definition is always available) that can represent both structures
     and we then perform the operation at that level.
 
-    One particular instance of a class of sequence that is the oposite to the callable sequence is the 
+    One particular instance of a class of sequence that is the opposite to the callable sequence is the 
     Constant Sequence. This sequence can be converted to any type of sequence and it is used as a base case for
     all other sequences.
 
@@ -116,7 +116,7 @@ r'''
         binomial(n, factorial(k))
         sage: Fac.subsequence((0,Sequence(lambda n: n//2, ZZ, 1)))[:10] # repeated Factorial sequence
         [1, 1, 1, 1, 2, 2, 6, 6, 24, 24]
-        sage: Fib.subsequence((0,Sequence(lambda n: n**2 + 2*n + 1, ZZ, 1)))[:10] # quadratic sparse Fibonnaci sequence
+        sage: Fib.subsequence((0,Sequence(lambda n: n**2 + 2*n + 1, ZZ, 1)))[:10] # quadratic sparse Fibonacci sequence
         [1, 5, 55, 1597, 121393, 24157817, 12586269025, 17167680177565, 61305790721611591, 573147844013817084101]
 
     The final operation we provide for any sequence is the slicing operation. This is equivalent to the subsequence operation
@@ -147,7 +147,7 @@ from sage.categories.homsets import Homsets
 from sage.categories.morphism import SetMorphism # pylint: disable=no-name-in-module
 from sage.categories.pushout import ConstructionFunctor, pushout
 from sage.graphs.digraph import DiGraph
-from sage.structure.element import Element
+from sage.structure.element import Element #pylint: disable=no-name-in-module
 from sage.structure.unique_representation import UniqueRepresentation
 
 _Sets = Sets.__classcall__(Sets)
@@ -184,7 +184,7 @@ class Sequence(SetMorphism):
         This class inherits from :class:`sage.categories.morphism.SetMorphism`allowing us to use methods such as
         ``domain`` and ``codomain``, ``__call__``, etc.
 
-        However, we have overriden the method __mul__ to fit better to the parent-element Sage framework.
+        However, we have overridden the method __mul__ to fit better to the parent-element Sage framework.
     '''
     def __init__(self, sequence: Callable, universe = None, dim : int = 1, *, _extend_by_zero=False):
         if universe is None:
@@ -196,7 +196,7 @@ class Sequence(SetMorphism):
         self.__CACHE_ELEMENTS = {}
 
         super().__init__(parent, func)
-        self.__class__.resgister_class()
+        self.__class__.register_class()
 
     #############################################################################
     ## Methods related to the Graph of sequences classes
@@ -204,16 +204,16 @@ class Sequence(SetMorphism):
     CLASSES_GRAPH: DiGraph = DiGraph(loops=False, multiedges=False, weighted=False, data_structure="sparse")
 
     @classmethod
-    def resgister_class(cls):
+    def register_class(cls):
         if len(Sequence.CLASSES_GRAPH) == 0: ## adding the base of Sequence and ConstantSequence
             Sequence.CLASSES_GRAPH.add_vertex(Sequence)
             Sequence.CLASSES_GRAPH.add_vertex(ConstantSequence)
             logger.debug(f"[Sequence - register] Adding edge ({ConstantSequence}) -> ({Sequence})")
             Sequence.CLASSES_GRAPH.add_edge(ConstantSequence, Sequence)
-        cls._resgister_class()
+        cls._register_class()
 
     @classmethod
-    def _resgister_class(cls, super_classes: list = None, sub_classes: list = None):
+    def _register_class(cls, super_classes: list = None, sub_classes: list = None):
         if (super_classes == None or len(super_classes) == 0) and cls != Sequence:
             super_classes = [Sequence]
         if (sub_classes == None or len(sub_classes) == 0) and cls != ConstantSequence:
@@ -405,7 +405,7 @@ class Sequence(SetMorphism):
     #############################################################################
     ## Operation with sequences
     ##
-    ## In this seciton we present the main methods that are defined over sequences
+    ## In this section we present the main methods that are defined over sequences
     ## including, but not being limited to:
     ##   * Shifts -> shifting the arguments of the sequence
     ##   * Subsequences -> getting a subsequence indexed by other sequence, but keeping the dimension
