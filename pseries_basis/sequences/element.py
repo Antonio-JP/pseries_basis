@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from .base import ConstantSequence, Sequence
 from sage.all import Expression, PolynomialRing, var, SR #pylint: disable=no-name-in-module
-from sage.rings.fraction_field import is_FractionField
+from sage.rings.fraction_field import is_FractionField 
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
 
@@ -154,7 +154,7 @@ class ExpressionSequence(Sequence):
     def extra_info(self) -> dict:
         return {"variables": self.variables()}
 
-    ## Methods fro sequence arithmetic
+    ## Methods for sequence arithmetic
     def _neg_(self) -> ExpressionSequence:
         return ExpressionSequence(
             self.generic()._neg_(), 

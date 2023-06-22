@@ -340,7 +340,7 @@ class Sequence(SetMorphism):
     #############################################################################
     ## Element methods
     #############################################################################
-    def element(self, *indices : int, _generic=False):
+    def element(self, *indices : int, _generic=False, _debug=False):
         if len(indices) != self.dim:
             raise TypeError(f"Invalid number of arguments for a sequence. Provided {len(indices)} but required {self.dim}")
         
@@ -350,9 +350,13 @@ class Sequence(SetMorphism):
         if not tuple(indices) in self.__CACHE_ELEMENTS:
             try:
                 output = self._element(*indices)
-            except ZeroDivisionError:
+            except ZeroDivisionError as e:
+                if _debug:
+                    raise e
                 output = oo
-            except:
+            except Exception as e:
+                if _debug:
+                    raise e
                 output = NaN
 
             if (not output is NaN) and (not output is oo):
@@ -360,7 +364,7 @@ class Sequence(SetMorphism):
                     output = self.universe(output) #pylint: disable=not-callable
                     if self.universe == SR: output = output.simplify_full()
                 except Exception as e:
-                    if not _generic:
+                    if not _generic or _debug:
                         raise e
             
             self.__CACHE_ELEMENTS[tuple(indices)] = output
