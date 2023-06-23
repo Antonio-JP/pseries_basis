@@ -517,7 +517,7 @@ class Sequence(SetMorphism):
                 elif any((not el in ZZ) for el in seq):
                     raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
                 a, b = seq
-                final_input.append([(i,),Sequence(lambda n : a*n+b, ZZ, 1)])
+                final_input.append((i,Sequence(lambda n : a*n+b, ZZ, 1)))
             else: 
                 final_input.append((i,seq))
                 

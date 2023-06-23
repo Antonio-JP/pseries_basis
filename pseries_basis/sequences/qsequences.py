@@ -40,6 +40,7 @@ from sage.misc.functional import log
 
 from pseries_basis.sequences.base import Sequence
 from .base import Sequence, ConstantSequence
+from .element import RationalSequence
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +60,18 @@ class QSequence(Sequence):
         In general, `q`-sequences appear when taking a transcendental element in the universe (i.e.,
         we can decompose the universe into a field of rational fractions over this `q`). However, the 
         implementation provided by this class is not limited to this.
+
+        INPUT:
+
+        * ``sequence``: a callable such that, evaluated on `q^n` gives the sequence defined.
+        * ``universe``: a Parent structure on SageMath as in :class:`.base.Sequence`.
+        * ``dim``: number of variables defining the sequence, as in :class:`.base.Sequence`.
+        * ``q``: indicates the element to be used as `q`.
+
+        TODO: add examples and tests.
     '''
     def __init__(self, sequence: Callable[..., Any], universe=None, dim: int = 1, *, q, _extend_by_zero=False):
-        super().__init__(sequence, universe, dim, _extend_by_zero=_extend_by_zero)
+        Sequence.__init__(self, sequence, universe, dim, _extend_by_zero=_extend_by_zero)
         
         self.__q = self.universe(q)
 
@@ -82,6 +92,11 @@ class QSequence(Sequence):
             )
         else:
             raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of {cls}")
+        
+    def extra_info(self) -> dict:
+        dict = super().extra_info()
+        dict["q"] = self.q
+        return dict
 
     ## Methods for sequence arithmetic
     def _neg_(self) -> Sequence:
@@ -126,21 +141,128 @@ class QSequence(Sequence):
     
     ## Other methods
     def is_hypergeometric(self, index: int = None, *, _bound=30) -> tuple[bool, Sequence]:
-        if self.dim > 1:
-            raise NotImplementedError(f"is_hypergeometric not implemented for multidimensional q-sequences")
-        elif index != None and index != 0:
-            raise IndexError(f"{index=} not valid for a sequence of dimension {self.dim}")
-        from ore_algebra import OreAlgebra, guess
-        from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-        R = PolynomialRing(self.universe, "q_n"); qn = R.gens()[0]
-        OQ = OreAlgebra(R, ("Q", R.Hom(R)(self.q*qn), lambda _ : 0))
-        try:
-            guessed = guess(self[:_bound], OQ, order=1)
-        except ValueError: #no relations found
-            return False,None
-        if guessed.order() != 1:
-            return False,None
-        rat_func = -guessed[0]/guessed[1]
-        return True, QSequence(lambda n : rat_func(**{str(qn): n}), self.universe, 1, q=self.q)
+        raise NotImplementedError(f"is_hypergeometric with guessing is not working as expected.")
+        # if self.dim > 1:
+        #     raise NotImplementedError(f"is_hypergeometric not implemented for multidimensional q-sequences")
+        # elif index != None and index != 0:
+        #     raise IndexError(f"{index=} not valid for a sequence of dimension {self.dim}")
+        # from ore_algebra import OreAlgebra, guess
+        # from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+        # R = PolynomialRing(self.universe, "q_n"); qn = R.gens()[0]
+        # OQ = OreAlgebra(R, ("Q", R.Hom(R)(self.q*qn), lambda _ : 0))
+        # try:
+        #     guessed = guess(self[:_bound], OQ, order=1)
+        # except ValueError: #no relations found
+        #     return False,None
+        # if guessed.order() != 1:
+        #     return False,None
+        # rat_func = -guessed[0]/guessed[1]
+        # return True, QSequence(lambda n : rat_func(**{str(qn): n}), self.universe, 1, q=self.q)
 
-__all__ = ["logq", "QSequence"]
+class QRationalSequence(QSequence, RationalSequence):
+    r'''
+        Class for representing rational `q`-sequences
+
+        A rational `q`-sequences is a `q`-sequence that can be expressed as a rational function in `q^n`
+        for each of the dimensions of the sequence. For example, the bidimensional sequence `q^{n-k}` is
+        rational, since we can write it as `q^n / q^k \leftrightarrow x/y`.
+
+        The actual implementation of the arithmetic operations of this class is based on the implementation of 
+        :class:`.element.RationalSequence`. On the other hand, other operations are implemented
+        following the ideas from :class:`QSequence`, since the behavior of the shifts are different between
+        the classical sequences and the `q`-sequences.
+
+        TODO: add examples of rational q-sequences.
+    '''
+    def __init__(self, rational, variables=None, universe=None, *, q, _extend_by_zero=False):
+        # we set up the generic expression and check the arguments
+        RationalSequence.__init__(self, rational, variables=variables, universe=universe, _extend_by_zero=_extend_by_zero) 
+        # we set up the value for q
+        QSequence.__init__(self, None, self.universe, q=q, _extend_by_zero=_extend_by_zero)
+
+    ## Methods for the casting of sequences
+    @classmethod
+    def register_class(cls):
+        return cls._register_class([QSequence], [])
+    
+    def _change_class(self, goal_class, **_):
+        if goal_class != QSequence:
+            raise NotImplementedError
+        return QSequence(
+            lambda *n : self.generic()(**{str(v): n[i] for (i,v) in enumerate(self.variables())}),
+            self.universe, 
+            self.dim, 
+            q = self.q,
+            _extend_by_zero = self._Sequence__extend_by_zero
+        )
+    
+    @classmethod
+    def _change_from_class(cls, sequence: Sequence, **extra_info):
+        if not isinstance(sequence, ConstantSequence):
+            raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of {cls}")
+    
+        return QRationalSequence(
+            lambda *n : sequence(*(sequence.dim*[0])),
+            variables=extra_info.get("variables", [f"qn_{i}" for i in range(sequence.dim)] if sequence.dim > 1 else ["qn"]),
+            universe=sequence.universe,
+            q = extra_info.get("q"),
+            _extend_by_zero=sequence._Sequence__extend_by_zero
+        )
+       
+    def extra_info(self) -> dict:
+        dict = QSequence.extra_info(self)
+        dict.update(RationalSequence.extra_info(self))
+        return dict
+    
+    ## Methods fro sequence arithmetic
+    def _neg_(self) -> Sequence:
+        return RationalSequence._neg_(self)
+    def _final_add(self, other: Sequence) -> Sequence:
+        return RationalSequence._final_add(self,other)
+    def _final_sub(self, other: Sequence) -> Sequence:
+        return RationalSequence._final_sub(self,other)
+    def _final_mul(self, other: Sequence) -> Sequence:
+        return RationalSequence._final_mul(self,other)
+    def _final_div(self, other: Sequence) -> Sequence:
+        return RationalSequence._final_div(self,other)
+    def _final_mod(self, other: Sequence) -> Sequence:
+        return RationalSequence._final_mod(self,other)
+    def _final_floordiv(self, other: Sequence) -> Sequence:
+        return RationalSequence._final_floordiv(self,other)
+    
+    ## Methods for operations on Sequences
+    def _element(self, *indices: int):
+        return RationalSequence._element(self, *[self.q**i if i in ZZ else SR(self.q)**i for i in indices])
+
+    def _shift(self, *shifts):
+        return QRationalSequence(
+            self.generic()(**{str(v): v * self.q**(i) for (v,i) in zip(self.variables(), shifts)}), 
+            variables=self.variables(), 
+            q = self.q,
+            _extend_by_zero=self._Sequence__extend_by_zero
+        )
+    def _subsequence(self, final_input: dict[int, Sequence]):
+        try:
+            vars = self.variables()
+            generics = {i : seq.generic(str(vars[i])) for (i,seq) in final_input.items()}
+            return QRationalSequence(
+                self.__generic(**{str(vars[i]): self.q**gen for (i,gen) in generics.items()}), 
+                variables=self.variables(), 
+                universe=self.universe, 
+                q = self.q,
+                _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values())
+            )
+        except:
+            return super()._subsequence(final_input)
+    def _slicing(self, values: dict[int, int]):
+        vars = self.variables()
+        rem_vars = [vars[i] for i in range(self.dim) if not i in values]
+        return QRationalSequence(
+            self.__generic(**{str(vars[i]): self.q**(val) for (i,val) in values.items()}), 
+            variables=rem_vars, 
+            universe=self.universe, 
+            q = self.q,
+            _extend_by_zero=self._Sequence__extend_by_zero
+        )
+
+__all__ = ["logq", "QSequence", "QRationalSequence"]

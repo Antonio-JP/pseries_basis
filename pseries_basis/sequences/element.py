@@ -152,7 +152,9 @@ class ExpressionSequence(Sequence):
             raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of ExpressionSequence")
         
     def extra_info(self) -> dict:
-        return {"variables": self.variables()}
+        dict = super().extra_info()
+        dict["variables"] = self.variables()
+        return dict
 
     ## Methods for sequence arithmetic
     def _neg_(self) -> ExpressionSequence:
@@ -349,7 +351,12 @@ class RationalSequence(Sequence):
 
         ## Computing the remaining universe
         if universe == None:
-            universe = R.remove_var(*variables)
+            if is_PolynomialRing(R) and any(v in R.gens() for v in variables):
+                universe = R.base()
+            elif is_PolynomialRing(R):
+                universe = R
+            else:
+                universe = R.remove_var(*variables)
             universe = R.fraction_field() if not R.is_field() else R
             
         super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
@@ -358,9 +365,6 @@ class RationalSequence(Sequence):
     @classmethod
     def register_class(cls):
         return cls._register_class([ExpressionSequence], [ConstantSequence])
-    
-    def extra_info(self) -> dict:
-        return {"variables": self.variables(), "F": self.__F}
     
     def _change_class(self, cls, **extra_info):
         if cls == ExpressionSequence:
@@ -385,67 +389,79 @@ class RationalSequence(Sequence):
         else:
             raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of ExpressionSequence")
 
+    def extra_info(self) -> dict:
+        dict = super().extra_info()
+        dict["variables"] = self.variables()
+        return dict
+
     ## Methods fro sequence arithmetic
     def _neg_(self) -> RationalSequence:
-        return RationalSequence(
+        return self.__class__(
             self.generic()._neg_(), 
             variables=self.variables(),  
-            _extend_by_zero=self._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero,
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
         )
 
     def _final_add(self, other: RationalSequence) -> RationalSequence:
         if self.variables() != other.variables():
             return NotImplemented
 
-        return RationalSequence(
+        return self.__class__(
             self.generic() + other.generic(), 
             variables=self.variables(), 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
         )
     def _final_sub(self, other: RationalSequence) -> RationalSequence:
         if self.variables() != other.variables():
             return NotImplemented
 
-        return RationalSequence(
+        return self.__class__(
             self.generic() - other.generic(), 
             variables=self.variables(), 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
         )
     def _final_mul(self, other: RationalSequence) -> RationalSequence:
         if self.variables() != other.variables():
             return NotImplemented
 
-        return RationalSequence(
+        return self.__class__(
             self.generic() * other.generic(), 
             variables=self.variables(), 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
         )
     def _final_div(self, other: RationalSequence) -> RationalSequence:
         if self.variables() != other.variables():
             return NotImplemented
 
-        return RationalSequence(
+        return self.__class__(
             self.generic() / other.generic(), 
             variables=self.variables(), 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
         )
     def _final_mod(self, other: RationalSequence) -> RationalSequence:
         if self.variables() != other.variables():
             return NotImplemented
 
-        return RationalSequence(
+        return self.__class__(
             self.generic() % other.generic(), 
             variables=self.variables(), 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
         )
     def _final_floordiv(self, other: RationalSequence) -> RationalSequence:
         if self.variables() != other.variables():
             return NotImplemented
 
-        return RationalSequence(
+        return self.__class__(
             self.generic() // other.generic(), 
             variables=self.variables(), 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
         )
 
     ## Methods for operations on Sequences
@@ -456,7 +472,7 @@ class RationalSequence(Sequence):
         return RationalSequence(
             self.__generic(**{str(v): v + i for (v,i) in zip(self.variables(), shifts)}), 
             variables=self.variables(), 
-            _extend_by_zero=self._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero,
         )
     def _subsequence(self, final_input: dict[int, Sequence]):
         try:
