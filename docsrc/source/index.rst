@@ -19,6 +19,7 @@ Submodules
    pseries_basis/orthogonal
    pseries_basis/order
    pseries_basis/misc
+   pseries_basis/sequences
 
 Indices and Tables
 ***********************************************************

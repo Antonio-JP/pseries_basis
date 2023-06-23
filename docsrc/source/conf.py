@@ -12,22 +12,31 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import os
+import sys
+from codecs import open
+from pathlib import Path
+
+try:
+    from sage.env import SAGE_DOC_SRC, SAGE_SRC
+except ImportError:
+    raise RuntimeError("to build the documentation you need to be inside a Sage shell (run first the command 'sage -sh' in a shell")
+
+# Get information from separate files (README, VERSION)
+def readfile(filename):
+    with open(filename,  encoding='utf-8') as f:
+        return f.read()
+
 # General information about the project.
 project = u"Inverse Zeibelger Problem: Power Series basis for Sage"
 copyright = u'2022'
 package_name = 'pseries_basis'
-package_folder = "../../pseries_basis"
+package_folder = "../../"
 authors = u"Antonio Jimenez-Pastor"
 
-import sys
-import os
-
-try:
-    from sage.env import SAGE_DOC_SRC, SAGE_DOC, SAGE_SRC
-    import sage.all
-except ImportError:
-    raise RuntimeError("to build the documentation you need to be inside a Sage shell (run first the command 'sage -sh' in a shell")
-
+# The full version, including alpha/beta/rc tags
+path = Path("../../", "VERSION")
+release = readfile(str(path)).strip()
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -45,17 +54,19 @@ sys.path.append(os.path.join(SAGE_SRC, "sage_docbuild","ext"))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    #'sphinx.ext.autodoc',
     'sage_autodoc',
-    # 'sage_package.sphinx',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
     'sphinx.ext.extlinks',
 ]
 
+# The reST default role (used for this markup: `text`) to use for all
+# documents.
+default_role = 'math'
+
 # Add any paths that contain templates here, relative to this directory.
-# templates_path = ['_templates']
-templates_path = [os.path.join(SAGE_DOC_SRC, 'common', 'templates'), '_templates']
+templates_path = ['_templates']
+# templates_path = [os.path.join(SAGE_DOC_SRC, 'common', 'templates'), '_templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -130,14 +141,18 @@ extlinks = {
     'sageref': ('https://doc.sagemath.org/html/en/reference/%s', 'Sage_doc:'),
     'fungrim': ('https://fungrim.org/entry/%s', 'Fungrim:'),
     'fungrimT': ('https://fungrim.org/topic/%s', 'Fungrim:'),
-    'issue': ('https://github.com/Antonio-JP/pseries_basis/issues/%s', 'GitHub/Issue:#')
+    'git': ('https://github.com/%s', 'GitHub: '),
+    'issue': ('https://github.com/Antonio-JP/dalgebra/issues/%s', 'Issue:'),
+    'tag': ('https://github.com/Antonio-JP/dalgebra/tree/%s', 'Tag:'),
+    'home': ('https://github.com/Antonio-JP/dalgebra%s', 'Git:dalgebra'),
+    'hdoc': ('https://antonio-jp.github.io/dalgebra%s', 'Doc:dalgebra')
     }
 
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = 'classic'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

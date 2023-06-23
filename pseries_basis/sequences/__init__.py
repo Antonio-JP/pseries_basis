@@ -2,7 +2,7 @@ r'''
     Sequences module.
 
     This module contains the main structures and algorithms to handle generic infinite sequences.
-    This module differs from the module :mod:`sage.structure.sequence:Sequence` in the sense that
+    This module differs from the module :mod:`sage.structure.sequence.Sequence` in the sense that
     the data of the sequence can be infinite.
 
     A sequence is a map from a cartesian product of the natural numbers to a *universe*. 
