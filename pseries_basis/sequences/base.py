@@ -632,11 +632,11 @@ class Sequence(SetMorphism):
             elements of the sequence are equal to zero. This is helpful in some sequence to guarantee that the whole 
             sequence is exactly zero.
         '''
-        first_terms = product(range(order), repeat=self.dim)
+        first_terms = product(range(order), repeat=self.dim) if self.dim > 1 else range(order)
         if isinstance(self.universe, SequenceSet):
-            return all(self(*term).almost_zero(order) for term in first_terms)
+            return all(self(term).almost_zero(order) for term in first_terms)
         else:
-            return all(bool(self(*term) == 0) for term in first_terms)
+            return all(bool(self(term) == 0) for term in first_terms)
 
     def almost_equals(self, other : Sequence, order=10) -> bool:
         r'''
@@ -673,11 +673,11 @@ class Sequence(SetMorphism):
                 sage: Fib.almost_equals(Fac, 4)
                 False
         '''
-        first_terms = product(range(order), repeat=self.dim)
+        first_terms = product(range(order), repeat=self.dim) if self.dim > 0 else range(order)
         if isinstance(self.universe, SequenceSet): # equality if the codomain are more sequences
-            return all(self(*term).almost_equals(other(*term), order) for term in first_terms)
+            return all(self(term).almost_equals(other(term), order) for term in first_terms)
         else: # equality when elements lied in other ring
-            return all(bool(self(*term) == other(*term)) for term in first_terms)
+            return all(bool(self(term) == other(term)) for term in first_terms)
 
     def __eq__(self, other: Sequence) -> bool:
         r'''Checking for partial equality'''
