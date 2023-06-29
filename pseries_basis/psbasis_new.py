@@ -3,7 +3,7 @@ r'''
 
     This module introduces the basic structures in Sage for computing with *Power
     Series Basis*. We based this work in the paper :doi:`10.1016/j.jsc.2022.11.002`
-    by A. Jiménez-Pasror and M. Petkovšek, where all definitions and proofs for the algorithms 
+    by A. Jiménez-Pastor and M. Petkovšek, where all definitions and proofs for the algorithms 
     can be found.
 
     In particular, this module allows to consider basis of formal power series subrings, i.e., 
@@ -40,7 +40,7 @@ r'''
 
     L f_{nt+m} = \sum_{i=-A}^B c_{m,i,n} f_{nt+m+i},
 
-    where `(c_{m,i,n})_n` are **valid** sequences, wehre **valid** means they are hypergeometric 
+    where `(c_{m,i,n})_n` are **valid** sequences, where **valid** means they are hypergeometric 
     in some sense (either `q`-hypergeometric or normal hypergeometric). Then, if we have
     `g(x)` an element in the spanned space by our basis with 
 
@@ -48,7 +48,7 @@ r'''
 
     g = \sum_k \alpha_k f_k, \qquad L \cdot g = 0,
 
-    then the sequence `(\alpha_k)_k` satisfy a set of recurrences ingerited from the compatibility
+    then the sequence `(\alpha_k)_k` satisfy a set of recurrences inherited from the compatibility
     equation of `L` for the basis.
 
     TODO: add examples of usage of this package
@@ -60,9 +60,8 @@ logger = logging.getLogger(__name__)
 
 from collections.abc import Callable
 from functools import reduce
-from sage.all import lcm, ZZ
+from sage.all import cached_method, lcm, Matrix, ZZ
 from sage.categories.pushout import pushout
-from sage.misc.cachefunc import cached_method
 from .sequences.base import ConstantSequence, Sequence, SequenceSet
 
 class PSBasis(Sequence):
@@ -73,7 +72,7 @@ class PSBasis(Sequence):
         SageMath field `\mathbb{K}`. In general, a basis is a sequence `f_k` indexed by
         an natural number `k` of formal power series or sequences. Hence, this class
         inherits from the generic sequence class in :class:`~.sequences.base.Sequence`,
-        and always procides a representation as a sequence of sequences.
+        and always provides a representation as a sequence of sequences.
 
         .. MATH::
 
@@ -143,10 +142,98 @@ class PSBasis(Sequence):
     ### INFORMATION OF THE BASIS
     ### 
     ##########################################################################################################
-    # @property
-    # TODO def functional_seq(self) -> Sequence
-    # TODO def functional_matrix(self, nrows: int, ncols: int = None) -> matrix_class:
-    # TODO def is_quasi_func_triangular(self) -> bool
+    @property
+    def functional_seq(self) -> Sequence:
+        r'''
+            Method to get the functional sequence of the basis.
+
+            A :class:`PSBasis` can be seen as a sequence of functions or polynomials. However, these
+            functions and polynomials are sequences by themselves. In fact, a :class:`PSBasis` is 
+            a basis of the ring of formal power series which, at the same time, is a basis of the 
+            ring of sequences. 
+
+            However, the relation between the sequences and the formal power series is not unique:
+
+            * We can consider the formal power series `f(x) = \sum_n a_n x^n`, then we have the 
+              natural (also called functional) sequence `(a_n)_n`.
+            * We can consider formal power series as functions `f: \mathbb{K} \rightarrow \mathbb{K},
+              and (if convergent) we can define the (evaluation) sequence `(f(n))_n`.
+
+            This method returns a bi-indexed sequence that allows to obtain the functional sequences
+            of this basis. This is equivalent to the bi-dimensional sequence that defines the basis
+            (see method :func:`as_2dim`)
+        '''
+        return self.as_2dim()
+    
+    def functional_matrix(self, nrows: int, ncols: int = None):
+        r'''
+            Method to get a matrix representation of the basis.
+
+            This method returns a matrix `\tilde{M} = (m_{i,j})` with ``nrows`` rows and
+            ``ncols`` columns such that `m_{i,j} = [x^j]f_i(x)`, where `f_i(x)` is 
+            the `i`-th element of ``self``.
+
+            This is the upper-left part of the matrix `M` that represent, by rows,
+            the elements of this basis in terms of the canonical basis of the formal
+            power series ring (`\{1,x,x^2,\ldots\}`). Hence, if we have an element 
+            `y(x) \in \mathbb{K}[[x]]` with:
+
+            .. MATH::
+
+                y(x) = \sum_{n\geq 0} y_n x^n = \sum_{n\geq 0} c_n f_n(x),
+
+            then the infinite vectors `\mathbf{y}` and `\mathbf{c}` satisfies:
+
+            .. MATH::
+
+                \mathbf{y} = \mathbf{c} M
+
+            INPUT:
+
+            * ``nrows``: number of rows of the final matrix
+            * ``ncols``: number of columns of the final matrix. If ``None`` is given, we
+              will automatically return the square matrix with size given by ``nrows``.
+        '''
+        ## Checking the arguments
+        if(not ((nrows in ZZ) and nrows > 0)):
+            raise ValueError("The number of rows must be a positive integer")
+        if(ncols is None):
+            ncols = nrows
+        elif(not ((ncols in ZZ) and ncols > 0)):
+                raise ValueError("The number of columns must be a positive integer")
+
+        return Matrix([[self.functional_seq((i,j)) for j in range(ncols)] for i in range(nrows)])
+    
+    def is_quasi_func_triangular(self, bound:int=20) -> bool:
+        r'''
+            Method to check whether a basis is quasi-triangular or not as a functional basis up to a bound
+
+            A basis `\mathcal{B} = \{f_n(x)\}_n` is a functional *quasi-triangular* if its 
+            functional matrix representation `M = \left(m_{n,k}\right)_{n,k \geq 0}` (see 
+            :func:`functional_matrix`) is *quasi-upper triangular*, i.e.,
+            there is a strictly monotonic function `I: \mathbb{N} \rightarrow \mathbb{N}` such that
+
+            * For all `k \in \mathbb{N}`, and `m > I(k)`, `m_{n,k} =0`, i.e., `x^k` divides `f_n(x)`.
+            * For all `k \in \mathbb{N}`, `m_{I(k),k} \neq 0`, i.e., `x^k` does not divide `f_{I(k)}(x)`.
+
+            This property will allow to transform the initial conditions from the canonical basis
+            of formal power series (`\{1,x,x^2,\ldots\}`) to the initial conditions of the expansion
+            over ``self``.
+        '''
+        M = self.functional_matrix(bound)
+        I = M.ncols()*[None]
+        for i in range(M.ncols()):
+            for j in range(M.nrows()-1, -1, -1):
+                if M[i,j] != 0:
+                    I[i] = j+1; break
+            else:
+                I[i] = 0
+
+        for i in range(M.ncols()-1):
+            if (I[i+1] not in (0, bound)) and I[i+1] <= I[i]:
+                return False
+        return True
+    
     # TODO def functional_to_self(self, sequence: Sequence | Collection, size: int) -> matrix_class
     # @property
     # TODO def evaluation_seq(self) -> Sequence
@@ -221,7 +308,7 @@ class Compatibility:
 
             L f_{at+b} = \sum_{i=-A}^B c_{b,i,a} f_{at+b+i},
 
-        where, for fixed indices `b,i`, the element `(c_{b,i,a})_a` are *nice sequences*. In general, the nicesness of the 
+        where, for fixed indices `b,i`, the element `(c_{b,i,a})_a` are *nice sequences*. In general, the niceness of the 
         sequences `(c_{b,i,a})` required depends on the operations we pretend to apply over the compatibility.
 
         INPUT:
@@ -240,7 +327,7 @@ class Compatibility:
 
         If some of the optional arguments is given, it is used as sanity checks on the input of ``c``. If the user
         pretend to obtain the compatibility in more sections than given with the coefficients, consider the method
-        :func:`in_sections` after the creation of the basic ompatibility.
+        :func:`in_sections` after the creation of the basic compatibility.
 
         TODO: add examples from the use of :class:`PSBasis`.
     '''
@@ -249,17 +336,17 @@ class Compatibility:
         if t is None:
             t = len(c)
         elif t != len(c):
-            raise TypeError(f"[compatibility] Requested compatiblity in {t} sections but only provided information for {len(c)} sections")
+            raise TypeError(f"[compatibility] Requested compatibility in {t} sections but only provided information for {len(c)} sections")
         if t == 0:
             raise ValueError(f"[compatibility] Compatibility in 0 sections is not properly defined.")
 
         ## Processing the number of elements
         if any(len(c[i]) != len(c[0]) for i in range(t)):
-            raise TypeError(f"[compatibility] Incoherent information for compatiblity: different size in each section.")
+            raise TypeError(f"[compatibility] Incoherent information for compatibility: different size in each section.")
         if A is None and B is None:
             raise TypeError(f"[compatibility] At least `A` or `B` must be provided to a compatibility")
         elif (not A is None) and (not B is None) and (len(c[0]) != A+B+1):
-            raise ValueError(f"[compatibility] Incoherent information for compatiblity: given {len(c[0])} coefficients per section, but requested a ({A},{B}) compatibility")
+            raise ValueError(f"[compatibility] Incoherent information for compatibility: given {len(c[0])} coefficients per section, but requested a ({A},{B}) compatibility")
         elif (not A is None):
             B = len(c[0]) - A - 1
         else:
@@ -286,9 +373,9 @@ class Compatibility:
     def lower(self): return self.__lower #: Property of the lower bound for the compatibility
     @property
     def nsections(self): return self.__nsections #: Property of the number of sections for the compatibility
-    A = upper #: alias for the upper bound
-    B = lower #: alias for the lower bound
-    t = nsections # alias for the number of sections
+    A: int = upper #: alias for the upper bound
+    B: int = lower #: alias for the lower bound
+    t: int = nsections # alias for the number of sections
 
     def data(self):
         r'''Return the compatibility data (`A`, `B`, `t`)'''
@@ -298,7 +385,7 @@ class Compatibility:
         r'''Return the common universe of the sequences in the compatibility coefficients'''
         return self.__base
     def change_base(self, new_base) -> Compatibility:
-        r'''Returns a new comaptibility condition changing the universe of the sequences to a new ring'''
+        r'''Returns a new compatibility condition changing the universe of the sequences to a new ring'''
         return Compatibility([[coeff.change_universe(new_base) for coeff in section] for section in self.__data], self.A, self.B, self.t)
     
     def __getitem__(self, item):
@@ -329,8 +416,7 @@ class Compatibility:
             raise ValueError(f"[compatibility] Compatibilities can only be extended when the new sections ({new_sections}) are multiple of previous sections ({self.t}).")
         
         A = self.A; B = self.B
-        a = new_sections // self.m # proportion to new sections
-        action = self.action; action_type = self.action_type
+        a = new_sections // self.t # proportion to new sections
 
         coeffs = []
         for s in range(new_sections):
