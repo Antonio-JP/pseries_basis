@@ -258,6 +258,11 @@ class ExpressionSequence(Sequence):
             universe=self.universe, 
             _extend_by_zero=self._Sequence__extend_by_zero
         )
+    
+    def _swap(self, src: int, dst: int):
+        new_vars = list(self.variables())
+        new_vars[src], new_vars[dst] = new_vars[dst], new_vars[src]
+        return ExpressionSequence(self.generic(), new_vars, self.universe, _extend_by_zero = self._Sequence__extend_by_zero)
 
     ## Other overridden methods
     def generic(self, *names: str):
@@ -495,7 +500,11 @@ class RationalSequence(Sequence):
             universe=self.universe, 
             _extend_by_zero=self._Sequence__extend_by_zero
         )
-
+    def _swap(self, src: int, dst: int):
+        new_vars = list(self.variables())
+        new_vars[src], new_vars[dst] = new_vars[dst], new_vars[src]
+        return RationalSequence(self.__generic, new_vars, self.universe, _extend_by_zero = self._Sequence__extend_by_zero)
+    
     ## Other overridden methods
     def generic(self, *names: str):
         if len(names) == 0:

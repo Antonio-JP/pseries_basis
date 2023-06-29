@@ -415,6 +415,7 @@ class Sequence(SetMorphism):
     ##   * Subsequences -> getting a subsequence indexed by other sequence, but keeping the dimension
     ##   * Slicing -> getting a part of the sequence reducing the dimension
     ##   * Interlacing -> interlacing several sequences
+    ##   * Swap -> changes the order of two indices
     #############################################################################
     @cached_method
     def shift(self, *shifts : int) -> Sequence:
@@ -548,6 +549,35 @@ class Sequence(SetMorphism):
 
         return self._subsequence((index,(scale,shift)))
     
+    def swap(self, src: int = None, dst: int = None):
+        r'''
+            Method that exchange the indices of a multi-dimensional sequence.
+        '''
+        if src == None and dst == None and self.dim == 2:
+            src = 0; dst = 1
+        elif src == None and dst == None:
+            raise TypeError(f"If a sequence is not bi-dimensional, the arguments ``src`` and ``dst`` are mandatory")
+        elif any(el < 0 or el >= self.dim for el in (src,dst)):
+            raise IndexError(f"Required valid indices for swapping.")
+        elif src == dst:
+            return self
+        elif src > dst:
+            src,dst = dst,src
+        return self._swap(src, dst)
+    
+    def _swap(self, src: int, dst: int):
+        r'''
+            Method that exchange the indices of a multi-dimensional sequence.
+
+            This methods can assume that `src < dst`.
+        '''
+        def __swap_index(*n):
+            n = list(n)
+            n[src], n[dst] = n[dst], n[src]
+            return tuple(n)
+
+        return Sequence(lambda *n : self._element(*__swap_index(*n)), self.universe, self.dim, _extend_by_zero = self.__extend_by_zero)
+        
     #############################################################################
     ## Arithmetic methods
     #############################################################################
@@ -779,6 +809,8 @@ class ConstantSequence(Sequence):
         if len(values) >= self.dim:
             return self.__value
         return ConstantSequence(self.__value, self.universe, self.dim - len(values))
+    def _swap(self, src: int, dst: int):
+        return self
 
 class SequenceSet(Homset,UniqueRepresentation):
     r'''

@@ -138,6 +138,13 @@ class QSequence(Sequence):
                     result.append(n[read]); read += 1
             return result
         return QSequence(lambda *n: self._Sequence__sequence(*to_original_input(n)), self.universe, self.dim - len(values), q = self.q)
+    def _swap(self, src: int, dst: int):
+        def __swap_index(*n):
+            n = list(n)
+            n[src], n[dst] = n[dst], n[src]
+            return tuple(n)
+
+        return QSequence(lambda *qn : self._Sequence__sequence(*__swap_index(*qn)), self.universe, self.dim, q = self.q)
     
     ## Other methods
     def is_hypergeometric(self, index: int = None, *, _bound=30) -> tuple[bool, Sequence]:
@@ -264,5 +271,9 @@ class QRationalSequence(QSequence, RationalSequence):
             q = self.q,
             _extend_by_zero=self._Sequence__extend_by_zero
         )
+    def _swap(self, src: int, dst: int):
+        new_vars = list(self.variables())
+        new_vars[src], new_vars[dst] = new_vars[dst], new_vars[src]
+        return QRationalSequence(self.__generic, new_vars, self.universe, q = self.q)
 
 __all__ = ["logq", "QSequence", "QRationalSequence"]
