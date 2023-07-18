@@ -466,4 +466,54 @@ class Compatibility:
         ## Here we can assume that the base ring coincides 
         return self.mul(Compatibility([[factor]], 0, 0, 1))
 
-# TODO def check_compatibility(basis: PSBasis, operator: OreOperator | TypeCompatibility, action: Callable, bound: int = 100)
+def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: Callable, bound: int = 100):
+    r'''
+        Method that checks whether a basis has a particular compatibility for a given action.
+
+        This method takes a :class:`PSBasis` (i.e., a sequence of sequences), a given
+        operator compatible with it (or simply the :class:`Compatibility` object representing
+        such compatibilty) and check whether the action that is defined for the operator/compatibility
+        (which is provided by the argument ``action``) has precisely this compatibility.
+
+        More precisely, if an operator `L` the operator is `(A,B)`-compatible with the basis `P=(P_n)_n` 
+        with the formula:
+        
+        .. MATH::
+
+            L P_n = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},
+
+        then thi method checks this identity for the ``action`` defining `L`, and the compatibility
+        condition `(A,B,m,\alpha)` defined in ``compatibility``.
+
+        This checking is perform until a given `n` bounded by the input ``bound``.
+
+        INPUT:
+
+        * ``basis``: a :class:`PSBasis` that defines the basis `P=(P_n)_n`.
+        * ``compatibility``: a compatibility condition. If an operator is given, then compatibility condition
+          for ``basis`` is computed (check method :func:`PSBasis.compatibility`)
+        * ``action``: a callable that actually computes the element `L P_n` so it can be compared.
+        * ``bound``: a bound for the limit this equality will be checked. Since `L P_n` is a sequence
+          this boundd is used both for checking equality at each level `n` and until which level the 
+          identity is checked.
+
+        OUTPUT:
+
+        ``True`` if all the checkings provide equality, and ``False`` otherwise. Be cautious when reading
+        this output: ``False`` guarnatees that the compatibility is **not** for the action, however, ``True``
+        provides a nice hint the result should be True, but it is not a complete proof.
+
+        TODO: add examples 
+    '''
+    if not isinstance(compatibility, Compatibility):
+        compatibility = basis.compatibility(compatibility)
+
+    for n in range(compatibility.A, bound):
+        lhs:Sequence = action(basis[n]) # sequence obtained from L P_n
+        A,B,t = compatibility.data()
+        k,s = ZZ(n).quo_rem(ZZ(compatibility.t))
+        rhs = sum(compatibility[s,i](k)*basis[n+i] for i in range(-A, B+1)) # sequence for the rhs
+
+        if not lhs.almost_equals(rhs, bound):
+            return False
+    return True
