@@ -74,7 +74,7 @@ r'''
         ....: ); # compatibility with x
         sage: B.set_compatibility(
         ....:     'Dx', 
-        ....:     Compatibility([[RationalSequence(QQ['n']('n'),QQ,1), ConstantSequence(0,QQ,1)]], 1,0,1), 
+        ....:     Compatibility([[RationalSequence(QQ['n']('n')), ConstantSequence(0,QQ,1)]], 1,0,1), 
         ....:     type="derivation"
         ....: ); # compatibility with Dx
 
@@ -393,7 +393,8 @@ class PSBasis(Sequence):
 
             TODO: add examples
         '''
-        if isinstance(operator, str): return operator in self.__basic_compatibilities
+        if isinstance(operator, str) and operator in self.__basic_compatibilities:
+            return True
                     
         FA = self.__get_algebra()
         try:
