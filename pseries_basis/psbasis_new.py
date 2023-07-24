@@ -51,7 +51,40 @@ r'''
     then the sequence `(\alpha_k)_k` satisfy a set of recurrences ingerited from the compatibility
     equation of `L` for the basis.
 
-    TODO: add examples of usage of this package
+    EXAMPLES::
+
+        sage: from pseries_basis.psbasis_new import *
+        sage: from pseries_basis.sequences import *
+        sage: B = PSBasis(lambda k : RationalSequence(QQ[x](x**k)), QQ) # B_k(x) = x^k
+        sage: B[0]
+        Sequence over [Rational Field]: (1, 1, 1,...)
+        sage: B[1]
+        Sequence over [Rational Field]: (0, 1, 2,...)
+        sage: B[2]
+        Sequence over [Rational Field]: (0, 1, 4,...)
+        sage: B[10].generic()
+        n^10
+
+    We can from this point set up the compatibilities for this basis::
+
+        sage: B.set_compatibility(
+        ....:     'x', 
+        ....:     Compatibility([[ConstantSequence(0,QQ,1), ConstantSequence(1,QQ,1)]], 0,1,1), 
+        ....:     type="any"
+        ....: ); # compatibility with x
+        sage: B.set_compatibility(
+        ....:     'Dx', 
+        ....:     Compatibility([[RationalSequence(QQ['n']('n'),QQ,1), ConstantSequence(0,QQ,1)]], 1,0,1), 
+        ....:     type="derivation"
+        ....: ); # compatibility with Dx
+
+    And then the compatibility conditions can be obtained for any expression involving objects called `x`
+    and `Dx`::
+
+        sage: B.is_compatible("x**2 * Dx**2 - Dx + x^3")
+        True
+        sage: B.compatibility_type("x**2 * Dx**2 - Dx + x^3")
+        "derivation"
 '''
 from __future__ import annotations
 
@@ -60,7 +93,8 @@ logger = logging.getLogger(__name__)
 
 from collections.abc import Callable
 from functools import reduce
-from sage.all import lcm, ZZ
+from sage.algebras.free_algebra import FreeAlgebra
+from sage.all import lcm, PolynomialRing, ZZ
 from sage.categories.pushout import pushout
 from sage.misc.cachefunc import cached_method
 from .sequences.base import ConstantSequence, Sequence, SequenceSet
@@ -93,6 +127,12 @@ class PSBasis(Sequence):
             if universe is None:
                 raise ValueError(f"When argument is callable we require a universe argument for the basis.")
         self.__inner_universe = universe
+
+        ## Attributes for storing compatibilities
+        self.__basic_compatibilities : dict[str, Compatibility] = dict()
+        self.__homomorphisms : list[str] = list()
+        self.__derivations : list[str] = list()
+        self.__any : list[str] = list()
         super().__init__(sequence, SequenceSet(1, universe), 1, _extend_by_zero=_extend_by_zero)
 
     ##########################################################################################################
@@ -104,7 +144,27 @@ class PSBasis(Sequence):
     def base(self):
         return self.__inner_universe
     
-    # TODO def change_base(self, base : Parent) -> PSBasis
+    def change_base(self, base) -> PSBasis:
+        r'''
+            Method to compute the same basis of sequences as ``self`` with a different base ring.
+
+            This method creates a new :class:`PSBasis` that changes the ring over which the elements
+            are defined. This method does not guarantee the new basis makes real sense and it
+            may raise some errors when creating the elements of the basis.
+
+            **Overriding recommended**: this method acts as a default way of changing the base
+            ring of a :class:`PSBasis` but it may lose some information in the proccess. In order
+            to preserve the structure of the :class:`PSBasis`, this method should be overriden.
+
+            INPUT:
+
+            * ``base``: a new parent structure for the universe of the elements of ``self``
+
+            OUTPUT:
+
+            A equivalent basis where the elements have as common universe ``base``
+        '''
+        return PSBasis(lambda n : self.element(n), base, _extend_by_zero=self._Sequence__extend_by_zero)
     
     def _element(self, *indices: int):
         return super()._element(*indices).change_universe(self.base)
@@ -118,7 +178,8 @@ class PSBasis(Sequence):
     ### SEQUENCE METHODS
     ### 
     ##########################################################################################################
-    # TODO * :func:`_change_class`: receives a class (given when registering the sequence class) and cast the current sequence to the new class.
+    ## TODO: Check if these methods are needed: this is a :class:`Sequence` with more information, but changing nothing
+    #       - :func:`_change_class`: receives a class (given when registering the sequence class) and cast the current sequence to the new class.
     #       - :func:`_change_from_class`: class method that receives a sequence in a different class and transform into the current class. 
     #       - :func:`_neg_`: implement the negation of a sequence for a given class.
     #       - :func:`_final_add`: implement the addition for two sequences of the same parent and class.
@@ -159,26 +220,238 @@ class PSBasis(Sequence):
     ### COMPATIBILITY METHODS
     ### 
     ##########################################################################################################
-    # TODO def _compatibility_from_recurrence(self, recurrence: OreOperator) -> TypeCompatibility
-    # TODO def set_compatibility(self, name: str, trans: OreOperator | TypeCompatibility, sub: bool = False, type: None | str = None)
-    # TODO def set_endomorphism(self, name: str, trans: OreOperator | TypeCompatibility, sub: bool = False)
-    # TODO def set_derivation(self, name: str, trans: OreOperator | TypeCompatibility, sub: bool = False)
-    # @cached_method
-    # TODO def get_lower_bound(self, operator: str | OreOperator) -> int
-    # @cached_method
-    # TODO def get_upper_bound(self, operator: str | OreOperator) -> int
-    # TODO def compatible_operators(self) -> Collection[str]
-    # TODO def compatible_endomorphisms(self) -> Collection[str]
-    # TODO def compatible_derivations(self) -> Collection[str]
-    # TODO def has_compatibility(self, operator: str | OreOperator) -> bool
-    # TODO def compatibility_type(self, operator: str | OreOperator) -> None | str
-    # TODO def compatibility(self, operator: str | OreOperator) -> TypeCompatibility
-    # TODO def compatibility_matrix(self, operator: str | OreOperator, sections: int = None) -> matrix_class
-    # @cached_method
-    # TODO def compatibility_sections(self, compatibility: str | OreOperator | TypeCompatibility, sections : int) -> TypeCompatibility
-    # @cached_method
-    # TODO def compatibility_coefficient(self, operator: str | OreOperator) -> Callable
+    def _compatibility_from_recurrence(self, recurrence) -> Compatibility:
+        # TODO def _compatibility_from_recurrence(self, recurrence: OreOperator) -> TypeCompatibility
+        raise NotImplementedError("Method _compatibility_from_recurrence not implemented")
     
+    def set_compatibility(self, name: str, compatibility: Compatibility, sub: bool = False, type: str = None) -> Compatibility:
+        r'''
+            Method to set a new compatibility with this :class:`PSBasis`.
+
+            This method receives a name for the operator whose comptibility will be set and a 
+            compatibility condition for this operator. This method does not check whether 
+            this compatibility is real or not and this job is left to the user. 
+
+            In general, this method is not *recommended* for users.
+
+            The compatibility condition can be given in 3 different ways:
+
+            * A :class:`Compatibility` object: it is direcly stored
+            * A tuple `(A,B,\alpha)` or `(A,B,m,\alpha)`: we create a :class:`Compatibility`
+              using directly this data.
+            * An ore operator in a ring with one shift where we can read the data
+              to create a :class:`Compatibility` right from it.
+
+            If the argument ``sub`` is ``True``, we substitute the compatibility, if not, 
+            we raise a :class:`ValueError`. 
+
+            INPUT:
+
+            * ``name``: the name of the operator that we are defining as compatible.
+            * ``compatibility``: the compatibility condition to be set.
+            * ``sub``: if set to ``True``, we substitute the old compatibility with the new.
+            * ``type``: a string (or None) describing the type of the operator. It can be ``"homomorphism"``
+              or ``"derivation"``.
+
+            OUTPUT:
+
+            It will return the created compatibility condition in case of success or an error
+            if something goes wrong.
+
+            TODO: add examples
+        '''
+        if not sub and name in self.__basic_compatibilities:
+            raise ValueError(f"The operator {name} was already compatible with this basis.")
+
+        if name in self.__basic_compatibilities:
+            del self.__basic_compatibilities[name]
+            if name in self.__homomorphisms: self.__homomorphisms.remove(name)
+            elif name in self.__derivations: self.__derivations.remove(name)
+            elif name in self.__any: self.__any.remove(name)
+
+        from ore_algebra.ore_operator import OreOperator
+        if isinstance(compatibility, tuple):
+            compatibility = Compatibility(
+                compatibility[-1],                                 # \alpha
+                compatibility[0],                                  # A
+                compatibility[1],                                  # B
+                1 if len(compatibility) == 3 else compatibility[2] # t
+            )
+        elif isinstance(compatibility, OreOperator):
+            compatibility = self._compatibility_from_opertator(compatibility)
+        elif not isinstance(compatibility, Compatibility):
+            raise TypeError(f"The given compatibility is not of valid type.")
+        
+        self.__basic_compatibilities[name] = compatibility
+        if type == "homomorphism": self.__homomorphisms.append(name)
+        elif type == "derivation": self.__derivations.append(name)
+        elif type == "any": self.__any.append(name)
+
+        return compatibility
+    
+    def set_homomorphism(self, name: str, compatibility: Compatibility, sub: bool = False) -> Compatibility:
+        r'''
+            See :func:`set_compatibility`. This method adds a compatibility for an homomorphism
+        '''
+        return self.set_compatibility(name, compatibility, sub, "homomorphism")
+    def set_derivation(self, name: str, compatibility: Compatibility, sub: bool = False) -> Compatibility:
+        r'''
+            See :func:`set_compatibility`. This method adds a compatibility for a derivation
+        '''
+        return self.set_compatibility(name, compatibility, sub, "derivation")
+    
+    def basic_compatibilities(self) -> list[str]:
+        r'''
+            Method that return a copy of the current basic compatibilities that exist for ``self``.
+
+            See method :func:`compatibility` for further information.
+        '''
+        return list(self.__basic_compatibilities.keys())
+    def compatible_endomorphisms(self) -> list[str]:
+        r'''
+            Method that return a copy of the current compatible homomorphisms that exist for ``self``.
+
+            See method :func:`compatibility` for further information.
+        '''
+        return self.__homomorphisms.copy()
+    def compatible_derivations(self) -> list[str]:
+        r'''
+            Method that return a copy of the current compatible derivations that exist for ``self``.
+
+            See method :func:`compatibility` for further information.
+        '''
+        return self.__derivations.copy()
+    
+    def __get_algebra(self):
+        if len(self.basic_compatibilities()) > 1:
+            return FreeAlgebra(self.base, self.basic_compatibilities())
+        else:
+            return PolynomialRing(self.base, self.basic_compatibilities())
+
+    @cached_method
+    def compatibility(self, operator) -> Compatibility:
+        r'''
+            Method that returns the compatibility of a given operator with ``self``.
+
+            Check documenttion of :class:`Compatibility` for further information on
+            what a compatible operator is.
+
+            INPUT:
+
+            * ``operator``: the operator that we want to compute the compatibility. It
+              can be any object that can be casted into a free algebra over the names
+              that are currently compatible with ``self``.
+
+            OUTPUT:
+
+            A :class:`Compatibility` condition for the operator. It raises en error when 
+            it is not possible to cast the operator to a compatible operator.
+            
+            INFORMATION: 
+            
+            This method is cached.
+
+            TODO: add examples
+        '''
+        # Base case when the input is the name of an operator
+        if isinstance(operator, str) and operator in self.__basic_compatibilities:
+            return self.__basic_compatibilities[operator]
+        
+        FA = self.__get_algebra()
+        operator = FA(str(operator))
+        output = operator(**self.__basic_compatibilities)
+        if output in self.base(): # the operator is a constant
+            return Compatibility(
+                [[ConstantSequence(self.base(operator), self.base, 1, _extend_by_zero=False)]], # coefficient
+                0,# A
+                0,# B
+                1 # t
+            )
+        return output # this is the compatibility  
+    @cached_method
+    def is_compatible(self, operator) -> bool:
+        r'''
+            Method that checks whether an object is compatible with a :class:`PSBasis`.
+
+            This method tries to create the free algebra of compatible operators and cast
+            the object ``operator`` to this ring. This is also done in the method 
+            :func:`compatibility`. The main difference is that this method do **not**
+            compute the actual compatibility. 
+
+            INPUT:
+
+            * ``operator``: an object to be checked for compatibility.
+
+            INFORMATION:
+
+            This method is cached.
+
+            OUTPUT:
+
+            A boolean value indcating if the method :func:`compatibility` will
+            return something or an error.
+
+            TODO: add examples
+        '''
+        if isinstance(operator, str): return operator in self.__basic_compatibilities
+                    
+        FA = self.__get_algebra()
+        try:
+            FA(str(operator))
+            return True
+        except:
+            return False
+    @cached_method
+    def compatibility_type(self, operator) -> None | str:
+        r'''
+            Method to determine if an operator belong to a specific type.
+
+            Operators may have three different types:
+
+            * "homomorphism": it behaves nicely with the product.
+            * "derivation": it satisfies the Leibniz rule for the product.
+            * "any": an operator that can be combined for any of the two previous.
+
+            It may also have type "None", meaning we could not deduce any specific behavior.
+
+            This methods behaves similar to the methods :func:`compatibility` and 
+            :func:`is_compatible` but, contrary to method :func:`compatibility`,
+            this method do **not** compute the actual compatibility.
+
+            INPUT:
+
+            * ``operator``: the object that we want to check.
+
+            INFORMATION:
+
+            This method is cached.
+
+            OUTPUT:
+
+            Either a string in ("homomorphism", "derivation", "any") or None.
+
+            TODO: add examples
+        '''
+        if isinstance(operator, str) and operator in self.__basic_compatibilities:
+            if operator in self.__homomorphisms: return "homomorphism"
+            elif operator in self.__derivations: return "derivation"
+            elif operator in self.__any: return "any"
+            else: return None
+        
+        FA = self.__get_algebra()
+        operator = FA(str(operator))
+        basic_operations = [self.compatibility_type(str(v)) for v in operator.variables()]
+        output = basic_operations[0]
+        for basic in basic_operations[1:]:
+            if output is None: break
+            if basic == "homomorphism" and output in ("any", "homomorphism"): output = "nomomorphism"
+            elif basic == "homomorphism": output = None
+            elif basic == "derivation" and output in ("any", "derivation"): output = "derivation"
+            elif basic == "derivation": output = None
+            elif basic is None: output = None
+            # The else case means that basic == "any", so output does not change
+        return output
+
     ##########################################################################################################
     ###
     ### RECURRENCES METHODS
@@ -240,7 +513,7 @@ class Compatibility:
 
         If some of the optional arguments is given, it is used as sanity checks on the input of ``c``. If the user
         pretend to obtain the compatibility in more sections than given with the coefficients, consider the method
-        :func:`in_sections` after the creation of the basic ompatibility.
+        :func:`in_sections` after the creation of the basic compatibility.
 
         TODO: add examples from the use of :class:`PSBasis`.
     '''
