@@ -180,6 +180,7 @@ class Sequence(SetMorphism):
           - :func:`_shift` to adjust the output of the shifted sequence.
           - :func:`_subsequence` to adjust the output of the subsequence.
           - :func:`_slicing` to adjust the output of the sliced sequence.
+          - :func:`args_to_self` to declare how an element is built.
 
         This class inherits from :class:`sage.categories.morphism.SetMorphism`allowing us to use methods such as
         ``domain`` and ``codomain``, ``__call__``, etc.
@@ -218,13 +219,20 @@ class Sequence(SetMorphism):
             super_classes = [Sequence]
         if (sub_classes == None or len(sub_classes) == 0) and cls != ConstantSequence:
             sub_classes = [ConstantSequence]
+        
         if not cls in Sequence.CLASSES_GRAPH.vertices(sort=False):
             Sequence.CLASSES_GRAPH.add_vertex(cls)
             for sup_class in super_classes:
+                logger.debug(f"[Sequence - register] Checking if {sup_class} is registered...")
+                if not sup_class in Sequence.CLASSES_GRAPH.vertices(sort=False):
+                    sup_class.register_class()
                 logger.debug(f"[Sequence - register] Adding edge ({cls}) -> ({sup_class})")
                 Sequence.CLASSES_GRAPH.add_edge(cls, sup_class)
             for sub_class in sub_classes:
-                logger.debug(f"[Sequence - register] Adding edge ({sup_class}) -> ({cls})")
+                logger.debug(f"[Sequence - register] Checking if {sub_class} is registered...")
+                if not sub_class in Sequence.CLASSES_GRAPH.vertices(sort=False):
+                    sub_class.register_class()
+                logger.debug(f"[Sequence - register] Adding edge ({sub_class}) -> ({cls})")
                 Sequence.CLASSES_GRAPH.add_edge(sub_class, cls)
         else:
             logger.debug(f"[Sequence - register] Trying to register repeatedly a sequence class ({cls})")
@@ -290,7 +298,9 @@ class Sequence(SetMorphism):
             Method that change the universe of a sequence. This can help to use the same universe in different 
             spaces or when it is required to force a specific universe.
         '''
-        return Sequence(lambda *n : self._element(*n), new_universe, dim=self.dim)
+        args, kwds = self.args_to_self()
+        kwds["universe"] = new_universe
+        return self.__class__(*args, **kwds)
 
     def change_class(self, goal_class, **extra_info):
         r'''
@@ -316,7 +326,7 @@ class Sequence(SetMorphism):
                 continue
             break # otherwise we simply get out of the loop
         else: # if we never break, it means we did not find "goal_class"
-            raise TypeError(f"The class {goal_class} is not admissible for {self.__class}")
+            raise TypeError(f"The class {goal_class} is not admissible for {self.__class__}")
         path_to_goal = [goal_class]; current = goal_class
         while prev_class[current] != self.__class__:
             current = prev_class[current]
@@ -564,7 +574,8 @@ class Sequence(SetMorphism):
         elif power == 1:
             return self
         else:
-            return self * self**(power-1)
+            p1 = power//2; p2 = p1 + power%2
+            return (self**p1)*(self**p2)
 
     def __coerce_into_common_class__(self, other: Sequence):
         r'''We assume ``other`` is in the same parent as ``self``. Hence it is a :class:`Sequence`'''
@@ -673,7 +684,7 @@ class Sequence(SetMorphism):
                 sage: Fib.almost_equals(Fac, 4)
                 False
         '''
-        first_terms = product(range(order), repeat=self.dim) if self.dim > 0 else range(order)
+        first_terms = product(range(order), repeat=self.dim) if self.dim > 1 else range(order)
         if isinstance(self.universe, SequenceSet): # equality if the codomain are more sequences
             return all(self(term).almost_equals(other(term), order) for term in first_terms)
         else: # equality when elements lied in other ring
@@ -746,6 +757,9 @@ class ConstantSequence(Sequence):
     def __init__(self, value, universe=None, dim: int = 1, *, _extend_by_zero=True):
         super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
         self.__value = self.universe(value)
+
+    def args_to_self(self):
+        return [self.__value], {"universe": self.universe, "dim": self.dim, "_extend_by_zero": self._Sequence__extend_by_zero}
 
     def _change_class(self, cls, **extra_info): # pylint: disable=unused-argument
         raise NotImplementedError(f"Class {cls} not recognized from a ConstantSequence")

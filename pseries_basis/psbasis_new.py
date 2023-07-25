@@ -93,7 +93,7 @@ logger = logging.getLogger(__name__)
 
 from collections.abc import Callable
 from functools import reduce
-from sage.algebras.free_algebra import FreeAlgebra
+from sage.algebras.free_algebra import FreeAlgebra, is_FreeAlgebra
 from sage.all import lcm, PolynomialRing, ZZ
 from sage.categories.pushout import pushout
 from sage.misc.cachefunc import cached_method
@@ -167,7 +167,8 @@ class PSBasis(Sequence):
         return PSBasis(lambda n : self.element(n), base, _extend_by_zero=self._Sequence__extend_by_zero)
     
     def _element(self, *indices: int):
-        return super()._element(*indices).change_universe(self.base)
+        output = super()._element(*indices)
+        return output.change_universe(self.base)
     
     @cached_method
     def as_2dim(self) -> Sequence:
@@ -178,6 +179,9 @@ class PSBasis(Sequence):
     ### SEQUENCE METHODS
     ### 
     ##########################################################################################################
+    def args_to_self(self):
+        return [self._element], {"universe":self.universe, "_extend_by_zero": self._Sequence__extend_by_zero}
+    
     ## TODO: Check if these methods are needed: this is a :class:`Sequence` with more information, but changing nothing
     #       - :func:`_change_class`: receives a class (given when registering the sequence class) and cast the current sequence to the new class.
     #       - :func:`_change_from_class`: class method that receives a sequence in a different class and transform into the current class. 
@@ -359,7 +363,8 @@ class PSBasis(Sequence):
         
         FA = self.__get_algebra()
         operator = FA(str(operator))
-        output = operator(**self.__basic_compatibilities)
+        ## We split evaluation in cases to avoid problems with FreeAlgebra implementations
+        output = operator(*[self.__basic_compatibilities[v] for v in FA.variable_names()]) if is_FreeAlgebra(FA) else operator(**self.__basic_compatibilities)
         if output in self.base(): # the operator is a constant
             return Compatibility(
                 [[ConstantSequence(self.base(operator), self.base, 1, _extend_by_zero=False)]], # coefficient
@@ -532,8 +537,9 @@ class Compatibility:
             raise TypeError(f"[compatibility] Incoherent information for compatiblity: different size in each section.")
         if A is None and B is None:
             raise TypeError(f"[compatibility] At least `A` or `B` must be provided to a compatibility")
-        elif (not A is None) and (not B is None) and (len(c[0]) != A+B+1):
-            raise ValueError(f"[compatibility] Incoherent information for compatiblity: given {len(c[0])} coefficients per section, but requested a ({A},{B}) compatibility")
+        elif (not A is None) and (not B is None):
+            if (len(c[0]) != A+B+1):
+                raise ValueError(f"[compatibility] Incoherent information for compatiblity: given {len(c[0])} coefficients per section, but requested a ({A},{B}) compatibility")
         elif (not A is None):
             B = len(c[0]) - A - 1
         else:
@@ -553,6 +559,7 @@ class Compatibility:
         self.__upper = B
         self.__nsections = t
         self.__data = [[coeff.change_universe(self.__base) for coeff in section] for section in c]
+        self.__cache_pow = dict()
 
     @property
     def upper(self): return self.__upper #: Property of the upper bound for the compatibility
@@ -560,8 +567,8 @@ class Compatibility:
     def lower(self): return self.__lower #: Property of the lower bound for the compatibility
     @property
     def nsections(self): return self.__nsections #: Property of the number of sections for the compatibility
-    A = upper #: alias for the upper bound
-    B = lower #: alias for the lower bound
+    A = lower #: alias for the upper bound
+    B = upper #: alias for the lower bound
     t = nsections # alias for the number of sections
 
     def data(self):
@@ -590,8 +597,8 @@ class Compatibility:
             raise KeyError(f"Compatibility with {self.t} sections. Can not access section {item[0]}")
         elif item[0] is None or item[0] == slice(None,None,None): # requesting the full 
             return self.__data[item[0]]
-        elif item[1] < -self.A or item[1] > self.B:
-            return self.__data[item[0], item[1]-self.A]
+        elif item[1] >= -self.A and item[1] <= self.B:
+            return self.__data[item[0]][item[1]+self.A]
         else:
             return ConstantSequence(0, self.base(), 1)
         
@@ -740,7 +747,45 @@ class Compatibility:
         ## Here we can assume that the base ring coincides 
         return self.mul(Compatibility([[factor]], 0, 0, 1))
 
-def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: Callable, bound: int = 100):
+    def __coerce_into_compatibility__(self, other) -> Compatibility:
+        if isinstance(other, Compatibility):
+            return other
+        else:
+            return Compatibility([[ConstantSequence(other,self.base(),1)]], 0,0,1)
+
+    def __add__(self, other) -> Compatibility:
+        return self.add(self.__coerce_into_compatibility__(other))
+    def __radd__(self, other) -> Compatibility:
+        return self.__coerce_into_compatibility__(other).add(self)
+    def __mul__(self, other) -> Compatibility:
+        return self.mul(self.__coerce_into_compatibility__(other))
+    def __rmul__(self, other) -> Compatibility:
+        return self.__coerce_into_compatibility__(other).mul(self)
+    def __pow__(self, other) -> Compatibility:
+        if not other in ZZ or other < 0:
+            raise TypeError(f"[compatibility] Power only valid for natiral numbers")
+        if not other in self.__cache_pow:
+            if other == 0:
+                self.__cache_pow[other] = Compatibility([[ConstantSequence(1, self.base())]], 0,0,1)
+            elif other == 1:
+                self.__cache_pow[other] = self
+            else:
+                p1 = other//2; p2 = p1 + other%2
+                comp1 = self**p1; comp2 = self*p2
+                self.__cache_pow[other] = comp1 * comp2
+        return self.__cache_pow[other]
+
+    def __repr__(self) -> str:
+        start = f"Compatibility condition {self.data()}"
+        try:
+            from sage.matrix.constructor import Matrix
+            M = Matrix([[self[t,i].generic() for i in range(-self.A, self.B+1)] for t in range(self.t)])
+            start += f" with following coefficient matrix:\n{M}"
+        except:
+            pass
+        return start
+
+def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: Callable, bound: int = 100, *, _full=False):
     r'''
         Method that checks whether a basis has a particular compatibility for a given action.
 
@@ -789,5 +834,5 @@ def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: C
         rhs = sum(compatibility[s,i](k)*basis[n+i] for i in range(-A, B+1)) # sequence for the rhs
 
         if not lhs.almost_equals(rhs, bound):
-            return False
+            return (n,lhs, rhs), False if _full else False
     return True

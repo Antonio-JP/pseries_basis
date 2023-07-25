@@ -138,7 +138,10 @@ class ExpressionSequence(Sequence):
     @classmethod
     def register_class(cls):
         return cls._register_class([Sequence], [ConstantSequence])
-
+    
+    def args_to_self(self):
+        return [self.__generic], {"variables" : self.variables(), "universe": self.universe, "_extend_by_zero": self._Sequence__extend_by_zero}
+    
     @classmethod
     def _change_from_class(cls, sequence: Sequence, **extra_info):
         if isinstance(sequence, ConstantSequence):
@@ -346,18 +349,18 @@ class RationalSequence(Sequence):
         ## Storing the data for the sequence
         self.__generic = rational
         self.__F = F
-        self.__variables = variables
+        self.__variables = tuple(variables)
         dim = len(variables)
 
         ## Computing the remaining universe
         if universe == None:
-            if is_PolynomialRing(R) and any(v in R.gens() for v in variables):
+            if is_PolynomialRing(R) and len(variables) > 0:
                 universe = R.base()
             elif is_PolynomialRing(R):
                 universe = R
             else:
                 universe = R.remove_var(*variables)
-            universe = R.fraction_field() if not R.is_field() else R
+            universe = universe.fraction_field() if not universe.is_field() else universe
             
         super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
 
@@ -365,6 +368,13 @@ class RationalSequence(Sequence):
     @classmethod
     def register_class(cls):
         return cls._register_class([ExpressionSequence], [ConstantSequence])
+    
+    def args_to_self(self):
+        r'''
+            Method that change the universe of a sequence. This can help to use the same universe in different 
+            spaces or when it is required to force a specific universe.
+        '''
+        return [self.generic()], {"variables": self.variables(), "universe": self.universe, "_extend_by_zero": self._Sequence__extend_by_zero}
     
     def _change_class(self, cls, **extra_info):
         if cls == ExpressionSequence:
