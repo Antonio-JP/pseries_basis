@@ -94,7 +94,7 @@ logger = logging.getLogger(__name__)
 from collections.abc import Callable
 from functools import reduce
 from sage.algebras.free_algebra import FreeAlgebra, is_FreeAlgebra
-from sage.all import lcm, PolynomialRing, ZZ
+from sage.all import latex, lcm, PolynomialRing, ZZ
 from sage.categories.pushout import pushout
 from sage.misc.cachefunc import cached_method
 from .sequences.base import ConstantSequence, Sequence, SequenceSet
@@ -364,7 +364,11 @@ class PSBasis(Sequence):
         FA = self.__get_algebra()
         operator = FA(str(operator))
         ## We split evaluation in cases to avoid problems with FreeAlgebra implementations
-        output = operator(*[self.__basic_compatibilities[v] for v in FA.variable_names()]) if is_FreeAlgebra(FA) else operator(**self.__basic_compatibilities)
+        if is_FreeAlgebra(FA):
+            output = operator(*[self.__basic_compatibilities[v] for v in FA.variable_names()])
+        else:
+            comp = next(iter(self.__basic_compatibilities.values()))
+            output = sum(c*comp**i for i,c in enumerate(operator.coefficients(False)))
         if output in self.base(): # the operator is a constant
             return Compatibility(
                 [[ConstantSequence(self.base(operator), self.base, 1, _extend_by_zero=False)]], # coefficient
@@ -610,8 +614,7 @@ class Compatibility:
             raise ValueError(f"[compatibility] Compatibilities can only be extended when the new sections ({new_sections}) are multiple of previous sections ({self.t}).")
         
         A = self.A; B = self.B
-        a = new_sections // self.m # proportion to new sections
-        action = self.action; action_type = self.action_type
+        a = new_sections // self.t # proportion to new sections
 
         coeffs = []
         for s in range(new_sections):
@@ -771,7 +774,7 @@ class Compatibility:
                 self.__cache_pow[other] = self
             else:
                 p1 = other//2; p2 = p1 + other%2
-                comp1 = self**p1; comp2 = self*p2
+                comp1 = self**p1; comp2 = self**p2
                 self.__cache_pow[other] = comp1 * comp2
         return self.__cache_pow[other]
 
@@ -784,6 +787,44 @@ class Compatibility:
         except:
             pass
         return start
+    
+    def _latex_(self) -> str:
+        int_with_sign = lambda n : f"- {-n}" if n < 0 else "" if n == 0 else f"+ {n}"
+        code = r"\text{Compatibility condition with shape " + f"(A={self.A}, B={self.B}, t={self.t})" + r":}\\"
+        if self.t > 1:
+            code += r"\left\{\begin{array}{rl}"
+        
+        for b in range(self.t):
+            if self.t > 1:
+                code += r"L \cdot P_{" + latex(self.t) + r"k + " + latex(b) + r"} & = "
+            else:
+                code += r"L \cdot P_{k} = "
+
+            monomials = []
+            for i in range(-self.A, self.B+1):
+                ## Creating the coefficient
+                try:
+                    c = self[b,i].generic('k')
+                    if c == 0: continue
+                    new_mon = r"\left(" + latex(c) + r"\right)"
+                except:
+                    if self.t > 1:
+                        new_mon = r"c_{" + latex(b) + r"," + latex(i) + r"}(k)"
+                    else:
+                        new_mon = r"c_{" + latex(i) + r"(k)"
+                ## Creating the P_{k+i}
+                if self.t > 1:
+                    new_mon += r"P_{" + latex(self.t) + r"k" + int_with_sign(b+i) + r"}"
+                else:
+                    new_mon += r"P_{k" + int_with_sign(i) + r"}"
+                monomials.append(new_mon)
+            code += " + ".join(monomials)
+            if self.t > 1: code += r"\\"
+        if self.t > 1:
+            code += r"\end{array}\right."
+        return code 
+
+
 
 def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: Callable, bound: int = 100, *, _full=False):
     r'''
