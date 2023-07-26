@@ -94,10 +94,11 @@ logger = logging.getLogger(__name__)
 from collections.abc import Callable
 from functools import reduce
 from sage.algebras.free_algebra import FreeAlgebra, is_FreeAlgebra
-from sage.all import latex, lcm, PolynomialRing, ZZ
+from sage.all import latex, lcm, Matrix, PolynomialRing, ZZ
 from sage.categories.pushout import pushout
 from sage.misc.cachefunc import cached_method
 from .sequences.base import ConstantSequence, Sequence, SequenceSet
+from .sequences.element import ExpressionSequence, RationalSequence
 
 class PSBasis(Sequence):
     r'''
@@ -467,9 +468,112 @@ class PSBasis(Sequence):
     ### RECURRENCES METHODS
     ### 
     ##########################################################################################################
-    # TODO def _recurrence_from_compatibility(self, compatibility: TypeCompatibility) -> OreOperator
-    # TODO def recurrence(self, operator: str | OreOperator | TypeCompatibility, sections: int = None, cleaned: bool = False) -> OreOperator | matrix_class
-    # TODO def recurrence_orig(self, operator: str | OreOperator | TypeCompatibility) -> OreOperator
+    def _basic_recurrence(self, operator, sections : int = None):
+        ## Get the compatibility condition from the operator
+        if not isinstance(operator, Compatibility):
+            operator = self.compatibility(operator)
+        
+        ## Putting appropriate number of sections
+        if sections != None and sections > 0 and sections % operator.t == 0:
+            operator = operator.in_sections(sections)
+        
+        ## Computing the recurrence
+        if operator.t == 1: # only one sequence
+            recurrence = {-i: operator[0,i].shift(-i) for i in range(-operator.A,operator.B+1)}
+        else: # the output is a matrix of recurrences
+            recurrence = []
+            for r in range(operator.t):
+                row = []
+                for j in range(operator.t):
+                    element = dict()
+                    for i in range(-operator.A, operator.B+1):
+                        if (r-i-j)%operator.t == 0:
+                            exp = (r-i-j)//operator.t
+                            element[exp] = element.get(exp, 0) + operator[j,i].shift(exp)
+                    row.append(element)
+                recurrence.append(row)
+        return recurrence
+
+    def _process_recurrence(self, recurrence, output: str = None):
+        if isinstance(recurrence, list): # matrix output
+            recurrence = [[self._process_recurrence(el, output) for el in row] for row in recurrence]
+            if output in ("ore_double", "ore"):
+                recurrence = Matrix(recurrence)
+        else:
+            if output in ("rational", "expression"):
+                for k,v in recurrence.items():
+                    seq = ExpressionSequence(v.generic('k'), universe=v.universe, variables=['k'])
+                    if output == "rational":
+                        seq = RationalSequence(seq.generic('k'), universe=seq.universe, variables=['k'])
+                    recurrence[k] = seq
+            elif output == "expression":
+                pass
+            elif output in ("ore_double", "ore"):
+                recurrence = self._process_ore_algebra(recurrence, output == "ore_double")
+            elif output != None:
+                raise ValueError(f"Output type ({output}) not recognized")
+        return recurrence
+            
+    def _process_ore_algebra(self, recurrence, double: bool = False):
+        from .misc.ore import get_double_recurrence_algebra, get_recurrence_algebra
+        recurrence = self._process_recurrence(recurrence, "rational")
+        if len(recurrence) == 0:
+            return 0
+        el = next(iter(recurrence.values()))
+        if double:
+            OA, (k, E, Ei) = get_double_recurrence_algebra("k", "Sk", base=el.universe)
+            return sum((OA(v.generic("k"))*(E**i if i >= 0 else Ei**(-i)) for (i,v) in recurrence.items()), OA.zero())
+        else:
+            neg_power = -min(0, min(recurrence.keys()))
+            OA, (k, E) = get_recurrence_algebra("k", "Sk", base=el.universe)
+            return sum((OA(v.shift(neg_power).generic("k"))*E**(i+neg_power) for (i,v) in recurrence.items()), OA.zero())
+
+    def recurrence(self, operator, sections : int = None, output : str = None):
+        r'''
+            Method to obtain a recurrence for a compatible operator.
+
+            Following the theory in :doi:`10.1016/j.jsc.2022.11.002`, when we have an 
+            operator `L` that is `(A,B,t)`-compatible with a basis os sequences such that
+
+            .. MATH::
+
+                L P_{kt+b} = \sum_{i=-A}^B c_{b,i}(k) P_{kt+b+i},
+
+            then the solutions `L\cdot (\sum_k a_kP_k) = 0` can be obtained from solutions to
+            `\tilde{L} \cdot a_k` where `\tilde{L}` can be automatically computed from 
+            the compatibility and the coefficients `c_{b,i}(k)`.
+
+            This method creates such recurrence (or system of recurrences) given the compatible 
+            operator.
+
+            INPUT:
+
+            * ``operator``: an object that will be feeded to method :func:`compatibility`.
+            * ``sections``: indicate the number of sections that will be considered for the 
+              compatibility condition. If has to be a multiple of the default number of 
+              sections for the ``operator``.
+            * ``output``: by default the output of this method is a Laurent Polynomial in 
+              a shift operator with sequences as coefficients. This argument indicates 
+              where we should transform this output to be used later. It allow two options:
+                - "rational": force the sequence in the output to be rational sequences.
+                - "expression": force the sequence in the output to be an expression sequence.
+                - "ore_double": a Ore Algebra with two operators will be used as output.
+                  This requires the sequences are rational functions in the shift variable 
+                  and the two operators on the algebra will act as the forward and backward 
+                  shift.
+                - "ore": a Ore Algebra with just a shift will be used as output. Similar to the
+                  double case, but we remove completely the inverse shift.
+            
+            OUTPUT:
+
+            A recurrence or a matrix of recurrences as described in :doi:`10.1016/j.jsc.2022.11.002`.
+
+            TODO: add examples.
+        '''
+        recurrence = self._basic_recurrence(operator, sections)
+        recurrence = self._process_recurrence(recurrence, output)
+        return recurrence
+
     # TODO def simplify_operator(self,operator: OreOperator) -> OreOperator
     # TODO def _simplify_operator(self, operator: OreOperator) -> OreOperator
     # TODO def remove_Sni(self, operator: OreOperator) -> OreOperator
