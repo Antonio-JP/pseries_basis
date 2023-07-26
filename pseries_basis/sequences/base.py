@@ -794,15 +794,23 @@ class ConstantSequence(Sequence):
             return self.__value
         return ConstantSequence(self.__value, self.universe, self.dim - len(values))
 
+from sage.categories.all import Rings
+_Rings = Rings.__classcall__(Rings)
 class SequenceSet(Homset,UniqueRepresentation):
     r'''
         Class for the set of sequences. We implement more coercion methods to allow more operations for sequences.
     '''
     Element = Sequence
 
-    def __init__(self, dimension, codomain):
+    def __init__(self, dimension, codomain, category=None):
         domain = ZZ if dimension == 1 else cartesian_product(dimension*[ZZ])
         super().__init__(domain, codomain, category=_Sets)
+        if category is None:
+            if self.codomain() in _CommutativeRings:
+                category = _CommutativeRings
+            else:
+                category = _Rings
+        self._refine_category_(category)
 
     def dimension(self):
         try:
@@ -829,6 +837,12 @@ class SequenceSet(Homset,UniqueRepresentation):
 
     def __repr__(self):
         return f"Set of Sequences from NN{'' if self.dimension()==1 else f'^{self.dimension()}'} to {self.codomain()}"
+    
+    ## Ring methods
+    def one(self):
+        return ConstantSequence(1, self.codomain(), self.dimension())
+    def zero(self):
+        return ConstantSequence(0, self.codomain(), self.dimension())
     
 class SequenceFunctor(ConstructionFunctor):
     def __init__(self, dimension: int):
