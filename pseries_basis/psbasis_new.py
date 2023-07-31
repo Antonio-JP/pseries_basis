@@ -963,17 +963,40 @@ class PSBasis(Sequence):
         recurrence = self._process_recurrence(recurrence, output)
         return recurrence
 
-    # TODO def simplify_operator(self,operator: OreOperator) -> OreOperator
-    # TODO def _simplify_operator(self, operator: OreOperator) -> OreOperator
-    # TODO def remove_Sni(self, operator: OreOperator) -> OreOperator
-
     ##########################################################################################################
     ###
     ### MAGIC METHODS
     ### 
     ##########################################################################################################
-    # TODO def __repr__(self)
+    def __repr__(self):
+        output = f"Basis of Sequences over {self.base}"
+        try:
+            generic = self.as_2dim().generic("n","k")
+            output += f": ({generic})"
+        except ValueError:
+            try:
+                first_elements = [self(i).generic("n") for i in range(5)]
+                output += ": (" + ", ".join(str(el) for el in first_elements) + ",...)"
+            except ValueError:
+                pass
+        return output
+    
+    def _latex_(self):
+        output = r"\left\{"
+        try:
+            generic = self.as_2dim().generic("n","k")
+            output += latex(generic)
+        except ValueError:
+            try:
+                first_elements = [self(i).generic("n") for i in range(5)]
+                output += ", ".join(latex(el) for el in first_elements)
+                output += ",..."
+            except ValueError:
+                output += r"B_k(n)"
+        output += r"\right\}"
 
+        return output
+    
     ##########################################################################################################
     ###
     ### OTHER METHODS
@@ -1313,8 +1336,6 @@ class Compatibility:
         if self.t > 1:
             code += r"\end{array}\right."
         return code 
-
-
 
 def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: Callable, bound: int = 100, *, _full=False):
     r'''
