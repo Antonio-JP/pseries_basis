@@ -344,7 +344,7 @@ class Sequence(SetMorphism):
         raise NotImplementedError(f"For {self.__class__}, class {cls} not recognized.")
     
     @classmethod
-    def _change_from_class(self, sequence: Sequence, **extra_info): # pylint: disable=unused-argument
+    def _change_from_class(cls, sequence: Sequence, **extra_info): # pylint: disable=unused-argument
         return Sequence(lambda *n : sequence._element(*n), sequence.universe, sequence.dim)
         
     #############################################################################

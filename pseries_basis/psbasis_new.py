@@ -92,9 +92,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 from collections.abc import Callable
-from functools import reduce
+from functools import cached_property, reduce
 from sage.algebras.free_algebra import FreeAlgebra, is_FreeAlgebra
-from sage.all import latex, lcm, Matrix, PolynomialRing, ZZ
+from sage.all import latex, lcm, Matrix, PolynomialRing, prod, SR, vector, ZZ
 from sage.categories.pushout import pushout
 from sage.misc.cachefunc import cached_method
 from .sequences.base import ConstantSequence, Sequence, SequenceSet
@@ -180,45 +180,434 @@ class PSBasis(Sequence):
     ### SEQUENCE METHODS
     ### 
     ##########################################################################################################
+    ### Casting methods
     def args_to_self(self):
-        return [self._element], {"universe":self.universe, "_extend_by_zero": self._Sequence__extend_by_zero}
+        return [self._element], {"universe":self.base, "_extend_by_zero": self._Sequence__extend_by_zero}
+        
+    def _change_class(self, cls, **extra_info): # pylint: disable=unused-argument
+        if cls != Sequence:
+            raise NotImplementedError(f"Class {cls} not recognized as {self.__class__}")
+        return Sequence(self._element, self.universe, 1, _extend_by_zero=self._Sequence__extend_by_zero)
     
-    ## TODO: Check if these methods are needed: this is a :class:`Sequence` with more information, but changing nothing
-    #       - :func:`_change_class`: receives a class (given when registering the sequence class) and cast the current sequence to the new class.
-    #       - :func:`_change_from_class`: class method that receives a sequence in a different class and transform into the current class. 
-    #       - :func:`_neg_`: implement the negation of a sequence for a given class.
-    #       - :func:`_final_add`: implement the addition for two sequences of the same parent and class.
-    #       - :func:`_final_sub`: implement the difference for two sequences of the same parent and class.
-    #       - :func:`_final_mul`: implement the hadamard product for two sequences of the same parent and class.
-    #       - :func:`_final_div`: implement the hadamard division for two sequences of the same parent and class.
-    #       - :func:`_final_mod`: implement the hadamard module for two sequences of the same parent and class.
-    #       - :func:`_final_floordiv`: implement the hadamard floor division for two sequences of the same parent and class.
-    #     * Consider updating the following methods:
-    #       - :func:`_shift` to adjust the output of the shifted sequence.
-    #       - :func:`_subsequence` to adjust the output of the subsequence.
-    #       - :func:`_slicing` to adjust the output of the sliced sequence.
+    @classmethod
+    def _change_from_class(cls, sequence: Sequence, **extra_info): # pylint: disable=unused-argument
+        if not isinstance(ConstantSequence):
+            raise NotImplementedError(f"Class {sequence.__class__} not recognized from {cls}")
+        return PSBasis(lambda _ : sequence, sequence.universe)
+    
+    ### Arithmetic methods
+    def _neg_(self) -> PSBasis:
+        r'''
+            Addition inverse of a :class:`PSBasis`.
 
-    # TODO def scalar(self, factor: element.Element) -> PSBasis
-    # TODO def _scalar_basis(self, factor: element.Element) -> PSBasis
-    # TODO def _scalar_hypergeometric(self, factor: element.Element, quotient: element.Element) -> PSBasis
-    # TODO def __scalar_extend_compatibilities(self, new_basis: PSBasis, factor: element.Element)
-    # TODO def __scalar_hyper_extend_compatibilities(self, new_basis: PSBasis, factor: element.Element, quotient: element.Element)
+            The compatibilitites are simple inverted as well, since:
 
+            .. MATH::
+
+                L (-P_k(n)) = - L (P_k(n))
+        '''
+        output = PSBasis(lambda *n : (-1)*self._element(*n), self.universe) 
+        ## We extend compatibilities
+        for operator in self.basic_compatibilities():
+            compatibility = self.compatibility(operator)
+            A,B,t = compatibility.data()
+            ctype = self.compatibility_type(operator)
+            output.set_compatibility(operator, 
+                Compatibility([[-compatibility[b,i] for i in range(-A,B+1)] for b in range(t)], A, B, t),
+                sub=True,
+                type=ctype
+            )
+        return output
+    
+    def _final_add(self, other:PSBasis) -> PSBasis:
+        r'''
+            Addition of two :class:`PSBasis`
+            
+            **WARNING**: No compatibility is extended!
+        '''
+        return PSBasis(lambda n: self._element(n) + other._element(n), self.universe)
+    def _final_sub(self, other:PSBasis) -> PSBasis:
+        r'''
+            Difference of two :class:`PSBasis`
+            
+            **WARNING**: No compatibility is extended!
+        '''
+        return PSBasis(lambda n: self._element(n) - other._element(n), self.universe)
+    def _final_mul(self, other:PSBasis) -> PSBasis:
+        r'''
+            Hadamard product of two :class:`PSBasis`
+            
+            **WARNING**: No compatibility is extended!
+        '''
+        return PSBasis(lambda n: self._element(n)*other._element(n), self.universe)
+    def _final_div(self, _:PSBasis) -> PSBasis:
+        r'''
+            Quotient of two :class:`PSBasis`
+            
+            **WARNING**: This method is not implemented!
+        '''
+        return NotImplemented
+    def _final_mod(self, _:Sequence) -> PSBasis:
+        r'''
+            Modulus between two :class:`PSBasis`
+            
+            **WARNING**: This method is not implemented!
+        '''
+        return NotImplemented
+    def _final_floordiv(self, _:Sequence) -> PSBasis:
+        r'''
+            Exact divition of two :class:`PSBasis`
+            
+            **WARNING**: This method is not implemented!
+        '''
+        return NotImplemented
+    
+    ### Other sequences operations
+    def _shift(self, *shifts):
+        shift = shifts[0] # we know the dimension is 1
+        output = PSBasis(lambda n : self._element(n + shift), self.universe)
+        for operator in self.basic_compatibilities():
+            compatibility = self.compatibility(operator)
+            ctype = self.compatibility_type(operator)
+            A,B,t = compatibility.data()
+            output.set_compatibility(operator,
+                Compatibility([[compatibility[b,i].shift(shift) for i in range(-A,B+1)] for b in range(t)], A,B,t),
+                sub=True,
+                type=ctype
+            )
+        return Sequence(lambda *n : self._element(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim)
+    ## Slicing not implemented because PSBasis have dimension 1.
+    def _subsequence(self, final_input: dict[int, Sequence]):
+        return PSBasis(lambda n : self._element(final_input[0]._element(n) if 0 in final_input else n), self.universe)
+
+    ### Creating new PSBasis by sclaing its elements
+    def scalar(self, factor: Sequence) -> PSBasis:
+        r'''
+            Method to scale a :class:`PSBasis` preserving compatibilities.
+
+            This method computes a new :class:`PSBasis` structure and extends
+            when possible the compatibility conditions over ``self``. The elements
+            of the new sequence is the scaling by the sequence given in ``factor``.
+
+            This method works on two steps:
+
+            * First, we create a new :class:`PSBasis` with the corresponding elements.
+              This may differ from different classes and can be extended in the method
+              :func:`_scalar_basis`.
+            * Second, we extend te compatibilities. Since some of the compatibilities
+              can be automatically compute dwhen creating the basis, we only extends those
+              compatibilities that are not already created.
+
+            This method exploits when possible the fact that the given factor is hypergeometric.
+            This is based in the method :func:`.sequences.base.Sequence.is_hypergeometric`. If this 
+            method succeeds, we use the rational function obtained to extend compatibilities.
+
+            INPUT:
+
+            * ``factor``: a :class:`.sequences.base.Sequence` with the scaling factor. 
+
+            OUTPUT:
+
+            A new basis with the extended compatibilities.
+
+            **WARNING**: 
+
+            This method assumes that the sequence given by ``factor`` never vanishes.
+
+            TODO: add examples.
+        '''
+        if not isinstance(factor, Sequence):
+            if factor in self.base:
+                factor = ConstantSequence(factor, self.base, 1)
+            elif factor in SR:
+                factor = SR(factor)
+                factor = ExpressionSequence(factor, factor.variables(), self.base)
+            else:
+                raise TypeError(f"The given factor must be castable to a sequence.")
+            
+        ## Creating the new basis object
+        new_basis = self._scalar_basis(factor)
+
+        ## Checking hypergeometric behavior
+        is_hyper, quot = factor.is_hypergeometric()
+
+        ## Extending compatibilities
+        for operator in self.basic_compatibilities():
+            if not operator in new_basis.basic_compatibilities():
+                compatibility = self.compatibility(operator)
+                A, B, t = compatibility.data()
+                
+                new_coeffs = []
+                for b in range(t):
+                    section = []
+                    for i in range(-A,B+1):
+                        if i == 0:
+                            to_mul = ConstantSequence(1, self.base, 1)
+                        if not is_hyper:
+                            to_mul = factor.linear_subsequence(0, t, b)/factor.linear_subsequence(0, t, b+i)
+                        else:
+                            if i > 0:
+                                to_mul = 1/prod((quot.linear_subsequence(0, t, b+j) for j in range(i+1)), z=ConstantSequence(1, self.base, 1))
+                            elif i < 0:
+                                to_mul = prod((quot.linear_subsequence(0, t, b+j) for j in range(-i+1, 1)), z=ConstantSequence(1, self.base, 1))
+                        section.append(compatibility[b,i] * to_mul)
+                    new_coeffs.append(section)
+                new_compatibility = Compatibility(new_coeffs, A, B, t)
+                new_basis.set_compatibility(operator, new_compatibility)
+
+        return new_basis
+
+    def _scalar_basis(self, factor: Sequence) -> PSBasis:
+        r'''
+            Method that creates a new basis scaled by a given factor.
+
+            This method assume the factor sequences is of correct format. This method can be
+            overriden for creating more specific types of basis.
+        '''
+        return PSBasis(lambda n : self._element(n)*factor(n), self.base)
+    
     ##########################################################################################################
     ###
     ### INFORMATION OF THE BASIS
     ### 
     ##########################################################################################################
-    # @property
-    # TODO def functional_seq(self) -> Sequence
-    # TODO def functional_matrix(self, nrows: int, ncols: int = None) -> matrix_class:
-    # TODO def is_quasi_func_triangular(self) -> bool
-    # TODO def functional_to_self(self, sequence: Sequence | Collection, size: int) -> matrix_class
-    # @property
-    # TODO def evaluation_seq(self) -> Sequence
-    # TODO def evaluation_matrix(self, nrows: int, ncols: int = None) -> matrix_class:
-    # TODO def is_quasi_eval_triangular(self) -> bool
-    # TODO def evaluation_to_self(self, sequence: Sequence | Collection, size: int) -> matrix_class
+    @cached_property
+    def functional_seq(self) -> Sequence:
+        r'''
+            Method to get the functional bi-sequence for a :class:`PSBasis`.
+
+            A :class:`PSBasis` is a sequence of sequences. The ring of sequences is in 
+            bijection with the ring of formal power series, hence, any element `P_k(n)`
+            in ``self`` can be seen as the formal power series:
+
+            .. MATH::
+
+                f_k(x) = \sum_n = P_k(n)x^n.
+
+            Then, we have two main sequences associated with these functions:
+
+            * The "functoinal" sequence: is the transformation back to a sequence using the 
+              same bijection. Hence, it coincides with the sequence `P_k(n)`.
+            * The "evaluation" sequence: when the series is convergent, then we can 
+              consider the sequence `E_k(n) = f_k(n)`. 
+
+            This method returns a bi-indexed sequence that allows to obtain the functional sequences
+            of this basis.
+        '''
+        return self.as_2dim()
+    
+    def functional_matrix(self, nrows: int, ncols: int = None):
+        r'''
+            Method to get a matrix representation of the basis.
+
+            This method returns a matrix `\tilde{M}` with ``nrows`` and ``ncols``
+            such that the rows are the begninning of the "functional" sequences
+            associated to this :class:`PSbasis` (see method :func:`functional_seq`).
+
+            INPUT:
+
+            * ``nrows``: number of rows of the final matrix
+            * ``ncols``: number of columns of the final matrix. If ``None`` is given, we
+              will automatically return the square matrix with size given by ``nrows``.
+        '''
+        ## Checking the arguments
+        if(not ((nrows in ZZ) and nrows > 0)):
+            raise ValueError("The number of rows must be a positive integer")
+        if(ncols is None):
+            ncols = nrows
+        elif(not ((ncols in ZZ) and ncols > 0)):
+                raise ValueError("The number of columns must be a positive integer")
+
+        return Matrix([[self.functional_seq((i,j)) for j in range(ncols)] for i in range(nrows)])
+
+    def is_quasi_func_triangular(self, bound=None) -> bool:
+        r'''
+            Method to check whether a basis is quasi-triangular or not as a functional basis.
+
+            A basis `\mathcal{B} = \{P_k(n)\}_k` is a functional *quasi-triangular* if its 
+            functional matrix representation `M = \left(m_{n,k}\right)_{n,k \geq 0}` (see 
+            :func:`functional_matrix`) is *quasi-upper triangular*, i.e.,
+            there is a strictly monotonic function `I: \mathbb{N} \rightarrow \mathbb{N}` such that
+
+            * For all `k \in \mathbb{N}`, and `n > I(k)`, `m_{n,k} =0`, i.e., `x^k` divides `f_n(x)`.
+            * For all `k \in \mathbb{N}`, `m_{I(k),k} \neq 0`, i.e., `x^k` does not divide `f_{I(k)}(x)`.
+
+            This property will allow to transform the initial conditions from the canonical basis
+            of formal power series (`\{1,x,x^2,\ldots\}`) to the initial conditions of the expansion
+            over ``self``.
+
+            INPUT:
+
+            * ``bound``: we will check the quasi-triangular property until we get ``bound`` columns
+              and ``bound^2`` rows.
+        '''
+        columns = [self.as_2dim().slicing((1,i)) for i in range(bound)]
+        I = []
+        bound_to_check = min(100, bound**2)
+        for column in columns:
+            for i in range(bound_to_check):
+                if column.shift(i).almost_zero(bound_to_check):
+                    I.append(i)
+                    break
+            else:
+                return False
+        return all(I[i+1] > I[i] for i in range(len(I)-1))
+
+    def functional_to_self(self, sequence: Sequence, size: int):
+        r'''
+            Matrix to convert a sequence from the canonical basis of `\mathbb{K}[[x]]` to ``self``.
+
+            Let `y(x) = \sum_{n\geq 0} y_n x^n` be a formal power series. Since ``self`` represents another 
+            basis of the formal power series ring, then `y(x)` can be expressed in terms of the elements
+            of ``self``, i.e., `y(x) = \sum_{n\geq 0} c_n f_n(x)` where `f_n(x)` is the `n`-th term of this basis.
+
+            This method allows to obtain the first terms of this expansion (as many as given in ``size``) 
+            for the formal power series `y(x)` where the first elements are given by ``sequence``. 
+
+            Using the basis matrix `M` (see :func:`functional_matrix`), this computation is straightforward, since
+
+            .. MATH::
+
+                y = c M.
+
+            INPUT:
+
+            * ``sequence``: indexable object with *enough* information to compute the result, representing the first
+              terms of the sequence `(y_0, y_1, \ldots)`.
+            * ``size``: number of elements of the sequence `(c_0, c_1,\ldots)` computed in this method.
+
+            OUTPUT:
+
+            The tuple `(c_0, \ldots, c_{k})` where `k` is given by ``size-1``.
+
+            TODO: add Examples and tests
+        '''
+        if not (self.is_quasi_func_triangular(size)): 
+            raise ValueError("We require 'functional_matrix' to be quasi-upper triangular.")
+
+        M = self.functional_matrix(size)
+        if M.is_triangular("upper"):
+            return tuple([el for el in M.solve_left(vector(sequence[:size]))])
+        raise NotImplementedError("The pure quasi-triangular case not implemented yet.")
+
+    @cached_property
+    def evaluation_seq(self) -> Sequence:
+        r'''
+            Method to get the functional bi-sequence for a :class:`PSBasis`.
+
+            A :class:`PSBasis` is a sequence of sequences. The ring of sequences is in 
+            bijection with the ring of formal power series, hence, any element `P_k(n)`
+            in ``self`` can be seen as the formal power series:
+
+            .. MATH::
+
+                f_k(x) = \sum_n = P_k(n)x^n.
+
+            Then, we have two main sequences associated with these functions:
+
+            * The "functoinal" sequence: is the transformation back to a sequence using the 
+              same bijection. Hence, it coincides with the sequence `P_k(n)`.
+            * The "evaluation" sequence: when the series is convergent, then we can 
+              consider the sequence `E_k(n) = f_k(n)`. 
+
+            This method returns a bi-indexed sequence that allows to obtain the evaluation sequences
+            of this basis.
+        '''
+        raise NotImplementedError(f"The evaluation amtrix is not defined in general.")
+    
+    def evaluation_matrix(self, nrows: int, ncols: int = None):
+        r'''
+            Method to get a matrix representation of the basis.
+
+            This method returns a matrix `\tilde{M}` with ``nrows`` and ``ncols``
+            such that the rows are the begninning of the "evaluation" sequences
+            associated to this :class:`PSbasis` (see method :func:`functional_seq`).
+
+            INPUT:
+
+            * ``nrows``: number of rows of the final matrix
+            * ``ncols``: number of columns of the final matrix. If ``None`` is given, we
+              will automatically return the square matrix with size given by ``nrows``.
+        '''
+        ## Checking the arguments
+        if(not ((nrows in ZZ) and nrows > 0)):
+            raise ValueError("The number of rows must be a positive integer")
+        if(ncols is None):
+            ncols = nrows
+        elif(not ((ncols in ZZ) and ncols > 0)):
+                raise ValueError("The number of columns must be a positive integer")
+
+        return Matrix([[self.evaluation_seq((i,j)) for j in range(ncols)] for i in range(nrows)])
+
+    def is_quasi_eval_triangular(self, bound=None) -> bool:
+        r'''
+            Method to check whether a basis is quasi-triangular or not as a evaluation basis.
+
+            A basis `\mathcal{B} = \{P_k(n)\}_k` is a evaluation *quasi-triangular* if its 
+            evaluation matrix representation `M = \left(m_{n,k}\right)_{n,k \geq 0}` (see 
+            :func:`evaluation_matrix`) is *quasi-upper triangular*, i.e.,
+            there is a strictly monotonic function `I: \mathbb{N} \rightarrow \mathbb{N}` such that
+
+            * For all `k \in \mathbb{N}`, and `n > I(k)`, `m_{n,k} =0`, i.e., `x^k` divides `f_n(x)`.
+            * For all `k \in \mathbb{N}`, `m_{I(k),k} \neq 0`, i.e., `x^k` does not divide `f_{I(k)}(x)`.
+
+            This property will allow to transform the initial conditions from the canonical basis
+            of formal power series (`\{1,x,x^2,\ldots\}`) to the initial conditions of the expansion
+            over ``self``.
+
+            INPUT:
+
+            * ``bound``: we will check the quasi-triangular property until we get ``bound`` columns
+              and ``bound^2`` rows.
+        '''
+        columns = [self.evaluation_seq.slicing((1,i)) for i in range(bound)]
+        I = []
+        bound_to_check = min(100, bound**2)
+        for column in columns:
+            for i in range(bound_to_check):
+                if column.shift(i).almost_zero(bound_to_check):
+                    I.append(i)
+                    break
+            else:
+                return False
+        return all(I[i+1] > I[i] for i in range(len(I)-1))
+
+    def evaluation_to_self(self, sequence: Sequence, size: int):
+        r'''
+            Matrix to convert a sequence from the canonical basis of `\mathbb{K}[[x]]` to ``self``.
+
+            Let `y(x) = \sum_{n\geq 0} y_n x^n` be a formal power series. Since ``self`` represents another 
+            basis of the formal power series ring, then `y(x)` can be expressed in terms of the elements
+            of ``self``, i.e., `y(x) = \sum_{n\geq 0} c_n f_n(x)` where `f_n(x)` is the `n`-th term of this basis.
+
+            This method allows to obtain the first terms of this expansion (as many as given in ``size``) 
+            for the formal power series `y(x)` where the first elements are given by ``sequence``. 
+
+            Using the basis matrix `M` (see :func:`evaluation_matrix`), this computation is straightforward, since
+
+            .. MATH::
+
+                y = c M.
+
+            INPUT:
+
+            * ``sequence``: indexable object with *enough* information to compute the result, representing the first
+              terms of the sequence `(y_0, y_1, \ldots)`.
+            * ``size``: number of elements of the sequence `(c_0, c_1,\ldots)` computed in this method.
+
+            OUTPUT:
+
+            The tuple `(c_0, \ldots, c_{k})` where `k` is given by ``size-1``.
+
+            TODO: add Examples and tests
+        '''
+        if not (self.is_quasi_func_triangular(size)): 
+            raise ValueError("We require 'evaluation_matrix' to be quasi-upper triangular.")
+
+        M = self.evaluation_matrix(size)
+        if M.is_triangular("upper"):
+            return tuple([el for el in M.solve_left(vector(sequence[:size]))])
+        raise NotImplementedError("The pure quasi-triangular case not implemented yet.")
 
     ##########################################################################################################
     ###
@@ -583,9 +972,6 @@ class PSBasis(Sequence):
     ### MAGIC METHODS
     ### 
     ##########################################################################################################
-    # TODO def __mul__
-    # TODO def __rmul__
-    # TODO def __truediv__
     # TODO def __repr__(self)
 
     ##########################################################################################################
