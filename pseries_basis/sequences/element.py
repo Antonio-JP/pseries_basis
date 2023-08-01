@@ -130,7 +130,7 @@ class ExpressionSequence(Sequence):
             variables = expression.variables()
         dim = len(variables)
         self.__generic = expression
-        self.__variables = variables
+        self.__variables = [SR(el) for el in variables]
 
         super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
 

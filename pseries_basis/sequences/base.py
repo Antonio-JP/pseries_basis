@@ -140,7 +140,7 @@ import logging
 from collections.abc import Callable
 from functools import cached_property
 from itertools import product
-from sage.all import (cached_method, cartesian_product, parent, var, oo, NaN, SR, ZZ)
+from sage.all import (cached_method, cartesian_product, parent, prod, var, oo, NaN, SR, ZZ)
 from sage.categories.all import CommutativeRings, Sets
 from sage.categories.homset import Homset
 from sage.categories.homsets import Homsets
@@ -588,6 +588,89 @@ class Sequence(SetMorphism):
 
         return Sequence(lambda *n : self._element(*__swap_index(*n)), self.universe, self.dim, _extend_by_zero = self.__extend_by_zero)
         
+    def partial_sum(self, index: int = None) -> Sequence:
+        r'''
+            Method to create the partial sum sequence.
+
+            Given a sequence `(a_n)_n`, we can always define the sequence of partial sums,
+            i.e., `b_n = \sum_{i=0}^n a_i`. This method creates the corresponding 
+            sequence. 
+
+            Similarly, we can do the same for multivariate sequences. More precisely, we 
+            require the index that we will compute the sum for. Iterated call of this method
+            may allow summing through several dimensions of the sequence.
+
+            *INFORMATION*: this method may be overridden for subclasses to offer a better
+            structure of these sequences.
+
+            INPUT:
+
+            * ``index``: the index over which we will compute the partial sum sequence. ``None`` 
+              is allowed for univariate sequences.
+
+            EXAMPLES::
+
+                sage: from pseries_basis.sequences import *
+                sage: N = ExpressionSequence(var('n'), universe=QQ)
+                sage: N.partial_sum() == ExpressionSequence((n*(n-1))/2, universe=QQ)
+                True
+                sage: N.shift().partial_sum() == ExpressionSequence((n*(n+1))/2, universe=QQ)
+        '''
+        if self.dim == 1 and index is None: index = 0
+        if not index in ZZ or index < 0 or index >= self.dim:
+            raise IndexError(f"The index for partial sum must be a valid index for this sequence.")
+        
+        if self.dim > 1:
+            def _partial_sum(*n):
+                bf = list(n[:index]); lt = list(n[index+1:])
+                return sum(self(bf+[i]+lt) for i in range(n[index]))
+        else:
+            def _partial_sum(n):
+                return sum(self(i) for i in range(n))
+            
+        return Sequence(_partial_sum, self.universe, self.dim, _extend_by_zero=self.__extend_by_zero)
+    
+    def partial_prod(self, index: int = None) -> Sequence:
+        r'''
+            Method to create the partial product sequence.
+
+            Given a sequence `(a_n)_n`, we can always define the sequence of partial products,
+            i.e., `b_n = \prod_{i=0}^n a_i`. This method creates the corresponding 
+            sequence. 
+
+            Similarly, we can do the same for multivariate sequences. More precisely, we 
+            require the index that we will compute the product for. Iterated call of this method
+            may allow multiplying through several dimensions of the sequence.
+
+            *INFORMATION*: this method may be overridden for subclasses to offer a better
+            structure of these sequences.
+
+            INPUT:
+
+            * ``index``: the index over which we will compute the partial product sequence. ``None`` 
+              is allowed for univariate sequences.
+
+            EXAMPLES::
+
+                sage: from pseries_basis.sequences import *
+                sage: N = ExpressionSequence(var('n'), universe=QQ)
+                sage: N.shift().partial_prod() == Factorial
+                True
+        '''
+        if self.dim == 1 and index is None: index = 0
+        if not index in ZZ or index < 0 or index >= self.dim:
+            raise IndexError(f"The index for partial sum must be a valid index for this sequence.")
+        
+        if self.dim > 1:
+            def _partial_prod(*n):
+                bf = list(n[:index]); lt = list(n[index+1:])
+                return prod((self(bf+[i]+lt) for i in range(n[index])), z=self.universe.one())
+        else:
+            def _partial_prod(n):
+                return prod((self(i) for i in range(n)), z=self.universe.one())
+            
+        return Sequence(_partial_prod, self.universe, self.dim, _extend_by_zero=self.__extend_by_zero)
+
     #############################################################################
     ## Arithmetic methods
     #############################################################################
