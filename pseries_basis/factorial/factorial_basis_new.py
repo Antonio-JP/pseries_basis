@@ -13,7 +13,7 @@ r'''
         P_{k+1}(n) = (a_{k}n + b_{k})P_{k}.
 
     This lead to specific types of compatibility as sequences as described in :doi:`10.1016/j.jsc.2022.11.002`.
-    For example, the "multiplication by `n`" operation is always comaptible with a factorial basis since:
+    For example, the "multiplication by `n`" operation is always compatible with a factorial basis since:
 
     .. MATH::
 
@@ -25,9 +25,10 @@ r'''
     `\{n^k\}`, the binomial basis `\left\{\binom{n}{k}\right\}` and falling-type basis.
 '''
 
-from functools import lru_cache
-from sage.all import PolynomialRing, SR
-from ..sequences.base import Sequence
+from functools import lru_cache, reduce
+from sage.all import parent, PolynomialRing, QQ, SR, ZZ #pylint: disable=no-name-in-module
+from sage.categories.pushout import pushout
+from ..sequences.base import Sequence, ConstantSequence
 from ..sequences.element import ExpressionSequence, RationalSequence
 from ..psbasis_new import PSBasis, Compatibility
 
@@ -47,7 +48,7 @@ class FactorialBasis(PSBasis):
             P_{k+1}(n) = (a_{k}n + b_{k})P_{k}.
 
         This type of basis have special types of compatibilities. More precisely, they are 
-        **always** comaptible with the "multiplication by `n`" operation. This is a special type
+        **always** compatible with the "multiplication by `n`" operation. This is a special type
         of homomorphism, and always satisfies:
 
         .. MATH::
@@ -89,9 +90,9 @@ class FactorialBasis(PSBasis):
 
         @lru_cache
         def __get_element(k):
-            if k < 0: return 0
-            elif k == 0: return 1
-            else: return (self.ak(k-1)*self.__gen + self.bk(k-1))*__get_element(k-1)
+            if k < 0: return universe.zero()
+            elif k == 0: return universe.one()
+            else: return (self.ak(k-1)*self.__gen + self.bk(k-1))*__get_element(k-1) #pylint: disable=not-callable
 
         super().__init__(lambda k : RationalSequence(__get_element(k), ["n"], universe), universe, _extend_by_zero=_extend_by_zero)
 
@@ -116,7 +117,26 @@ class FactorialBasis(PSBasis):
     ### TODO: def equiv_DtC(self, compatibility: str | OreOperator | TypeCompatibility) -> TypeCompatibility
     ### TODO: def equiv_CtD(self, division: TypeCompatibility) -> TypeCompatibility
 
-def RootSequence(rho: Sequence, lc: Sequence, universe = None, *, _extend_by_zero=False):
+def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, _extend_by_zero=False):
+    r'''
+        Factory for creating a factorial basis from the root sequence and sequence of coefficients.
+
+        INPUT:
+
+        * ``rho``: the sequence of roots for the factorial basis.
+        * ``cn``: the sequence of leading coefficients for the factorial basis.
+        * ``universe``: the base universe where the :class:`PSBasis` will be created.
+
+        EXAMPLES::
+
+            sage: from pseries_basis import *
+            sage: RootSequenceBasis(0, 1)[:5]
+            [Sequence over [Rational Field]: (1, 1, 1,...),
+             Sequence over [Rational Field]: (0, 1, 2,...),
+             Sequence over [Rational Field]: (0, 1, 4,...),
+             Sequence over [Rational Field]: (0, 1, 8,...),
+             Sequence over [Rational Field]: (0, 1, 16,...)]
+    '''
     ## Treating the arguments rho and lc
     if not isinstance(rho, Sequence):
         if universe != None:
@@ -132,4 +152,99 @@ def RootSequence(rho: Sequence, lc: Sequence, universe = None, *, _extend_by_zer
     ak = lc.shift()/lc
     bk = -rho*ak
     return FactorialBasis(ak, bk, universe, _extend_by_zero=_extend_by_zero)
+        
+def FallingBasis(a, b, c, universe = None, E: str = None):
+    r'''
+        Factory for creating a factorial basis as a falling factorial-type.
+
+        This class represent the FactorialBasis formed by the falling factorial basis
+        for the power series ring `\mathbb{Q}[[x]]` with two extra parameters `a` and `b`:
+
+        .. MATH::
+
+            1,\quad (ax+b),\quad (ax+b)(ax+b-c),\quad (ax+b)(ax+b-c)(ax+b-2c),\dots
+
+        In the case of `a = 1`, `b = 0` and `c = 0`, we have the usual power basis 
+        and in the case of `a=1`, `b = 0` and `c = \pm 1` we have the falling (or
+        raising) factorial basis.
+
+        Following the notation in :doi:`10.1016/j.jsc.2022.11.002`, these basis
+        have compatibilities with the multiplication by `n` (as any other factorial basis)
+        and with the homomorphism `E: n \mapsto n+\frac{c}{a}`. All other compatible shifts (i.e., 
+        maps `E_{\alpha}: n \mapsto n+\alpha)` are just powers of `E`.
+
+        To be more precise, we always have:
+
+        .. MATH::
+
+            E P_k(n) = P_k(n + c/a) = P_k(n) + cP_{k-1}(n)
+
+        INPUT:
+
+        * ``a``: the natural number corresponding to the parameter `a`.
+        * ``b``: the shift corresponding to the value `b`.
+        * ``c``: the value for `c`
+        * ``universe``: the universe where the :class:`PSBasis` will live.
+        * ``E``: the name for the operator representing the shift of `n` by `c/a`. If not given, we will 
+          consider "E" as default.
+
+        OUTPUT:
+
+        The corresponding :class:`FactorialBasis` with the given compatibilities.
+    '''
+    if universe is None: # we need to compute a base universe
+        universe = reduce(lambda p,q: pushout(p,q), (parent(b), parent(c)), initial=parent(a))
+    
+    ## We require everything to be in the universe
+    a,b,c = [universe(el) for el in (a,b,c)]
+    
+    ak = ConstantSequence(a, universe, 1)
+    R = PolynomialRing(universe, "k"); k = R.gens()[0]
+    bk = RationalSequence(b - k*c, [k], universe=universe)
+
+    output = FactorialBasis(ak, bk, universe)
+    # This object already has the compatibility with "n". The shift remains
+    comp = Compatibility([[ConstantSequence(c, universe, 1), ConstantSequence(1,universe, 1)]], 1, 0, 1)
+
+    if c == 0: # no shift is compatible --> just identity
+        E = "Id"
+    elif a in ZZ and a > 0: # the shift by 1 is compatible
+        E_base = E + f"_{abs(c)}_{abs(a)}"
+        output.set_compatibility(E_base, comp, True, "homomorphism")
+        comp = comp**ZZ(a)
+    output.set_compatibility(E, comp, True, "homomorphism")
+
+    return output
+
+def PowerTypeBasis(a = 1, b = 0, universe = None, Dn: str = 'Dn'):
+    r'''
+        Factory for creating power-type basis.
+
+        This class represents the :class:`FactorialBasis` formed by the simplest basis
+        for the power series: `1`, `(an+b)`, `(an+b)^2`, etc.
+
+        Following the notation in :arxiv:`2202.05550`, we can find that these basis
+        have compatibilities with the multiplication by `n` and with the derivation
+        with respect to `n`.
+
+        INPUT:
+
+        * ``a``: the element of the value `a`.
+        * ``b``: the shift corresponding to the value `b`.
+        * ``universe``: the universe where the :class:`PSBasis` will live.
+        * ``Dn``: the name for the operator representing the derivation by `n`. If not given, we will
+          consider `Dn` as default.
+        
+        TODO: add examples
+    '''
+    output = FallingBasis(a, b, 0, universe, None)
+    R = PolynomialRing(universe, "k"); k = R.gens()[0]
+    output.set_compatibility(Dn, Compatibility([[RationalSequence(a*k, [k], universe), 0]]), True, "derivation")
+    return output
+
+FallingFactorial = FallingBasis(1, 0, 1, QQ, "E")
+RaisingFactorial = FallingBasis(1, 0,-1, QQ, "E")
+PowerBasis = PowerTypeBasis()
+
+
         
