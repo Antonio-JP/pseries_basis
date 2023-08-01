@@ -80,6 +80,9 @@ class QSequence(Sequence):
         return self.__q
     
     ## Methods for the casting of sequences
+    def args_to_self(self):
+        return [self._element], {"universe": self.universe, "dim": self.dim, "q": self.q, "_extend_by_zero": self._Sequence__extend_by_zero}
+
     @classmethod
     def _change_from_class(cls, sequence: Sequence, **extra_info):
         if isinstance(sequence, ConstantSequence):
@@ -191,6 +194,9 @@ class QRationalSequence(QSequence, RationalSequence):
     @classmethod
     def register_class(cls):
         return cls._register_class([QSequence], [])
+    
+    def args_to_self(self):
+        return [self.generic()], {"variables": self.variables(), "universe": self.universe, "q": self.q, "_extend_by_zero": self._Sequence__extend_by_zero}
     
     def _change_class(self, goal_class, **_):
         if goal_class != QSequence:
