@@ -123,9 +123,11 @@ class PSBasis(Sequence):
         if isinstance(sequence, Sequence) and sequence.dim == 2:
             universe = sequence.universe if universe is None else universe; or_sequence = sequence
             sequence = lambda n : or_sequence.slicing((0,n))
+            self.__original_sequence = or_sequence
         else:
             if universe is None:
                 raise ValueError(f"When argument is callable we require a universe argument for the basis.")
+            self.__original_sequence = None
         self.__inner_universe = universe
 
         ## Attributes for storing compatibilities
@@ -172,7 +174,16 @@ class PSBasis(Sequence):
     
     @cached_method
     def as_2dim(self) -> Sequence:
-        return Sequence(lambda n,k : self(n)(k), self.base, 2, _extend_by_zero = self._Sequence__extend_by_zero)
+        return (self.__original_sequence if self.__original_sequence != None else 
+                Sequence(lambda n,k : self(n)(k), self.base, 2, _extend_by_zero = self._Sequence__extend_by_zero))
+    
+    def generic(self, *names : str):
+        if self.__original_sequence:
+            try:
+                return self.__original_sequence.generic(*names)
+            except ValueError: 
+                pass
+        return super().generic(*names)
     
     ##########################################################################################################
     ###
@@ -527,7 +538,13 @@ class PSBasis(Sequence):
         operator = FA(str(operator))
         ## We split evaluation in cases to avoid problems with FreeAlgebra implementations
         if is_FreeAlgebra(FA):
-            output = operator(*[self.__basic_compatibilities[v] for v in FA.variable_names()])
+            ## Special evaluation since the method in FreeAlgebra does not work
+            to_eval = [self.__basic_compatibilities[v] for v in FA.variable_names()]
+            output = sum(
+                (c*m(*to_eval) if m != 1 else Compatibility([[ConstantSequence(c, self.base, 1)]], 0,0,1) 
+                for (m,c) in [(el.monomials()[0], el.coefficients()[0]) for el in operator.terms()]),
+                Compatibility([[ConstantSequence(0, self.base, 1)]], 0,0,1)
+            )
         else:
             comp = next(iter(self.__basic_compatibilities.values()))
             output = sum(c*comp**i for i,c in enumerate(operator.coefficients(False)))
@@ -689,7 +706,7 @@ class PSBasis(Sequence):
             OA, (_, E) = get_recurrence_algebra("k", "Sk", base=el.universe)
             return sum((OA(v.shift(neg_power).generic("k"))*E**(i+neg_power) for (i,v) in recurrence.items()), OA.zero())
 
-    def recurrence(self, operator, sections : int = None, output : str = None):
+    def recurrence(self, operator, sections : int = None, output : str = "ore_double"):
         r'''
             Method to obtain a recurrence for a compatible operator.
 
@@ -743,7 +760,7 @@ class PSBasis(Sequence):
     def __repr__(self):
         output = f"Basis of Sequences over {self.base}"
         try:
-            generic = self.as_2dim().generic("n","k")
+            generic = self.as_2dim().generic("k","n")
             output += f": ({generic})"
         except ValueError:
             try:
@@ -754,18 +771,20 @@ class PSBasis(Sequence):
         return output
     
     def _latex_(self):
-        output = r"\left\{"
         try:
-            generic = self.as_2dim().generic("n","k")
+            output = r"\left\{"
+            generic = self.as_2dim().generic("k","n")
             output += latex(generic)
+            output += r"\right\}_{k \in \mathbb{N}}"
         except ValueError:
+            output = r"\left\{"
             try:
                 first_elements = [self(i).generic("n") for i in range(5)]
                 output += ", ".join(latex(el) for el in first_elements)
                 output += ",..."
             except ValueError:
                 output += r"B_k(n)"
-        output += r"\right\}"
+            output += r"\right\}"
 
         return output
     
@@ -856,8 +875,8 @@ class Compatibility:
     def lower(self): return self.__lower #: Property of the lower bound for the compatibility
     @property
     def nsections(self): return self.__nsections #: Property of the number of sections for the compatibility
-    A = upper #: alias for the upper bound
-    B = lower #: alias for the lower bound
+    A = lower #: alias for the upper bound
+    B = upper #: alias for the lower bound
     t = nsections # alias for the number of sections
 
     def data(self):

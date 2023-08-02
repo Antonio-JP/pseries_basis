@@ -26,7 +26,7 @@ r'''
 '''
 
 from functools import lru_cache, reduce
-from sage.all import parent, PolynomialRing, QQ, SR, ZZ #pylint: disable=no-name-in-module
+from sage.all import binomial, parent, PolynomialRing, QQ, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from ..sequences.base import Sequence, ConstantSequence
 from ..sequences.element import ExpressionSequence, RationalSequence
@@ -153,7 +153,7 @@ def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, _extend_b
     bk = -rho*ak
     return FactorialBasis(ak, bk, universe, _extend_by_zero=_extend_by_zero)
         
-def FallingBasis(a, b, c, universe = None, E: str = None):
+def FallingBasis(a, b, c, universe = None, E: str = 'E'):
     r'''
         Factory for creating a factorial basis as a falling factorial-type.
 
@@ -193,7 +193,7 @@ def FallingBasis(a, b, c, universe = None, E: str = None):
         The corresponding :class:`FactorialBasis` with the given compatibilities.
     '''
     if universe is None: # we need to compute a base universe
-        universe = reduce(lambda p,q: pushout(p,q), (parent(b), parent(c)), initial=parent(a))
+        universe = reduce(lambda p,q: pushout(p,q), (parent(a), parent(b), parent(c)), QQ)
     
     ## We require everything to be in the universe
     a,b,c = [universe(el) for el in (a,b,c)]
@@ -213,6 +213,10 @@ def FallingBasis(a, b, c, universe = None, E: str = None):
         output.set_compatibility(E_base, comp, True, "homomorphism")
         comp = comp**ZZ(a)
     output.set_compatibility(E, comp, True, "homomorphism")
+
+    ## We create the base sequence for generic purposes
+    n, k, i = SR.var("n"), SR.var("k"), SR.var("i")
+    output._PSBasis__original_sequence = ExpressionSequence((a*n + b - c*i).prod(i, 0, k), [k,n], universe)
 
     return output
 
@@ -238,13 +242,74 @@ def PowerTypeBasis(a = 1, b = 0, universe = None, Dn: str = 'Dn'):
         TODO: add examples
     '''
     output = FallingBasis(a, b, 0, universe, None)
+    universe = output.base
     R = PolynomialRing(universe, "k"); k = R.gens()[0]
-    output.set_compatibility(Dn, Compatibility([[RationalSequence(a*k, [k], universe), 0]]), True, "derivation")
+    output.set_compatibility(Dn, Compatibility([[RationalSequence(a*k, [k], universe), ConstantSequence(0, universe, 1)]], 1, 0, 1), True, "derivation")
+
+    ## Creating the generic for this type of sequences
+    n,k = SR.var("n"), SR.var("k")
+    output._PSBasis__original_sequence = ExpressionSequence((a*n+b)**k, [k,n], universe)
+
     return output
 
-FallingFactorial = FallingBasis(1, 0, 1, QQ, "E")
-RaisingFactorial = FallingBasis(1, 0,-1, QQ, "E")
-PowerBasis = PowerTypeBasis()
+def BinomialTypeBasis(a = 1, b = 0, universe = None, E : str = 'E'):
+    r'''
+        Factory for the generic binomial basis.
+
+        This class represents a binomial basis with a shift and dilation effect on the
+        top variable. Namely, a basis of the form
+
+        .. MATH::
+
+            \binom{an+b}{k},
+
+        where `a` is a natural number and `b` is a rational number.
+
+        In :arxiv:`2202.05550` this corresponds to `\mathfrak{C}_{a,b}`
+        and it is compatible with the multiplication by `n` and by the shift operator
+        `E: n \rightarrow n+1`.
+
+        INPUT:
+
+        * ``a``: the natural number corresponding to the value `a`.
+        * ``b``: the shift corresponding to the value `b`.
+        * ``universe``: the main ring where the basis of sequences is defined.
+        * ``E``: the name for the operator representing the shift of `n` by `1`. If not given, we will
+          consider "E" as default. The operator of shift by `1/a` will be named by adding a `_t` to the name.
+
+        OUTPUT:
+
+        A :class:`FactorialBasis` with the corresponding compatibilities and the binomial structure.
+    '''
+    if(not a in ZZ or a <= 0):
+        raise ValueError("The value for 'a' must be a natural number")
+    
+    if universe is None: # we need to compute a base universe
+        universe = reduce(lambda p,q: pushout(p,q), (parent(a), parent(b)), QQ)
+
+    a = ZZ(a); b = universe(b)
+    R = PolynomialRing(universe, "k"); k = R.gens()[0] # creating the polynomial ring for the sequences
+    ak = RationalSequence(a/(k+1), [k], universe)
+    bk = RationalSequence((b-k)/(k+1), [k], universe)
+
+    output = FactorialBasis(ak, bk, universe) # this includes the compatibility with "n"
+
+    E_comp = Compatibility([[ConstantSequence(binomial(a, -i), universe, 1) for i in range(-a, 1)]], a, 0, 1)
+    output.set_compatibility(E, E_comp, True, "homomorphism")
+    if a != 1:
+        output.set_compatibility(E + "_t", Compatibility([[ConstantSequence(1, universe, 1), ConstantSequence(1, universe, 1)]], 1, 0, 1), True, "homomorphism")
+
+    ## Creating the original sequence for this type
+    n,k = SR.var("n"), SR.var("k")
+    output._PSBasis__original_sequence = ExpressionSequence(binomial(a*n+b,k), [k,n], universe)
+
+    return output
+
+
+FallingFactorial = FallingBasis(1, 0, 1, QQ)
+RaisingFactorial = FallingBasis(1, 0,-1, QQ)
+PowerBasis = PowerTypeBasis(universe=QQ)
+BinomialBasis = BinomialTypeBasis(universe=QQ)
 
 
         
