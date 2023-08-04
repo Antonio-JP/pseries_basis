@@ -396,7 +396,7 @@ class RationalSequence(Sequence):
     def _change_from_class(cls, sequence: Sequence, **extra_info):
         if isinstance(sequence, ConstantSequence):
             return RationalSequence(
-                (sequence.element(*[0 for _ in range(sequence.dim)])), 
+                extra_info["field"](sequence.element(*[0 for _ in range(sequence.dim)])), 
                 variables = extra_info.get("variables", [f"n_{i}" for i in range(sequence.dim)] if sequence.dim > 1 else ["n"]), 
                 universe=sequence.universe, 
                 _extend_by_zero=sequence._Sequence__extend_by_zero
@@ -407,6 +407,7 @@ class RationalSequence(Sequence):
     def extra_info(self) -> dict:
         dict = super().extra_info()
         dict["variables"] = self.variables()
+        dict["field"] = self.__F
         return dict
 
     ## Methods fro sequence arithmetic
@@ -415,7 +416,7 @@ class RationalSequence(Sequence):
             self.generic()._neg_(), 
             variables=self.variables(),  
             _extend_by_zero=self._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
         )
 
     def _final_add(self, other: RationalSequence) -> RationalSequence:
@@ -426,7 +427,7 @@ class RationalSequence(Sequence):
             self.generic() + other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
         )
     def _final_sub(self, other: RationalSequence) -> RationalSequence:
         if self.variables() != other.variables():
@@ -436,7 +437,7 @@ class RationalSequence(Sequence):
             self.generic() - other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
         )
     def _final_mul(self, other: RationalSequence) -> RationalSequence:
         if self.variables() != other.variables():
@@ -446,7 +447,7 @@ class RationalSequence(Sequence):
             self.generic() * other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
         )
     def _final_div(self, other: RationalSequence) -> RationalSequence:
         if self.variables() != other.variables():
@@ -456,7 +457,7 @@ class RationalSequence(Sequence):
             self.generic() / other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
         )
     def _final_mod(self, other: RationalSequence) -> RationalSequence:
         if self.variables() != other.variables():
@@ -466,7 +467,7 @@ class RationalSequence(Sequence):
             self.generic() % other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
         )
     def _final_floordiv(self, other: RationalSequence) -> RationalSequence:
         if self.variables() != other.variables():
@@ -476,7 +477,7 @@ class RationalSequence(Sequence):
             self.generic() // other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero")}
+            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
         )
 
     ## Methods for operations on Sequences

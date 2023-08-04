@@ -79,9 +79,10 @@ class FactorialBasis(PSBasis):
             raise TypeError(f"[FactorialBasis] The element a_k must be a univariate sequence or an expression in 'k'")
         if not isinstance(bk, Sequence) or bk.dim != 1:
             raise TypeError(f"[FactorialBasis] The element a_k must be a univariate sequence or an expression in 'k'")
+        universe = universe if universe != None else pushout(ak.universe, bk.universe)
         
-        self.__ak = ak
-        self.__bk = bk
+        self.__ak = ak.change_universe(universe)
+        self.__bk = bk.change_universe(universe)
         self.__rho = -bk/ak
         self.__lc = ak.partial_prod()
 
@@ -90,14 +91,17 @@ class FactorialBasis(PSBasis):
 
         @lru_cache
         def __get_element(k):
-            if k < 0: return universe.zero()
-            elif k == 0: return universe.one()
+            if k < 0: return self.__poly_ring.zero()
+            elif k == 0: return self.__poly_ring.one()
             else: return (self.ak(k-1)*self.__gen + self.bk(k-1))*__get_element(k-1) #pylint: disable=not-callable
 
         super().__init__(lambda k : RationalSequence(__get_element(k), ["n"], universe), universe, _extend_by_zero=_extend_by_zero)
 
         # We create now the compatibility with the multiplication by "n"
         self.set_compatibility("n", Compatibility([[self.rho, 1/self.ak]], 0, 1, 1), True, "any")
+
+    def args_to_self(self):
+        return [self.ak, self.bk], {"universe": self.base, "_extend_by_zero": self._Sequence__extend_by_zero}
 
     @property
     def ak(self): return self.__ak #: Sequence a_k from definition of Factorial basis.
@@ -304,7 +308,6 @@ def BinomialTypeBasis(a = 1, b = 0, universe = None, E : str = 'E'):
     output._PSBasis__original_sequence = ExpressionSequence(binomial(a*n+b,k), [k,n], universe)
 
     return output
-
 
 FallingFactorial = FallingBasis(1, 0, 1, QQ)
 RaisingFactorial = FallingBasis(1, 0,-1, QQ)

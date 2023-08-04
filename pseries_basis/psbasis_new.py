@@ -166,7 +166,19 @@ class PSBasis(Sequence):
 
             A equivalent basis where the elements have as common universe ``base``
         '''
-        return PSBasis(lambda n : self.element(n), base, _extend_by_zero=self._Sequence__extend_by_zero)
+        args, kwds = self.args_to_self()
+        kwds["universe"] = base
+        output = self.__class__(*args, **kwds)
+
+        ## Recreating the "original_sequence" part
+        if self.__original_sequence != None:
+            output._PSBasis__original_sequence = self.__original_sequence.change_universe(base)
+
+        ## Recreating the compatibilities
+        for operator in self.basic_compatibilities():
+            if not operator in output.basic_compatibilities():
+                output.set_compatibility(operator, self.compatibility(operator).change_base(base), True, self.compatibility_type(operator))
+        return output
     
     def _element(self, *indices: int):
         output = super()._element(*indices)
@@ -192,7 +204,7 @@ class PSBasis(Sequence):
     ##########################################################################################################
     ### Casting methods
     def args_to_self(self):
-        return [self._element], {"universe":self.base, "_extend_by_zero": self._Sequence__extend_by_zero}
+        return [self.as_2dim()], {"universe":self.base, "_extend_by_zero": self._Sequence__extend_by_zero}
         
     def _change_class(self, cls, **extra_info): # pylint: disable=unused-argument
         if cls != Sequence:
@@ -504,6 +516,16 @@ class PSBasis(Sequence):
             return FreeAlgebra(self.base, self.basic_compatibilities())
         else:
             return PolynomialRing(self.base, self.basic_compatibilities())
+        
+    def __cast_to_algebra(self, operator: str):
+        from sage.misc.sage_eval import sage_eval
+        A = self.__get_algebra(); C = A
+        locals = dict()
+        while not 1 in C.gens():
+            locals.update(C.gens_dict())
+            C = C.base()
+        value = sage_eval(operator, locals=locals)
+        return A(value)
 
     @cached_method
     def compatibility(self, operator) -> Compatibility:
@@ -535,7 +557,7 @@ class PSBasis(Sequence):
             return self.__basic_compatibilities[operator]
         
         FA = self.__get_algebra()
-        operator = FA(str(operator))
+        operator = self.__cast_to_algebra(str(operator))
         ## We split evaluation in cases to avoid problems with FreeAlgebra implementations
         if is_FreeAlgebra(FA):
             ## Special evaluation since the method in FreeAlgebra does not work
@@ -584,12 +606,12 @@ class PSBasis(Sequence):
         if isinstance(operator, str) and operator in self.__basic_compatibilities:
             return True
                     
-        FA = self.__get_algebra()
         try:
-            FA(str(operator))
+            self.__cast_to_algebra(str(operator))
             return True
         except:
             return False
+        
     @cached_method
     def compatibility_type(self, operator) -> None | str:
         r'''
@@ -627,8 +649,7 @@ class PSBasis(Sequence):
             elif operator in self.__any: return "any"
             else: return None
         
-        FA = self.__get_algebra()
-        operator = FA(str(operator))
+        operator = self.__cast_to_algebra(str(operator))
         basic_operations = [self.compatibility_type(str(v)) for v in operator.variables()]
         output = basic_operations[0]
         for basic in basic_operations[1:]:
