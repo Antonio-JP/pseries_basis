@@ -142,6 +142,18 @@ class ExpressionSequence(Sequence):
     def args_to_self(self):
         return [self.__generic], {"variables" : self.variables(), "universe": self.universe, "_extend_by_zero": self._Sequence__extend_by_zero}
     
+    def _change_dimension(self, new_dim: int, old_dims: list[int], new_variables = None):
+        args, kwds = self.args_to_self()
+        generic = args[0]
+        variables = kwds["variables"]; universe=kwds["universe"]; extend = kwds["_extend_by_zero"]
+
+        ## Checking the new variable names
+        if not isinstance(new_variables, (list,tuple)) or len(new_variables) != new_dim - self.dim:
+            raise TypeError(f"[change_dim] The new variables must be a valid list of valid length")
+        for (i, v) in sorted(zip(old_dims, variables), key=lambda k : k[0]): new_variables.insert(i, v)
+
+        return self.__class__(generic, new_variables, universe=universe, _extend_by_zero=extend)
+
     @classmethod
     def _change_from_class(cls, sequence: Sequence, **extra_info):
         if isinstance(sequence, ConstantSequence):
@@ -375,10 +387,6 @@ class RationalSequence(Sequence):
         return cls._register_class([ExpressionSequence], [ConstantSequence])
     
     def args_to_self(self):
-        r'''
-            Method that change the universe of a sequence. This can help to use the same universe in different 
-            spaces or when it is required to force a specific universe.
-        '''
         return [self.generic()], {"variables": self.variables(), "universe": self.universe, "_extend_by_zero": self._Sequence__extend_by_zero}
     
     def _change_class(self, cls, **extra_info):

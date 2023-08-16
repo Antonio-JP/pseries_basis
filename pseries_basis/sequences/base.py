@@ -166,6 +166,7 @@ class Sequence(SetMorphism):
         
         * Override the class method :func:`register_class` with the desired classes we want to be directly below and above
         * Implement the following methods:
+          - :func:`_change_dim`: changes the dimension of a sequence.
           - :func:`_change_class`: receives a class (given when registering the sequence class) and cast the current sequence to the new class.
           - :func:`_change_from_class`: class method that receives a sequence in a different class and transform into the current class. 
           - :func:`_neg_`: implement the negation of a sequence for a given class.
@@ -293,6 +294,16 @@ class Sequence(SetMorphism):
     #############################################################################
     ## Casting methods
     #############################################################################
+    def args_to_self(self):
+        r'''
+            Method to return the arguments necessary to reproduce this sequence
+
+            This method returns a list and a dictionary of arguments that when used on 
+            ``self.__class__``, it creates an equal sequence to ``self``. It is useful to 
+            change some of the arguments or to create copies of the sequences.
+        '''
+        return [self._element], {"universe": self.universe, "dim": self.dim, "_extend_by_zero": self.__extend_by_zero}
+
     def change_universe(self, new_universe):
         r'''
             Method that change the universe of a sequence. This can help to use the same universe in different 
@@ -301,6 +312,32 @@ class Sequence(SetMorphism):
         args, kwds = self.args_to_self()
         kwds["universe"] = new_universe
         return self.__class__(*args, **kwds)
+    
+    def change_dimension(self, new_dim: int, old_dims: list[int] = None, **kwds):
+        r'''
+            Method to create an equivalent sequence to ``self`` but with more dimensions.
+
+            This method creates a copy of this sequences with several extra dimensions and 
+            giving the old dimensions a new position.
+        '''
+        if not new_dim in ZZ or new_dim < self.dim:
+            raise ValueError(f"[change_dim] Change dimension requires as new dimension an integer with value, at least, the old dimension ({self.dim})")
+        
+        if old_dims == None: old_dims = list(range(self.dim)) # old dimensions are the first new dimensions
+
+        if not isinstance(old_dims, (list, tuple)):
+            raise TypeError(f"[change_dim] The type for old dimension must be a list or tuple.")
+        elif len(old_dims) != self.dim:
+            raise TypeError(f"[change_dim] The number of old dimensions must be exact ({self.dim} in this case)")
+        elif any(nd < 0 or nd >= new_dim for nd in old_dims):
+            raise ValueError(f"[change_dim] The old dimensions must be valid new dimensions.")
+        
+        return self._change_dimension(new_dim, old_dims, **kwds)
+    
+    def _change_dimension(self, new_dim: int, old_dims: list[int], **_):
+        def new_to_old(*n):
+            return [n[i] for i in old_dims]
+        return Sequence(lambda *n : self._element(*new_to_old(*n)), universe=self.universe, dim=new_dim, _extend_by_zero=self.__extend_by_zero)
 
     def change_class(self, goal_class, **extra_info):
         r'''
@@ -873,7 +910,10 @@ class ConstantSequence(Sequence):
 
     def args_to_self(self):
         return [self.__value], {"universe": self.universe, "dim": self.dim, "_extend_by_zero": self._Sequence__extend_by_zero}
-
+    
+    def _change_dimension(self, new_dim: int, old_dims: list[int], **_):
+        return ConstantSequence(self.__value, self.universe, new_dim)
+    
     def _change_class(self, cls, **extra_info): # pylint: disable=unused-argument
         raise NotImplementedError(f"Class {cls} not recognized from a ConstantSequence")
     @classmethod

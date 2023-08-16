@@ -24,6 +24,7 @@ r'''
     class will be then created specifically for other types of examples, such as the power basis 
     `\{n^k\}`, the binomial basis `\left\{\binom{n}{k}\right\}` and falling-type basis.
 '''
+from __future__ import annotations
 
 from functools import lru_cache, reduce
 from sage.all import binomial, parent, PolynomialRing, QQ, SR, ZZ #pylint: disable=no-name-in-module
@@ -111,6 +112,31 @@ class FactorialBasis(PSBasis):
     def rho(self): return self.__rho #: Root sequence of a Factorial basis.
     @property
     def lc(self): return self.__lc #: Leading coefficient sequence of a Factorial basis.
+
+    ##################################################################################
+    ### METHODS FROM PSBASIS
+    ##################################################################################
+    def _scalar_basis(self, factor: Sequence) -> FactorialBasis:
+        r'''
+            Creates the scaled version of a :class:`FactorialBasis`.
+
+            EXAMPLES::
+
+                sage: from pseries_basis.factorial.factorial_basis_new import *
+                sage: 
+            TODO: add tests for the scalar of a Factorial Basis. Need to be tested:
+             * does it extends compatibilitities?
+             * does it extend the generic sequence?
+             * does it produced the correct output?
+             * what happen for non-hypergeometric sequences?
+        '''
+        new_universe = pushout(self.base, factor.universe)
+        quotient = factor.shift() / factor
+        output = FactorialBasis(factor*quotient, factor*quotient, universe=new_universe)
+        if self._PSBasis__original_sequence != None:
+            output._PSBasis__original_sequence = factor.change_dimension(2, [0], new_variables=["n"])*self._PSBasis__original_sequence
+        return super()._scalar_basis(factor)
+
 
     ##################################################################################
     ### TODO: def increasing_polynomial(self, *args, **kwds)
