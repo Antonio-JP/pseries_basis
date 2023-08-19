@@ -123,19 +123,46 @@ class FactorialBasis(PSBasis):
             EXAMPLES::
 
                 sage: from pseries_basis.factorial.factorial_basis_new import *
-                sage: 
-            TODO: add tests for the scalar of a Factorial Basis. Need to be tested:
-             * does it extends compatibilitities?
-             * does it extend the generic sequence?
-             * does it produced the correct output?
-             * what happen for non-hypergeometric sequences?
+                sage: from pseries_basis.sequences.examples import Factorial
+                sage: FallingFactorial.lc / BinomialBasis.lc == Factorial
+                True
+                sage: FallingFactorial.rho == BinomialBasis.rho
+                True
+                sage: BinomialBasis.scalar(Factorial) == FallingFactorial
+                True
+
+            The compatibilities from the original basis are automatically created in the 
+            scalared basis::
+
+                sage: Fac_B = BinomialBasis.scalar(Factorial)
+                sage: Fac_B.basic_compatibilities() == BinomialBasis.basic_compatibilities()
+                True
+                sage: Fac_B.compatibility("E")
+                Compatibility condition (1, 0, 1) with following coefficient matrix:
+                [1 1]
+                sage: FallingFactorial.compatibility("E")
+                Compatibility condition (1, 0, 1) with following coefficient matrix:
+                [1 1]
+                sage: Fac_B.compatibility("n")
+                Compatibility condition (0, 1, 1) with following coefficient matrix:
+                [                                    n (n + 1)*factorial(n)/factorial(n + 1)]
+                sage: FallingFactorial.compatibility("n")
+                Compatibility condition (0, 1, 1) with following coefficient matrix:
+                [k 1]
+
+            It seems that these two compatibilities differ. However, this is because while
+            extending the compatibilities from ``BinomialBasis`` to ``Fac_B``, the generic information
+            on the sequence is messed up. Let us check the equivalence of the two compatibilities::
+
+                sage: Fac_B.compatibility("n").equiv(FallingFactorial.compatibility("n"))
+                True
         '''
         new_universe = pushout(self.base, factor.universe)
         quotient = factor.shift() / factor
-        output = FactorialBasis(factor*quotient, factor*quotient, universe=new_universe)
+        output = FactorialBasis(self.ak*quotient, self.bk*quotient, universe=new_universe)
         if self._PSBasis__original_sequence != None:
             output._PSBasis__original_sequence = factor.change_dimension(2, [0], new_variables=["n"])*self._PSBasis__original_sequence
-        return super()._scalar_basis(factor)
+        return output
 
 
     ##################################################################################

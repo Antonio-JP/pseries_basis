@@ -1148,6 +1148,48 @@ class Compatibility:
             code += r"\end{array}\right."
         return code 
 
+    def equiv(self, other, bound=None) -> bool:
+        r'''
+            Check equavalence between compatibility conditions
+
+            This method defines the equivalence between two compatibility conditions.
+            Let `C_1` and `C_2` be two compatibility conditions with general data 
+            `(A_1,B_1,t_1)` and `(A_2,B_2,t_2)` and coefficients `\alpha_{b,i}(n)` and 
+            `\beta_{b,i}(n)` respectively.
+
+            * If `t_1 \neq t_2`, we say `C_1 \equiv C_2` if and only if `C_1(t) \equiv C_2(t)`,
+              where `t = \lcm(t_1,t_2)` and `C_*(t)` is the compatibility `C_*` in `t` sections 
+              (see method :func:`in_sections`)
+            * If `t_1 = t_2`, then we check the equality of 
+
+              .. MATH::
+                
+                \alpha_{b,i}(n) = \beta_{b,i}(n) \ \text{for } b=0,\ldots,t_1-1;\ i=-\max\{A_1,A_2\},\ldots,\max{B_1,B-2\};\ n=0,\ldots,\text{bound}.
+            
+              where the ``bound`` is given with the optional argument of this method. If not given, we will
+              use the default bound for almost equality of the module :mod:`~pseries_basis.sequences`.
+
+            INPUT:
+
+            * ``other``: a :class:`Compatibility` to be checked.
+            * ``bound`` (optional): bound for equality of sequences to be used.
+        '''
+        other = self.__coerce_into_compatibility__(other)
+
+        if self.t != other.t:
+            t = lcm(self.t, other.t)
+            logger.debug(f"[equiv] We need to extend to more sections ({self.t}, {other.t}) --> {t}")
+            return self.in_sections(t).equiv(other.in_sections(t))
+        ## Now we assume the sections are the same in both
+        A = max(self.A, other.A); B = max(self.B, other.B)
+        ## This loop could be Pythonize more, we keep it unrolled to keep debugging notes
+        for b in range(self.t):
+            for i in range(-A, B+1):
+                if not self[b,i].almost_equals(other[b,i], bound if bound else 10):
+                    logger.debug(f"[equiv] Found different in section {b}, coefficient {i}")
+                    return False
+        return True
+
 def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: Callable, bound: int = 100, *, _full=False):
     r'''
         Method that checks whether a basis has a particular compatibility for a given action.
