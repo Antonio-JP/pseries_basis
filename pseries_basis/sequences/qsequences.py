@@ -81,7 +81,7 @@ class QSequence(Sequence):
     
     ## Methods for the casting of sequences
     def args_to_self(self):
-        return [self._element], {"universe": self.universe, "dim": self.dim, "q": self.q, "_extend_by_zero": self._Sequence__extend_by_zero}
+        return [self._Sequence__sequence], {"universe": self.universe, "dim": self.dim, "q": self.q, "_extend_by_zero": self._Sequence__extend_by_zero}
 
     @classmethod
     def _change_from_class(cls, sequence: Sequence, **extra_info):
@@ -120,7 +120,7 @@ class QSequence(Sequence):
 
     ## Methods for operations on Sequences
     def _element(self, *indices: int):
-        return super()._element(*[self.q**i if i in ZZ else SR(self.q)**i for i in indices])
+        return super()._element(*[self.q**ZZ(i) if i in ZZ else SR(self.q)**i for i in indices])
 
     def _shift(self, *shifts):
         return QSequence(lambda *n : self._Sequence__sequence(*[self.q**shifts[i] * n[i] for i in range(self.dim)]), self.universe, dim=self.dim, q = self.q)

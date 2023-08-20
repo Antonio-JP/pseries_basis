@@ -701,6 +701,7 @@ class SievedBasis(FactorialBasis):
     def cycle(self) -> tuple[int]:
         r'''Property to get the deciding cycle of the :class:`SievedBasis`'''
         return self.__cycle
+    @property
     def nfactors(self) -> int:
         r'''
             Method to get the number of factors of the sieved basis.
@@ -715,7 +716,8 @@ class SievedBasis(FactorialBasis):
             TODO: add examples
         '''
         return len(self.factors)
-    F = nfactors() #: alias for the number of factors
+    F = nfactors #: alias for the number of factors
+    @property
     def nsections(self) -> int:
         r'''
             Method to get the number of sections of the sieved basis.
@@ -730,7 +732,7 @@ class SievedBasis(FactorialBasis):
             TODO: add examples
         '''
         return len(self.cycle)
-    m = nsections() #: alias for the number of sections in the cycle
+    m = nsections #: alias for the number of sections in the cycle
 
     # def extend_compatibility_X(self) -> TypeCompatibility:
     #     r'''

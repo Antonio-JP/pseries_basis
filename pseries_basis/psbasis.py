@@ -122,7 +122,7 @@ class PSBasis(Sequence):
         # We check the case we provide a 2-dimensional sequence
         if isinstance(sequence, Sequence) and sequence.dim == 2:
             universe = sequence.universe if universe is None else universe; or_sequence = sequence
-            sequence = lambda n : or_sequence.slicing((0,n))
+            sequence = lambda k : or_sequence.slicing((0,k))
             self.__original_sequence = or_sequence
         else:
             if universe is None:
