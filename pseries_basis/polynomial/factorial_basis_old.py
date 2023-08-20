@@ -14,7 +14,7 @@ from typing import Callable
 
 # Local imports
 from ..misc.sequences import LambdaSequence, Sequence
-from ..psbasis import TypeCompatibility, PolyBasis
+from ..psbasis_old import TypeCompatibility, PolyBasis
 
 Divisibility = tuple[int,int,Callable[[int,int,element.Element],element.Element]]
 

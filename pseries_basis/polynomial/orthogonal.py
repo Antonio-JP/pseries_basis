@@ -8,7 +8,7 @@ from sage.all import cached_method, Matrix, QQ, ZZ, lcm
 
 # Local imports
 from ..misc.ore import poly_decomposition
-from ..psbasis import PSBasis, PolyBasis
+from ..psbasis_old import PSBasis, PolyBasis
 
 class OrthogonalBasis(PolyBasis):
     r'''
@@ -873,5 +873,68 @@ class HermitePBasis(OrthogonalBasis):
 
     def _latex_(self):
         return r"\left\{He_n(%s)\right\}_{n \geq 0}" %str(self.universe.gens()[0])
+
+## Auxiliary methods to manage the dictionaries to handle the reductions
+from sage.all import PolynomialRing, FractionField
+OrthoRed_R = PolynomialRing(QQ, ['a','b','n'])
+OrthoRed_F = FractionField(OrthoRed_R)
+OrthoRed_RR = PolynomialRing(OrthoRed_F, ['x'])
+
+OrthoRed_a,OrthoRed_b,OrthoRed_n = OrthoRed_R.gens(); OrthoRed_x = OrthoRed_RR.gens()[0]
+
+def apply_op_dict(op, default=0, *dicts):
+    if(len(dicts) < 1 or any((not isinstance(el, dict)) for el in dicts)):
+        raise TypeError("Invalid arguments")
+    key_set = set(dicts[0].keys())
+    for i in range(1,len(dicts)):
+        key_set = key_set.union(dicts[i].keys())
+    return {key:op(*[el.get(key,default) for el in dicts]) for key in key_set}
+
+def OrthoRed_ssum(*summand):
+    return sum(summand)
+
+def OrthoRed_add_dicts(*dicts):
+    return apply_op_dict(OrthoRed_ssum, 0, *dicts)
+
+def OrthoRed_sub_dicts(d1, d2):
+    return OrthoRed_add_dicts(d1, apply_op_dict(lambda p: -p, 0, d2))
+
+def OrthoRed_scalar_dict(d1, factor):
+    return apply_op_dict(lambda p : p*factor, 0, d1)
+
+def OrthoRed_get_shift(dict):
+    return {k : v(**{str(OrthoRed_n):2*OrthoRed_n-k}).factor() for (k,v) in dict.items()}
+
+## Methods to reduce Jacobi polynomials
+def OrthoRed_jacobi_reduce_beta(n):
+    return {
+        n : 2*(n+OrthoRed_b+1)/(2*n+OrthoRed_a+OrthoRed_b+2), 
+        n+1 : 2*(n+1)/(2*n+OrthoRed_a+OrthoRed_b+2)
+    }, (1+OrthoRed_x)
+
+def OrthoRed_jacobi_reduce_alpha(n):
+    db,_ = OrthoRed_jacobi_reduce_beta(n)
+    da = {n : 2}
+    return OrthoRed_sub_dicts(da, db), (1-OrthoRed_x)
+
+def OrthoRed_jacobi_reduce_derivation(n):
+    da, _ = OrthoRed_jacobi_reduce_alpha(n-1)
+    d_ab = OrthoRed_add_dicts(*[OrthoRed_scalar_dict(OrthoRed_jacobi_reduce_beta(k)[0], v) for (k,v) in da.items()])
+
+    dd = OrthoRed_scalar_dict(d_ab, ((n+OrthoRed_a+OrthoRed_b+1)/2))
+    return dd, (1-OrthoRed_x**2)
+
+## Methods to reduce Gegenbauer polynomials
+def OrthoRed_gegenbauer_reduce_lambda(n):
+    return {
+        n: (n+2*OrthoRed_a)*(n+2*OrthoRed_a+1)/(4*OrthoRed_a*(n+OrthoRed_a+1)),
+        n+2: -(n+1)*(n+2)/(4*OrthoRed_a*(n+OrthoRed_a+1))
+    }, (1-OrthoRed_x**2)
+
+def OrthoRed_gegenbauer_reduce_derivation(n):
+    da, fa = OrthoRed_gegenbauer_reduce_lambda(n-1)
+
+    dd = OrthoRed_scalar_dict(da, 2*OrthoRed_a)
+    return dd, fa
 
 __all__ = ["OrthogonalBasis", "JacobiBasis", "GegenbauerBasis", "LegendreBasis", "TChebyshevBasis", "UChebyshevBasis", "LaguerreBasis", "HermiteBasis", "HermitePBasis"]

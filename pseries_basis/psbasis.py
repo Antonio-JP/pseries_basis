@@ -2,17 +2,21 @@ r'''
     Sage package for Power Series Basis.
 
     This module introduces the basic structures in Sage for computing with *Power
-    Series Basis*. We based this work in the paper :arxiv:`2202.05550`
-    by M. Petkovšek, where all definitions and proofs for the algorithms here can be found.
+    Series Basis*. We based this work in the paper :doi:`10.1016/j.jsc.2022.11.002`
+    by A. Jiménez-Pastor and M. Petkovšek, where all definitions and proofs for the algorithms 
+    can be found.
 
-    A Power Series basis is defined as a sequence `\{f_n\}_{n\in\mathbb{N}} \subset \mathbb{K}[[x]]`
-    that form a `\mathbb{K}`-basis of the whole ring of formal power series. We distinguish
-    between two basic type of basis:
+    In particular, this module allows to consider basis of formal power series subrings, i.e., 
+    sets of formal power series `f_n(x) \in \mathbb{K}[[x]]` that are `\mathbb{K}`-linearly 
+    independent.
+
+    There are two easy types of basis:
 
     * Polynomial basis: here `f_n \in \mathbb{K}[x]` with degree equal to `n`.
     * Order basis: here `ord(f_n) = n`, meaning that `f_n = x^n g_n(x)` such that `g(0) \neq 0`.
 
-    Any formal power series `g(x)` can be expressed in terms of the power series basis:
+    But this module will allow any linearly independent set of functions. Then, we will assume
+    that a formal power series `g(x)` is expressible in terms of the basis `f_n`:
 
     .. MATH::
 
@@ -22,2322 +26,1234 @@ r'''
     ring of formal power series are *compatible* with a power series basis, meaning that, 
     `L\cdot g(x) = 0` if and only if the sequence `\alpha_n` is P-recursive.
 
+    It is important to remark that this can be analogously develop for basis of sequences
+    by using the canonical bijection between formal power series and sequences:
+
+    .. MATH::
+
+        \sum_{n} \alpha_n x^n \leftrightarrow (\alpha_n)_n
+
+    For any given basis, we say that a `\mathbb{K}`-linear operator `L` is `(A,B)`-*compatible*
+    in `t` sections if, for all `n \in \mathbb{N}` and `m \in \{0,\ldots,t-1\}` we can write:
+
+    .. MATH
+
+    L f_{nt+m} = \sum_{i=-A}^B c_{m,i,n} f_{nt+m+i},
+
+    where `(c_{m,i,n})_n` are **valid** sequences, where **valid** means they are hypergeometric 
+    in some sense (either `q`-hypergeometric or normal hypergeometric). Then, if we have
+    `g(x)` an element in the spanned space by our basis with 
+
+    .. MATH 
+
+    g = \sum_k \alpha_k f_k, \qquad L \cdot g = 0,
+
+    then the sequence `(\alpha_k)_k` satisfy a set of recurrences inherited from the compatibility
+    equation of `L` for the basis.
+
     EXAMPLES::
 
-        sage: from pseries_basis import *
+        sage: from pseries_basis.psbasis_new import *
+        sage: from pseries_basis.sequences import *
+        sage: B = PSBasis(lambda k : RationalSequence(QQ[x](x**k)), QQ) # B_k(x) = x^k
+        sage: B[0]
+        Sequence over [Rational Field]: (1, 1, 1,...)
+        sage: B[1]
+        Sequence over [Rational Field]: (0, 1, 2,...)
+        sage: B[2]
+        Sequence over [Rational Field]: (0, 1, 4,...)
+        sage: B[10].generic()
+        n^10
 
-    This package includes no example since all the structures it offers are abstract, so they should
-    never be instantiated. For particular examples and test, look to the modules :mod:`~pseries_basis.factorial.factorial_basis`
-    and :mod:`~pseries_basis.factorial.product_basis`.
+    We can from this point set up the compatibilities for this basis::
+
+        sage: B.set_compatibility(
+        ....:     'x', 
+        ....:     Compatibility([[ConstantSequence(0,QQ,1), ConstantSequence(1,QQ,1)]], 0,1,1), 
+        ....:     type="any"
+        ....: ); # compatibility with x
+        sage: B.set_compatibility(
+        ....:     'Dx', 
+        ....:     Compatibility([[RationalSequence(QQ['n']('n')), ConstantSequence(0,QQ,1)]], 1,0,1), 
+        ....:     type="derivation"
+        ....: ); # compatibility with Dx
+
+    And then the compatibility conditions can be obtained for any expression involving objects called `x`
+    and `Dx`::
+
+        sage: B.is_compatible("x**2 * Dx**2 - Dx + x^3")
+        True
+        sage: B.compatibility_type("x**2 * Dx**2 - Dx + x^3")
+        "derivation"
 '''
 from __future__ import annotations
 
 import logging
 logger = logging.getLogger(__name__)
 
-from collections.abc import Sequence as SequenceType, Mapping, Callable
+from collections.abc import Callable
 from functools import reduce
-from sage.all import (ZZ, QQ, Matrix, cached_method, latex, factorial, 
-                        SR, Expression, prod, hypergeometric, lcm, cartesian_product, SR, parent,
-                        block_matrix, vector, ceil, Parent)
-from sage.matrix.matrix2 import Matrix as matrix_class #pylint: disable=no-name-in-module
-from sage.rings import ring 
-from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.symbolic.operators import add_vararg, mul_vararg
-from sage.structure import element
-from typing import Any, Collection
+from sage.algebras.free_algebra import FreeAlgebra, is_FreeAlgebra
+from sage.all import cached_method, latex, lcm, Matrix, PolynomialRing, prod, SR, ZZ #pylint: disable=no-name-in-module
+from sage.categories.pushout import pushout
+from .sequences.base import ConstantSequence, Sequence, SequenceSet
+from .sequences.element import ExpressionSequence, RationalSequence
 
-# ore_algebra imports
-from ore_algebra.ore_algebra import OreAlgebra_generic
-from ore_algebra.ore_operator import OreOperator
+class PSBasis(Sequence):
+    r'''
+        Base class for a basis of formal power series/sequences.
 
-from pseries_basis.misc.noncom_rings import OperatorAlgebra_generic, OperatorAlgebra_element
+        This class allows to represent any basis of formal power series of sequences over a 
+        SageMath field `\mathbb{K}`. In general, a basis is a sequence `f_k` indexed by
+        an natural number `k` of formal power series or sequences. Hence, this class
+        inherits from the generic sequence class in :class:`~.sequences.base.Sequence`,
+        and always provides a representation as a sequence of sequences.
 
-# imports from this package
-from .misc.ore import (get_double_recurrence_algebra, is_based_field, is_recurrence_algebra, is_qshift_algebra, 
-                    gens_recurrence_algebra, gens_qshift_algebra, eval_ore_operator, poly_decomposition, 
-                    get_rational_algebra, get_recurrence_algebra)
-from .misc.sequences import LambdaSequence, ConstantSequence, Sequence, SequenceSet
+        .. MATH::
 
-## Special types for PSBasis
-TypeCompatibility = tuple[int,int,int,Callable[[int,int,element.Element],element.Element]]
+            `\mathcal{B}: k \mapsto (\alpha_{k,n})_n`
+
+        where `f_k(x) = \sum_n \alpha_{k,n}x^n`.
+
+        This class will implement any other method for basis of formal power series related with
+        the compatibility of a sequence.
+    '''
+    def __init__(self, sequence: Callable[[int], Sequence], universe=None, *, _extend_by_zero=False):
+        # We check the case we provide a 2-dimensional sequence
+        if isinstance(sequence, Sequence) and sequence.dim == 2:
+            universe = sequence.universe if universe is None else universe; or_sequence = sequence
+            sequence = lambda n : or_sequence.slicing((0,n))
+            self.__original_sequence = or_sequence
+        else:
+            if universe is None:
+                raise ValueError(f"When argument is callable we require a universe argument for the basis.")
+            self.__original_sequence = None
+        self.__inner_universe = universe
+
+        ## Attributes for storing compatibilities
+        self.__basic_compatibilities : dict[str, Compatibility] = dict()
+        self.__homomorphisms : list[str] = list()
+        self.__derivations : list[str] = list()
+        self.__any : list[str] = list()
+        super().__init__(sequence, SequenceSet(1, universe), 1, _extend_by_zero=_extend_by_zero)
+
+    ##########################################################################################################
+    ###
+    ### PROPERTY METHODS
+    ### 
+    ##########################################################################################################
+    @property
+    def base(self):
+        return self.__inner_universe
+    
+    def change_base(self, base) -> PSBasis:
+        r'''
+            Method to compute the same basis of sequences as ``self`` with a different base ring.
+
+            This method creates a new :class:`PSBasis` that changes the ring over which the elements
+            are defined. This method does not guarantee the new basis makes real sense and it
+            may raise some errors when creating the elements of the basis.
+
+            **Overriding recommended**: this method acts as a default way of changing the base
+            ring of a :class:`PSBasis` but it may lose some information in the process. In order
+            to preserve the structure of the :class:`PSBasis`, this method should be overridden.
+
+            INPUT:
+
+            * ``base``: a new parent structure for the universe of the elements of ``self``
+
+            OUTPUT:
+
+            A equivalent basis where the elements have as common universe ``base``
+        '''
+        args, kwds = self.args_to_self()
+        kwds["universe"] = base
+        output = self.__class__(*args, **kwds)
+
+        ## Recreating the "original_sequence" part
+        if self.__original_sequence != None:
+            output._PSBasis__original_sequence = self.__original_sequence.change_universe(base)
+
+        ## Recreating the compatibilities
+        for operator in self.basic_compatibilities():
+            if not operator in output.basic_compatibilities():
+                output.set_compatibility(operator, self.compatibility(operator).change_base(base), True, self.compatibility_type(operator))
+        return output
+    
+    def _element(self, *indices: int):
+        output = super()._element(*indices)
+        return output.change_universe(self.base)
+    
+    @cached_method
+    def as_2dim(self) -> Sequence:
+        return (self.__original_sequence if self.__original_sequence != None else 
+                Sequence(lambda n,k : self(n)(k), self.base, 2, _extend_by_zero = self._Sequence__extend_by_zero))
+    
+    def generic(self, *names : str):
+        if self.__original_sequence:
+            try:
+                return self.__original_sequence.generic(*names)
+            except ValueError: 
+                pass
+        return super().generic(*names)
+    
+    ##########################################################################################################
+    ###
+    ### SEQUENCE METHODS
+    ### 
+    ##########################################################################################################
+    ### Casting methods
+    def args_to_self(self):
+        return [self.as_2dim()], {"universe":self.base, "_extend_by_zero": self._Sequence__extend_by_zero}
+        
+    def _change_class(self, cls, **extra_info): # pylint: disable=unused-argument
+        if cls != Sequence:
+            raise NotImplementedError(f"Class {cls} not recognized as {self.__class__}")
+        return Sequence(self._element, self.universe, 1, _extend_by_zero=self._Sequence__extend_by_zero)
+    
+    @classmethod
+    def _change_from_class(cls, sequence: Sequence, **extra_info): # pylint: disable=unused-argument
+        if not isinstance(ConstantSequence):
+            raise NotImplementedError(f"Class {sequence.__class__} not recognized from {cls}")
+        return PSBasis(lambda _ : sequence, sequence.universe)
+    
+    ### Arithmetic methods
+    def _neg_(self) -> PSBasis:
+        r'''
+            Addition inverse of a :class:`PSBasis`.
+
+            The compatibilities are simple inverted as well, since:
+
+            .. MATH::
+
+                L (-P_k(n)) = - L (P_k(n))
+        '''
+        output = PSBasis(lambda *n : (-1)*self._element(*n), self.universe) 
+        ## We extend compatibilities
+        for operator in self.basic_compatibilities():
+            compatibility = self.compatibility(operator)
+            A,B,t = compatibility.data()
+            ctype = self.compatibility_type(operator)
+            output.set_compatibility(operator, 
+                Compatibility([[-compatibility[b,i] for i in range(-A,B+1)] for b in range(t)], A, B, t),
+                sub=True,
+                type=ctype
+            )
+        return output
+    
+    def _final_add(self, other:PSBasis) -> PSBasis:
+        r'''
+            Addition of two :class:`PSBasis`
+            
+            **WARNING**: No compatibility is extended!
+        '''
+        return PSBasis(lambda n: self._element(n) + other._element(n), self.universe)
+    def _final_sub(self, other:PSBasis) -> PSBasis:
+        r'''
+            Difference of two :class:`PSBasis`
+            
+            **WARNING**: No compatibility is extended!
+        '''
+        return PSBasis(lambda n: self._element(n) - other._element(n), self.universe)
+    def _final_mul(self, other:PSBasis) -> PSBasis:
+        r'''
+            Hadamard product of two :class:`PSBasis`
+            
+            **WARNING**: No compatibility is extended!
+        '''
+        return PSBasis(lambda n: self._element(n)*other._element(n), self.universe)
+    def _final_div(self, _:PSBasis) -> PSBasis:
+        r'''
+            Quotient of two :class:`PSBasis`
+            
+            **WARNING**: This method is not implemented!
+        '''
+        return NotImplemented
+    def _final_mod(self, _:Sequence) -> PSBasis:
+        r'''
+            Modulus between two :class:`PSBasis`
+            
+            **WARNING**: This method is not implemented!
+        '''
+        return NotImplemented
+    def _final_floordiv(self, _:Sequence) -> PSBasis:
+        r'''
+            Exact division of two :class:`PSBasis`
+            
+            **WARNING**: This method is not implemented!
+        '''
+        return NotImplemented
+    
+    ### Other sequences operations
+    def _shift(self, *shifts):
+        shift = shifts[0] # we know the dimension is 1
+        output = PSBasis(lambda n : self._element(n + shift), self.universe)
+        for operator in self.basic_compatibilities():
+            compatibility = self.compatibility(operator)
+            ctype = self.compatibility_type(operator)
+            A,B,t = compatibility.data()
+            output.set_compatibility(operator,
+                Compatibility([[compatibility[b,i].shift(shift) for i in range(-A,B+1)] for b in range(t)], A,B,t),
+                sub=True,
+                type=ctype
+            )
+        return Sequence(lambda *n : self._element(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim)
+    ## Slicing not implemented because PSBasis have dimension 1.
+    def _subsequence(self, final_input: dict[int, Sequence]):
+        return PSBasis(lambda n : self._element(final_input[0]._element(n) if 0 in final_input else n), self.universe)
+
+    ### Creating new PSBasis by scaling its elements
+    def scalar(self, factor: Sequence) -> PSBasis:
+        r'''
+            Method to scale a :class:`PSBasis` preserving compatibilities.
+
+            This method computes a new :class:`PSBasis` structure and extends
+            when possible the compatibility conditions over ``self``. The elements
+            of the new sequence is the scaling by the sequence given in ``factor``.
+
+            This method works on two steps:
+
+            * First, we create a new :class:`PSBasis` with the corresponding elements.
+              This may differ from different classes and can be extended in the method
+              :func:`_scalar_basis`.
+            * Second, we extend te compatibilities. Since some of the compatibilities
+              can be automatically computed when creating the basis, we only extends those
+              compatibilities that are not already created.
+
+            This method exploits when possible the fact that the given factor is hypergeometric.
+            This is based in the method :func:`.sequences.base.Sequence.is_hypergeometric`. If this 
+            method succeeds, we use the rational function obtained to extend compatibilities.
+
+            INPUT:
+
+            * ``factor``: a :class:`.sequences.base.Sequence` with the scaling factor. 
+
+            OUTPUT:
+
+            A new basis with the extended compatibilities.
+
+            **WARNING**: 
+
+            This method assumes that the sequence given by ``factor`` never vanishes.
+
+            TODO: add examples.
+        '''
+        if not isinstance(factor, Sequence):
+            if factor in self.base:
+                factor = ConstantSequence(factor, self.base, 1)
+            elif factor in SR:
+                factor = SR(factor)
+                factor = ExpressionSequence(factor, factor.variables(), self.base)
+            else:
+                raise TypeError(f"The given factor must be like a sequence.")
+            
+        ## Creating the new basis object
+        new_basis = self._scalar_basis(factor)
+
+        ## Checking hypergeometric behavior
+        is_hyper, quot = factor.is_hypergeometric()
+
+        ## Extending compatibilities
+        for operator in self.basic_compatibilities():
+            if not operator in new_basis.basic_compatibilities():
+                compatibility = self.compatibility(operator)
+                A, B, t = compatibility.data()
+                
+                new_coeffs = []
+                for b in range(t):
+                    section = []
+                    for i in range(-A,B+1):
+                        if i == 0:
+                            to_mul = ConstantSequence(1, self.base, 1)
+                        if not is_hyper:
+                            to_mul = factor.linear_subsequence(0, t, b)/factor.linear_subsequence(0, t, b+i)
+                        else:
+                            if i > 0:
+                                to_mul = 1/prod((quot.linear_subsequence(0, t, b+j) for j in range(i+1)), z=ConstantSequence(1, self.base, 1))
+                            elif i < 0:
+                                to_mul = prod((quot.linear_subsequence(0, t, b+j) for j in range(-i+1, 1)), z=ConstantSequence(1, self.base, 1))
+                        section.append(compatibility[b,i] * to_mul)
+                    new_coeffs.append(section)
+                new_compatibility = Compatibility(new_coeffs, A, B, t)
+                new_basis.set_compatibility(operator, new_compatibility)
+
+        return new_basis
+
+    def _scalar_basis(self, factor: Sequence) -> PSBasis:
+        r'''
+            Method that creates a new basis scaled by a given factor.
+
+            This method assume the factor sequences is of correct format. This method can be
+            overridden for creating more specific types of basis.
+        '''
+        return PSBasis(lambda n : self._element(n)*factor(n), self.base)
+    
+    ##########################################################################################################
+    ###
+    ### INFORMATION OF THE BASIS
+    ### 
+    ##########################################################################################################
+    # @property
+    # TODO def functional_seq(self) -> Sequence
+    # TODO def functional_matrix(self, nrows: int, ncols: int = None) -> matrix_class:
+    # TODO def is_quasi_func_triangular(self) -> bool
+    # TODO def functional_to_self(self, sequence: Sequence | Collection, size: int) -> matrix_class
+    # @property
+    # TODO def evaluation_seq(self) -> Sequence
+    # TODO def evaluation_matrix(self, nrows: int, ncols: int = None) -> matrix_class:
+    # TODO def is_quasi_eval_triangular(self) -> bool
+    # TODO def evaluation_to_self(self, sequence: Sequence | Collection, size: int) -> matrix_class
+
+    ##########################################################################################################
+    ###
+    ### COMPATIBILITY METHODS
+    ### 
+    ##########################################################################################################
+    def _compatibility_from_recurrence(self, recurrence) -> Compatibility:
+        # TODO def _compatibility_from_recurrence(self, recurrence: OreOperator) -> TypeCompatibility
+        raise NotImplementedError("Method _compatibility_from_recurrence not implemented")
+    
+    def set_compatibility(self, name: str, compatibility: Compatibility, sub: bool = False, type: str = None) -> Compatibility:
+        r'''
+            Method to set a new compatibility with this :class:`PSBasis`.
+
+            This method receives a name for the operator whose compatibility will be set and a 
+            compatibility condition for this operator. This method does not check whether 
+            this compatibility is real or not and this job is left to the user. 
+
+            In general, this method is not *recommended* for users.
+
+            The compatibility condition can be given in 3 different ways:
+
+            * A :class:`Compatibility` object: it is directly stored
+            * A tuple `(A,B,\alpha)` or `(A,B,m,\alpha)`: we create a :class:`Compatibility`
+              using directly this data.
+            * An ore operator in a ring with one shift where we can read the data
+              to create a :class:`Compatibility` right from it.
+
+            If the argument ``sub`` is ``True``, we substitute the compatibility, if not, 
+            we raise a :class:`ValueError`. 
+
+            INPUT:
+
+            * ``name``: the name of the operator that we are defining as compatible.
+            * ``compatibility``: the compatibility condition to be set.
+            * ``sub``: if set to ``True``, we substitute the old compatibility with the new.
+            * ``type``: a string (or None) describing the type of the operator. It can be ``"homomorphism"``
+              or ``"derivation"``.
+
+            OUTPUT:
+
+            It will return the created compatibility condition in case of success or an error
+            if something goes wrong.
+
+            TODO: add examples
+        '''
+        if not sub and name in self.__basic_compatibilities:
+            raise ValueError(f"The operator {name} was already compatible with this basis.")
+
+        if name in self.__basic_compatibilities:
+            del self.__basic_compatibilities[name]
+            if name in self.__homomorphisms: self.__homomorphisms.remove(name)
+            elif name in self.__derivations: self.__derivations.remove(name)
+            elif name in self.__any: self.__any.remove(name)
+
+        from ore_algebra.ore_operator import OreOperator
+        if isinstance(compatibility, tuple):
+            compatibility = Compatibility(
+                compatibility[-1],                                 # \alpha
+                compatibility[0],                                  # A
+                compatibility[1],                                  # B
+                1 if len(compatibility) == 3 else compatibility[2] # t
+            )
+        elif isinstance(compatibility, OreOperator):
+            compatibility = self._compatibility_from_operator(compatibility)
+        elif not isinstance(compatibility, Compatibility):
+            raise TypeError(f"The given compatibility is not of valid type.")
+        
+        self.__basic_compatibilities[name] = compatibility
+        if type == "homomorphism": self.__homomorphisms.append(name)
+        elif type == "derivation": self.__derivations.append(name)
+        elif type == "any": self.__any.append(name)
+
+        return compatibility
+    
+    def set_homomorphism(self, name: str, compatibility: Compatibility, sub: bool = False) -> Compatibility:
+        r'''
+            See :func:`set_compatibility`. This method adds a compatibility for an homomorphism
+        '''
+        return self.set_compatibility(name, compatibility, sub, "homomorphism")
+    def set_derivation(self, name: str, compatibility: Compatibility, sub: bool = False) -> Compatibility:
+        r'''
+            See :func:`set_compatibility`. This method adds a compatibility for a derivation
+        '''
+        return self.set_compatibility(name, compatibility, sub, "derivation")
+    
+    def basic_compatibilities(self) -> list[str]:
+        r'''
+            Method that return a copy of the current basic compatibilities that exist for ``self``.
+
+            See method :func:`compatibility` for further information.
+        '''
+        return list(self.__basic_compatibilities.keys())
+    def compatible_endomorphisms(self) -> list[str]:
+        r'''
+            Method that return a copy of the current compatible homomorphisms that exist for ``self``.
+
+            See method :func:`compatibility` for further information.
+        '''
+        return self.__homomorphisms.copy()
+    def compatible_derivations(self) -> list[str]:
+        r'''
+            Method that return a copy of the current compatible derivations that exist for ``self``.
+
+            See method :func:`compatibility` for further information.
+        '''
+        return self.__derivations.copy()
+    
+    def __get_algebra(self):
+        if len(self.basic_compatibilities()) > 1:
+            return FreeAlgebra(self.base, self.basic_compatibilities())
+        else:
+            return PolynomialRing(self.base, self.basic_compatibilities())
+        
+    def __cast_to_algebra(self, operator: str):
+        from sage.misc.sage_eval import sage_eval
+        A = self.__get_algebra(); C = A
+        locals = dict()
+        while not 1 in C.gens():
+            locals.update(C.gens_dict())
+            C = C.base()
+        value = sage_eval(operator, locals=locals)
+        return A(value)
+
+    @cached_method
+    def compatibility(self, operator) -> Compatibility:
+        r'''
+            Method that returns the compatibility of a given operator with ``self``.
+
+            Check documentation of :class:`Compatibility` for further information on
+            what a compatible operator is.
+
+            INPUT:
+
+            * ``operator``: the operator that we want to compute the compatibility. It
+              can be any object that can be casted into a free algebra over the names
+              that are currently compatible with ``self``.
+
+            OUTPUT:
+
+            A :class:`Compatibility` condition for the operator. It raises en error when 
+            it is not possible to cast the operator to a compatible operator.
+            
+            INFORMATION: 
+            
+            This method is cached.
+
+            TODO: add examples
+        '''
+        # Base case when the input is the name of an operator
+        if isinstance(operator, str) and operator in self.__basic_compatibilities:
+            return self.__basic_compatibilities[operator]
+        
+        FA = self.__get_algebra()
+        operator = self.__cast_to_algebra(str(operator))
+        ## We split evaluation in cases to avoid problems with FreeAlgebra implementations
+        if is_FreeAlgebra(FA):
+            ## Special evaluation since the method in FreeAlgebra does not work
+            to_eval = [self.__basic_compatibilities[v] for v in FA.variable_names()]
+            output = sum(
+                (c*m(*to_eval) if m != 1 else Compatibility([[ConstantSequence(c, self.base, 1)]], 0,0,1) 
+                for (m,c) in [(el.monomials()[0], el.coefficients()[0]) for el in operator.terms()]),
+                Compatibility([[ConstantSequence(0, self.base, 1)]], 0,0,1)
+            )
+        else:
+            comp = next(iter(self.__basic_compatibilities.values()))
+            output = sum(c*comp**i for i,c in enumerate(operator.coefficients(False)))
+        if output in self.base: # the operator is a constant
+            return Compatibility(
+                [[ConstantSequence(self.base(operator), self.base, 1, _extend_by_zero=False)]], # coefficient #pylint: disable=not-callable
+                0,# A
+                0,# B
+                1 # t
+            )
+        return output # this is the compatibility  
+    @cached_method
+    def is_compatible(self, operator) -> bool:
+        r'''
+            Method that checks whether an object is compatible with a :class:`PSBasis`.
+
+            This method tries to create the free algebra of compatible operators and cast
+            the object ``operator`` to this ring. This is also done in the method 
+            :func:`compatibility`. The main difference is that this method do **not**
+            compute the actual compatibility. 
+
+            INPUT:
+
+            * ``operator``: an object to be checked for compatibility.
+
+            INFORMATION:
+
+            This method is cached.
+
+            OUTPUT:
+
+            A boolean value indicating if the method :func:`compatibility` will
+            return something or an error.
+
+            TODO: add examples
+        '''
+        if isinstance(operator, str) and operator in self.__basic_compatibilities:
+            return True
+                    
+        try:
+            self.__cast_to_algebra(str(operator))
+            return True
+        except:
+            return False
+        
+    @cached_method
+    def compatibility_type(self, operator) -> None | str:
+        r'''
+            Method to determine if an operator belong to a specific type.
+
+            Operators may have three different types:
+
+            * "homomorphism": it behaves nicely with the product.
+            * "derivation": it satisfies the Leibniz rule for the product.
+            * "any": an operator that can be combined for any of the two previous.
+
+            It may also have type "None", meaning we could not deduce any specific behavior.
+
+            This methods behaves similar to the methods :func:`compatibility` and 
+            :func:`is_compatible` but, contrary to method :func:`compatibility`,
+            this method do **not** compute the actual compatibility.
+
+            INPUT:
+
+            * ``operator``: the object that we want to check.
+
+            INFORMATION:
+
+            This method is cached.
+
+            OUTPUT:
+
+            Either a string in ("homomorphism", "derivation", "any") or None.
+
+            TODO: add examples
+        '''
+        if isinstance(operator, str) and operator in self.__basic_compatibilities:
+            if operator in self.__homomorphisms: return "homomorphism"
+            elif operator in self.__derivations: return "derivation"
+            elif operator in self.__any: return "any"
+            else: return None
+        
+        operator = self.__cast_to_algebra(str(operator))
+        basic_operations = [self.compatibility_type(str(v)) for v in operator.variables()]
+        output = basic_operations[0]
+        for basic in basic_operations[1:]:
+            if output is None: break
+            if basic == "homomorphism" and output in ("any", "homomorphism"): output = "homomorphism"
+            elif basic == "homomorphism": output = None
+            elif basic == "derivation" and output in ("any", "derivation"): output = "derivation"
+            elif basic == "derivation": output = None
+            elif basic is None: output = None
+            # The else case means that basic == "any", so output does not change
+        return output
+
+    ##########################################################################################################
+    ###
+    ### RECURRENCES METHODS
+    ### 
+    ##########################################################################################################
+    def _basic_recurrence(self, operator, sections : int = None):
+        ## Get the compatibility condition from the operator
+        if not isinstance(operator, Compatibility):
+            operator = self.compatibility(operator)
+        
+        ## Putting appropriate number of sections
+        if sections != None and sections > 0 and sections % operator.t == 0:
+            operator = operator.in_sections(sections)
+        
+        ## Computing the recurrence
+        if operator.t == 1: # only one sequence
+            recurrence = {-i: operator[0,i].shift(-i) for i in range(-operator.A,operator.B+1)}
+        else: # the output is a matrix of recurrences
+            recurrence = []
+            for r in range(operator.t):
+                row = []
+                for j in range(operator.t):
+                    element = dict()
+                    for i in range(-operator.A, operator.B+1):
+                        if (r-i-j)%operator.t == 0:
+                            exp = (r-i-j)//operator.t
+                            element[exp] = element.get(exp, 0) + operator[j,i].shift(exp)
+                    row.append(element)
+                recurrence.append(row)
+        return recurrence
+
+    def _process_recurrence(self, recurrence, output: str = None):
+        from pseries_basis.misc.ore import gens_double_recurrence_algebra, get_recurrence_algebra
+        if isinstance(recurrence, list): # matrix output
+            recurrence = [[self._process_recurrence(el, output if output != "ore" else "ore_double") for el in row] for row in recurrence]
+            if output == "ore_double":
+                recurrence = Matrix(recurrence)
+            elif output == "ore": # we need to clean the inverse shift globally in the whole matrix
+                OA = recurrence[0][0].parent()
+                k, S, Si, _ = gens_double_recurrence_algebra(OA)
+                D = max(max(el.polynomial().degree(Si.polynomial()) for el in row) for row in recurrence)
+
+                out_OA, (_, out_E) = get_recurrence_algebra("k", "Sk", base=OA.base())
+                ## Removing the inverse shift from all matrix entries
+                for row in recurrence:
+                    for i in range(len(row)):
+                        row[i] = sum(
+                            (((S**D * c).polynomial().coefficients()[0]) * 
+                            (out_E**(D + (m.degree(S.polynomial()) - m.degree(Si.polynomial())))))
+                            for c,m in zip(row[i].polynomial().coefficients(), row[i].polynomial().monomials())    
+                        )
+                recurrence = Matrix(recurrence)
+        else:
+            if output in ("rational", "expression"):
+                for k,v in recurrence.items():
+                    seq = ExpressionSequence(v.generic('k'), universe=v.universe, variables=['k'])
+                    if output == "rational":
+                        seq = RationalSequence(seq.generic('k'), universe=seq.universe, variables=['k'])
+                    recurrence[k] = seq
+            elif output == "expression":
+                pass
+            elif output in ("ore_double", "ore"):
+                recurrence = self._process_ore_algebra(recurrence, output == "ore_double")
+            elif output != None:
+                raise ValueError(f"Output type ({output}) not recognized")
+        return recurrence
+            
+    def _process_ore_algebra(self, recurrence, double: bool = False):
+        from .misc.ore import get_double_recurrence_algebra, get_recurrence_algebra
+        recurrence = self._process_recurrence(recurrence, "rational")
+        if len(recurrence) == 0:
+            return 0
+        el = next(iter(recurrence.values()))
+        if double:
+            OA, (_, E, Ei) = get_double_recurrence_algebra("k", "Sk", base=el.universe)
+            return sum((OA(v.generic("k"))*(E**i if i >= 0 else Ei**(-i)) for (i,v) in recurrence.items()), OA.zero())
+        else:
+            neg_power = -min(0, min(recurrence.keys()))
+            OA, (_, E) = get_recurrence_algebra("k", "Sk", base=el.universe)
+            return sum((OA(v.shift(neg_power).generic("k"))*E**(i+neg_power) for (i,v) in recurrence.items()), OA.zero())
+
+    def recurrence(self, operator, sections : int = None, output : str = "ore_double"):
+        r'''
+            Method to obtain a recurrence for a compatible operator.
+
+            Following the theory in :doi:`10.1016/j.jsc.2022.11.002`, when we have an 
+            operator `L` that is `(A,B,t)`-compatible with a basis os sequences such that
+
+            .. MATH::
+
+                L P_{kt+b} = \sum_{i=-A}^B c_{b,i}(k) P_{kt+b+i},
+
+            then the solutions `L\cdot (\sum_k a_kP_k) = 0` can be obtained from solutions to
+            `\tilde{L} \cdot a_k` where `\tilde{L}` can be automatically computed from 
+            the compatibility and the coefficients `c_{b,i}(k)`.
+
+            This method creates such recurrence (or system of recurrences) given the compatible 
+            operator.
+
+            INPUT:
+
+            * ``operator``: an object that will be fed to method :func:`compatibility`.
+            * ``sections``: indicate the number of sections that will be considered for the 
+              compatibility condition. If has to be a multiple of the default number of 
+              sections for the ``operator``.
+            * ``output``: by default the output of this method is a Laurent Polynomial in 
+              a shift operator with sequences as coefficients. This argument indicates 
+              where we should transform this output to be used later. It allow two options:
+                - "rational": force the sequence in the output to be rational sequences.
+                - "expression": force the sequence in the output to be an expression sequence.
+                - "ore_double": a Ore Algebra with two operators will be used as output.
+                  This requires the sequences are rational functions in the shift variable 
+                  and the two operators on the algebra will act as the forward and backward 
+                  shift.
+                - "ore": a Ore Algebra with just a shift will be used as output. Similar to the
+                  double case, but we remove completely the inverse shift.
+            
+            OUTPUT:
+
+            A recurrence or a matrix of recurrences as described in :doi:`10.1016/j.jsc.2022.11.002`.
+
+            TODO: add examples.
+        '''
+        recurrence = self._basic_recurrence(operator, sections)
+        recurrence = self._process_recurrence(recurrence, output)
+        return recurrence
+
+    ##########################################################################################################
+    ###
+    ### MAGIC METHODS
+    ### 
+    ##########################################################################################################
+    def __repr__(self):
+        output = f"Basis of Sequences over {self.base}"
+        try:
+            generic = self.as_2dim().generic("k","n")
+            output += f": ({generic})"
+        except ValueError:
+            try:
+                first_elements = [self(i).generic("n") for i in range(5)]
+                output += ": (" + ", ".join(str(el) for el in first_elements) + ",...)"
+            except ValueError:
+                pass
+        return output
+    
+    def _latex_(self):
+        try:
+            output = r"\left\{"
+            generic = self.as_2dim().generic("k","n")
+            output += latex(generic)
+            output += r"\right\}_{k \in \mathbb{N}}"
+        except ValueError:
+            output = r"\left\{"
+            try:
+                first_elements = [self(i).generic("n") for i in range(5)]
+                output += ", ".join(latex(el) for el in first_elements)
+                output += ",..."
+            except ValueError:
+                output += r"B_k(n)"
+            output += r"\right\}"
+
+        return output
+    
+    ##########################################################################################################
+    ###
+    ### OTHER METHODS
+    ### 
+    ##########################################################################################################
+    # TODO def system(self, operator: str | OreOperator | TypeCompatibility, sections: int = None)
+    
 class Compatibility:
     r'''
         Class representing a compatibility condition in sections.
 
-        This class compiles access methods to the compatibility conditions and general combination of these compatibilities to 
-        allow a more simple codification of some parts of this module.
+        A compatibility condition is associated to a basis of power series and with a linear operator
+        that behaves *nicely* with the basis. More precisely, if we consider the basis `(f_k)_k` and 
+        the linear operator `L`, we say that `L` is `(A,B)`-*compatible* in `t` sections with the basis if, for all 
+        `a \in \mathbb{N}` and `b \in \{0,\ldots,t-1}`:
+
+        .. MATH::
+
+            L f_{at+b} = \sum_{i=-A}^B c_{b,i,a} f_{at+b+i},
+
+        where, for fixed indices `b,i`, the element `(c_{b,i,a})_a` are *nice sequences*. In general, the niceness of the 
+        sequences `(c_{b,i,a})` required depends on the operations we pretend to apply over the compatibility.
 
         INPUT:
 
-        * ``A``: the lower bound for the compatibility
-        * ``B``: the upper bound for the compatibility
-        * ``m``: number of sections for the compatibility
-        * ``coeffs``: the object representing the coefficients. They have to be indexed with two indices (i,s) such that
-        
-        .. MATH::
+        * ``c``: coefficients of the compatibility. It must be an object that should be accessed with syntax `c[b][i]`. 
+          These objects must be sequences.
+        * ``A``: lower bound of the compatibility.
+        * ``B``: upper bound of the compatibility. 
+        * ``t``: number of sections for the compatibility.
 
-            L B_{rm + s}(n) = \sum_{i=-A}^B \text{coeffs[i,s]}(r,i) B_{rm+s+i}(n)
+        The input can be given partially or totally. The coefficients `c` are mandatory and `A` or `B` is also required.
+        The other bound and the value for `t` can be obtained from the structure of `c`, since:
 
-        * ``action``: a function that takes a sequence and return what the operator would do over that sequence. ``None`` is allowed here.
-        * ``_dependency``: indicates whether the compatibility depends on `r` or not.
+        * ``len(c) == t``
+        * ``len(c[*]) == A + B + 1``.
 
-        In general, we would like to have the coefficients only depending on `n`. The dependency on `r` will provide several issues
-        when computing with the compatibility.
+        If some of the optional arguments is given, it is used as sanity checks on the input of ``c``. If the user
+        pretend to obtain the compatibility in more sections than given with the coefficients, consider the method
+        :func:`in_sections` after the creation of the basic compatibility.
+
+        TODO: add examples from the use of :class:`PSBasis`.
     '''
-    def __init__(self, A: int, B: int, m: int, coeffs, *, action: Callable[[Sequence], Sequence] = None, action_type: str = None, _dependency: bool = False):
-        if A < 0: raise TypeError(f"The lower bound given ({A}) must be non-negative")
-        if B < 0: raise TypeError(f"The upper bound given ({B}) must be non-negative")
-        if m < 1: raise TypeError(f"The number of sections ({m}) must be positive")
-        self.__lower: int = A
-        self.__upper: int = B
-        self.__nsections: int = m
-        self.__dependency: bool = _dependency
+    def __init__(self, c, A: int = None, B: int = None, t: int = None):
+        ## Processing number of sections
+        if t is None:
+            t = len(c)
+        elif t != len(c):
+            raise TypeError(f"[compatibility] Requested compatibility in {t} sections but only provided information for {len(c)} sections")
+        if t == 0:
+            raise ValueError(f"[compatibility] Compatibility in 0 sections is not properly defined.")
+
+        ## Processing the number of elements
+        if any(len(c[i]) != len(c[0]) for i in range(t)):
+            raise TypeError(f"[compatibility] Incoherent information for compatibility: different size in each section.")
+        if A is None and B is None:
+            raise TypeError(f"[compatibility] At least `A` or `B` must be provided to a compatibility")
+        elif (not A is None) and (not B is None):
+            if (len(c[0]) != A+B+1):
+                raise ValueError(f"[compatibility] Incoherent information for compatibility: given {len(c[0])} coefficients per section, but requested a ({A},{B}) compatibility")
+        elif (not A is None):
+            B = len(c[0]) - A - 1
+        else:
+            A = len(c[0]) - B - 1
+
+        if A < 0 or B < 0:
+            raise ValueError(f"[compatibility] Incorrect value for compatibility: given `A` or `B` too big.")
         
-        self.__coeffs: dict[tuple[int,int], Sequence] = dict()
-        ## We process the coefficients
-        if isinstance(coeffs, SequenceType): # coefficients given as lists
-            # Putting as double list in case of m=1 and having a simple list
-            if m == 1 and (
-                (A + B + 1 > m and len(coeffs) == A+B+1) or # 
-                (A + B + 1 == m and not isinstance(coeffs[0], SequenceType)) # special case when 1 coefficient only is necessary with 1 section
-            ):
-                coeffs = [coeffs]
+        if any(any(not isinstance(coeff, Sequence) or coeff.dim != 1 for coeff in section) for section in c):
+            raise TypeError(f"[compatibility] coefficients mus be one-dimensional sequences")
+        
+        ## Computing a common universe for all sequences
+        self.__base = reduce(lambda p,q : pushout(p,q), [coeff.universe for section in c for coeff in section], ZZ)
 
-            if len(coeffs) != m:
-                raise TypeError(f"The coefficients with {m} sections must be a list with {m} elements.")
-            elif any(not isinstance(coeff, SequenceType) for coeff in coeffs):
-                raise TypeError(f"The coefficients with {m} sections must be a list with {m} lists.")
-            elif any(len(coeff) != A+B+1 for coeff in coeffs):
-                raise TypeError(f"The coefficients with {m} sections must be a list of {m} lists with {A+B+1} elements.")
-            else:
-                self.__coeffs.update({(i,j) : self.__process_coefficient(coeffs[i][j]) for i in range(m) for j in range(-A, B+1)})
-        elif isinstance(coeffs, Mapping):
-            self.__coeffs.update({(j,i): self.__process_coefficient(coeffs.get((j,i), ZZ(0))) for i in range(m) for j in range(-A, B+1)})
-        elif isinstance(coeffs, Callable):
-            self.__coeffs.update({(j,i): self.__process_coefficient(coeffs(j,i)) for i in range(m) for j in range(-A, B+1)})
-
-        ## Saving the arguments relating to the actual operator
-        self.__action: Callable[[Sequence], Sequence] = action
-        if self.__action != None and action_type == None:
-            raise TypeError("Required specification for the action")
-        elif self.__action != None and not action_type in ("homomorphism", "derivation", "unknown"):
-            raise TypeError("The type for the action must be either 'homomorphism', 'derivation' or 'unknown'")
-        self.__action_type: str = action_type
-
-    def __process_coefficient(self, coeff):
-        if isinstance(coeff, Sequence): # if given a sequence we check dimensions and adjust if possible
-            if self.__dependency and coeff.dim == 1:
-                coeff = LambdaSequence(lambda _, n: coeff(n), universe=coeff.universe, dim = 2, allow_sym = coeff.allow_sym)
-            elif self.__dependency and coeff.dim > 2:
-                raise TypeError(f"Obtained a sequence of dimension {coeff.dim} when only dimension 2 is allowed")
-            elif (not self.__dependency) and coeff.dim > 1:
-                raise TypeError(f"Obtained a sequence of dimension {coeff.dim} when only dimension 1 is allowed")
-        elif callable(coeff): # if callable, we assume it will work for the corresponding arguments (1 or 2)
-            if self.__dependency:
-                coeff = LambdaSequence(lambda k,n : coeff(k,n), universe= coeff(0,0), dim = 2, allow_sym = True)
-            else:
-                coeff = LambdaSequence(lambda n : coeff(n), universe= coeff(0), dim = 1, allow_sym = True)
-        else: # we assume it is a constant
-            coeff = ConstantSequence(coeff, universe = coeff.parent(), dim = 2 if self.__dependency else 1)
-        return coeff
+        ## Storing data for compatibility
+        self.__lower = A
+        self.__upper = B
+        self.__nsections = t
+        self.__data = [[coeff.change_universe(self.__base) for coeff in section] for section in c]
+        self.__cache_pow = dict()
 
     @property
-    def upper(self): return self.__upper
+    def upper(self): return self.__upper #: Property of the upper bound for the compatibility
     @property
-    def lower(self): return self.__lower
+    def lower(self): return self.__lower #: Property of the lower bound for the compatibility
     @property
-    def nsections(self): return self.__nsections
-    A = upper; B = lower; m = nsections #: aliases for some properties
+    def nsections(self): return self.__nsections #: Property of the number of sections for the compatibility
+    A = lower #: alias for the upper bound
+    B = upper #: alias for the lower bound
+    t = nsections # alias for the number of sections
 
     def data(self):
-        r'''Return the compatibility data (`A`, `B`, `m`)'''
-        return self.A, self.B, self.m
-
-    @property
-    def action(self) -> Callable[[Sequence], Sequence]: return self.__action
-    @property
-    def action_type(self): return self.__action_type
-
+        r'''Return the compatibility data (`A`, `B`, `t`)'''
+        return self.A, self.B, self.t
+    
+    def base(self):
+        r'''Return the common universe of the sequences in the compatibility coefficients'''
+        return self.__base
+    def change_base(self, new_base) -> Compatibility:
+        r'''Returns a new compatibility condition changing the universe of the sequences to a new ring'''
+        return Compatibility([[coeff.change_universe(new_base) for coeff in section] for section in self.__data], self.A, self.B, self.t)
+    
     def __getitem__(self, item):
-        if item in ZZ and self.m == 1: # only one element given
-            item = (item, 0)
-
+        r'''Given `(b,i)` returns the compatibility on the `b`-th section on the `i`-th coefficients'''
+        if item in ZZ: # only one element given
+            item = (0 if self.t == 1 else item, item if self.t == 1 else None)
+            if self.t == 1:
+                item = (0, item)
+            else:
+                item = (item, None)
+        
         if len(item) != 2:
             raise KeyError("Only tuples allowed for getting compatibility coefficients")
-        elif item[1] < 0 or item[1] >= self.m:
-            raise KeyError(f"Compatibility with {self.m} sections. Can not access section {item[0]}")
-        elif item[0] < -self.A or item[0] > self.B:
-            return self.__process_coefficient(ZZ(0))
+        elif item[0] < 0 or item[0] >= self.t:
+            raise KeyError(f"Compatibility with {self.t} sections. Can not access section {item[0]}")
+        elif item[0] is None or item[0] == slice(None,None,None): # requesting the full 
+            return self.__data[item[0]]
+        elif item[1] >= -self.A and item[1] <= self.B:
+            return self.__data[item[0]][item[1]+self.A]
         else:
-            return self.__coeffs[item]
-
+            return ConstantSequence(0, self.base(), 1)
+        
     def in_sections(self, new_sections: int) -> Compatibility:
         r'''
             Method to compute the compatibility condition with respect to more sections.
         '''
-        if new_sections % self.m != 0:
-            raise ValueError(f"Impossible to extend to {new_sections} (not a multiple of {self.m})")
+        if new_sections%self.t != 0:
+            raise ValueError(f"[compatibility] Compatibilities can only be extended when the new sections ({new_sections}) are multiple of previous sections ({self.t}).")
         
         A = self.A; B = self.B
-        a = new_sections // self.m # proportion to new sections
-        action = self.action; action_type = self.action_type
+        a = new_sections // self.t # proportion to new sections
 
-        coeffs = dict()
-        for i in range(-A, B+1):
-            for s in range(new_sections):
-                s0,s1 = ZZ(s).quo_rem(self.m)
-                coeffs[i,s] = self[i,s1].linear_subsequence(0, a, s0)
-
-        return Compatibility(A, B, new_sections, coeffs, action=action, action_type=action_type, _dependency=self.__dependency)
-
+        coeffs = []
+        for s in range(new_sections):
+            new_section = []
+            for i in range(-A, B+1):
+                s0,s1 = ZZ(s).quo_rem(self.t)
+                new_section.append(self[s1,i].subsequence((0, (a, s0))))
+            coeffs.append(new_section)
+        
+        return Compatibility(coeffs, A, B, new_sections)
 
     def add(self, other: Compatibility) -> Compatibility:
         r'''
             Method to compute the compatibility of the sum of the two compatibilities.
+
+            One of the main results in :doi:`10.1016/j.jsc.2022.11.002` is that whenever
+            a basis is compatible with two linear operators, then it is compatible with the sum of 
+            the operators. 
+
+            When we take into account the bounds of the compatibilities and the sections, the 
+            final statement is the following: let `L_1` be a `(A_1,B_1)`-compatible operator
+            in `t_1` sections and `L_2` be a `(A_2, B_2)`-compatible operator in `t_2` sections.
+            Then `L_1 + L_2` is a `(A,B)`-compatible operator in `t` sections where
+
+            * `A = \max(A_1,A_2)`,
+            * `B = \min(B_1,B_2)`,
+            * `t = \text{lcm}(t_1,t_2)`.
+
+            This method return the corresponding compatibility for the addition of two operators
+            from the compatibilities of these two operators.
+
+            INPUT:
+
+            * ``other``: a new compatibility condition that will *added* to ``self``.
+
+            OUTPUT:
+
+            A new :class:`Compatibility` for the operator obtained as the addition of the operators
+            that defined ``self`` and ``other``.
+
+            TODO: add examples
         '''
         if not isinstance(other, Compatibility):
-            try:
-                other = Compatibility(*other)
-            except:
-                raise TypeError("Require a compatibility to compute the addition")
-        elif other.m != self.m:
-            new_sections = lcm(self.m, other.m)
-            return self.in_sections(new_sections).mul(other.in_sections(new_sections))
-        elif other.__dependency != self.__dependency:
-            raise ValueError("Incompatible dimension for coefficients between compatibilities")
-        
+            raise TypeError("[comp-add] Require a compatibility to compute the addition")
+        elif self.base() != other.base():
+            R = pushout(self.base(), other.base())
+            return self.change_base(R).add(other.change_base(R))
+        elif other.t != self.t:
+            t = lcm(self.t, other.t)
+            return self.in_sections(t).add(other.in_sections(t))
+
+        ## Here we can assume that the base ring coincides and the number of sections is the same        
         ## Creating the elements for the compatibility
         A = max(self.A, other.A); B = max(self.B, other.B)
-        coeffs = {(j,i) : self[j,i] + other[j,i] for i in range(self.m) for j in range(-A, B+1)}
-
-        ## Creating the action (if possible)
-        if self.action != None and other.action != None:
-            action = lambda S : self.action(S) + other.action(S) #pylint: disable=not-callable
-            action_type = self.action_type if self.action_type == other.action_type else "unknown"
-        else:
-            action = None; action_type = None
-
-        return Compatibility(A, B, self.m, coeffs, action=action, action_type=action_type, _dependency = self.__dependency)
+        coeffs = []
+        for b in range(self.t):
+            section = []
+            for i in range(-A, B+1):
+                section.append(self[b,i] + other[b,i])
+            coeffs.append(section)
+        
+        return Compatibility(coeffs, A, B, self.t)
     
     def mul(self, other: Compatibility) -> Compatibility:
         r'''
-            Method to compute the compatibility of the composition of the two compatibilities.
+            Method to compute the compatibility of the product/composition of the two compatibilities.
+
+            One of the main results in :doi:`10.1016/j.jsc.2022.11.002` is that whenever
+            a basis is compatible with two linear operators, then it is compatible with the product
+            (i.e., the composition) of the operators. 
+
+            When we take into account the bounds of the compatibilities and the sections, the 
+            final statement is the following: let `L_1` be a `(A_1,B_1)`-compatible operator
+            in `t_1` sections and `L_2` be a `(A_2, B_2)`-compatible operator in `t_2` sections.
+            Then `L_1 + L_2` is a `(A,B)`-compatible operator in `t` sections where
+
+            * `A = A_1+A_2`,
+            * `B = B_1+B_2`,
+            * `t = \text{lcm}(t_1,t_2)`.
+
+            This method return the corresponding compatibility for the product of two operators
+            from the compatibilities of these two operators.
+
+            INPUT:
+
+            * ``other``: a new compatibility condition that will *multiplied* to ``self``.
+
+            OUTPUT:
+
+            A new :class:`Compatibility` for the operator obtained as the product of the operators
+            that defined ``self`` and ``other``.
+
+            TODO: add examples
         '''
         if not isinstance(other, Compatibility):
-            try:
-                other = Compatibility(*other)
-            except:
-                raise TypeError("Require a compatibility to compute the addition")
-        elif other.m != self.m:
-            new_sections = lcm(self.m, other.m)
-            return self.in_sections(new_sections).mul(other.in_sections(new_sections))
-        elif other.__dependency != self.__dependency:
-            raise ValueError("Incompatible dimension for coefficients between compatibilities")
+            raise TypeError("[comp-mul] Require a compatibility to compute the product")
+        elif self.base() != other.base():
+            R = pushout(self.base(), other.base())
+            return self.change_base(R).mul(other.change_base(R))
+        elif other.t != self.t:
+            t = lcm(self.t, other.t)
+            return self.in_sections(t).mul(other.in_sections(t))
 
+        ## Here we can assume that the base ring coincides and the number of sections is the same        
         ## Creating the elements for the compatibility
         A = self.A + other.A; B = self.B + other.B
-        coeffs = dict()
-        for l in range(-A, B+1):
-            for s in range(self.m):
-                if self.action_type == "homomorphism":
-                    coeffs[l,s] = sum(
-                        [self.action(other[i,s])*self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1)], #pylint: disable=not-callable
-                        ZZ(0)
-                    )
-                elif self.action_type == "derivation":
-                    coeffs[l,s] = self.action(other[l,s]) + sum(                                                             #pylint: disable=not-callable
-                        [other[i,s] * self[l-i, (s+i)%self.m].shift((s+i)//self.m, 0) for i in range(-other.A, other.B+1)],
-                        ZZ(0)  
-                    )
-
-        ## Creating the action (if possible)
-        if self.action != None and other.action != None:
-            action = lambda S : self.action(other.action(S)) # composition of the maps #pylint: disable=not-callable
-            action_type = "homomorphism" if (self.action_type == "homomorphism" and self.action_type == other.action_type) else "unknown"
-        else:
-            action = None; action_type = None
-            
-        return Compatibility(A, B, self.m, coeffs, action=action, action_type=action_type, _dependency = self.__dependency)
+        coeffs = []
+        for b in range(self.t):
+            section = []
+            for l in range(-A, B+1):
+                coeff = ConstantSequence(0, self.base(), 1)
+                for i in range(-other.A, other.B+1):
+                    s0,s1 = ZZ(b+i).quo_rem(self.t)
+                    coeff += other[b,i]*self[s1,l-i].shift(s0)
+                section.append(coeff)
+            coeffs.append(section)
+        
+        return Compatibility(coeffs, A, B, self.t)
 
     def scale(self, factor: Sequence) -> Compatibility:
-        if factor.dim != 2 and self.__dependency:
-            raise ValueError("Incompatible sequence for scale product")
-        elif factor.dim != 1 and not self.__dependency:
-            raise ValueError("Incompatible sequence for scale product")
-        
-        A = self.A; B = self.B; m = self.m
-        coeffs = {(i,s) : factor.linear_subsequence(0, m, s)*self[i,s] for i in range(-A, B+1) for s in range(m)}
-        return Compatibility(A, B, m, coeffs, action=self.action, action_type=self.action_type, _dependency = self.__dependency)
-
-class NotCompatibleError(TypeError): pass
-
-class PSBasis(Sequence):
-    r'''
-        Generic (abstract) class for a power series basis.
-        
-        Their elements must be indexed by natural numbers and ordered by
-        *degree* or *order*.
-        
-        This class **must never** be instantiated, but contains all the methods that will
-        have a common implementation for particular basis.
-
-        List of abstract methods:
-
-        * :func:`~PSBasis._element`.
-        * :func:`~PSBasis._functional_matrix`.
-    '''
-    def __init__(self, base: Parent, universe: Parent = None, degree: bool = True, var_name: str = None, **_):
-        self.__degree : bool = degree
-        self.__base : Parent = base
-        self.__compatibility : dict[str, Any] = {}
-        self.__derivations : list[str] = []
-        self.__endomorphisms : list[str] = []
-        self.__var_name : str = "x" if var_name is None else var_name
-        
-        if universe == None and degree is True:
-            universe = PolynomialRing(self.__base, self.__var_name)
-        elif universe is None:
-            universe = LambdaSequence(lambda n,k : n+k, self.base, 2, True).parent()
-        super().__init__(universe, 1)
-
-    ### Getters from the module variable as objects of the class
-    def OB(self) -> ring.Field:
-        r'''
-            Method to get the generic base ring for rational functions in `n`.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = PSBasis(QQ) # illegal building, do not use in general
-                sage: B.OB()
-                Fraction Field of Univariate Polynomial Ring in n over Rational Field
-        '''
-        return get_rational_algebra('n', base=self.base)[0]
-
-    def n(self) -> element.Element:
-        r'''
-            Method to get the generic variable `n` for the recurrences.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = PSBasis(QQ) # illegal building, do not use in general
-                sage: B.n()
-                n
-                sage: B.n().parent()
-                Fraction Field of Univariate Polynomial Ring in n over Rational Field
-        '''
-        return get_rational_algebra('n', base=self.base)[1]
-
-    def OS(self) -> OreAlgebra_generic:
-        r'''
-            Method to get the generic variable :class:`~ore_algebra.OreAlgebra` for the shift 
-            and inverse shift operators over the rational functions in `n`.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = PSBasis(QQ) # illegal building, do not use in general
-                sage: B.OS()
-                Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
-        '''
-        return get_double_recurrence_algebra("n", "Sn", rational=True, base=self.base)[0]
-
-    def OSS(self) -> OreAlgebra_generic:
-        r'''
-            Method to get the generic variable :class:`~ore_algebra.OreAlgebra` with only the direct shift 
-            over the rational functions in `n`.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = PSBasis(QQ) # illegal building, do not use in general
-                sage: B.OSS()
-                Univariate Ore algebra in Sn over Fraction Field of Univariate Polynomial Ring in n over Rational Field
-        '''
-        return get_recurrence_algebra("n", "Sn", rational=True, base=self.base)[0]
-
-    def Sn(self) -> OreOperator:
-        r'''
-            Method to get the generic variable for the direct shift operator.
-
-            This object is in the ring :func:`~PSBasis.OS`.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = PSBasis(QQ) # illegal building, do not use in general
-                sage: B.Sn()
-                Sn
-                sage: B.Sn().parent()
-                Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
-        '''
-        return self.OS().gens()[0]
-
-    def Sni(self) -> OreOperator:
-        r'''
-            Method to get the generic variable for the inverse shift operator.
-
-            This object is in the ring :func:`~PSBasis.OS`.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = PSBasis(QQ) # illegal building, do not use in general
-                sage: B.Sni()
-                Sni
-                sage: B.Sni().parent()
-                Multivariate Ore algebra in Sn, Sni over Fraction Field of Univariate Polynomial Ring in n over Rational Field
-        '''
-        return self.OS().gens()[1]
-    
-    def recurrence_vars(self) -> tuple[element.Element, OreOperator, OreOperator]:
-        r'''
-            Method that returns all the variables involved in the recurrence operators (see :func:`OS`).
-
-            This method returns the variables and generators necessary to fully describe the recurrence operators obtained
-            through the method :func:`recurrence`. The order of the output is "inner-out", meaning the first variables are 
-            the most inner variables of the structure and the last elements are the outer most variables.
-
-            For example, if ``self.OS()`` returns the ring `\mathbb{K}(a,b)[x]\langle S, S^{-1}\rangle`, then this method will
-            return `(a,b,x,S,S^{-1})`.
-        '''
-        base_gens = self.base.gens()
-        if 1 in base_gens: base_gens = [] # no real generator
-        n, Sn, Sni = self.n(), self.Sn(), self.Sni()
-        return tuple([*base_gens, n, Sn, Sni])
-
-    def is_hypergeometric(self, element: element.Element) -> bool:
-        r'''
-            Method to check if a symbolic expression is hypergeometric or not.
-
-            This method checks whether ``element`` is a symbolic expression or a function
-            with a parameter `n` that is hypergeometric. 
-
-            This method returns ``True`` or ``False`` and the quotient (if the output is hypergeometric)
-            or ``None`` otherwise.
-
-            INPUT:
-
-            * ``element``: the object that will be checked.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = BinomialBasis(); n = B.n()
-
-            Rational functions in `n` are always hypergeometric::
-
-                sage: B.is_hypergeometric(n)
-                (True, (n + 1)/n)
-                sage: B.is_hypergeometric(n^2)
-                (True, (n^2 + 2*n + 1)/n^2)
-                sage: B.is_hypergeometric(n*(n+1))
-                (True, (n + 2)/n)
-
-            But this method accepts symbolic expressions involving the factorial or the binomial
-            method of Sage and recognize the type of sequence::
-
-                sage: B.is_hypergeometric(factorial(n))
-                (True, n + 1)
-                sage: B.is_hypergeometric(hypergeometric([1,2,3],[4,5,6],n))
-                (True, (n^2 + 5*n + 6)/(n^3 + 15*n^2 + 74*n + 120))
-
-            We can also recognize any polynomial expression of hypergeometric terms::
-
-                sage: B.is_hypergeometric(n+factorial(n))
-                (True, (n^2 + 2*n + 1)/n)
-                sage: B.is_hypergeometric(hypergeometric([1,2],[],n)*(n^2-2) + factorial(n)*(n^4-1)/(n+1))
-                (True, (2*n^6 + 6*n^5 + 2*n^4 - 6*n^3 - 7*n^2 - 9*n + 2)/(n^5 - n^4 - n^3 + n^2 - 2*n + 2))
-
-            The argument for the :sageref:`functions/sage/functions/hypergeometric` and 
-            :sageref:`functions/sage/functions/other#sage.functions.other.Function_factorial`
-            has to be exactly `n` or a simple shift. Otherwise this method returns ``False``::
-
-                sage: B.is_hypergeometric(factorial(n+1))
-                (True, n + 2)
-                sage: B.is_hypergeometric(factorial(n^2))
-                (False, None)
-                sage: B.is_hypergeometric(hypergeometric([1],[2], n+2))
-                (True, 1/(n + 4))
-                sage: B.is_hypergeometric(hypergeometric([1],[2], n^2))
-                (False, None)
-
-            TODO: add a global class sequence for the sequences and then allow P-finite sequences
-            TODO: extend this method for further hypergeometric detection (if possible)
-        '''
-        from _operator import pow
-
-        # Basic case of rational functions in self.OB()
-        if(element in self.OB()):
-            element = self.OB()(element); n = self.n()
-            return True, element(n=n+1)/element(n)
-
-        # We assume now it is a symbolic expression
-        element = SR(element)
-
-        operator = element.operator()
-        if(operator is add_vararg):
-            are_hyper = [self.is_hypergeometric(el) for el in element.operands()]
-            if(any(not el[0] for el in are_hyper)):
-                return (False, None)
-            return (True, sum([el[1] for el in are_hyper], 0))
-        elif(operator is mul_vararg):
-            are_hyper = [self.is_hypergeometric(el) for el in element.operands()]
-            if(any(not el[0] for el in are_hyper)):
-                return (False, None)
-            return (True, prod([el[1] for el in are_hyper], 1))
-        elif(operator is pow):
-            base,exponent = element.operands()
-            if(exponent in ZZ):
-                is_hyper, quotient = self.is_hypergeometric(base)
-                if(is_hyper):
-                    return (is_hyper, quotient**ZZ(exponent))
-                return (False, None)
-        elif(operator is hypergeometric):
-            a, b, n = element.operands()
-            # casting a and b to lists
-            a = a.operands(); b = b.operands()
-
-            if(not n in self.OB()):
-                return (False, None)
-            n = self.OB()(n)
-            if(not self.OB()(n)-self.n() in ZZ): # the index is a rational function in `n`
-                return (False, None) # TODO: check if it is extensible
-            quotient = prod(n+el for el in a)/prod(n+el for el in b+[1])
+        if not isinstance(factor, Sequence):
             try:
-                return (True, self.OB()(str(quotient)))
-            except: 
-                return (False, None)
+                factor = ConstantSequence(factor, factor.parent(), 1)
+            except:
+                raise TypeError(f"[comp-scale] Scaling element must be a Sequence or something with a parent.")
             
-        # The operator is not a special case: we try to check by division
-        n = self.n()
-        quotient = element(n=n+1)/element(n=n)
-        if(isinstance(quotient, Expression)):
-            quotient = quotient.simplify_full()
+        if not factor.dim == 1:
+            raise TypeError(f"[comp-scale] THe scaling sequence must have dimension 1")
+        elif factor.universe != self.base():
+            R = pushout(self.base(), factor.universe)
+            return self.change_base(R).scale(factor.change_universe(R))
         
-        try:
-            return (True, self.OB()(str(quotient)))
-        except:
-            return (False, None)
-
-    def valid_factor(self, element: element.Element) -> True:
-        r'''
-            Checks whether a rational function has poles or zeros in the positive integers.
-
-            When we compute a scaling of a basis for the ring of formal power series, we 
-            should be careful that the factor (which is a sequence `\mathbb{K}^\mathbb{N}`)
-            never vanishes and it is well defined for all possible values of `n`.
-
-            This method perform that checking for a rational function (which we can explicitly
-            compute the zeros and poles). We do not need to compute the algebraic roots of the polynomial,
-            simply the rational roots (which can be done with the usual Sage algorithms).
-
-            INPUT:
-
-            * ``element``: rational function in `n` (see :func:`OB`).
-
-            OUTPUT:
-
-            This method return ``True`` if the rational function has no pole nor zero on `\mathbb{N}`.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = BinomialBasis(); n = B.n()
-                sage: B.valid_factor(n)
-                False
-                sage: B.valid_factor(n+1)
-                True
-                sage: B.valid_factor(n+1/2)
-                True
-                sage: B.valid_factor(factorial(n))
-                False
-                sage: B.valid_factor(5)
-                True
-                sage: B.valid_factor((n+1)*(n+2))
-                True
-                sage: B.valid_factor((n+1)/n)
-                False
-                sage: B.valid_factor((n+1)/(n+2))
-                True
-
-            This allow to check if a hypergeometric element is valid as a scalar product (see method :func:`is_hypergeometric`)::
-
-                sage: hyper, quotient = B.is_hypergeometric(factorial(n))
-                sage: B.valid_factor(quotient)
-                True
-                sage: hyper, quotient = B.is_hypergeometric(hypergeometric([2],[3],n))
-                sage: B.valid_factor(quotient)
-                True
-                sage: hyper, quotient = B.is_hypergeometric(hypergeometric([2,6,8,4],[3,2,4,23],n))
-                sage: quotient
-                (n^2 + 14*n + 48)/(n^3 + 27*n^2 + 95*n + 69)
-                sage: B.valid_factor(quotient)
-                True
-                sage: hyper, quotient = B.is_hypergeometric(hypergeometric([-2,6],[],n))
-                sage: B.valid_factor(quotient)
-                False
-        '''
-        if isinstance(element, Sequence) and element.allow_sym:
-            element = element(self.n())
-        if(not element in self.OB()):
-            return False
-        element = self.OB()(element)
-
-        ## We check the denominator never vanishes on positive integers
-        if(any((m >= 0 and m in ZZ) for m in [root[0] for root in element.denominator().roots()])):
-            return False
-
-        ## We check the numerator never vanishes on the positive integers
-        if(any((m >= 0 and m in ZZ) for m in [root[0] for root in element.numerator().roots()])):
-            return False
-            
-        return True
-
-    def extended_quo_rem(self, n: element.Element, k: element.Element) -> tuple[element.Element, element.Element]:
-        r'''
-            Extended version of quo_rem that works also for for rational functions.
-
-            This method extends the functionality of quo_rem for rational functions and takes
-            care of the different types the input may have.
-
-            This method returns a tuple `(r,s)` such that `n = rk + s` and `s < k`.
-
-            INPUT:
-
-            * ``n``: value to compute quo_rem
-            * ``k``: integer number for computing the quo_rem
-
-            TODO: add examples
-        '''
-        ## Checking the input
-        if(not k in ZZ):
-            raise TypeError("The divisor must be an integer")
-        k = ZZ(k)
-        
-        if(n in ZZ):
-            return ZZ(n).quo_rem(k)
-        
-        elif(n in self.OB()):
-            if(n.denominator() != 1):
-                raise TypeError("The value of `n` can not be quo_rem by %d" %k)
-            n = n.numerator().change_ring(ZZ); var = self.n()
-            q = sum(n[i]//k * var**i for i in range(n.degree()+1))
-            r = sum(n[i]%k * var**i for i in range(n.degree()+1))
-
-            if(not r in ZZ):
-                raise ValueError("The quo_rem procedure fail to get a valid remainder")
-            r = ZZ(r)
-            if(r < 0): # in case Sage does something weird and return a negative remainder
-                q -= 1
-                r += k
-            return (q,r)
-        
-        raise NotImplementedError("quo_rem not implemented for %s" %type(n))
-
-    ### BASIC METHODS
-    @property
-    def base(self) -> ring.Ring:
-        return self.__base
-
-    @property
-    def var_name(self) -> str:
-        return self.__var_name
-
-    def change_base(self, base : Parent) -> PSBasis:
-        r'''
-            Method to change the base ring to consider the coefficients.
-
-            This method allows to change the base ring (see input ``base`` in :class:`PSBasis` for further information).
-        '''
-        raise NotImplementedError(f"Method `change_base` not implemented for {self.__class__}")
-
-    def by_degree(self) -> bool:
-        r'''
-            Getter for the type of ordering of the basis.
-            
-            Return ``True`` if the `n`-th element of the basis is a polynomial of degree `n`.
-        '''
-        return self.__degree
-    
-    def by_order(self) -> bool:
-        r'''
-            Getter for the type of ordering of the basis.
-            
-            Return ``True`` if the `n`-th element of the basis is a power series of order `n`.
-        '''
-        return (not self.__degree)
-
-    @property
-    def functional_seq(self) -> Sequence:
-        r'''
-            Method to get the functional sequence of the basis.
-
-            A :class:`PSBasis` can be seen as a sequence of functions or polynomials. However, these
-            functions and polynomials are sequences by themselves. In fact, a :class:`PSBasis` is 
-            a basis of the ring of formal power series which, at the same time, is a basis of the 
-            ring of sequences. 
-
-            However, the relation between the sequences and the formal power series is not unique:
-
-            * We can consider the formal power series `f(x) = \sum_n a_n x^n`, then we have the 
-              natural (also called functional) sequence `(a_n)_n`.
-            * We can consider formal power series as functions `f: \mathbb{K} \rightarrow \mathbb{K},
-              and (if convergent) we can define the (evaluation) sequence `(f(n))_n`.
-
-            This method returns a bi-indexed sequence that allows to obtain the functional sequences
-            of this basis.
-        '''
-        raise NotImplementedError("Method functional_seq must be implemented in each subclass of PSBasis")
-
-    def functional_matrix(self, nrows: int, ncols: int = None) -> matrix_class:
-        r'''
-            Method to get a matrix representation of the basis.
-
-            This method returns a matrix `\tilde{M} = (m_{i,j})` with ``nrows`` rows and
-            ``ncols`` columns such that `m_{i,j} = [x^j]f_i(x)`, where `f_i(x)` is 
-            the `i`-th element of ``self``.
-
-            This is the upper-left part of the matrix `M` that represent, by rows,
-            the elements of this basis in terms of the canonical basis of the formal
-            power series ring (`\{1,x,x^2,\ldots\}`). Hence, if we have an element 
-            `y(x) \in \mathbb{K}[[x]]` with:
-
-            .. MATH::
-
-                y(x) = \sum_{n\geq 0} y_n x^n = \sum_{n\geq 0} c_n f_n(x),
-
-            then the infinite vectors `\mathbf{y}` and `\mathbf{c}` satisfies:
-
-            .. MATH::
-
-                \mathbf{y} = \mathbf{c} M
-
-            INPUT:
-
-            * ``nrows``: number of rows of the final matrix
-            * ``ncols``: number of columns of the final matrix. If ``None`` is given, we
-              will automatically return the square matrix with size given by ``nrows``.
-        '''
-        ## Checking the arguments
-        if(not ((nrows in ZZ) and nrows > 0)):
-            raise ValueError("The number of rows must be a positive integer")
-        if(ncols is None):
-            ncols = nrows
-        elif(not ((ncols in ZZ) and ncols > 0)):
-                raise ValueError("The number of columns must be a positive integer")
-
-        return Matrix([[self.functional_seq(i,j) for j in range(ncols)] for i in range(nrows)])
-
-    def is_quasi_func_triangular(self) -> bool:
-        r'''
-            Method to check whether a basis is quasi-triangular or not as a functional basis.
-
-            A basis `\mathcal{B} = \{f_n(x)\}_n` is a functional *quasi-triangular* if its 
-            functional matrix representation `M = \left(m_{n,k}\right)_{n,k \geq 0}` (see 
-            :func:`functional_matrix`) is *quasi-upper triangular*, i.e.,
-            there is a strictly monotonic function `I: \mathbb{N} \rightarrow \mathbb{N}` such that
-
-            * For all `k \in \mathbb{N}`, and `m > I(k)`, `m_{n,k} =0`, i.e., `x^k` divides `f_n(x)`.
-            * For all `k \in \mathbb{N}`, `m_{I(k),k} \neq 0`, i.e., `x^k` does not divide `f_{I(k)}(x)`.
-
-            This property will allow to transform the initial conditions from the canonical basis
-            of formal power series (`\{1,x,x^2,\ldots\}`) to the initial conditions of the expansion
-            over ``self``.
-        '''
-        return False
-
-    def functional_to_self(self, sequence: Sequence | Collection, size: int) -> matrix_class:
-        r'''
-            Matrix to convert a sequence from the canonical basis of `\mathbb{K}[[x]]` to ``self``.
-
-            Let `y(x) = \sum_{n\geq 0} y_n x^n` be a formal power series. Since ``self`` represents another 
-            basis of the formal power series ring, then `y(x)` can be expressed in terms of the elements
-            of ``self``, i.e., `y(x) = \sum_{n\geq 0} c_n f_n(x)` where `f_n(x)` is the `n`-th term of this basis.
-
-            This method allows to obtain the first terms of this expansion (as many as given in ``size``) 
-            for the formal power series `y(x)` where the first elements are given by ``sequence``. 
-
-            Using the basis matrix `M` (see :func:`functional_matrix`), this computation is straightforward, since
-
-            .. MATH::
-
-                y = c M.
-
-            INPUT:
-
-            * ``sequence``: indexable object with *enough* information to compute the result, representing the first
-              terms of the sequence `(y_0, y_1, \ldots)`.
-            * ``size``: number of elements of the sequence `(c_0, c_1,\ldots)` computed in this method.
-
-            OUTPUT:
-
-            The tuple `(c_0, \ldots, c_{k})` where `k` is given by ``size-1``.
-
-            TODO: add Examples and tests
-        '''
-        if not (self.is_quasi_func_triangular()): 
-            raise ValueError("We require 'functional_matrix' to be quasi-upper triangular.")
-
-        M = self.functional_matrix(size)
-        if M.is_triangular("upper"):
-            return tuple([el for el in M.solve_left(vector(sequence[:size]))])
-        raise NotImplementedError("The pure quasi-triangular case not implemented yet.")
-
-    @property
-    def evaluation_seq(self) -> Sequence:
-        r'''
-            Method to get the functional sequence of the basis.
-
-            A :class:`PSBasis` can be seen as a sequence of functions or polynomials. However, these
-            functions and polynomials are sequences by themselves. In fact, a :class:`PSBasis` is 
-            a basis of the ring of formal power series which, at the same time, is a basis of the 
-            ring of sequences. 
-
-            However, the relation between the sequences and the formal power series is not unique:
-
-            * We can consider the formal power series `f(x) = \sum_n a_n x^n`, then we have the 
-              natural (also called functional) sequence `(a_n)_n`.
-            * We can consider formal power series as functions `f: \mathbb{K} \rightarrow \mathbb{K},
-              and (if convergent) we can define the (evaluation) sequence `(f(n))_n`.
-
-            This method returns a bi-indexed sequence that allows to obtain the evaluation sequences
-            of this basis.
-        '''
-        raise NotImplementedError("Method evaluation_seq must be implemented in each subclass of PSBasis")
-
-    def evaluation_matrix(self, nrows: int, ncols: int = None) -> matrix_class:
-        r'''
-            Method to get a matrix representation of the basis.
-
-            This method returns a matrix `\tilde{M} = (m_{i,j})` with ``nrows`` rows and
-            ``ncols`` columns such that `m_{i,j} = f_i(j)`, where `f_i(x)` is 
-            the `i`-th element of ``self``.
-
-            This is the upper-left part of the matrix `M` that represent, by rows,
-            the images of this basis in the natural numbers. This is specially useful when
-            considering recurrences since, if we have an element 
-            `y(x) \in \mathbb{K}[[x]]` with `y(n) = y_n` and:
-
-            .. MATH::
-
-                y(x) = \sum_{n\geq 0} c_n f_n(x),
-
-            then the infinite vectors `\mathbf{y}` and `\mathbf{c}` satisfies:
-
-            .. MATH::
-
-                \mathbf{y} = \mathbf{c} M
-
-            INPUT:
-
-            * ``nrows``: number of rows of the final matrix
-            * ``ncols``: number of columns of the final matrix. If ``None`` is given, we
-              will automatically return the square matrix with size given by ``nrows``.
-        '''
-        ## Checking the arguments
-        if(not ((nrows in ZZ) and nrows > 0)):
-            raise ValueError("The number of rows must be a positive integer")
-        if(ncols is None):
-            ncols = nrows
-        elif(not ((ncols in ZZ) and ncols > 0)):
-                raise ValueError("The number of columns must be a positive integer")
-
-        return Matrix([[self.evaluation_seq(i,j) for j in range(ncols)] for i in range(nrows)])
-
-    def is_quasi_eval_triangular(self) -> bool:
-        r'''
-            Method to check whether a basis is quasi-triangular or not as an evaluation basis.
-
-            A basis `\mathcal{B} = \{f_n(x)\}_n` is an evaluation *quasi-triangular* if its 
-            evaluation matrix representation `M = \left(m_{n,k}\right)_{n,k \geq 0}` (see 
-            :func:`evaluation_matrix`) is *quasi-upper triangular*, i.e.,
-            there is a strictly monotonic function `I: \mathbb{N} \rightarrow \mathbb{N}` such that
-
-            * For all `k \in \mathbb{N}`, and `m > I(k)`, `m_{n,k} =0`, i.e., `k` is a zero of `f_n(x)`.
-            * For all `k \in \mathbb{N}`, `m_{I(k),k} \neq 0`, i.e., `k` is not a zero of `f_{I(k)}(x)`.
-
-            This property will allow to transform the initial conditions from a recurrence defined 
-            by the evaluation at the natural numbers to the initial conditions of the expansion
-            over ``self``.
-
-            In :arxiv:`2202.05550`, this concept is equivalent to the definition of a *quasi-triangular* basis
-            in the case of factorial bases.
-        '''
-        return False
-
-    def evaluation_to_self(self, sequence: Sequence | Collection, size: int) -> matrix_class:
-        r'''
-            Matrix to convert a sequence from the evaluation basis of `\mathbb{K}[[x]]` to ``self``.
-
-            Let `y(x) = \sum_{n\geq 0} c_n f_n(x)` be a formal power series where `f_n(x)` is the `n`-th term of this basis.
-            If well defined, the values `y_n = y(n)` defined a new sequence of numbers.
-
-            This method allows to obtain the first terms of the `\mathbf{c}` expansion (as many as given in ``size``) 
-            for the formal power series `y(x)` where the first evaluations `y_n` are given by ``sequence``. 
-
-            Using the evaluation matrix `M` (see :func:`evaluation_matrix`), this computation is straightforward, since
-
-            .. MATH::
-
-                y = c M.
-
-            INPUT:
-
-            * ``sequence``: indexable object with *enough* information to compute the result, representing the first
-              terms of the sequence `(y_0, y_1, \ldots)`.
-            * ``size``: number of elements of the sequence `(c_0, c_1,\ldots)` computed in this method.
-
-            OUTPUT:
-
-            The tuple `(c_0, \ldots, c_{k})` where `k` is given by ``size-1``.
-
-            TODO: add Examples and tests
-        '''
-        if not (self.is_quasi_eval_triangular()): 
-            raise ValueError("We require 'evaluation_matrix' to be quasi-upper triangular.")
-
-        M = self.evaluation_matrix(size)
-        if M.is_triangular("upper"):
-            return tuple([el for el in M.solve_left(vector(sequence[:size]))])
-        raise NotImplementedError("The pure quasi-triangular case not implemented yet.")
-
-    ### AUXILIARY METHODS
-    def simplify_operator(self,operator: OreOperator) -> OreOperator:
-        r'''
-            Method to reduce operators with ``Sn`` and ``Sni``.
-
-            The operators we handle will have two shifts in the variable `n`: the direct shift (`\sigma: n \mapsto n+1`)
-            and the inverse shift (`\sigma^{-1}: n \mapsto n-1`). These two shifts are represented in our system with the 
-            operators ``Sn`` and ``Sni`` respectively.
-
-            However, the computations with the package ``ore_algebra`` do not take care automatically of the obvious cancellation
-            between these two operators: `\sigma \sigma^{-1} = \sigma^{-1}\sigma = id`. This method performs this cancellation
-            in all terms that have the two operators involved and returns a reduced version of the input.
-
-            INPUT:
-
-            * ``operator``: an operator involving ``Sn`` and ``Sni``.
-
-            OUTPUT:
-            
-            A reduced but equivalent version of ``operator`` such that the monomials involved in the reduced version only have
-            ``Sn`` or ``Sni``, but never mixed. 
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = PSBasis(QQ) # illegal build just for examples
-                sage: Sn = B.Sn(); Sni = B.Sni()
-                sage: Sn*Sni
-                Sn*Sni
-                sage: Sni*Sn
-                Sn*Sni
-                sage: B.simplify_operator(Sn*Sni)
-                1
-                sage: B.simplify_operator(Sni*Sn)
-                1
-                sage: B.simplify_operator(Sni*Sn^2 - 3*Sni^2*Sn^3 + Sn)
-                -Sn
-        '''
-        if(element.is_Matrix(operator)):
-            base = operator.parent().base(); n = operator.nrows()
-            return Matrix(base, [[self.simplify_operator(operator.coefficient((i,j))) for j in range(n)] for i in range(n)])
-        
-        return self._simplify_operator(operator)
-
-    def _simplify_operator(self, operator: OreOperator) -> OreOperator:
-        r'''
-            Method that actually simplifies the operator. This removes inverses operators and ensures all
-            the variables appear in desirable order.
-        '''
-        if isinstance(self.OS(), OreAlgebra_generic) and operator in self.OS():
-            operator = self.OS()(str(operator))
-            Sn = self.Sn(); Sni = self.Sni()
-
-            poly = operator.polynomial()
-            monomials = poly.monomials()
-            coefficients = poly.coefficients()
-            result = operator.parent().zero()
-
-            for i in range(len(monomials)):
-                d1,d2 = monomials[i].degrees()
-                if(d1 > d2):
-                    result += coefficients[i]*Sn**(d1-d2)
-                elif(d2 > d1):
-                    result += coefficients[i]*Sni**(d2-d1)
-                else:
-                    result += coefficients[i]
-            return result
-        elif isinstance(self.OS(), OperatorAlgebra_generic) and operator in self.OS():
-            return operator.canonical()
+        ## Here we can assume that the base ring coincides 
+        return self.mul(Compatibility([[factor]], 0, 0, 1))
+
+    def __coerce_into_compatibility__(self, other) -> Compatibility:
+        if isinstance(other, Compatibility):
+            return other
         else:
-            raise NotImplementedError(f"Impossible to simplify {operator} (type={operator.__class__})")
-
-    def remove_Sni(self, operator: OreOperator) -> OreOperator:
-        r'''
-            Method to remove ``Sni`` from an operator. 
-
-            This method allows to compute an equivalent operator but without inverse shifts. This
-            can be helpful to compute a holonomic operator and apply methods from the package
-            :mod:`ore_algebra` to manipulate it.
-
-            We are usually interested in sequences such that when we apply an operator 
-            `L \in \mathbb{K}(n)[\sigma,\sigma^{-1}]` we obtain zero. In this sense, we can always
-            find an operator `\tilde{L} \in \mathbb{K}(n)[\sigma]` that also annihilates the same object.
-
-            This method transform an operator with both direct and inverse shift to another operator
-            only with direct shifts such that if the original operator annihilates an object, then
-            the transformed operator also annihilates it.
-
-            This elimination is the multiplication by ``Sn`` to the highest power of the simplified form
-            of the input. This cancels all the appearances of ``Sni`` and only ``Sn`` remains. Since this is
-            a left multiplication, the annihilator space only increases, hence obtaining the desired property.
-
-            INPUT:
-
-            * ``operator``: and operators involving ``Sn`` and ``Sni`` (i.e, in the ring returned by
-              the method :func:`~PSBasis.OS`)
-
-            OUTPUT:
-
-            An operator that annihilates all the objects annihilated by ``operator`` that belong to the ring
-            returned by :func:`~PSBasis.OSS`.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = PSBasis(QQ) # do not do this in your code
-                sage: Sn = B.Sn(); Sni = B.Sni()
-                sage: B.remove_Sni(Sni)
-                1
-                sage: B.remove_Sni(Sni + 2 + Sn)
-                Sn^2 + 2*Sn + 1
-        '''
-        Sni = self.Sni(); Sn = self.Sn()
-        if(element.is_Matrix(operator)):
-            d = max(max(el.degree(self.Sni()) for el in row) for row in operator)
-            return Matrix(self.OSS(), [[self.simplify_operator((Sn**d)*el) for el in row] for row in operator])
-
-        d = operator.degree(Sni)
-        return self.OSS()(self.simplify_operator((Sn**d)*operator))
-    
-    ### COMPATIBILITY RELATED METHODS
-    def _compatibility_from_recurrence(self, recurrence: OreOperator) -> TypeCompatibility:
-        r'''
-            Method to obtain the compatibility condition from a recurrence equivalent.
-
-            This method allows the user (for compatibilities in 1 section) to provide the 
-            recurrence equation associated directly. This method can be overridden if the meaning
-            of the recurrences involved changes.
-
-            INPUT:
-
-            * ``recurrence``: an element in ``self.OS()`` simplified. 
-
-            OUTPUT:
-
-            A tuple `(A,B,m,\alpha_{i,j,k})` with the compatibility condition from the recurrence
-            (see the output of :func:`compatibility` for further information).
-        '''
-        Sn = self.Sn(); Sni = self.Sni(); n = self.n()
-        A = recurrence.degree(Sn); B = recurrence.degree(Sni); recurrence = recurrence.polynomial()
-        alpha = ([self.OB()(recurrence.coefficient({Sn:i}))(n=n-i) for i in range(A, 0, -1)] + 
-                [self.OB()(recurrence.constant_coefficient())] + 
-                [self.OB()(recurrence.coefficient({Sni:i}))(n=n+i) for i in range(1, B+1)])
-        return (ZZ(A), ZZ(B), ZZ(1), lambda _, j, k: alpha[j+A](n=k))
-
-    def set_compatibility(self, name: str, trans: OreOperator | TypeCompatibility, sub: bool = False, type: None | str = None):
-        r'''
-            Method to set a new compatibility operator.
-
-            This method sets a new compatibility condition for an operator given 
-            by ``name``. The compatibility condition must be given as a tuple
-            `(A, B, m, \alpha_{i,j,k})` where `A` is the lower bound for the compatibility,
-            `B` is the upper bound for the compatibility and `m` is the number of sections
-            for the compatibility. In this way, we have tht the operator `L` defined by ``name``
-            satisfies:
-
-            .. MATH::
-
-                L \cdot b_{km+r} = \sum_{i=-A}^B \alpha_{r, i, k} b_{km+r+j}
-
-            See :arxiv:`2202.05550` for further information about the
-            definition of a compatible operator.
-            
-            INPUT:
-            
-            * ``name``: the operator we want to set the compatibility. It can be the
-              name for any generator in the *ore_algebra* package or the generator
-              itself.
-            * ``trans``: a tuple ``(A, B, m, alpha)`` where ``alpha`` must be a function with 
-              three parameters:
-
-                  * ``i``: a positive integer smaller than `m`.
-                  * ``j``: an integer between `-A` and `B`.
-                  * ``k``: an element of :func:`OB`.
-
-              This parameter can also be an operator is :func:`OS`. Then the compatibility
-              is of 1 section and we can compute explicitly the values of `A`, `B` and the
-              `\alpha_{i,j,k}`.
-            * ``sub`` (optional): if set to ``True``, the compatibility rule for ``name``
-              will be updated even if the operator was already compatible.
-            * ``type`` (optional): if set to ``"endo"`` or ``"der"``, we assume the operator given in 
-              ``name`` is either a endomorphism or derivation.
-        '''
-        name = str(name)
-        
-        if(name in self.__compatibility and (not sub)):
-            print(f"The operator {name} is already compatible with this basis -- no changes are done")
-            return
-        
-        if(isinstance(trans, tuple)):
-            if(len(trans) != 4):
-                raise ValueError("The operator given has not the appropriate format: not a triplet")
-            A, B, m, alpha = trans
-            if((not A in ZZ) or A < 0):
-                raise ValueError(f"The lower bound parameter is not valid: {A}")
-            if((not B in ZZ) or B < 0):
-                raise ValueError(f"The upper bound parameter is not valid: {B}")
-            if((not m in ZZ) or m < 1):
-                raise ValueError(f"The number of sections is not valid: {m}")
-
-            # TODO: how to check the alpha?
-            self.__compatibility[name] = (ZZ(A),ZZ(B),ZZ(m),alpha)
-        elif(trans in self.OS()):
-            self.__compatibility[name] = self._compatibility_from_recurrence(self.simplify_operator(trans))
-
-        if type in ("endo", "der"):
-            if name in self.__derivations:
-                self.__derivations.remove(name)
-            elif name in self.__endomorphisms:
-                self.__endomorphisms.remove(name)
-
-            if type == "endo": self.__endomorphisms.append(name)
-            if type == "der": self.__derivations.append(name)
-
-    def set_endomorphism(self, name: str, trans: OreOperator | TypeCompatibility, sub: bool = False):
-        r'''
-            Method to set a new compatibility operator for an endomorphism.
-
-            This method sets a new compatibility condition for an operator given 
-            by ``name`` (see :func:`set_compatibility`). We assume the name 
-            is for an endomorphism, i.e., let `\varphi` be the operator represented by ``name``. 
-            Then for all `a,b in \mathbb{K}[[x]]`, it holds
-
-            .. MATH::
-
-                \varphi(ab) = \varphi(a) \varphi(b)
-            
-            INPUT: see input in :func:`set_compatibility`.
-        '''
-        self.set_compatibility(name, trans, sub, "endo")
-
-    def set_derivation(self, name: str, trans: OreOperator | TypeCompatibility, sub: bool = False):
-        r'''
-            Method to set a new compatibility operator for a derivation.
-
-            This method sets a new compatibility condition for an operator given 
-            by ``name`` (see :func:`set_compatibility`). We assume the name 
-            is for a derivation, i.e., let `\partial` be the operator represented by ``name``. 
-            Then for all `a,b in \mathbb{K}[[x]]`, it holds
-
-            .. MATH::
-
-                \partial(ab) = \partial(a)b +  a\partial(b)
-            
-            INPUT: see input in :func:`set_compatibility`.
-        '''
-        self.set_compatibility(name, trans, sub, "der")
-
-    @cached_method
-    def get_lower_bound(self, operator: str | OreOperator) -> int:
-        r'''
-            Method to get the lower bound compatibility for an operator.
-            
-            This method returns the minimal index for the compatibility property
-            for a particular operator. In the notation of the paper
-            :arxiv:`2202.05550`, for a `(A,B)`-compatible operator,
-            this lower bound corresponds to the value of `A`.
-            
-            INPUT:
-
-            * ``operator``: the operator we want to check. It can be the
-              name for any generator in the ``ore_algebra`` package or the generator
-              itself.
-                
-            WARNING:
-            
-            * The case when the compatibility rule is a matrix is not implemented.
-        '''
-        ## Case of the name
-        compatibility = self.recurrence(operator)
-        
-        if(element.is_Matrix(compatibility)):
-            return self.compatibility(operator)[0]
-            
-        return compatibility.degree(self.Sn())
-    
-    @cached_method
-    def get_upper_bound(self, operator: str | OreOperator) -> int:
-        r'''
-            Method to get the upper bound compatibility for an operator.
-            
-            This method returns the maximal index for the compatibility property
-            for a particular operator. In the notation of the paper
-            :arxiv:`2202.05550`, for a `(A,B)`-compatible operator,
-            this lower bound corresponds to the value of `B`.
-            
-            INPUT:
-
-            * ``operator``: the operator we want to check. It can be the
-              name for any generator in the ``ore_algebra`` package or the generator
-              itself.
-                
-            WARNING:
-                
-            * The case when the compatibility rule is a matrix is not implemented.
-        '''
-        compatibility = self.recurrence(operator)
-        
-        if(element.is_Matrix(compatibility)):
-            return self.compatibility(operator)[0]
-            
-        return compatibility.degree(self.Sni())
-        
-    def compatible_operators(self) -> Collection[str]:
-        r'''
-            Method that returns a list with the compatible operators stored in the dictionary.
-
-            This method allows the user to know the names of the basic compatible operators with this 
-            basis. Any polynomial built on these operators will be valid for the method :func:`recurrence`.
-
-            OUTPUT:
-
-            Return the key set of the dictionary of compatibilities. This set will be composed of the names of 
-            the compatible operators with ``self``.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: BinomialBasis().compatible_operators()
-                dict_keys(['x', 'Et', 'E'])
-                sage: PowerBasis().compatible_operators()
-                dict_keys(['x', 'Id', 'Dx'])
-                sage: HermiteBasis().compatible_operators()
-                dict_keys(['x', 'Dx'])
-                sage: B = FallingBasis(1,2,3)
-                sage: B.compatible_operators()
-                dict_keys(['x', 'E3'])
-                
-            This output gets updated when we add new compatibilities
-                
-                sage: B.set_compatibility('s', 1)
-                sage: B.compatible_operators()
-                dict_keys(['x', 'E3', 's'])
-        '''
-        return self.__compatibility.keys()
-
-    def compatible_endomorphisms(self) -> Collection[str]:
-        r'''
-            Method to get the registered endomorphisms compatible with ``self``.
-        '''
-        return self.__endomorphisms
-
-    def compatible_derivations(self) -> Collection[str]:
-        r'''
-            Method to get the registered derivations compatible with ``self``.
-        '''
-        return self.__derivations
-
-    def has_compatibility(self, operator: str | OreOperator) -> bool:
-        r'''
-            Method to know if an operator has compatibility with this basis.
-
-            This method checks whether the operator given has a compatibility or not.
-
-            INPUT:
-
-            * ``operator``: the operator we want to know if it is compatible or not.
-              It can be a string or an object that will be transformed into a string
-              to check if the compatibility is included.
-
-            OUTPUT:
-
-            ``True`` if the given operator is compatible and ``False`` otherwise.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: BinomialBasis().has_compatibility('x')
-                True
-                sage: BinomialBasis().has_compatibility('E')
-                True
-                sage: BinomialBasis().has_compatibility('Id')
-                False
-                sage: PowerBasis().has_compatibility('Id')
-                True
-                sage: HermiteBasis().has_compatibility('Dx')
-                True
-                sage: B = FallingBasis(1,2,3)
-                sage: B.has_compatibility('E3')
-                True
-                
-            This output gets updated when we add new compatibilities::
-                
-                sage: B.has_compatibility('s')
-                False
-                sage: B.set_compatibility('s', 1)
-                sage: B.has_compatibility('s')
-                True
-        '''
-        return str(operator) in self.__compatibility
-
-    def compatibility_type(self, operator: str | OreOperator) -> None | str:
-        r'''
-            Method to know if an operator has compatibility of a specific type.
-
-            This method checks whether the operator given has a compatibility of
-            endomorphism type or derivation type.
-
-            INPUT:
-
-            * ``operator``: the operator we want to know if it is compatible or not.
-              It can be a string or an object that will be transformed into a string
-              to check if the compatibility is included.
-
-            OUTPUT:
-
-            ``"endo"`` if the given operator is considered an endomorphism, ``"der"``
-            if it is considered a derivation and ``None`` otherwise.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: BinomialBasis().compatibility_type('x')
-                sage: BinomialBasis().compatibility_type('E')
-                'endo'
-                sage: BinomialBasis().compatibility_type('Id')
-                Traceback (most recent call last):
-                ...
-                NotCompatibleError: operator Id is not compatible with this basis
-                sage: PowerBasis().compatibility_type('Id')
-                'endo'
-                sage: HermiteBasis().compatibility_type('Dx')
-                'der'
-                sage: B = FallingBasis(1,2,3)
-                sage: B.compatibility_type('E3')
-                'endo'
-                
-            This output gets updated when we add new compatibilities::
-                
-                sage: B.compatibility_type('s')
-                Traceback (most recent call last):
-                ...
-                NotCompatibleError: operator s is not compatible with this basis
-                sage: B.set_compatibility('s', 1)
-                sage: B.compatibility_type('s')
-                sage: B.set_endomorphism('t', 10)
-                sage: B.compatibility_type('t')
-                'endo'
-        '''
-        operator = str(operator)
-        if not self.has_compatibility(operator):
-            raise NotCompatibleError(f"operator {operator} is not compatible with this basis")
-        if operator in self.__derivations:
-            return "der"
-        elif operator in self.__endomorphisms:
-            return "endo"
-        else:
-            return None
-        
-    def compatibility(self, operator: str | OreOperator) -> TypeCompatibility:
-        r'''
-            Method to get the compatibility condition for an operator.
-
-            This method returns the tuple `(A, B, m, \alpha_{i,j,k})` that defines
-            the compatibility condition for the operator `L` defined by ``operator``.
-            this compatibility has to be stored already (see method :func:`set_compatibility`).
-
-            INPUT:
-
-            * ``operator``: string or a polynomial (either a proper polynomial or an operator in an *ore_algebra*)
-              that is compatible with ``self``. If it is not a string, we cast it.
-
-            OUTPUT:
-
-            A compatibility tuple `(A, B, m, \alpha_{i,j}(k))` such that, for all `n = km+r` it holds:
-
-            .. MATH::
-
-                `L \cdot b_n = \sum_{j=-A, B} \alpha_{r,j}(k) b_{n+j}`.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: B = BinomialBasis(); n = B.n()
-                sage: a,b,m,alpha = B.compatibility(x)
-                sage: a,b,m
-                (0, 1, 1)
-                sage: alpha(0,0,n), alpha(0,1,n)
-                (n, n + 1)
-                sage: a,b,m,alpha = B.compatibility(x^2)
-                sage: a,b,m
-                (0, 2, 1)
-                sage: alpha(0,0,n), alpha(0,1,n), alpha(0,2,n)
-                (n^2, 2*n^2 + 3*n + 1, n^2 + 3*n + 2)
-
-            The method :func:`~pseries_basis.psbasis.check_compatibility` can check that these tuples are
-            correct for the first terms of the basis::
-
-                sage: x = B.universe.gens()[0]
-                sage: check_compatibility(B, B.compatibility(2*x^2 + 3), lambda p :(2*x^2 + 3)*p)
-                True
-
-            The Binomial basis is also compatible with the shift operator `E: x \mapsto x + 1`. We can 
-            also get the compatibility of that operator by name::
-
-                sage: a,b,m,alpha = B.compatibility('E')
-                sage: a,b,m
-                (1, 0, 1)
-                sage: alpha(0,-1,n), alpha(0,0,n)
-                (1, 1)
-
-            But we can also use any operator in the :class:`OreAlgebra` representing the operators
-            generated by `E` and `x`::
-
-                sage: from ore_algebra import OreAlgebra
-                sage: R = QQ[x]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))
-                sage: a,b,m,alpha = B.compatibility(E)
-                sage: (a,b,m) == (1,0,1)
-                True
-                sage: alpha(0,-1,n), alpha(0,0,n)
-                (1, 1)
-                sage: a,b,m,alpha = B.compatibility(x*E + x^2 + 3)
-                sage: a,b,m
-                (1, 2, 1)
-                sage: alpha(0,-1,n), alpha(0,0,n), alpha(0,1,n), alpha(0,2,n)
-                (n - 1, n^2 + 2*n + 3, 2*n^2 + 4*n + 2, n^2 + 3*n + 2)
-                sage: check_compatibility(B, x*E + x^2 + 3, lambda p :x*p(x=x+1)+(x^2+3)*p)
-                True
-
-            This method also allows to get compatibility in different sections::
-
-                sage: P = ProductBasis([B,B])
-                sage: a,b,m,alpha = P.compatibility('E')
-                sage: a,b,m
-                (2, 0, 2)
-                sage: P.compatibility_matrix('E')[-1]
-                [                1                 2                 1]
-                [        n/(n + 1) (2*n + 1)/(n + 1)                 1]
-                sage: a,b,m,alpha = P.compatibility(3)
-                sage: a,b,m
-                (0, 0, 1)
-                sage: alpha(0,0,n)
-                3
-                sage: a,b,m,alpha = P.compatibility(x*E + x^2 + 3)
-                sage: a,b,m
-                (2, 2, 2)
-                sage: P.compatibility_matrix(x*E + x^2 + 3)[-1]
-                [              n - 1             3*n - 2       n^2 + 3*n + 3     2*n^2 + 3*n + 1       n^2 + 2*n + 1]
-                [  (n^2 - n)/(n + 1) (3*n^2 + n)/(n + 1)       n^2 + 3*n + 4     2*n^2 + 4*n + 2       n^2 + 3*n + 2]
-                sage: check_compatibility(B, x*E + x^2 + 3, lambda p :x*p(x=x+1)+(x^2+3)*p, bound=50)
-                True
-
-        '''
-        if(not str(operator) in self.__compatibility):
-            if(operator in self.OB().base_ring()):
-                self.__compatibility[str(operator)] = (0,0,1,lambda i,j,k : self.OB()(operator) if (i==j and i==0) else self.OB().zero())
-            elif(not type(operator) == str):
-                if(parent(operator) is SR):
-                    if(any(not operator.is_polynomial(v) for v in operator.variables())):
-                        raise NotCompatibleError("The symbolic expression %s can not be casted into a polynomial" %operator)
-                    operator = operator.polynomial(self.OB().base_ring())
-                elif(isinstance(operator, OreOperator)):
-                    operator = operator.polynomial()
-                
-                ## At this point, operator should be a polynomial, which have the flattening morphism
-                try: 
-                    operator = operator.parent().flattening_morphism()(operator) # case of iterated polynomial rings
-                except AttributeError: 
-                    raise NotCompatibleError("The input %s is not a polynomial" %operator)
-
-                # now the coefficients are constants
-                coeffs = operator.coefficients()
-                mons = operator.monomials()
-
-                ## NOT UNICITY IN SAGE FOR UNIVARIATE POLYNOMIALS
-                ## The order of monomials and coefficients in univariate polynomials are different. That is why
-                ## we need to consider that special case and treat it apart:
-                from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
-                if(is_PolynomialRing(operator.parent())):
-                    mons.reverse() # just inverting the order of one of the list is enough
-
-                if(len(mons) == 1): # monomial case
-                    m = mons[0]; c = coeffs[0]
-                    g = [g for g in operator.parent().gens() if g in operator.variables()]
-                    if(len(g) == 0): # the monomial 1
-                        comps = [(0,0,1,lambda i,j,k : 1)]
-                    elif(len(g) == 1): # monomial with 1 variable
-                        d = operator.degree()
-                        if(d == 1 and c == 1): # no compatibility found
-                            raise NotCompatibleError("The input %s is not compatible with this basis" %operator)
-                        comps = d*[self.compatibility(g[0])]
-                    else: # monomial with several variables 
-                        comps = [self.compatibility(v**m.degree(v)) for v in g] 
-
-                    A,B,m,alphas = reduce(lambda comp1, comp2 : self.__prod2_case(comp1, comp2), comps[::-1])
-                    self.__compatibility[str(operator)] = (A,B,m,lambda i,j,k : c*alphas(i,j,k))
-                else:
-                    comps = [self.compatibility(m) for m in mons]
-                    t = lcm(comps[i][2] for i in range(len(mons)))
-                    comps = [self.compatibility_sections(m, t) for m in mons]
-                    
-                    A = max(comps[i][0] for i in range(len(mons)))
-                    B = max(comps[i][1] for i in range(len(mons)))
-                    def __sum_case(i,j,k):
-                        return sum([coeffs[l]*comps[l][3](i,j,k) if (j >= -comps[l][0] and j <= comps[l][1]) else 0 for l in range(len(mons))])
-                    self.__compatibility[str(operator)] = (A,B,t,__sum_case)
+            return Compatibility([[ConstantSequence(other,self.base(),1)]], 0,0,1)
+
+    def __add__(self, other) -> Compatibility:
+        return self.add(self.__coerce_into_compatibility__(other))
+    def __radd__(self, other) -> Compatibility:
+        return self.__coerce_into_compatibility__(other).add(self)
+    def __mul__(self, other) -> Compatibility:
+        return self.mul(self.__coerce_into_compatibility__(other))
+    def __rmul__(self, other) -> Compatibility:
+        return self.__coerce_into_compatibility__(other).mul(self)
+    def __pow__(self, other) -> Compatibility:
+        if not other in ZZ or other < 0:
+            raise TypeError(f"[compatibility] Power only valid for natural numbers")
+        if not other in self.__cache_pow:
+            if other == 0:
+                self.__cache_pow[other] = Compatibility([[ConstantSequence(1, self.base())]], 0,0,1)
+            elif other == 1:
+                self.__cache_pow[other] = self
             else:
-                raise NotCompatibleError("The operator %s is not compatible with %s" %(operator, self))
-        return self.__compatibility[str(operator)]
-
-    def __prod2_case(self, comp1, comp2):
-        A1, B1, t1, alphas = comp1 # last one
-        A2, B2, t2, betas = comp2 # second last one
-        A = (A1+A2); B = (B1+B2); m = lcm(t1,t2)
-        m1 = m//t1; m2 = m//t2
-        def __aux_prod2_case(r,l,k):
-            r0,r1 = self.extended_quo_rem(r, t1)
-            r2,r3 = list(zip(*[self.extended_quo_rem(r+i, t2) for i in range(-A1,B1+1)]))
-
-            return sum(
-                alphas(r1,i,k*m1+r0)*betas(r3[i+A1],j,k*m2+r2[i+A1]) 
-                for (i,j) in cartesian_product([range(-A1,B1+1),range(-A2,B2+1)])
-                if(i+j == l))
-        return (A,B,m,__aux_prod2_case)
-
-    def compatibility_matrix(self, operator: str | OreOperator, sections: int = None) -> matrix_class:
-        r'''
-            Method to get the compatibility condition in matrix form
-
-            This method is equivalent to the method :func:`compatibility`
-            but instead of returning the coefficients `\alpha_{i,j}(n)` in 
-            a method format, it plugs the value `n` and builds a matrix
-            of size `i\times j`.
-
-            This method requires that the compatibility condition can be written
-            with a generic formula. See method :func:`compatibility` for a further
-            description on compatibilities conditions and tests.
-
-            INPUT:
-
-            * ``operator``: operator `L` we want to compute the compatibility matrix.
-            * ``sections``: optional argument (``None`` by default). If different than
-              ``None``, we force that the compatibility is given in a particular number of sections.
-
-            OUTPUT:
-
-            A tuple `(A,B,M)` where `A` and `B` are the compatibility bounds (see output of 
-            :func:`compatibility`) and `M` is a matrix of size `(m\times(A+B+1))` such that
-            for all `n = km + r`:
-
-            .. MATH::
-            
-            L\cdot P_n(x) = \sum_{i=-A}^B m_{r,A+i}(k)P_{n+i}
-
-            TODO: add examples
-        '''
-        if(sections is None):
-            a,b,m,alpha = self.compatibility(operator)
-        else:
-            a,b,m,alpha = self.compatibility_sections(operator, sections)
-            
-        return (a,b,Matrix([[alpha(i,j,self.n()) for j in range(-a,b+1)] for i in range(m)]))
-
-    def _recurrence_from_compatibility(self, compatibility: TypeCompatibility) -> OreOperator:
-        r'''
-            Method that returns the recurrence from a compatibility condition.
-
-            This is the "basic" method for recurrences. Other recurrences (built from polynomials or similar) use this 
-            basic method. Hence, for changing the method to compute the recurrence from the compatibility condition, 
-            this is the method to change.
-        '''
-        if not isinstance(compatibility, (list, tuple)) or len(compatibility) != 4:
-            raise TypeError("The compatibility condition is not valid")
-
-        A,B,m,alpha = compatibility
-        ## We do the transformation
-        Sn = self.Sn(); Sni = self.Sni(); n = self.n()
-        def SN(index):
-            if(index == 0):
-                return 1
-            elif(index > 0):
-                return Sn**index
-            else:
-                return Sni**(-index)
-        
-        # We have to distinguish between m = 1 and m > 1
-        if(m == 1): # we return an operator
-            recurrence = sum(alpha(0,i,n-i)*SN(-i) for i in range(-A,B+1))
-            output = self.simplify_operator(recurrence)
-        elif(m > 1):
-            output = Matrix(
-                [
-                    [self.simplify_operator(sum(
-                        alpha(j,i,self.n()+(r-i-j)//m)*SN((r-i-j)//m)
-                        for i in range(-A,B+1) if ((r-i-j)%m == 0)
-                    )) for j in range(m)
-                    ] for r in range(m)
-                ])
-        else:
-            raise TypeError("The number of sections must be a positive integer")
-        return output
-
-    def recurrence(self, operator: str | OreOperator | TypeCompatibility, sections: int = None, cleaned: bool = False) -> OreOperator | matrix_class:
-        r'''
-            Method to get the recurrence for a compatible operator.
-            
-            This method returns the recurrence equation induced for a compatible operator. 
-            In :arxiv:`2202.05550` this compatibility
-            is shown to be an algebra isomorphism, so we can compute the compatibility
-            final sequence operator using the ``ore_algebra`` package and a plain 
-            substitution.
-            
-            INPUT:
-
-            * ``operator``: the operator we want to get the compatibility. It has to be the
-              name for any generator in an ``ore_algebra`` package or the generator
-              itself.
-            * ``sections``: number of desired sections for the recurrence compatibility.
-              The output will be then a square matrix of this size. If ``None`` is given,
-              the default recurrence is returned.
-
-            OUTPUT:
-
-            An operator in the algebra returned by :func:`OS` that represents the compatibility
-            condition of ``operator`` with the basis ``self``.
-
-            If ``sections`` is a positive integer greater than 1, then a matrix of that size
-            is returned.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-                sage: P = PowerBasis()
-                sage: P.recurrence('x')
-                Sni
-                sage: P.recurrence('Dx')
-                (n + 1)*Sn
-                sage: P11 = PowerBasis(1,1)
-                sage: P11.recurrence('x')
-                Sni - 1
-                sage: P11.recurrence('Id')
-                1
-                sage: P11.recurrence('Dx')
-                (n + 1)*Sn
-                sage: B = BinomialBasis()
-                sage: B.recurrence('x')
-                n*Sni + n
-                sage: B.recurrence('E')
-                Sn + 1
-                sage: H = HermiteBasis()
-                sage: H.recurrence('x')
-                (n + 1)*Sn + 1/2*Sni
-                sage: H.recurrence('Dx')
-                (2*n + 2)*Sn
-
-            We can also use the operators from :class:`ore_algebra.OreAlgebra` to get the compatibility. Here
-            we see some examples extracted from Example 25 in :arxiv:`2202.05550`::
-
-                sage: from pseries_basis.misc.ore import get_recurrence_algebra
-                sage: OE, (x,E) = get_recurrence_algebra("x", "E", rational=False)
-                sage: example25_1 = E - 3; B.recurrence(example25_1)
-                Sn - 2
-                sage: example25_2 = E^2 - 2*E + 1; B.recurrence(example25_2)
-                Sn^2
-                sage: example25_3 = E^2 - E - 1; B.recurrence(example25_3)
-                Sn^2 + Sn - 1
-                sage: example25_4 = E - (x+1); B.recurrence(example25_4)
-                Sn + (-n)*Sni + (-n)
-                sage: example25_5 = E^3 - (x^2+6*x+10)*E^2 + (x+2)*(2*x+5)*E-(x+1)*(x+2)
-                sage: B.recurrence(example25_5)
-                Sn^3 + (-n^2 - 6*n - 7)*Sn^2 + (-2*n^2 - 8*n - 7)*Sn + (-n^2 - 2*n - 1)
-        '''
-        if not isinstance(operator, (tuple, str)): # the input is a polynomial
-            ## Trying to get a polynomial from the input
-            if(operator in self.OB().base_ring()):
-                return self.OS()(operator)
-            elif(operator.parent() is SR): # case of symbolic expression
-                if(any(not operator.is_polynomial(v) for v in operator.variables())):
-                    raise NotCompatibleError("The symbolic expression %s is not a polynomial" %operator)
-                operator = operator.polynomial(self.OB().base_ring())
-                recurrences = {str(v): self.recurrence(str(v), sections) for v in operator.variables()}
-                output = self.simplify_operator(operator(**recurrences))
-            elif(isinstance(operator, OreOperator)): # case of ore_algebra operator
-                mons, coeffs = poly_decomposition(operator.polynomial())
-                # checking the type of coefficients and computing the final coefficients
-                if operator.parent().base().gens()[0] != 1:
-                    base_ring = operator.parent().base().base_ring()
-                    rec_coeffs = {str(v): self.recurrence(str(v), sections) for v in operator.parent().base().gens()}
-                    if is_based_field(operator.parent()):
-                        if any(element.is_Matrix(v) for v in rec_coeffs.values()):
-                            if any(not c.denominator() in self.OS().base().base_ring() for c in coeffs):
-                                raise NotCompatibleError("TypeCompatibility by sections when having denominators")
-                            coeffs = [(1/self.OS().base().base_ring()(str(c.denominator()))) * c.numerator()(**rec_coeffs) for c in coeffs]
-                        else:
-                            coeffs = [c.numerator()(**rec_coeffs)*(1/self.OS().base()(str(c.denominator()(**rec_coeffs)))) for c in coeffs]            
-                    else:
-                        coeffs = [c(**rec_coeffs) for c in coeffs]
-                else:
-                    base_ring = operator.parent().base()
-                # computing the monomials
-                rec_mons = {str(v): self.recurrence(str(v), sections) for v in operator.parent().gens()}
-                mons = [m.change_ring(base_ring)(**rec_mons) for m in mons]
-                # computing the final recurrence operator
-                output = self.simplify_operator(sum(coeffs[i]*mons[i] for i in range(len(mons))))
-            elif(isinstance(operator, OperatorAlgebra_element)): # case of an Operator algebra
-                rec_mons = {str(v) : self.recurrence(str(v), sections) for v in operator.variables()}
-                logger.warning(f"The coefficients of {operator} are not been converted using compatibilities -- Not yet implemented")
-                output = self.simplify_operator(
-                    sum(
-                        coeff*operator.parent()(mon)(**rec_mons).canonical() 
-                        for mon, coeff in operator.monomial_coefficients().items()
-                    ))
-            else:
-                try:
-                    poly = operator.parent().flattening_morphism()(operator)
-                except AttributeError: # we have no polynomial
-                    raise NotCompatibleError("The input %s is not a polynomial" %operator)
-                ## getting the recurrence for each generator
-                recurrences = {str(v): self.recurrence(str(v), sections) for v in poly.variables()}
-                output = self.simplify_operator(poly(**recurrences))
-        else: # the input is a name or a compatibility condition
-            if(isinstance(operator, str)): # getting the compatibility condition for the str case
-                operator = self.compatibility(operator)
-         
-            
-            ## Now we check the sections argument
-            if(sections != None):
-                operator = self.compatibility_sections(operator, sections)
-                
-            output = self._recurrence_from_compatibility(operator)
-
-        ## Cleaning the output if required
-        if cleaned:
-            if element.is_Matrix(output): # case for several sections
-                pass # TODO: implement this simplification --> remove Sni for rows and also denominators for rows
-            else: # case with one operator
-                output = self.remove_Sni(output) # we remove the inverse shift
-                # we clean denominators
-                _, coeffs = poly_decomposition(output.polynomial())
-                to_mult = lcm([el.denominator() for el in coeffs])
-                output = (to_mult * output).change_ring(self.OS().base().base())
-
-        return output
-
-    def recurrence_orig(self, operator: str | OreOperator | TypeCompatibility) -> OreOperator:
-        r'''
-            Method to get the recurrence for a compatible operator.
-
-            This method computes a recurrence operator associated with a compatible operator with this basis
-            (see :func:`recurrence`). There are cases where the original operator was also a recurrence
-            operator. In these cases, we are able to repeat the process of compatibility over and over.
-
-            This method transforms the output of :func:`recurrence` so this iterative behavior can be done.
-
-            INPUT:
-
-            * ``operator``: the linear recurrence to check for compatibility.
-
-            OUTPUT: 
-
-            A new operator in the same ring as ``operator`` representing the associated recurrence with the 
-            compatibility conditions w.r.t. ``self``.
-
-            EXAMPLES::
-
-                sage: from pseries_basis import *
-
-            TODO: Add examples and tests for this method
-        '''
-        if is_recurrence_algebra(operator.parent()):
-            gens_getter = gens_recurrence_algebra
-        elif is_qshift_algebra(operator.parent()):
-            gens_getter = gens_qshift_algebra
-        else:
-            raise TypeError(f"The iterative construction not implemented for [{operator.parent()}]")
-
-        comp = self.recurrence(operator, cleaned=True)
-        if element.is_Matrix(comp):
-            # TODO: check whether this make sense or not
-            raise NotImplementedError("The compatibility has sections. Unable to go back to original ring")
-
-        x,E,_ = gens_getter(operator.parent())
-        return eval_ore_operator(comp, operator.parent(), Sn = E, n = x, Sni = 1)
-
-    def system(self, operator: str | OreOperator | TypeCompatibility, sections: int = None):
-        r'''
-            Method to get a first order recurrence system associated with an operator.
-
-            Using the method :func:`recurrence`, we can obtain a matrix `R(L)` of linear recurrence operators
-            such that, for any solution to `L\cdot y = 0` where `y = \sum_{n\geq 0} c_n b_n` (where `b_n` are
-            the elements of this basis), then:
-
-            .. MATH::
-
-                R(L) \begin{pmatrix}c_{km}\\c_{km+1}\\\vdots\\c_{km+m-1}\end{pmatrix} = 0.
-
-            This is a linear system of recurrence equations involving the sections of `(c_n)_n`. Hence, 
-            we ca obtain a first order recurrence equation associated with this system. This method
-            computes (if possible) a matrix `A` with size `pm` such that
-
-            .. MATH::
-
-                A \begin{pmatrix}c_{km}\\c_{km+1}\\vdots\\c_{(k+p)m+m-1\end{pmatrix} = 
-                \begin{pmatrix}c_{km+1}\\c_{km+2}\\vdots\\c_{(k+p)m+m\end{pmatrix}
-
-            The study of this system may help understanding the final interlacing solution to the original
-            equation `L\cdot y = 0`.
-
-            INPUT:
-
-            Same input as the method :func:`recurrence`.
-
-            OUTPUT:
-
-            The matrix `A` described above.
-
-            TODO: add examples and tests.
-        '''
-        Sn = self.Sn(); Sni = self.Sni()
-        R = self.recurrence(operator, sections)
-        m = R.ncols()
-        ## R is now the recursion matrix of size ``sections x sections``.
-        ## We extract the matrices depending on the coefficient of the corresponding `Sn` and `Sni`
-        dSn = 0
-        dSni = 0
-        for i in range(m):
-            for j in range(m):
-                el = R.coefficient((i,j))
-                if(dSn < el.degree(Sn)):
-                    dSn = el.degree(Sn)
-                if(dSni < el.degree(Sni)):
-                    dSni = el.degree(Sni)
-        matrices = {}
-
-        from sage.rings.polynomial.polydict import ETuple #pylint: disable=no-name-in-module
-        for k in range(dSn+1): # getting the positive shift matrices
-            matrices[k] = Matrix(self.OB(), 
-            [[R.coefficient((i,j)).dict().get(ETuple((k,0)), 0) for j in range(m)] 
-            for i in range(m)])
-        for k in range(1, dSni+1): # getting the negative shift matrices
-            matrices[-k] = Matrix(self.OB(), 
-            [[R.coefficient((i,j)).dict().get(ETuple((0,k)), 0) for j in range(m)] 
-            for i in range(m)])
-
-        matrices = [matrices[i] for i in range(-dSni, dSn+1)] # putting matrices in list format
-
-        ## Removing the Sni factor
-        n = self.n()
-        matrices = [Matrix(self.OB(), [[el(n=n+dSni) for el in row] for row in matrix]) for matrix in matrices]
-
-        ## Checking invertibility of leading coefficient
-        if(matrices[-1].determinant() == 0):
-            raise ValueError("The leading matrix is not invertible")
-        inverse_lc = matrices[-1].inverse()
-        matrices = [inverse_lc*el for el in matrices]
-        rows = []
-        for i in range(len(matrices)-2):
-            rows += [(i+1)*[0] + [1] + (len(matrices)-i-3)*[0]]
-        rows += [-matrices[:-1]]
-        return block_matrix(self.OB(), rows)
-
-    @cached_method
-    def compatibility_sections(self, compatibility: str | OreOperator | TypeCompatibility, sections : int) -> TypeCompatibility:
-        r'''
-            Compute an extension of a compatibility for larger amount of sections.
-            
-            This method takes a compatibility input (i.e., a compatible operator or the 
-            tuple `(A,B,m,alpha_{i,j,k})` representing the compatibility) and returns a 
-            new tuple `(A,B,M,\tilde{\alpha}_{i,j,k})` where `M` is the desired number
-            of final sections.
-            
-            INPUT:
-
-            * ``compatibility``: here we need either an operator (or a valid input for
-              :func:`compatibility`) or a tuple with four entries `(A, B, m, \alpha_{i,j,k})`
-              where the last entry is a function that takes three arguments:
-
-                  * ``i``: an integer from `0` up to `m-1`.
-                  * ``j``: an integer from `-A` up to `B`.
-                  * ``k``: an element of :func:`OB` to index the coefficient.
-                  
-            * ``sections``: the value for the new number of sections `M`.
-
-            OUTPUT:
-
-            A tuple `(A,B,M,\tilde{\alpha}_{i,j,k})` representing the same compatibility
-            but for a new number of sections `M`.
-
-            TODO: add examples
-        '''
-        ## Considering the case of an operator
-        if(not type(compatibility) in (tuple, list)):
-            compatibility = self.compatibility(compatibility)
-
-        ## Checking the input
-        if(len(compatibility) != 4):
-            raise TypeError("The input must a tuple with 3 elements")
-        A,B,m,alpha = compatibility
-
-        if((not sections in ZZ) or sections <= 0):
-            raise ValueError("The number of sections must be a positive integer (got %s)" %sections)
-        elif(sections%m != 0):
-            raise ValueError("The number of sections must be a multiple of the compatibility size of the operator")
-        elif((not A in ZZ) or A < 0):
-            raise ValueError("The upper bound condition is not valid")
-        elif((not B in ZZ) or B < 0):
-            raise ValueError("The lower bound condition is not valid")
-
-        l = sections//m # the extension factor of the compatibility
-        new_alpha = lambda i,j,k : alpha(i%m, j, l*k + i//m)
-        return (A, B, sections, new_alpha)
-    
-    @cached_method
-    def compatibility_coefficient(self, operator: str | OreOperator) -> Callable:
-        r'''
-            Method to get the compatibility coefficient.
-            
-            Following :arxiv:`2202.05550`, an operator `L` is
-            `(A,B)`-compatible if there are some `\alpha_{n,i}` such that for all `n = kr + j`
-
-            .. MATH::
-
-                L \cdot b_n = \sum_{i=-A}^B \alpha_{r,i}(k)b_{n+i}.
-            
-            This method returns, for the given operator, a function with 3 parameters
-            `(i,j,n)` representing the element `\alpha_{i,j}(n)`.
-            
-            INPUT:
-
-            * ``operator``: the operator we want to get the compatibility. It can be the
-              name for any generator in an ``ore_algebra`` or the generator itself.
-                
-            OUTPUT:
-
-            The coefficients `\alpha_{i,j}(n)` for the operator in ``operator`` as a function
-            with three parameters `(i,j,n)`.
-        '''
-        return self.compatibility(operator)[3]
-
-    def scalar(self, factor: element.Element) -> PSBasis:
-        r'''
-            Method to create an equivalent basis built by multiplying by a sequence of constants.
-
-            It is clear that if we compute the Hadamard product of a basis and a sequence
-            of constants, we obtain a basis of the ring of formal power series. This 
-            new basis carry over all the compatibilities of the old basis with small modifications.
-
-            INPUT:
-
-            * ``factor``: rational function in `n` that will be interpreted as a sequence.
-
-            OUTPUT:
-
-            A :class:`PSBasis` of the same type as ``self`` but representing the equivalent basis
-            multiplied by ``factor``.
-        '''
-        hyper, quotient = self.is_hypergeometric(factor)
-        if(factor in self.OB()): # rational function case
-            if(not self.valid_factor(self.OB()(factor))):
-                raise ValueError("The scalar factor is not valid: not well defined for all 'n'")
-            new_basis = self._scalar_basis(factor)
-            # we extend the compatibilities
-            self.__scalar_extend_compatibilities(new_basis, factor)  
-        elif(hyper): # the input is an hypergeometric expression
-            new_basis = self._scalar_hypergeometric(factor, quotient)
-            # we extend the compatibilities
-            self.__scalar_hyper_extend_compatibilities(new_basis, factor, quotient)
-        else: # we need that factor(n) is a rational function
-            n = self.n(); factor_n = factor(n=n)
-            if((not factor_n in self.OB()) or (not self.valid_factor(self.OB()(factor)))):
-                raise ValueError("The scalar factor is not valid: the general term is not well defined for all 'n'")
-            new_basis = self._scalar_basis(factor) # we create the structure for the new basis
-            # we extend the compatibilities
-            self.__scalar_extend_compatibilities(new_basis, factor)  
-             
-        return new_basis
-
-    def _scalar_basis(self, factor: element.Element) -> PSBasis:
-        r'''
-            Method that actually builds the structure for the new basis.
-
-            This method build the actual structure for the new basis. This may have
-            some intrinsic compatibilities that will be extended with the compatibilities that 
-            are in ``self`` according with the factor.
-
-            By default, this structure will be :class:`BruteBasis`, with the trivial method to 
-            generate new elements. However, different subclasses may override this method to 
-            provide a better structure to the scalar product.
-
-            INPUT:
-
-            * ``factor``: the scalar factor for each step.
-        '''
-        return BruteBasis(lambda n : self.element(n)*factor(n=n), self.by_degree())
-
-    def _scalar_hypergeometric(self, factor: element.Element, quotient: element.Element) -> PSBasis: #pylint: disable=unused-argument
-        r'''
-            Method that actually builds the structure for the new basis.
-
-            This method build the actual structure for the new basis in the case of 
-            a hypergeometric factor. This may have
-            some intrinsic compatibilities that will be extended with the compatibilities that 
-            are in ``self`` according with the factor.
-
-            By default, this structure will be :class:`BruteBasis`, with the trivial method to 
-            generate new elements. However, different subclasses may override this method to 
-            provide a better structure to the scalar product.
-
-            INPUT:
-
-            * ``factor``: the scalar factor for each step.
-            * ``quotient``: the quotient that defines ``factor`` as a hypergeometric element.
-        '''
-        return BruteBasis(lambda n : self.element(n)*factor(n=n), self.by_degree())
-
-    def __scalar_extend_compatibilities(self, new_basis: PSBasis, factor: element.Element):
-        r'''
-            Method to extend compatibilities to ``new_basis`` with a rational function or a method
-            that returns a rational function when fed by `n` (see :func:`OB`)
-        '''
-        compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
-        for key in compatibilities:
-            A, B, m, alpha = self.compatibility(key)
-            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*(factor(n=k*m+i)/factor(k*m+i+j))), type=self.compatibility_type(key))
-            
-        return
-
-    def __scalar_hyper_extend_compatibilities(self, new_basis: PSBasis, factor: element.Element, quotient: element.Element): #pylint: disable=unused-argument
-        r'''
-            Method to extend compatibilities to ``new_basis`` with a rational function or a method
-            that returns a rational function when fed by `n` (see :func:`OB`).
-
-            If ``factor`` (let say `f_n`) is hypergeometric with defining quotient given by ``quotient``
-            (denoted by `q_n`), then we have for all `n \in \mathbb{N}` that:
-
-            .. MATH::
-
-                f_{n+1} = q_nf_n
-
-            In particular, we have that for any `m \in \mathbb{N}`:
-
-            .. MATH::
-
-                f_{n+m} = Q_{n,m}f_n,
-
-            where `Q_{n,m}` is defined by:
-
-            .. MATH::
-
-                Q_{n,m} = \prod_{i=n}^{n+m-1}q_i
-            
-            This formula can be adapted for `m < 0` too.
-        '''
-        # defining the method for computing the jumps for ``factor`` using the quotient
-        def _Q(q,n,m):
-            if(m > 0):
-                return prod(q(n=n+i) for i in range(m))
-            elif(m < 0):
-                return 1/prod(q(n=n+i) for i in range(m, 0))
-            return 1
-
-        compatibilities = [key for key in self.compatible_operators() if (not key in new_basis.compatible_operators())]
-        for key in compatibilities:
-            A, B, m, alpha = self.compatibility(key)
-            new_basis.set_compatibility(key, (A, B, m, lambda i,j,k : alpha(i,j,k)*_Q(1/quotient, k*m+i, j)), type=self.compatibility_type(key))
-            
-        return
-
-    ### MAGIC METHODS
-    def __mul__(self,other):
-        r'''
-            See method :func:`scalar`.
-        '''
-        try:
-            return self.scalar(other)
-        except:
-            return super().__mul__(other)
-        
-    def __rmul__(self, other):
-        r'''
-            See method :func:`scalar`.
-        '''
-        return self.__mul__(other)
-
-    def __truediv__(self,other):
-        r'''
-            See method :func:`scalar`.
-        '''
-        try:
-            return self.scalar(1/other)
-        except:
-            return NotImplemented
-    
-    ### MAGIC REPRESENTATION METHODS
-    def __repr__(self):
-        return f"{self.__class__.__name__} -- WARNING: this is an abstract class"
-    
-    ### OTHER ALIASES FOR METHODS
-    A = get_lower_bound #: alias for the method :func:`get_lower_bound`, according to notation in :arxiv:`2202.05550`
-    B = get_upper_bound #: alias for the method :func:`get_upper_bound`, according to notation in :arxiv:`2202.05550`
-    alpha = compatibility_coefficient #: alias for the method :func:`compatibility_coefficient`, according to notation in :arxiv:`2202.05550`
-
-class BruteBasis(PSBasis):
-    r'''
-        A brute type of basis where the elements are provided by a method.
-
-        Class for representing basis where the construction does not fit into any other construction
-        but can be given, element by element, via a function. These basis have no default compatibilities
-        and provide no guarantee that the set compatibilities are correct.
-
-        In order to reduce the impact of this lack of proof, we provide a method to check empirically the compatibility 
-        for certain amount of elements in the basis.
-
-        INPUT:
-
-        * ``elements``: function or lambda method that takes one parameter `n` and return the `n`-th element
-          of this basis.
-        * ``base``: base domain for the sequences this basis represents.
-        * ``universe``: domain where the elements of the basis will be represented.
-        * ``degree``: indicates if it is a polynomial basis or an order basis.
-        * ``var_name``: (only used if ``universe`` is None and ``degree`` is True) provides a name for the main variable
-          of the polynomials that compose this basis.
-
-        EXAMPLES::
-
-            sage: from pseries_basis import *
-            sage: B = BruteBasis(lambda n : binomial(x,n), QQ, degree=True)
-            sage: B2 = BinomialBasis()
-            sage: all(B[i] == B2[i] for i in range(100))
-            True
-
-        **Be careful**: this method does not check that the lambda function induces a basis nor that 
-        the ``degree`` argument is correct::
-
-            sage: B = BruteBasis(lambda n : 0, ZZ, ZZ, False)
-            sage: all(B[i] == 0 for i in range(100))
-            True
-    '''
-    def __init__(self, elements : Callable, base: Parent, universe: Parent = None, degree: bool = True, var_name: str = None):
-        super().__init__(base, universe, degree, var_name)
-        self.__get_element = elements
-
-    def change_base(self, base: Parent) -> BruteBasis:
-        return BruteBasis(
-            self.__get_element, 
-            base, 
-            self.universe, 
-            self.by_degree(), 
-            str(self.universe.gens()[0]) if is_PolynomialRing(self.universe) and self.by_degree() else None
-        )
-
-    @cached_method
-    def _element(self, n: int) -> element.Element:
-        r'''
-            Method to return the `n`-th element of the basis.
-
-            This method *implements* the corresponding abstract method from :class:`~pseries_basis.misc.sequences.Sequence`.
-            See method :func:`~pseries_basis.misc.sequences.element` for further information.
-        '''
-        output = self.__get_element(n)
-
-        return output if self.universe is None else self.universe.__call__(output)
-
-    @PSBasis.functional_seq.getter
-    def functional_seq(self) -> Sequence:
-        if is_PolynomialRing(self.universe):
-            return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
-        elif self.universe is SR:
-            return LambdaSequence(lambda k,n: self(k).taylor(self(k).variables()[0], 0, n).polynomial(self.base)[k], self.base, 2, False)
-        else:
-            return LambdaSequence(lambda k,n : self(k).derivative(times=n)(0)/factorial(n), self.base, 2, False)
-
-    @PSBasis.evaluation_seq.getter
-    def evaluation_seq(self) -> Sequence:
-        if is_PolynomialRing(self.universe):
-            return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
-        elif self.universe is SR:
-            return LambdaSequence(lambda k,n: self(k)(**{str(self(k).variables()[0]) : n}), self.base, 2, False)
-        else:
-            return LambdaSequence(lambda k,n : self(k)(n), self.base, 2, False)
+                p1 = other//2; p2 = p1 + other%2
+                comp1 = self**p1; comp2 = self**p2
+                self.__cache_pow[other] = comp1 * comp2
+        return self.__cache_pow[other]
 
     def __repr__(self) -> str:
-        return f"Brute basis: ({self[0]}, {self[1]}, {self[2]}, ...)"
-
+        start = f"Compatibility condition {self.data()}"
+        try:
+            M = Matrix([[self[t,i].generic() for i in range(-self.A, self.B+1)] for t in range(self.t)])
+            start += f" with following coefficient matrix:\n{M}"
+        except:
+            pass
+        return start
+    
     def _latex_(self) -> str:
-        return r"Brute basis: \left(%s, %s, %s, \ldots\right)" %(latex(self[0]), latex(self[1]), latex(self[2]))
+        int_with_sign = lambda n : f"- {-n}" if n < 0 else "" if n == 0 else f"+ {n}"
+        code = r"\text{Compatibility condition with shape " + f"(A={self.A}, B={self.B}, t={self.t})" + r":}\\"
+        if self.t > 1:
+            code += r"\left\{\begin{array}{rl}"
+        
+        for b in range(self.t):
+            if self.t > 1:
+                code += r"L \cdot P_{" + latex(self.t) + r"k + " + latex(b) + r"} & = "
+            else:
+                code += r"L \cdot P_{k} = "
 
-class SequenceBasis(PSBasis):
-    r'''
-        Abstract class for basis only viewed as sequences.
+            monomials = []
+            for i in range(-self.A, self.B+1):
+                ## Creating the coefficient
+                try:
+                    c = self[b,i].generic('k')
+                    if c == 0: continue
+                    new_mon = r"\left(" + latex(c) + r"\right)"
+                except:
+                    if self.t > 1:
+                        new_mon = r"c_{" + latex(b) + r"," + latex(i) + r"}(k)"
+                    else:
+                        new_mon = r"c_{" + latex(i) + r"(k)"
+                ## Creating the P_{k+i}
+                if self.t > 1:
+                    new_mon += r"P_{" + latex(self.t) + r"k" + int_with_sign(b+i) + r"}"
+                else:
+                    new_mon += r"P_{k" + int_with_sign(i) + r"}"
+                monomials.append(new_mon)
+            code += " + ".join(monomials)
+            if self.t > 1: code += r"\\"
+        if self.t > 1:
+            code += r"\end{array}\right."
+        return code 
 
-        Formal power series `f(x) \in \mathbb{K}[[x]]` can be also seen as sequences. Hence, a basis of the 
-        ring of formal power series can be defined using a bi-sequence, i.e., a sequence from `\mathbb{N}^2` to 
-        some field. This bi-sequence is exactly the one obtained by :func:`functional_seq`.
-
-        This class allows to represent basis of formal power series by given this bi-sequence.
-
-        INPUT:
-
-        * ``base``: a SageMath structure for `\mathbb{K}`.
-        * ``sequence``: a :class:`~pseries_basis.misc.sequences.Sequence` of dimension 2, whose universe can be changed to ``base``.
-    '''
-    def __init__(self, base: Parent, sequence : Sequence, degree : bool = True, **kwds):
-        if not isinstance(sequence, Sequence):
-            raise TypeError("The value for a sequence must be of class :class:`Sequence`")
-        if not sequence.dim == 2:
-            raise ValueError(f"The sequence must have 2 variables. It has {sequence.dim}")
-        self.__sequence = sequence.change_universe(base)
-
-        # removing possible repeated arguments
-        kwds.pop("universe")
-        super().__init__(
-            base, universe=SequenceSet(1, base), degree=degree, # arguments for PSBasis
-            **kwds # other arguments for other builders (allowing multi-inheritance)
-        )
-
-    @PSBasis.functional_seq.getter
-    def functional_seq(self) -> Sequence:
-        return self.__sequence
-
-    def _element(self, *indices: int) -> element.Element:
-        return self.functional_seq.subsequence(indices[0]) #pylint: disable=no-member
-
-    def change_base(self, base: Parent) -> SequenceBasis:
-        return SequenceBasis(base, self.functional_seq, self.by_degree())
-
-    def shift_in(self, shift: int) -> SequenceBasis:
+    def equiv(self, other, bound=None) -> bool:
         r'''
-            Method to apply shift to the second layer of this basis.
+            Check equavalence between compatibility conditions
 
-            It is quite common to compute shifts for the elements of a basis for the formal power series ring. This method
-            allows to obtain the corresponding :class:`SequentialBasis` after performing the given shift to all elements
-            of the basis defined by ``self``.
+            This method defines the equivalence between two compatibility conditions.
+            Let `C_1` and `C_2` be two compatibility conditions with general data 
+            `(A_1,B_1,t_1)` and `(A_2,B_2,t_2)` and coefficients `\alpha_{b,i}(n)` and 
+            `\beta_{b,i}(n)` respectively.
+
+            * If `t_1 \neq t_2`, we say `C_1 \equiv C_2` if and only if `C_1(t) \equiv C_2(t)`,
+              where `t = \lcm(t_1,t_2)` and `C_*(t)` is the compatibility `C_*` in `t` sections 
+              (see method :func:`in_sections`)
+            * If `t_1 = t_2`, then we check the equality of 
+
+              .. MATH::
+                
+                \alpha_{b,i}(n) = \beta_{b,i}(n) \ \text{for } b=0,\ldots,t_1-1;\ i=-\max\{A_1,A_2\},\ldots,\max{B_1,B-2\};\ n=0,\ldots,\text{bound}.
+            
+              where the ``bound`` is given with the optional argument of this method. If not given, we will
+              use the default bound for almost equality of the module :mod:`~pseries_basis.sequences`.
 
             INPUT:
 
-            * ``shift``: the integer defining the shift to be applied to the elements of ``self``.
-
-            OUTPUT:
-
-            A new :class:`SequenceBasis` whose elements are the elements of ``self`` after applying the given ``shift``.
+            * ``other``: a :class:`Compatibility` to be checked.
+            * ``bound`` (optional): bound for equality of sequences to be used.
         '''
-        return SequenceBasis(self.base, self.functional_seq.shift(0,shift), self.by_degree()) #pylint: disable=no-member
+        other = self.__coerce_into_compatibility__(other)
 
-    def mult_in(self, prod: element.Element) -> SequenceBasis:
-        r'''
-            Method to multiply the inner sequences and obtain a new basis.
-
-            The usual behavior or the multiplication does not allow to do this if the multiplication is also a 
-            sequence. This method allows to express this other operation that is a multiplication for each of
-            the sequences inside.
-        '''
-        return SequenceBasis(self.base, LambdaSequence(lambda n,k : (prod*self[n])[k], self.base, 2), self.by_degree())
-
-class PolyBasis(PSBasis):
-    r'''
-        Abstract class for a polynomial power series basis. 
-        
-        Their elements must be indexed by natural numbers such that the n-th
-        element of the basis has degree exactly `n`.
-        
-        This class **must never** be instantiated.
-
-        List of abstract methods:
-
-        * :func:`PSBasis.element`.
-    '''
-    def __init__(self, base: Parent = QQ, var_name: str = None, **kwds):
-        super().__init__(
-            base=base, universe=kwds.pop("universe", None), degree=kwds.pop("degree", True), var_name=var_name, # arguments for PSBasis
-            **kwds # other arguments for other builders (allowing multi-inheritance)
-        )
-        super(PolyBasis,self).__init__(base, None, True, var_name)
-
-    @PSBasis.functional_seq.getter
-    def functional_seq(self) -> Sequence:
-        return LambdaSequence(lambda k,n : self[k][n], self.base, 2, False)
-
-    @PSBasis.evaluation_seq.getter
-    def evaluation_seq(self) -> Sequence:
-        return LambdaSequence(lambda k,n : self[k](n), self.base, 2, False)
-
-    def __repr__(self) -> str:
-        return "PolyBasis -- WARNING: this is an abstract class"
-
-class OrderBasis(PSBasis):
-    r'''
-        Abstract class for a order power series basis. 
-        
-        Their elements must be indexed by natural numbers such that the n-th
-        element of the basis has order exactly `n`.
-        
-        This class **must never** be instantiated.
-
-        List of abstract methods:
-
-        * :func:`PSBasis.element`.
-    '''
-    def __init__(self, base: Parent = QQ, universe: Parent = None, **kwds):
-        super(OrderBasis,self).__init__(
-            base, universe, False, # arguments for PSBasis
-            **kwds # other arguments for other builders (allowing multi-inheritance)
-        )
-
-    @PSBasis.functional_seq.getter
-    def functional_seq(self) -> Sequence:
-        if is_PolynomialRing(self.universe):
-            return LambdaSequence(lambda k,n : self(k)[n], self.base, 2, False)
-        elif self.universe is SR:
-            return LambdaSequence(lambda k,n: self(k).taylor(self(k).variables()[0], 0, n).polynomial(self.base)[k], self.base, 2, False)
-        else:
-            return LambdaSequence(lambda k,n : self(k).derivative(times=n)(0)/factorial(n), self.base, 2, False)
-
-    def is_quasi_func_triangular(self) -> bool:
+        if self.t != other.t:
+            t = lcm(self.t, other.t)
+            logger.debug(f"[equiv] We need to extend to more sections ({self.t}, {other.t}) --> {t}")
+            return self.in_sections(t).equiv(other.in_sections(t))
+        ## Now we assume the sections are the same in both
+        A = max(self.A, other.A); B = max(self.B, other.B)
+        ## This loop could be Pythonize more, we keep it unrolled to keep debugging notes
+        for b in range(self.t):
+            for i in range(-A, B+1):
+                if not self[b,i].almost_equals(other[b,i], bound if bound else 10):
+                    logger.debug(f"[equiv] Found different in section {b}, coefficient {i}")
+                    return False
         return True
 
-def check_compatibility(basis: PSBasis, operator: OreOperator | TypeCompatibility, action: Callable, bound: int = 100) -> bool:
+def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: Callable, bound: int = 100, *, _full=False):
     r'''
-        Method that checks that a compatibility formula holds for some examples.
+        Method that checks whether a basis has a particular compatibility for a given action.
 
-        This method takes a :class:`PSBasis`, an operator compatibility (either a tuple with the 
-        compatibility data or the operator that must be compatible with the basis), an actions with the 
-        map for the operator and a bound and checks that the induced compatibility identity holds for 
-        the first terms of the basis.
+        This method takes a :class:`PSBasis` (i.e., a sequence of sequences), a given
+        operator compatible with it (or simply the :class:`Compatibility` object representing
+        such compatibility) and check whether the action that is defined for the operator/compatibility
+        (which is provided by the argument ``action``) has precisely this compatibility.
+
+        More precisely, if an operator `L` the operator is `(A,B)`-compatible with the basis `P=(P_n)_n` 
+        with the formula:
+        
+        .. MATH::
+
+            L P_n = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},
+
+        then thi method checks this identity for the ``action`` defining `L`, and the compatibility
+        condition `(A,B,m,\alpha)` defined in ``compatibility``.
+
+        This checking is perform until a given `n` bounded by the input ``bound``.
 
         INPUT:
 
-        * ``basis``: a :class:`PSBasis` to be checked.
-        * ``operator``: a tuple `(A,B,m,\alpha)` with the compatibility condition (see :func:`PSBasis.compatibility`)
-          or a valid input of that method.
-        * ``action``: a map that takes elements in ``basis.universe`` and perform the operation of ``operator``.
-        * ``bound``: positive integer with the number of cases to be checked.
-    '''
-    if(isinstance(operator, tuple)):
-        a,b,m,alpha = operator
-    else:
-        a,b,m,alpha = basis.compatibility(operator)
-        
-    mm = int(ceil(a/m))
-    return all(
-        all(
-            sum(basis[k*m+r+i]*basis.base(alpha(r,i,k)) for i in range(-a,b+1)) == action(basis[k*m+r]) 
-            for r in range(m)) 
-        for k in range(mm, bound))
+        * ``basis``: a :class:`PSBasis` that defines the basis `P=(P_n)_n`.
+        * ``compatibility``: a compatibility condition. If an operator is given, then compatibility condition
+          for ``basis`` is computed (check method :func:`PSBasis.compatibility`)
+        * ``action``: a callable that actually computes the element `L P_n` so it can be compared.
+        * ``bound``: a bound for the limit this equality will be checked. Since `L P_n` is a sequence
+          this bound is used both for checking equality at each level `n` and until which level the 
+          identity is checked.
 
-__all__ = ["PSBasis", "BruteBasis", "SequenceBasis", "PolyBasis", "OrderBasis", "check_compatibility"]
+        OUTPUT:
+
+        ``True`` if all the checking provide equality, and ``False`` otherwise. Be cautious when reading
+        this output: ``False`` guarantees that the compatibility is **not** for the action, however, ``True``
+        provides a nice hint the result should be True, but it is not a complete proof.
+
+        TODO: add examples 
+    '''
+    if not isinstance(compatibility, Compatibility):
+        compatibility = basis.compatibility(compatibility)
+
+    for n in range(compatibility.A, bound):
+        lhs:Sequence = action(basis[n]) # sequence obtained from L P_n
+        A,B,_ = compatibility.data()
+        k,s = ZZ(n).quo_rem(ZZ(compatibility.t))
+        rhs = sum(compatibility[s,i](k)*basis[n+i] for i in range(-A, B+1)) # sequence for the rhs
+
+        if not lhs.almost_equals(rhs, bound):
+            return (n,lhs, rhs), False if _full else False
+    return True

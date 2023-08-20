@@ -8,8 +8,8 @@ from sage.all import PolynomialRing, QQ, ZZ, cached_method, Matrix, ceil, parent
 from sage.categories.pushout import pushout
 from sage.structure import element
 
-from ..psbasis import PSBasis, PolyBasis, SequenceBasis
-from ..factorial.factorial_basis import FactorialBasis, RootSequenceBasis, SFactorialBasis, ScalarBasis
+from ..psbasis_old import PSBasis, PolyBasis, SequenceBasis
+from ..polynomial.factorial import FactorialBasis, RootSequenceBasis
 from ..misc.ore import get_qshift_algebra, get_double_qshift_algebra, get_rational_algebra, has_variable
 from ..misc.qsequences import QLambdaSequence
 from ..misc.sequences import LambdaSequence, Sequence

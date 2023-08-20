@@ -31,7 +31,7 @@ from sage.all import binomial, parent, PolynomialRing, QQ, SR, ZZ #pylint: disab
 from sage.categories.pushout import pushout
 from ..sequences.base import Sequence, ConstantSequence
 from ..sequences.element import ExpressionSequence, RationalSequence
-from ..psbasis_new import PSBasis, Compatibility
+from ..psbasis import PSBasis, Compatibility
 
 ###############################################################################
 ###
@@ -378,7 +378,6 @@ BinomialBasis = BinomialTypeBasis(universe=QQ)
 ### SIEVED BASIS AND PRODUCT BASIS
 ### 
 ###############################################################################
-
 class SievedBasis(FactorialBasis):
     r'''
         Class for a Sieved Basis.
@@ -1217,3 +1216,99 @@ def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> Sieve
     '''
     return SievedBasis(factors, list(range(len(factors))))
         
+##################################################################################################################
+###
+### DEFINITE SUM SOLUTIONS METHOD (see article)
+###
+##################################################################################################################
+def DefiniteSumSolutions(operator, *input: int | list[int]):
+    r'''
+        Petkovšek's algorithm for transforming operators into recurrence equations.
+        
+        This method is the complete execution for the algorithm **DefiniteSumSolutions** described in
+        :doi:`10.1016/j.jsc.2022.11.002`. This methods takes an operator `L` and convert the problem
+        of being solution `L \cdot y(n) = 0` to a recurrence equation assuming some hypergeometric
+        terms in the expansion.
+        
+        The operator must be a difference operator of `\mathbb{Q}[x]<E>` where `E: n \mapsto n+1`.
+        
+        This function does not check the nature of the generator, so using this algorithm with different 
+        types of operators may lead to some inconsistent results.
+        
+        INPUT:
+
+        * ``operator``: difference operator to be transformed.
+        * ``input``: the coefficients of the binomial coefficients we assume appear in the expansion
+          of the solutions. This input can be given with the following formats:
+          - ``a_1,a_2,...,a_m,b_1,b_2,...,b_m``: an unrolled list of `2m` elements.
+          - ``[a_1,a_2,...,a_m,b_1,b_2,...,b_m]``: a compress list of `2m` elements.
+          - ``[a_1,...,a_m],[b_1,...,b_m]``: two lists of `m` elements.
+
+        OUTPUT:
+
+        An operator `\tilde{L}` such that if a sequence `(c_k)_k` satisfies `L \cdot (c_k)_k = 0` then 
+        the sequence
+
+        .. MATH::
+
+            y(n) = \sum_{k \geq 0}c_k\prod{i=1}^m \binom{a_in+b_i}{k}
+
+        satisfies `L \cdot y(n) = 0`.
+
+        EXAMPLES::
+
+            sage: from pseries_basis import *
+            sage: from ore_algebra import OreAlgebra
+            sage: R.<n> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(n=n+1), lambda p : 0))
+            sage: DefiniteSumSolutions((n+1)*E - 2*(2*n+1), 1,1,0,0)
+            Sk - 1
+            sage: example_2 = 4*(2*n+3)^2*(4*n+3)*E^2 - 2*(4*n+5)*(20*n^2+50*n+27)*E + 9*(4*n+7)*(n+1)^2
+            sage: DefiniteSumSolutions(example_2, 1,1,0,0)
+            (k + 1/2)*Sk - 1/4*k - 1/4
+    '''
+    ## Checking the input
+    if(len(input) == 1 and type(input) in (tuple, list)):
+        input = input[0]
+
+    if(len(input)%2 != 0):
+        raise TypeError("The input must be a even number of elements")
+    elif(len(input) !=  2 or any(type(el) not in (list,tuple) for el in input)):
+        m = len(input)//2
+        a = input[:m]; b = input[m:]
+    else:
+        a,b = input; m = len(a)
+    
+    if(len(a) != len(b)):
+        raise TypeError("The length of the two arguments must be exactly the same")
+        
+    if(any(el not in ZZ or el <= 0 for el in a)):
+        raise ValueError("The values for `a` must be all positive integers")
+    if(any(el not in ZZ for el in b)):
+        raise ValueError("The values for `a` must be all integers")
+        
+    ## Getting the name of the difference operator
+    E = str(operator.parent().gens()[0])
+    
+    if(m == 1): # Non-product case
+        return BinomialTypeBasis(a[0],b[0],E=E).recurrence(operator)
+    
+    ## Building the appropriate ProductBasis
+    B = ProductBasis([BinomialTypeBasis(a[i],b[i],E=E) for i in range(m)])
+    
+    ## Getting the compatibility matrix R(operator)
+    matrix_recurrences = B.recurrence(operator, output="ore")
+        
+    ## Extracting the gcrd for the first column
+    result = matrix_recurrences[0][0].gcrd(*[matrix_recurrences[j][0] for j in range(m)])
+    
+    return result
+
+##################################################################################################################
+###
+### Generic Binomial Basis Methods (see file "gen_binomial_basis")
+###
+##################################################################################################################
+## TODO def GeneralizedBinomial(a: int, b: int, c: int, m: int, r: int) -> FactorialBasis (cached)
+## TODO def multiset_inclusion(l1 : list|tuple, l2 : list|tuple) -> bool
+## TODO def guess_compatibility_E(basis: FactorialBasis, shift: element.Element = 1, sections: int = None, A: int = None, bound_roots: int = 50, bound_data: int = 50) -> OreOperator
+## TODO def guess_rational_function(data: Collection, algebra: OreAlgebra_generic) -> element.Element

@@ -157,9 +157,7 @@ logger.propagate = False
 
 from .misc import *
 from .psbasis import *
-from .factorial import *
-from .orthogonal import *
-from .order import *
+from .functional import *
 from .qbasis import *
 
 # fixing imports that were destroyed from these
