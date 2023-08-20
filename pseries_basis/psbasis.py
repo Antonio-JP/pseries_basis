@@ -297,7 +297,7 @@ class PSBasis(Sequence):
                 sub=True,
                 type=ctype
             )
-        return Sequence(lambda *n : self._element(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim)
+        return output
     ## Slicing not implemented because PSBasis have dimension 1.
     def _subsequence(self, final_input: dict[int, Sequence]):
         return PSBasis(lambda n : self._element(final_input[0]._element(n) if 0 in final_input else n), self.universe)

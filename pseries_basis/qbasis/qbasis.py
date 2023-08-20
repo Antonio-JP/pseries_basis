@@ -63,6 +63,12 @@ class QBasis(PSBasis):
         self.__q = self.base()(q)
         self.__q_n = q_n # Storing name for the sequence (q^n)
 
+    ## Implement method of casting from PSBasis itself and ConstantSequence
+    ## Implement the _final_* arithmetic methods
+    ## Implement the _shift and _subsequence methods
+    ## Implement the _scalar_basis method
+    ## Implement the _process_recurrence and _process_ore_algebra for the "ore" and "ore_double" outputs
+
 # class QBasis(PSBasis):
 #     r'''
 #         Class for generic `q`-formal power series.
