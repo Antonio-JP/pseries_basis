@@ -7,10 +7,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 from collections.abc import Callable
-from sage.all import PolynomialRing, ZZ
+from sage.all import Matrix, PolynomialRing, ZZ #pylint: disable=no-name-in-module
 
 from ..psbasis import PSBasis, Compatibility
-from ..sequences.examples import Q_binomial, q_binomial
+from ..sequences.examples import Qn, Q_binomial_type, q_binomial
 from ..sequences.qsequences import QSequence, QRationalSequence
 
 #######################################################################################################
@@ -68,6 +68,53 @@ class QBasis(PSBasis):
     @property
     def q(self): return self.__q #: THe value for the `q` of the sequences.
 
+    def _process_recurrence(self, recurrence, output: str = None):
+        from pseries_basis.misc.ore import gens_double_qshift_algebra, get_qshift_algebra
+        if isinstance(recurrence, list): # matrix output
+            recurrence = [[self._process_recurrence(el, output if output != "ore" else "ore_double") for el in row] for row in recurrence]
+            if output == "ore_double":
+                recurrence = Matrix(recurrence)
+            elif output == "ore": # we need to clean the inverse shift globally in the whole matrix
+                OA = recurrence[0][0].parent()
+                k, S, Si, _, _ = gens_double_qshift_algebra(OA, name_q="q")
+                D = max(max(el.polynomial().degree(Si.polynomial()) for el in row) for row in recurrence)
+
+                out_OA, (_, out_E) = get_qshift_algebra("q_k", "q", "Sk", base=OA.base())
+                ## Removing the inverse shift from all matrix entries
+                for row in recurrence:
+                    for i in range(len(row)):
+                        row[i] = sum(
+                            (((S**D * c).polynomial().coefficients()[0]) * 
+                            (out_E**(D + (m.degree(S.polynomial()) - m.degree(Si.polynomial())))))
+                            for c,m in zip(row[i].polynomial().coefficients(), row[i].polynomial().monomials())    
+                        )
+                recurrence = Matrix(recurrence)
+        else:
+            if output == "rational":
+                for k,v in recurrence.items():
+                    R = PolynomialRing(v.universe, "q_k"); q_k = R.gens()[0]
+                    recurrence[k] = QRationalSequence(v._RationalSequence__generic, universe=v.universe, variables=[q_k], q=self.q)
+            elif output == "expression":
+                raise NotImplementedError("The case 'expression' for q-Basis is not valid")
+            elif output in ("ore_double", "ore"):
+                recurrence = self._process_ore_algebra(recurrence, output == "ore_double")
+            elif output != None:
+                raise ValueError(f"Output type ({output}) not recognized")
+        return recurrence
+            
+    def _process_ore_algebra(self, recurrence, double: bool = False):
+        from ..misc.ore import get_double_qshift_algebra, get_qshift_algebra
+        recurrence = self._process_recurrence(recurrence, "rational")
+        if len(recurrence) == 0:
+            return 0
+        el = next(iter(recurrence.values()))
+        if double:
+            OA, (_, E, Ei) = get_double_qshift_algebra("q_k", "q", "Sk", base=el.universe)
+            return sum((OA(v._RationalSequence__generic)*(E**i if i >= 0 else Ei**(-i)) for (i,v) in recurrence.items()), OA.zero())
+        else:
+            neg_power = -min(0, min(recurrence.keys()))
+            OA, (_, E) = get_qshift_algebra("q_k", "q", "Sk", base=el.universe)
+            return sum((OA(v.shift(neg_power)._RationalSequence__generic)*E**(i+neg_power) for (i,v) in recurrence.items()), OA.zero())
 
 
     ## Implement method of casting from PSBasis itself and ConstantSequence
@@ -76,7 +123,7 @@ class QBasis(PSBasis):
     ## Implement the _scalar_basis method
     ## Implement the _process_recurrence and _process_ore_algebra for the "ore" and "ore_double" outputs
 
-def QBinomialBasis(a: int = 1, b: int = 1, *, q = "q", q_n = "q_n"):
+def QBinomialBasis(a: int = 1, b: int = 1, *, q = "q", q_n = None):
     r'''
         Factory of `q`-binomial basis of generic form.
         
@@ -95,31 +142,36 @@ def QBinomialBasis(a: int = 1, b: int = 1, *, q = "q", q_n = "q_n"):
         * ``a``: the integer value for `a`.
         * ``b``: the integer value for `b`.
         * ``q``: the name or value for the `q` we will use as base.
-        * ``q_n``: the name of the operator that will be use for the multiplication by `q^{abn}`. 
+        * ``q_n``: the name of the operator that will be use for the multiplication by `q^{abn}`. If not given, 
+          we set it up to ``f"{q}_{a*b}n``, mixing the number and the `n`. 
     '''
     if not a in ZZ or a < 0:
         raise TypeError(f"[QBinomialBasis] The value for the parameter `a` must be a natural number.")
     if not b in ZZ or b < 0:
         raise TypeError(f"[QBinomialBasis] The value for the parameter `b` must be a natural number.")
     a = ZZ(a); b = ZZ(b)
+
+
+    q_n = f"{q}_{str(a*b) if a*b != 1 else ''}n" if q_n == None else q_n
     
-    basis = QBasis(Q_binomial.subsequence((0,(b,0)), (1, (a*b, 0))).swap(0,1), Q_binomial.universe, q=Q_binomial.q, q_n = q_n)
+    basis = QBasis(Q_binomial_type(a=a,e=b).swap(0,1), Qn.universe, q=Qn.q, q_n = q_n)
 
     ## Compatibility with the `q^{abn}`
     q = basis.q
     R = PolynomialRing(basis.base, "q_k"); q_k = R.gens()[0]
-    ak = QRationalSequence(q/(q_k**2 - q_k), variables=[q_k], universe=Q_binomial.universe, q = q).shift().subsequence((0,(b,0)))
-    bk = QRationalSequence(1/(1-q_k), variables=[q_k], universe=Q_binomial.universe, q = q).shift().subsequence((0,(b,0)))
 
-    basis.set_compatibility(q_n, Compatibility([[-bk/ak, q/ak]], 0, 1, 1), True, "any")
-    basis.set_compatibility(
+    c0 = QRationalSequence(q_k**b, variables=[q_k], universe=Qn.universe, q = q)
+    c1 = QRationalSequence(q_k**b * (q_k**b * q**b - 1), variables=[q_k], universe=Qn.universe, q = q)
+
+    basis.set_compatibility(q_n, Compatibility([[c0, c1]], 0, 1, 1), True, "any")
+    basis.set_homomorphism(
         "E", 
         Compatibility(
-            [[QRationalSequence(q_binomial(a, a-i, q)*q_k**(a-i)/q**a, variables=[q_k], universe = Q_binomial.universe, q = q).subsequence((0,(b,0)))
+            [[QRationalSequence(q_binomial(a, a-i, 1/q**b)*q_k**(b*(a-i)), variables=[q_k], universe = Qn.universe, q = q)
                 for i in range(a, -1, -1)]],
             a, 0, 1
         ), 
-        True, "homomorphism")
+        True)
     
     return basis
 
