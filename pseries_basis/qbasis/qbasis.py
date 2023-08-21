@@ -7,28 +7,30 @@ import logging
 logger = logging.getLogger(__name__)
 
 from collections.abc import Callable
+from sage.all import PolynomialRing, ZZ
 
-from ..psbasis import PSBasis
-from ..sequences.qsequences import QSequence
+from ..psbasis import PSBasis, Compatibility
+from ..sequences.examples import Q_binomial, q_binomial
+from ..sequences.qsequences import QSequence, QRationalSequence
 
 #######################################################################################################
 ### Private methods of this module
 #######################################################################################################
-def __polyvar_log(poly, var):
-    r'''Compute the `n` for ``poly == var**n` for a variable ``var`` of a polynomial ring'''
-    if not poly in var.parent():
-        raise ValueError(f"[polyvar_log] {poly} is not a polynomial in {var}")
-    poly = var.parent()(poly)
-    rems = []
-    while not poly.is_constant():
-        rems.append(poly%var)
-        poly = poly//var
-    if all(el == 0 for el in rems) and poly == 1:
-        return len(rems)
-    elif poly != 1:
-        raise ValueError(f"[polyvar_log] The leading coefficient of {poly} was not 1")
-    else:
-        raise ValueError(f"{poly} was not of the form {var}^n")
+# def __polyvar_log(poly, var):
+#     r'''Compute the `n` for ``poly == var**n` for a variable ``var`` of a polynomial ring'''
+#     if not poly in var.parent():
+#         raise ValueError(f"[polyvar_log] {poly} is not a polynomial in {var}")
+#     poly = var.parent()(poly)
+#     rems = []
+#     while not poly.is_constant():
+#         rems.append(poly%var)
+#         poly = poly//var
+#     if all(el == 0 for el in rems) and poly == 1:
+#         return len(rems)
+#     elif poly != 1:
+#         raise ValueError(f"[polyvar_log] The leading coefficient of {poly} was not 1")
+#     else:
+#         raise ValueError(f"{poly} was not of the form {var}^n")
 
 #######################################################################################################
 ### Classes for some basis of Q-series
@@ -60,14 +62,67 @@ class QBasis(PSBasis):
     '''
     def __init__(self, sequence: Callable[[int], QSequence], universe = None, *, q="q", q_n="q_n", _extend_by_zero=False):
         PSBasis.__init__(self, sequence, universe, _extend_by_zero=_extend_by_zero)
-        self.__q = self.base()(q)
+        self.__q = self.base(q)
         self.__q_n = q_n # Storing name for the sequence (q^n)
+
+    @property
+    def q(self): return self.__q #: THe value for the `q` of the sequences.
+
+
 
     ## Implement method of casting from PSBasis itself and ConstantSequence
     ## Implement the _final_* arithmetic methods
     ## Implement the _shift and _subsequence methods
     ## Implement the _scalar_basis method
     ## Implement the _process_recurrence and _process_ore_algebra for the "ore" and "ore_double" outputs
+
+def QBinomialBasis(a: int = 1, b: int = 1, *, q = "q", q_n = "q_n"):
+    r'''
+        Factory of `q`-binomial basis of generic form.
+        
+        This method creates a `q`-binomial basis where the `k` element of the basis is the sequence
+        
+        .. MATH::
+        
+            \left[\begin{array}{c}an\\k\right]_{q^b}
+            
+        These bases are always compatible with `E: n \mapsto n+1` and the multiplication by `q^{abn}`.
+        This method guarantees the input `a` and `b` are of correct form, build the `QBasis` corresponding
+        to it and include boths compatibilities automatically.
+        
+        INPUT:
+        
+        * ``a``: the integer value for `a`.
+        * ``b``: the integer value for `b`.
+        * ``q``: the name or value for the `q` we will use as base.
+        * ``q_n``: the name of the operator that will be use for the multiplication by `q^{abn}`. 
+    '''
+    if not a in ZZ or a < 0:
+        raise TypeError(f"[QBinomialBasis] The value for the parameter `a` must be a natural number.")
+    if not b in ZZ or b < 0:
+        raise TypeError(f"[QBinomialBasis] The value for the parameter `b` must be a natural number.")
+    a = ZZ(a); b = ZZ(b)
+    
+    basis = QBasis(Q_binomial.subsequence((0,(b,0)), (1, (a*b, 0))).swap(0,1), Q_binomial.universe, q=Q_binomial.q, q_n = q_n)
+
+    ## Compatibility with the `q^{abn}`
+    q = basis.q
+    R = PolynomialRing(basis.base, "q_k"); q_k = R.gens()[0]
+    ak = QRationalSequence(q/(q_k**2 - q_k), variables=[q_k], universe=Q_binomial.universe, q = q).shift().subsequence((0,(b,0)))
+    bk = QRationalSequence(1/(1-q_k), variables=[q_k], universe=Q_binomial.universe, q = q).shift().subsequence((0,(b,0)))
+
+    basis.set_compatibility(q_n, Compatibility([[-bk/ak, q/ak]], 0, 1, 1), True, "any")
+    basis.set_compatibility(
+        "E", 
+        Compatibility(
+            [[QRationalSequence(q_binomial(a, a-i, q)*q_k**(a-i)/q**a, variables=[q_k], universe = Q_binomial.universe, q = q).subsequence((0,(b,0)))
+                for i in range(a, -1, -1)]],
+            a, 0, 1
+        ), 
+        True, "homomorphism")
+    
+    return basis
+
 
 # class QBasis(PSBasis):
 #     r'''
@@ -776,3 +831,4 @@ class QBasis(PSBasis):
 #    "check_q_compatibility", "qpochhammer", "qnatural", "qfactorial", # utility functions
 #    "QPochhammerSequence", "QNaturalSequence", "QFactorialSequence", # special sequences
 #    ]
+
