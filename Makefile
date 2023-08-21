@@ -58,6 +58,8 @@ clean_doc:
 clean_pyc:
 	@echo "Cleaning the Python precompiled files (.pyc)"
 	@find . -name "*.pyc" -exec rm {} +
+	@find . -name "__pycache__" -exec rm -d {} +
+	@rm -rf ./build
 
 .PHONY: all install develop test coverage clean clean_doc doc doc-pdf
 	
