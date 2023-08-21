@@ -559,16 +559,13 @@ class Sequence(SetMorphism):
             i, seq = value
             if not i in ZZ or i < 0 or i >= self.dim:
                 raise IndexError(f"[subsequence] The given index is not valid (got {i}). It must be a non-negative integer smaller than {self.dim}")
-            if isinstance(seq, (list,tuple)):
-                if len(seq) != 2:
-                    raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
-                elif any((not el in ZZ) for el in seq):
-                    raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
-                a, b = seq
-                final_input.append((i,Sequence(lambda n : a*n+b, ZZ, 1)))
-            else: 
-                final_input.append((i,seq))
-                
+            seq = self._subsequence_input(seq)
+            if not (seq is False):
+                final_input.append((i, seq))
+
+        if len(final_input) == 0: # all subsequences were trivial
+            return self
+
         for value in final_input:
             index, seq = value
             if (not index in ZZ) or index < 0 or index >= self.dim:
@@ -581,6 +578,21 @@ class Sequence(SetMorphism):
                 raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be sequences over integers")
             
         return self._subsequence(dict(final_input))
+    
+    def _subsequence_input(self, input):
+        if isinstance(input, (list,tuple)):
+                if len(input) != 2:
+                    raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
+                elif any((not el in ZZ) for el in input):
+                    raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
+                a, b = input
+                if a != 1 or b != 0:
+                    from .element import RationalSequence
+                    return RationalSequence(ZZ['n'](f"{a}*n + {b}"), universe=ZZ)
+        elif input != Sequence(lambda n : n, self.universe, 1): 
+            return input
+        
+        return False # the sequence looks like the identity
     
     def _subsequence(self, final_input: dict[int, Sequence]):
         return Sequence(lambda *n : self._element(*[final_input[i]._element(n[i]) if i in final_input else n[i] for i in range(self.dim)]), self.universe, self.dim)

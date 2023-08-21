@@ -1151,7 +1151,7 @@ class Compatibility:
                     if self.t > 1:
                         new_mon = r"c_{" + latex(b) + r"," + latex(i) + r"}(k)"
                     else:
-                        new_mon = r"c_{" + latex(i) + r"(k)"
+                        new_mon = r"c_{" + latex(i) + r"}(k)"
                 ## Creating the P_{k+i}
                 if self.t > 1:
                     new_mon += r"P_{" + latex(self.t) + r"k" + int_with_sign(b+i) + r"}"

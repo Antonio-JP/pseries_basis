@@ -157,8 +157,10 @@ logger.propagate = False
 
 from .misc import *
 from .psbasis import *
+from .polynomial import *
 from .functional import *
 from .qbasis import *
+from .sequences import *
 
 # fixing imports that were destroyed from these
 from sage.all import factorial, order # pylint: disable=unused-import

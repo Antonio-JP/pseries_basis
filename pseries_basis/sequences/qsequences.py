@@ -215,7 +215,7 @@ class QRationalSequence(QSequence, RationalSequence):
             raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of {cls}")
     
         return QRationalSequence(
-            lambda *n : sequence(*(sequence.dim*[0])),
+            extra_info["field"](sequence(*(sequence.dim*[0]))),
             variables=extra_info.get("variables", [f"qn_{i}" for i in range(sequence.dim)] if sequence.dim > 1 else ["qn"]),
             universe=sequence.universe,
             q = extra_info.get("q"),
@@ -254,19 +254,37 @@ class QRationalSequence(QSequence, RationalSequence):
             q = self.q,
             _extend_by_zero=self._Sequence__extend_by_zero
         )
+    
+    def _subsequence_input(self, input):
+        if isinstance(input, (list, tuple)):
+            if len(input) != 2:
+                    raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
+            elif any((not el in ZZ) for el in input):
+                raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
+            a, b = input
+            if a != 1 or b != 0:
+                from .element import RationalSequence
+                R = ZZ[self.q, 'n']; n = R.gens()[1]
+                return RationalSequence(R(f"({self.q}**{b})*n**{a}"), variables=['n'], universe=ZZ)
+            else:
+                return False
+        return super()._subsequence_input(input)
+    
     def _subsequence(self, final_input: dict[int, Sequence]):
         try:
             vars = self.variables()
             generics = {i : seq.generic(str(vars[i])) for (i,seq) in final_input.items()}
             return QRationalSequence(
-                self.__generic(**{str(vars[i]): self.q**gen for (i,gen) in generics.items()}), 
+                self._RationalSequence__generic(**{str(vars[i]): gen for (i,gen) in generics.items()}), 
                 variables=self.variables(), 
                 universe=self.universe, 
                 q = self.q,
                 _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values())
             )
-        except:
+        except Exception as e:
+            if isinstance(e, RuntimeError): raise e
             return super()._subsequence(final_input)
+
     def _slicing(self, values: dict[int, int]):
         vars = self.variables()
         rem_vars = [vars[i] for i in range(self.dim) if not i in values]
