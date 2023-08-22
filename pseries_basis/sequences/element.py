@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from .base import ConstantSequence, Sequence
 from sage.all import Expression, PolynomialRing, var, SR #pylint: disable=no-name-in-module
+from sage.categories.pushout import pushout
 from sage.rings.fraction_field import is_FractionField 
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
@@ -356,6 +357,16 @@ class RationalSequence(Sequence):
                 R = PolynomialRing(universe, [str(v) for v in variables])
                 variables = R.gens()
         else:
+            if universe != None and variables != None:
+                min_R = PolynomialRing(universe, variables)
+            elif universe != None:
+                min_R = universe
+            elif variables != None:
+                min_R = R.extend_variables([v for v in variables if (not v in R.gens())])
+            else:
+                min_R = R
+            R = pushout(R, min_R)
+
             variables = [R(v) for v in variables] if variables != None else R.gens()
             if any(v not in R.gens() for v in variables):
                 raise TypeError("Incorrect information: a variable requested is not a generator of the polynomial ring.")
