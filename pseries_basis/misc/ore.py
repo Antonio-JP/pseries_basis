@@ -15,11 +15,10 @@ r'''
 '''
 from __future__ import annotations
 
-try: # python 3.9 or higher
-    from functools import cache
-except ImportError: #python 3.8 or lower
-    from functools import lru_cache as cache
-from typing import Collection
+import logging
+logger = logging.getLogger(__name__)
+
+from functools import lru_cache as cache
 
 from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
@@ -34,7 +33,7 @@ from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 from sage.rings.ring import Algebra # pylint: disable=no-name-in-module
 from sage.structure import element
 
-from .sequences import Sequence, LambdaSequence
+from ..sequences.base import Sequence
 
 _Fields = Fields.__classcall__(Fields)
 Element = element.Element
@@ -557,7 +556,7 @@ def get_double_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : st
 ### METHODS INVOLVING ORE ALGEBRAS AND OTHER STRUCTURES
 ###
 #############################################################################################
-def apply_operator_to_seq(operator : OreOperator, sequence : Sequence, **kwds) -> Sequence:
+def apply_operator_to_seq(operator : OreOperator, sequence : Sequence, **kwds) -> Sequence: # TODO: check this method
     r'''
         Method to apply an operator to a sequence.
         
@@ -612,7 +611,7 @@ def apply_operator_to_seq(operator : OreOperator, sequence : Sequence, **kwds) -
     else:
         raise TypeError(f"Type {operator.__class__} not valid for method 'apply_operator_to_seq'")
 
-    return LambdaSequence(gen, R, 1, False)
+    return Sequence(gen, R, 1, False)
 
 def required_init(operator : OreOperator) -> int:
     r'''
@@ -729,7 +728,7 @@ def eval_ore_operator(operator : OreOperator, ring: Parent = None, **values: Ele
 ### SOME CLASSES RELATING WITH ORE ALGEBRAS
 ###
 #############################################################################################
-def solution(operator: OreOperator, init: Collection[Element], check_init=True, **kwds) -> Sequence:
+def solution(operator: OreOperator, init: list | tuple, check_init=True, **kwds) -> Sequence:
     r'''
         Method to generate a :class:`Sequence` solution to a recurrence operator
 
@@ -749,6 +748,7 @@ def solution(operator: OreOperator, init: Collection[Element], check_init=True, 
 
         TODO: add examples
     '''
+    logger.debug(f"[solution] Computing a sequence solution to {operator} with initial condition {init}")
     if is_recurrence_algebra(operator.parent()):
         v,S,alpha = gens_recurrence_algebra(operator.parent()); S = S.polynomial(); Si = None
         if (not alpha in ZZ): 
@@ -769,18 +769,22 @@ def solution(operator: OreOperator, init: Collection[Element], check_init=True, 
         _shift = lambda i : alpha*i
     elif is_qshift_algebra(operator.parent(), **kwds):
         v,S,q,p = gens_qshift_algebra(operator.parent()); S = S.polynomial(); Si = None
+        logger.debug(f"[solution] Found the q-shit case: {v=}, {S=}, {q=}, {p=}")
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
 
         dS = operator.polynomial().degree(S); dSi = 0
+        logger.debug(f"[solution - q-shift] {dS=}, {dSi=}.")
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : q**(p*n)}))
         _shift = lambda i : i
     elif is_double_qshift_algebra(operator.parent(), **kwds):
         v,S,Si,q,p = gens_double_qshift_algebra(operator.parent()); S = S.polynomial(); Si = Si.polynomial()
+        logger.debug(f"[solution] Found the double q-shit case: {v=}, {S=}, {Si=}, {q=}, {p=}")
         if q == None:
             raise ValueError(f"The `q`-shift must be fully defined (got None)")
 
         dS = operator.polynomial().degree(S); dSi = operator.polynomial().degree(Si)
+        logger.debug(f"[solution - double-q] {dS=}, {dSi=}.")
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : q**(p*n)}))
         _shift = lambda i : i
     else:
@@ -811,130 +815,131 @@ def solution(operator: OreOperator, init: Collection[Element], check_init=True, 
             return init[n]
         else:
             return -sum(_eval_coeff(coefficients[i], n-dS)*_eval_monomial(monomials[i], n) for i in range(-dSi, dS))/_eval_coeff(lc, n-dS)
-    return LambdaSequence(__aux_sol, universe)
+    return Sequence(__aux_sol, universe=universe, dim=1)
 
-class OreSequence(Sequence):
-    r'''
-        Class to represent a sequence defined by a linear operator. This will include
-        C-finite, D-finite, Q-finite and similar type of sequences.
+## TODO: Maybe review this class
+# class OreSequence(Sequence):
+#     r'''
+#         Class to represent a sequence defined by a linear operator. This will include
+#         C-finite, D-finite, Q-finite and similar type of sequences.
 
-        These sequences are always defined with a linear operator acting (somehow) on the 
-        sequences and some initial conditions. 
+#         These sequences are always defined with a linear operator acting (somehow) on the 
+#         sequences and some initial conditions. 
 
-        TODO: Implement or use other class for this idea
-    '''
-    def __init__(self, operator : OreOperator, init: Collection[Element], universe: Parent = None):
-        self.__sequence = solution(operator, init, True)
-        self.__operator = operator
+#         TODO: Implement or use other class for this idea
+#     '''
+#     def __init__(self, operator : OreOperator, init: Collection[Element], universe: Parent = None):
+#         self.__sequence = solution(operator, init, True)
+#         self.__operator = operator
 
-        universe = self.__sequence.universe if universe is None else pushout(universe, self.__sequence.universe)
+#         universe = self.__sequence.universe if universe is None else pushout(universe, self.__sequence.universe)
 
-        super().__init__(universe, 1, False)
+#         super().__init__(universe, 1, False)
 
-    @property
-    def operator(self) -> OreOperator: return self.__operator
+#     @property
+#     def operator(self) -> OreOperator: return self.__operator
 
-    @cached_method
-    def required_init(self) -> int: 
-        return required_init(self.operator)
+#     @cached_method
+#     def required_init(self) -> int: 
+#         return required_init(self.operator)
 
-    @property
-    def type(self) -> str:
-        if is_recurrence_algebra(self.operator.parent()):
-            return "recurrence"
-        elif is_double_recurrence_algebra(self.operator.parent()):
-            return "double_recurrence"
-        elif is_qshift_algebra(self.operator.parent()):
-            return "qshift"
-        elif is_double_qshift_algebra(self.operator.parent()):
-            return "double_qshift"
-        else:
-            return "none"
+#     @property
+#     def type(self) -> str:
+#         if is_recurrence_algebra(self.operator.parent()):
+#             return "recurrence"
+#         elif is_double_recurrence_algebra(self.operator.parent()):
+#             return "double_recurrence"
+#         elif is_qshift_algebra(self.operator.parent()):
+#             return "qshift"
+#         elif is_double_qshift_algebra(self.operator.parent()):
+#             return "double_qshift"
+#         else:
+#             return "none"
 
-    @cached_method
-    def op_gen(self) -> OreOperator:
-        r'''
-            Method that returns the main operator of the Ore Algebra associated to this sequence
-        '''
-        if is_recurrence_algebra(self.operator.parent()):
-            method = gens_recurrence_algebra
-        elif is_double_recurrence_algebra(self.operator.parent()):
-            method = gens_double_recurrence_algebra
-        elif is_qshift_algebra(self.operator.parent()):
-            method = gens_qshift_algebra
-        elif is_double_qshift_algebra(self.operator.parent()):
-            method = gens_double_qshift_algebra
-        else:
-            raise TypeError(f"Type of operator [{self.operator.parent()}] not valid")
+#     @cached_method
+#     def op_gen(self) -> OreOperator:
+#         r'''
+#             Method that returns the main operator of the Ore Algebra associated to this sequence
+#         '''
+#         if is_recurrence_algebra(self.operator.parent()):
+#             method = gens_recurrence_algebra
+#         elif is_double_recurrence_algebra(self.operator.parent()):
+#             method = gens_double_recurrence_algebra
+#         elif is_qshift_algebra(self.operator.parent()):
+#             method = gens_qshift_algebra
+#         elif is_double_qshift_algebra(self.operator.parent()):
+#             method = gens_double_qshift_algebra
+#         else:
+#             raise TypeError(f"Type of operator [{self.operator.parent()}] not valid")
 
-        return method(self.operator.parent())[1]
+#         return method(self.operator.parent())[1]
 
-    @cached_method
-    def op_gen_inv(self) -> OreOperator:
-        r'''
-            Method that returns the main operator of the Ore Algebra associated to this sequence
-        '''
-        if is_recurrence_algebra(self.operator.parent()):
-            return None
-        elif is_double_recurrence_algebra(self.operator.parent()):
-            method = gens_double_recurrence_algebra
-        elif is_qshift_algebra(self.operator.parent()):
-            return None
-        elif is_double_qshift_algebra(self.operator.parent()):
-            method = gens_double_qshift_algebra
-        else:
-            raise TypeError(f"Type of operator [{self.operator.parent()}] not valid")
+#     @cached_method
+#     def op_gen_inv(self) -> OreOperator:
+#         r'''
+#             Method that returns the main operator of the Ore Algebra associated to this sequence
+#         '''
+#         if is_recurrence_algebra(self.operator.parent()):
+#             return None
+#         elif is_double_recurrence_algebra(self.operator.parent()):
+#             method = gens_double_recurrence_algebra
+#         elif is_qshift_algebra(self.operator.parent()):
+#             return None
+#         elif is_double_qshift_algebra(self.operator.parent()):
+#             method = gens_double_qshift_algebra
+#         else:
+#             raise TypeError(f"Type of operator [{self.operator.parent()}] not valid")
 
-        return method(self.operator.parent())[2]
+#         return method(self.operator.parent())[2]
 
-    def _element(self, *indices: int) -> Element:
-        return self.__sequence._element(*indices)
+#     def _element(self, *indices: int) -> Element:
+#         return self.__sequence._element(*indices)
 
-    def _shift(self) -> OreSequence:
-        if self.type.find("double") >= 0:
-            # since we can have the inverse shift, we multiply by it
-            Si = self.op_gen_inv()
-            new_operator = self.operator*Si
-        elif self.type != "none":
-            # this is the usual, we can use ore_algebra functions
-            S = self.op_gen()
-            new_operator = self.operator.annihilator_of_associate(S)
+#     def _shift(self) -> OreSequence:
+#         if self.type.find("double") >= 0:
+#             # since we can have the inverse shift, we multiply by it
+#             Si = self.op_gen_inv()
+#             new_operator = self.operator*Si
+#         elif self.type != "none":
+#             # this is the usual, we can use ore_algebra functions
+#             S = self.op_gen()
+#             new_operator = self.operator.annihilator_of_associate(S)
         
-        new_init = [self(i+1) for i in range(required_init(new_operator))]
-        return OreSequence(new_operator, new_init, self.universe)
+#         new_init = [self(i+1) for i in range(required_init(new_operator))]
+#         return OreSequence(new_operator, new_init, self.universe)
 
-    def __add__(self, other) -> Sequence:
-        if self.type.find("double") < 0 and self.type != "none" and isinstance(other, OreSequence) and self.operator.parent() == other.operator.parent():
-            # This is the only case we can use the methods from Ore Algebra
-            new_operator = self.operator.lclm(other.operator)
-            new_init = [self(i) + other(i) for i in range(required_init(new_operator))]
+#     def __add__(self, other) -> Sequence:
+#         if self.type.find("double") < 0 and self.type != "none" and isinstance(other, OreSequence) and self.operator.parent() == other.operator.parent():
+#             # This is the only case we can use the methods from Ore Algebra
+#             new_operator = self.operator.lclm(other.operator)
+#             new_init = [self(i) + other(i) for i in range(required_init(new_operator))]
 
-            return OreSequence(new_operator, new_init, pushout(self.universe, other.universe))
-        return super().__add__(other)
+#             return OreSequence(new_operator, new_init, pushout(self.universe, other.universe))
+#         return super().__add__(other)
 
-    def __sub__(self, other) -> Sequence:
-        if self.type.find("double") < 0 and self.type != "none" and isinstance(other, OreSequence) and self.operator.parent() == other.operator.parent():
-            # This is the only case we can use the methods from Ore Algebra
-            new_operator = self.operator.lclm(other.operator)
-            new_init = [self(i) - other(i) for i in range(required_init(new_operator))]
+#     def __sub__(self, other) -> Sequence:
+#         if self.type.find("double") < 0 and self.type != "none" and isinstance(other, OreSequence) and self.operator.parent() == other.operator.parent():
+#             # This is the only case we can use the methods from Ore Algebra
+#             new_operator = self.operator.lclm(other.operator)
+#             new_init = [self(i) - other(i) for i in range(required_init(new_operator))]
 
-            return OreSequence(new_operator, new_init, pushout(self.universe, other.universe))
-        return super().__sub__(other)
+#             return OreSequence(new_operator, new_init, pushout(self.universe, other.universe))
+#         return super().__sub__(other)
 
-    def __mul__(self, other) -> Sequence:
-        if self.type.find("double") < 0 and self.type != "none" and isinstance(other, OreSequence) and self.operator.parent() == other.operator.parent():
-            # This is the only case we can use the methods from Ore Algebra
-            new_operator = self.operator.symmetric_product(other.operator)
-            new_init = [self(i) * other(i) for i in range(required_init(new_operator))]
+#     def __mul__(self, other) -> Sequence:
+#         if self.type.find("double") < 0 and self.type != "none" and isinstance(other, OreSequence) and self.operator.parent() == other.operator.parent():
+#             # This is the only case we can use the methods from Ore Algebra
+#             new_operator = self.operator.symmetric_product(other.operator)
+#             new_init = [self(i) * other(i) for i in range(required_init(new_operator))]
 
-            return OreSequence(new_operator, new_init, pushout(self.universe, other.universe))
-        return super().__mul__(other)
+#             return OreSequence(new_operator, new_init, pushout(self.universe, other.universe))
+#         return super().__mul__(other)
         
-    def __neg__(self) -> OreSequence:
-        return OreSequence(self.operator, [(-1)*self(i) for i in range(required_init(self.operator))], self.universe)
+#     def __neg__(self) -> OreSequence:
+#         return OreSequence(self.operator, [(-1)*self(i) for i in range(required_init(self.operator))], self.universe)
 
-    def __repr__(self) -> str:
-        return f"Sequence over [{self.universe}] defined by the {self.type} ({self.operator}) with initial values {self[:self.required_init()]}."
+#     def __repr__(self) -> str:
+#         return f"Sequence over [{self.universe}] defined by the {self.type} ({self.operator}) with initial values {self[:self.required_init()]}."
         
 ####################################################################################################
 ###
@@ -980,6 +985,6 @@ __all__ = [
     "get_double_qshift_algebra",
     "apply_operator_to_seq",
     "required_init",
-    "solution", 
-    "OreSequence"
+    "solution",
+    "poly_decomposition"
 ]

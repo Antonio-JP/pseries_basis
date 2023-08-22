@@ -69,15 +69,16 @@ def Q_binomial_type(a:int = 1, b: int = 0, c: int = 0, r : int = 0, s: int = 1, 
         dim = 2,
         q = __q
     )
-
 Q_binomial = Q_binomial_type()
-def Q_pochhammer(a=None):
-    # If 'a' is not given, we set it to `q`
-    a = __q if a is None else a
+
+def Q_pochhammer(a=__q, q=__q):
+    r'''
+        Builds the sequence `(a;q)_n` as a `q`-sequence.
+    '''
     # We compute the corresponding pochhammer sequence
     R = pushout(a.parent(), __Rq) if not a in __Rq else __Rq
-    a = R(a); q = R(__q)
-    return QSequence(lambda qn: q_pochhammer(logq(qn, q), a, q=q), R, 1, q=q)
+    a = R(a); q = R(q)
+    return QSequence(lambda qn: q_pochhammer(logq(qn, __q), a, q=q), R, 1, q=__q)
 
 
 __all__ = [

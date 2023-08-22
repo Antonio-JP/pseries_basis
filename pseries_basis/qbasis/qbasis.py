@@ -106,7 +106,7 @@ class QBasis(PSBasis):
                 v.shift(neg_power)
                 if not isinstance(v, QRationalSequence):
                     v = QRationalSequence._change_from_class(v, field=self.base, variables=[q_k], q=self.q)
-                result += OA(v.generic())*E**(i+neg_power)
+                result += OA(v.shift(neg_power).generic())*E**(i+neg_power)
         return result
 
 
