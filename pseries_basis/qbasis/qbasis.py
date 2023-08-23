@@ -168,6 +168,44 @@ def QBinomialBasis(a: int = 1, b: int = 1, *, q = "q", q_n = None):
     
     return basis
 
+def QPowerBasis(a: int = 1, *, q= "q", q_n = None):
+    r'''
+        Method to create a `q`-basis with `q`-powers as its elements.
+
+        The elements of the basis will be `P_k(n) = q^{ank}`. These basis are 
+        compatible with the multiplication by `q^{an}` and the shift in `n`.
+
+        The name for the shift in `n` will be coded as "E". The name for the 
+        multiplication operator is given by ``q_n``. If not, we will use ``f"q_{a}n"``.
+
+        INPUT:
+
+        * ``a``: a positive integer defining the parameter `a`. 
+        * ``q``: name for the `q` that will be used.
+        * ``q_n`` (optional): name for the multiplication by `q^{an}`.
+
+        TODO: add examples
+    '''
+    if not a in ZZ or a < 0:
+        raise TypeError(f"[QPowerBasis] The value for the parameter `a` must be a natural number.")
+    a = ZZ(a)
+
+    q_n = f"{q}_{str(a) if a != 1 else ''}n" if q_n == None else q_n
+    
+    basis = QBasis(lambda k : Qn**(a*k), Qn.universe, q=Qn.q, q_n = q_n)
+
+    ## Creating the compatibilities
+    q = basis.q
+    R = PolynomialRing(basis.base, "q_k"); q_k = R.gens()[0]
+
+
+    c0 = QRationalSequence(ZZ(0), variables=[q_k], universe=basis.base, q = q)
+    c1 = QRationalSequence(ZZ(1), variables=[q_k], universe=basis.base, q = q)
+    p = QRationalSequence(q_k**a, variables=[q_k], universe=basis.base, q = q)
+    basis.set_compatibility(q_n, Compatibility([[c0, c1]], 0, 1, 1), True, "any")
+    basis.set_homomorphism("E", Compatibility([[p]], 0, 0, 1), True)
+
+    return basis
 
 # class QBasis(PSBasis):
 #     r'''
