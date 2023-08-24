@@ -60,7 +60,7 @@ class QBasis(PSBasis):
                 k, S, Si, _, _ = gens_double_qshift_algebra(OA, name_q="q")
                 D = max(max(el.polynomial().degree(Si.polynomial()) for el in row) for row in recurrence)
 
-                out_OA, (_, out_E) = get_qshift_algebra("q_k", "q", "Sk", base=OA.base())
+                out_OA, (_, out_E) = get_qshift_algebra("q_k", "q", "Sk", base=OA.base().base().base())
                 ## Removing the inverse shift from all matrix entries
                 for row in recurrence:
                     for i in range(len(row)):
@@ -116,7 +116,7 @@ class QBasis(PSBasis):
     ## Implement the _scalar_basis method
     ## Implement the _process_recurrence and _process_ore_algebra for the "ore" and "ore_double" outputs
 
-def QBinomialBasis(a: int = 1, b: int = 1, *, q = "q", q_n = None):
+def QBinomialBasis(a: int = 1, c: int = 0, t: int = 0, e: int = 1, *, q = "q", q_n = None):
     r'''
         Factory of `q`-binomial basis of generic form.
         
@@ -124,43 +124,50 @@ def QBinomialBasis(a: int = 1, b: int = 1, *, q = "q", q_n = None):
         
         .. MATH::
         
-            \left[\begin{array}{c}an\\k\right]_{q^b}
+            \left[\begin{array}{c}an+c\\k+t\right]_{q^e}
             
-        These bases are always compatible with `E: n \mapsto n+1` and the multiplication by `q^{abn}`.
-        This method guarantees the input `a` and `b` are of correct form, build the `QBasis` corresponding
+        These bases are always compatible with `E: n \mapsto n+1` and the multiplication by `q^{aen}`.
+        This method guarantees the input `a`, `c`, `t` and `e` are of correct form, build the `QBasis` corresponding
         to it and include boths compatibilities automatically.
         
         INPUT:
         
         * ``a``: the integer value for `a`.
-        * ``b``: the integer value for `b`.
+        * ``c``: the integer value for `c`.
+        * ``t``: the integer value for `t`.
+        * ``e``: the integer value for `e`.
         * ``q``: the name or value for the `q` we will use as base.
-        * ``q_n``: the name of the operator that will be use for the multiplication by `q^{abn}`. If not given, 
-          we set it up to ``f"{q}_{a*b}n``, mixing the number and the `n`. 
+        * ``q_n``: the name of the operator that will be use for the multiplication by `q^{aen}`. If not given, 
+          we set it up to ``f"{q}_{a*e}n``, mixing the number and the `n`. 
     '''
     if not a in ZZ or a < 0:
         raise TypeError(f"[QBinomialBasis] The value for the parameter `a` must be a natural number.")
-    if not b in ZZ or b < 0:
+    if not c in ZZ or c < 0:
+        raise TypeError(f"[QBinomialBasis] The value for the parameter `c` must be a natural number.")
+    if not t in ZZ or t < 0:
+        raise TypeError(f"[QBinomialBasis] The value for the parameter `t` must be a natural number.")
+    if not e in ZZ or e < 0:
         raise TypeError(f"[QBinomialBasis] The value for the parameter `b` must be a natural number.")
-    a = ZZ(a); b = ZZ(b)
+    a = ZZ(a); c = ZZ(c); t = ZZ(t); e = ZZ(e)
 
+    print(f"[QBinomialBasis] Creating the basis with {a=}, {c=}, {t=}, {e=}")
 
-    q_n = f"{q}_{str(a*b) if a*b != 1 else ''}n" if q_n == None else q_n
+    q_n = f"{q}_{str(a*e) if a*e != 1 else ''}n" if q_n == None else q_n
     
-    basis = QBasis(Q_binomial_type(a=a,e=b).swap(0,1), Qn.universe, q=Qn.q, q_n = q_n)
+    basis = QBasis(Q_binomial_type(a=a,c=c,t=t,e=e).swap(0,1), Qn.universe, q=Qn.q, q_n = q_n)
 
     ## Compatibility with the `q^{abn}`
     q = basis.q
     R = PolynomialRing(basis.base, "q_k"); q_k = R.gens()[0]
 
-    c0 = QRationalSequence(q_k**b, variables=[q_k], universe=basis.base, q = q)
-    c1 = QRationalSequence(q_k**b * (q_k**b * q**b - 1), variables=[q_k], universe=basis.base, q = q)
+    c0 = QRationalSequence(q_k**e*q**(e*(t-c)), variables=[q_k], universe=basis.base, q = q)
+    c1 = QRationalSequence(q_k**e*q**(e*(t-c)) * (q_k**e*q**(e*(t+1)) - 1), variables=[q_k], universe=basis.base, q = q)
 
     basis.set_compatibility(q_n, Compatibility([[c0, c1]], 0, 1, 1), True, "any")
     basis.set_homomorphism(
         "E", 
         Compatibility(
-            [[QRationalSequence(q_binomial(a, a-i, 1/q**b)*q_k**(b*(a-i)), variables=[q_k], universe = basis.base, q = q)
+            [[QRationalSequence(q_binomial(a, a-i, 1/q**e)*q_k**(e*(a-i)), variables=[q_k], universe = basis.base, q = q)
                 for i in range(a, -1, -1)]],
             a, 0, 1
         ), 
