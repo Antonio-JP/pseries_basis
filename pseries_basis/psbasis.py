@@ -1248,10 +1248,11 @@ def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: C
     if not isinstance(compatibility, Compatibility):
         compatibility = basis.compatibility(compatibility)
 
-    for n in range(compatibility.A, bound):
+    A,B,t = compatibility.data()
+
+    for n in range(A, bound):
         lhs:Sequence = action(basis[n]) # sequence obtained from L P_n
-        A,B,_ = compatibility.data()
-        k,s = ZZ(n).quo_rem(ZZ(compatibility.t))
+        k,s = ZZ(n).quo_rem(ZZ(t))
         rhs = sum(compatibility[s,i](k)*basis[n+i] for i in range(-A, B+1)) # sequence for the rhs
 
         if not lhs.almost_equals(rhs, bound):
