@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 from collections.abc import Callable
 from functools import lru_cache
 
-from sage.all import Matrix, PolynomialRing, SR, ZZ #pylint: disable=no-name-in-module
+from sage.all import PolynomialRing, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 
 from ..psbasis import PSBasis, Compatibility
@@ -113,7 +113,7 @@ class QFactorialBasis(QBasis):
     def __init__(self, ak: QSequence, bk: QSequence, universe = None, *, q=None, e: int=1, q_n: str = None, other_seq = None, _extend_by_zero=False):
         ## Checking the argument "e"
         if not e in ZZ or e < 1:
-            raise TypeError(f"[QFactorialBasis] THe exponent for (q^e)-factorial must be a positive integer")
+            raise TypeError(f"[QFactorialBasis] The exponent for (q^e)-factorial must be a positive integer")
         e = ZZ(e)
         ## Treating the arguments a_k and b_k
         if not isinstance(ak, QSequence):
