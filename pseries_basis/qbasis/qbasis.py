@@ -38,7 +38,7 @@ class QBasis(PSBasis):
 
         INPUT:
 
-        * ``sequence``: the callable defininf a `q`-sequence for the elements of the basis.
+        * ``sequence``: the callable defining a `q`-sequence for the elements of the basis.
         * ``universe``: the universe to be used in the `q`-sequence. It must include the `q`
         * ``q``: see :class:`..sequences.qsequences.QSequence`.
         * ``q_n``: name for the `q` variable. In this case, the variable will represent the sequence `(q^n)_n`.
@@ -46,70 +46,22 @@ class QBasis(PSBasis):
     '''
     def __init__(self, sequence: Callable[[int], QSequence], universe = None, *, q="q", _extend_by_zero=False):
         PSBasis.__init__(self, sequence, universe, _extend_by_zero=_extend_by_zero)
-        self.__q = self.base(q)
+        self.__q = self.base(q) #pylint: disable=not-callable
 
     @property
-    def q(self): return self.__q #: THe value for the `q` of the sequences.
+    def q(self): return self.__q #: The value for the `q` of the sequences.
 
-    def _process_recurrence(self, recurrence, output: str = None):
-        from pseries_basis.misc.ore import gens_double_qshift_algebra, get_qshift_algebra
-        if isinstance(recurrence, list): # matrix output
-            recurrence = [[self._process_recurrence(el, output if output != "ore" else "ore_double") for el in row] for row in recurrence]
-            if output == "ore_double":
-                recurrence = Matrix(recurrence)
-            elif output == "ore": # we need to clean the inverse shift globally in the whole matrix
-                OA = recurrence[0][0].parent()
-                k, S, Si, _, _ = gens_double_qshift_algebra(OA, name_q="q")
-                D = max(max(el.polynomial().degree(Si.polynomial()) for el in row) for row in recurrence)
-
-                out_OA, (_, out_E) = get_qshift_algebra("q_k", "q", "Sk", base=OA.base().base().base())
-                ## Removing the inverse shift from all matrix entries
-                for row in recurrence:
-                    for i in range(len(row)):
-                        row[i] = sum(
-                            (((S**D * c).polynomial().coefficients()[0]) * 
-                            (out_E**(D + (m.degree(S.polynomial()) - m.degree(Si.polynomial())))))
-                            for c,m in zip(row[i].polynomial().coefficients(), row[i].polynomial().monomials())    
-                        )
-                recurrence = Matrix(recurrence)
-        else:
-            if output == "rational":
-                for k,v in recurrence.items():
-                    R = PolynomialRing(v.universe, "q_k"); q_k = R.gens()[0]
-                    if not isinstance(v, QRationalSequence):
-                        v = QRationalSequence._change_from_class(v, field=self.base, variables=[q_k], q=self.q)
-                    recurrence[k] = QRationalSequence(v.generic(), universe=v.universe, variables=[q_k], q=self.q)
-            elif output == "expression":
-                raise NotImplementedError("The case 'expression' for q-Basis is not valid")
-            elif output in ("ore_double", "ore"):
-                recurrence = self._process_ore_algebra(recurrence, output == "ore_double")
-            elif output != None:
-                raise ValueError(f"Output type ({output}) not recognized")
-        return recurrence
-            
-    def _process_ore_algebra(self, recurrence, double: bool = False):
-        from ..misc.ore import get_double_qshift_algebra, get_qshift_algebra
-        recurrence = self._process_recurrence(recurrence, "rational")
-        if len(recurrence) == 0:
-            return 0
-        el = next(iter(recurrence.values()))
+    ##########################################################################################################
+    ###
+    ### RECURRENCES METHODS
+    ### 
+    ##########################################################################################################
+    def _create_algebra(self, double: bool):
+        from ..misc.ore import get_qshift_algebra, get_double_qshift_algebra
         if double:
-            OA, (q_k, E, Ei) = get_double_qshift_algebra("q_k", "q", "Sk", base=el.universe)
-            result = OA.zero()
-            for (i,v) in recurrence.items():
-                if not isinstance(v, QRationalSequence):
-                    v = QRationalSequence._change_from_class(v, field=self.base, variables=[q_k], q=self.q)
-                result += OA(v.generic())*(E**i if i >= 0 else Ei**(-i))
+            return get_double_qshift_algebra("q_k", str(self.q), "Sk", base=self.base)
         else:
-            neg_power = -min(0, min(recurrence.keys()))
-            OA, (q_k, E) = get_qshift_algebra("q_k", "q", "Sk", base=el.universe)
-            result = OA.zero()
-            for (i,v) in recurrence.items():
-                v.shift(neg_power)
-                if not isinstance(v, QRationalSequence):
-                    v = QRationalSequence._change_from_class(v, field=self.base, variables=[q_k], q=self.q)
-                result += OA(v.shift(neg_power).generic())*E**(i+neg_power)
-        return result
+            return get_qshift_algebra("q_k", str(self.q), "Sk", base=self.base)
 
     ## TODO: Methods to be implemented
     ## Implement method of casting from PSBasis itself and ConstantSequence
@@ -233,7 +185,7 @@ def QBinomialBasis(a: int = 1, c: int = 0, t: int = 0, e: int = 1, universe = No
             
         These bases are always compatible with `E: n \mapsto n+1` and the multiplication by `q^{aen}`.
         This method guarantees the input `a`, `c`, `t` and `e` are of correct form, build the `QBasis` corresponding
-        to it and include boths compatibilities automatically.
+        to it and include both compatibilities automatically.
         
         INPUT:
         

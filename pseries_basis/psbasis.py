@@ -93,6 +93,7 @@ logger = logging.getLogger(__name__)
 
 from collections.abc import Callable
 from functools import reduce
+from ore_algebra.ore_algebra import OreAlgebra_generic
 from sage.algebras.free_algebra import FreeAlgebra, is_FreeAlgebra
 from sage.all import cached_method, latex, lcm, Matrix, PolynomialRing, prod, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
@@ -135,6 +136,12 @@ class PSBasis(Sequence):
         self.__homomorphisms : list[str] = list()
         self.__derivations : list[str] = list()
         self.__any : list[str] = list()
+
+        ## Other cached variables
+        self.__ore_algebra : OreAlgebra_generic = None
+        self.__double_algebra : OreAlgebra_generic = None
+
+        ## Calling the super method
         super().__init__(sequence, SequenceSet(1, universe), 1, _extend_by_zero=_extend_by_zero)
 
     ##########################################################################################################
@@ -667,6 +674,60 @@ class PSBasis(Sequence):
     ### RECURRENCES METHODS
     ### 
     ##########################################################################################################
+    def _create_algebra(self, double: bool):
+        r'''
+            Method to create uniformly in a class a (double) shift ore algebra when needed.
+        '''
+        from .misc.ore import get_recurrence_algebra, get_double_recurrence_algebra
+        if double:
+            return get_double_recurrence_algebra("k", "Sk", base=self.base)
+        else:
+            return get_recurrence_algebra("k", "Sk", base=self.base)
+
+    def ore_algebra(self):
+        r'''
+            Method to get the ore algebra for recurrences
+
+            This method builds the corresponding Ore Algebra that can will appear in the 
+            recurrences that are derived from compatibility conditions.
+        '''
+        if self.__ore_algebra == None:
+            self.__ore_algebra = self._create_algebra(False)
+        return self.__ore_algebra[0]
+    
+    def ore_var(self):
+        r'''Method that returns the variable affected by the shift in the shift algebra'''
+        self.ore_algebra()
+        return self.__ore_algebra[1][0]
+    
+    def ore_gen(self):
+        r'''Method that returns the shift of the shift algebra'''
+        self.ore_algebra()
+        return self.__ore_algebra[1][1]
+    
+    def double_algebra(self):
+        r'''
+            Method to get the ore algebra for recurrences with inverses
+
+            This method builds the corresponding Ore Algebra that can will appear in the 
+            recurrences that are derived from compatibility conditions.
+        '''
+        if self.__double_algebra == None:
+            # We create the corresponding ore algebra
+            self.__double_algebra = self._create_algebra(True)
+            
+        return self.__double_algebra[0]
+    
+    def double_var(self):
+        r'''Method that returns the variable affected by the shift in the double-shift algebra'''
+        self.double_algebra()
+        return self.__double_algebra[1][0]
+
+    def double_gens(self):
+        r'''Method that returns the shifts of the double-shift algebra'''
+        self.double_algebra()
+        return self.__double_algebra[1][1:]
+    
     def _basic_recurrence(self, operator, sections : int = None):
         ## Get the compatibility condition from the operator
         if not isinstance(operator, Compatibility):
@@ -694,32 +755,29 @@ class PSBasis(Sequence):
         return recurrence
 
     def _process_recurrence(self, recurrence, output: str = None):
-        from pseries_basis.misc.ore import gens_double_recurrence_algebra, get_recurrence_algebra
         if isinstance(recurrence, list): # matrix output
-            recurrence = [[self._process_recurrence(el, output if output != "ore" else "ore_double") for el in row] for row in recurrence]
-            if output == "ore_double":
+            if output in ("ore", "ore_double"):
+                recurrence = [[self._process_recurrence(el, "ore_double") for el in row] for row in recurrence]
+                if output == "ore": # we need to remove the inverse shift in an equal way through the matrix
+                    S, Si = self.double_gens()
+                    E = self.ore_gen()
+                    D = max(max(el.polynomial().degree(Si.polynomial()) for el in row) for row in recurrence)
+                    for row in recurrence:
+                        for i in range(len(row)):
+                            row[i] = sum(
+                                (((S**D * c).polynomial().coefficients()[0]) * 
+                                (E**(D + (m.degree(S.polynomial()) - m.degree(Si.polynomial())))))
+                                for c,m in zip(row[i].polynomial().coefficients(), row[i].polynomial().monomials())    
+                            )
                 recurrence = Matrix(recurrence)
-            elif output == "ore": # we need to clean the inverse shift globally in the whole matrix
-                OA = recurrence[0][0].parent()
-                k, S, Si, _ = gens_double_recurrence_algebra(OA)
-                D = max(max(el.polynomial().degree(Si.polynomial()) for el in row) for row in recurrence)
-
-                out_OA, (_, out_E) = get_recurrence_algebra("k", "Sk", base=OA.base())
-                ## Removing the inverse shift from all matrix entries
-                for row in recurrence:
-                    for i in range(len(row)):
-                        row[i] = sum(
-                            (((S**D * c).polynomial().coefficients()[0]) * 
-                            (out_E**(D + (m.degree(S.polynomial()) - m.degree(Si.polynomial())))))
-                            for c,m in zip(row[i].polynomial().coefficients(), row[i].polynomial().monomials())    
-                        )
-                recurrence = Matrix(recurrence)
+            else: # no need to build a matrix -> we process each input
+                recurrence = [[self._process_recurrence(el, output) for el in row] for row in recurrence]
         else:
             if output in ("rational", "expression"):
                 for k,v in recurrence.items():
-                    seq = ExpressionSequence(v.generic('k'), universe=v.universe, variables=['k'])
+                    seq = ExpressionSequence(v.generic(), universe=v.universe, variables=[str(self.ore_var())])
                     if output == "rational":
-                        seq = RationalSequence(seq.generic('k'), universe=seq.universe, variables=['k'])
+                        seq = RationalSequence(seq.generic(), universe=seq.universe, variables=[str(self.ore_var())])
                     recurrence[k] = seq
             elif output == "expression":
                 pass
@@ -730,18 +788,19 @@ class PSBasis(Sequence):
         return recurrence
             
     def _process_ore_algebra(self, recurrence, double: bool = False):
-        from .misc.ore import get_double_recurrence_algebra, get_recurrence_algebra
         recurrence = self._process_recurrence(recurrence, "rational")
         if len(recurrence) == 0:
-            return 0
-        el = next(iter(recurrence.values()))
+            return (self.double_algebra() if double else self.ore_algebra()).zero()
+        
         if double:
-            OA, (_, E, Ei) = get_double_recurrence_algebra("k", "Sk", base=el.universe)
-            return sum((OA(v.generic("k"))*(E**i if i >= 0 else Ei**(-i)) for (i,v) in recurrence.items()), OA.zero())
+            OA = self.double_algebra()
+            E, Ei = self.double_gens()
+            return sum((OA(v.generic())*(E**i if i >= 0 else Ei**(-i)) for (i,v) in recurrence.items()), OA.zero())
         else:
+            OA = self.ore_algebra()
+            E = self.ore_gen()
             neg_power = -min(0, min(recurrence.keys()))
-            OA, (_, E) = get_recurrence_algebra("k", "Sk", base=el.universe)
-            return sum((OA(v.shift(neg_power).generic("k"))*E**(i+neg_power) for (i,v) in recurrence.items()), OA.zero())
+            return sum((OA(v.shift(neg_power).generic())*E**(i+neg_power) for (i,v) in recurrence.items()), OA.zero())
 
     def recurrence(self, operator, sections : int = None, output : str = "ore_double"):
         r'''
