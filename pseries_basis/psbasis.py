@@ -790,7 +790,7 @@ class PSBasis(Sequence):
     def _process_recurrence_sequence(self, sequence, output):
         seq = ExpressionSequence(sequence.generic(), universe=sequence.universe, variables=[str(self.ore_var())])
         if output == "rational":
-            seq = RationalSequence(seq.generic(), universe=seq.universe, variables=[str(self.ore_var())])
+            seq = RationalSequence(seq.generic(str(self.ore_var())), universe=seq.universe, variables=[str(self.ore_var())])
         return seq
 
     def _process_ore_algebra(self, recurrence, double: bool = False):
