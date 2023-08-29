@@ -73,14 +73,14 @@ class FactorialBasis(PSBasis):
         Then, there are two main criteria to determine whether a Factorial sequence is compatible with an 
         homomorphism and a derivation (see :doi:`10.1016/j.jsc.2022.11.002`, Propositions 14 and 16).
     '''
-    def __init__(self, ak: Sequence, bk: Sequence, universe = None, *, _extend_by_zero=False):
+    def __init__(self, ak: Sequence, bk: Sequence, universe = None, *, variable="n", seq_variable="k", other_seq: Sequence = None, _extend_by_zero=False, **kwds):
         ## Treating the arguments a_k and b_k
         if not isinstance(ak, Sequence):
             if universe != None:
-                ak = ExpressionSequence(SR(ak), ["k"], universe)
+                ak = ExpressionSequence(SR(ak), [seq_variable], universe)
         if not isinstance(bk, Sequence): 
             if universe != None:
-                bk = ExpressionSequence(SR(bk), ["k"], universe)
+                bk = ExpressionSequence(SR(bk), [seq_variable], universe)
         if not isinstance(ak, Sequence) or ak.dim != 1:
             raise TypeError(f"[FactorialBasis] The element a_k must be a univariate sequence or an expression in 'k'")
         if not isinstance(bk, Sequence) or bk.dim != 1:
@@ -92,7 +92,7 @@ class FactorialBasis(PSBasis):
         self.__rho = -bk/ak
         self.__lc = ak.partial_prod()
 
-        self.__poly_ring = PolynomialRing(universe, "n") # this is the polynomial ring for the elements of the sequence
+        self.__poly_ring = PolynomialRing(universe, variable) # this is the polynomial ring for the elements of the sequence
         self.__gen = self.__poly_ring.gens()[0]
 
         @lru_cache
@@ -101,23 +101,28 @@ class FactorialBasis(PSBasis):
             elif k == 0: return self.__poly_ring.one()
             else: return (self.ak(k-1)*self.__gen + self.bk(k-1))*__get_element(k-1) #pylint: disable=not-callable
 
-        super().__init__(lambda k : RationalSequence(__get_element(k), ["n"], universe), universe, _extend_by_zero=_extend_by_zero)
+        sequence = other_seq if other_seq != None else lambda k : self._RationalSequenceBuilder(__get_element(k))
 
-        # We create now the compatibility with the multiplication by "n"
-        self.set_compatibility("n", Compatibility([[self.rho, 1/self.ak]], 0, 1, 1), True, "any")
+        super().__init__(sequence, universe, _extend_by_zero=_extend_by_zero, **kwds)
+
+        # We create now the compatibility with the multiplication by the variable generator
+        self.set_compatibility(variable, Compatibility([[self.rho, 1/self.ak]], 0, 1, 1), True, "any")
 
     def args_to_self(self):
-        return [self.ak, self.bk], {"universe": self.base, "_extend_by_zero": self._Sequence__extend_by_zero}
+        return [self.ak, self.bk], {"universe": self.base, "variable": str(self.gen()), "seq_variable": str(self.ore_var()), "_extend_by_zero": self._Sequence__extend_by_zero}
 
     @property
-    def ak(self): return self.__ak #: Sequence a_k from definition of Factorial basis.
+    def ak(self): return self.__ak                  #: Sequence a_k from definition of Factorial basis.
     @property
-    def bk(self): return self.__bk #: Sequence b_k from definition of Factorial basis.
+    def bk(self): return self.__bk                  #: Sequence b_k from definition of Factorial basis.
     @property
-    def rho(self): return self.__rho #: Root sequence of a Factorial basis.
+    def rho(self): return self.__rho                #: Root sequence of a Factorial basis.
     @property
-    def lc(self): return self.__lc #: Leading coefficient sequence of a Factorial basis.
+    def lc(self): return self.__lc                  #: Leading coefficient sequence of a Factorial basis.
 
+    def gen(self): return self.__gen                #: Getter of the variable generator for the polynomial basis
+    def poly_ring(self): return self.__poly_ring    #: Getter of the polynomial ring for the basis
+        
     ##################################################################################
     ### METHODS FROM PSBASIS
     ##################################################################################
@@ -162,12 +167,29 @@ class FactorialBasis(PSBasis):
                 sage: Fac_B.compatibility("n").equiv(FallingFactorial.compatibility("n"))
                 True
         '''
+        ## Getting the new universe and new quotient for changing the sequences
         new_universe = pushout(self.base, factor.universe)
         quotient = factor.shift() / factor
-        output = FactorialBasis(self.ak*quotient, self.bk*quotient, universe=new_universe)
+
+        ## Gtting other arguments for the builder
+        _, kwds = self.args_to_self()
+        kwds["universe"] = new_universe
+
+        ## Building the new basis
+        output = FactorialBasis(self.ak*quotient, self.bk*quotient, **kwds)
+        ## Creating (if was present) the original sequence
         if self._PSBasis__original_sequence != None:
-            output._PSBasis__original_sequence = factor.change_dimension(2, [0], new_variables=["n"])*self._PSBasis__original_sequence
+            output._PSBasis__original_sequence = factor.change_dimension(2, [0], new_variables=[str(self.gen())])*self._PSBasis__original_sequence
         return output
+
+    ##################################################################################
+    ### TYPE GETTER METHODS
+    ##################################################################################
+    def _RationalSequenceBuilder(self, rational): 
+        r'''
+            Method that allows to build a rational sequence depending on the type of factorial basis
+        '''
+        return RationalSequence(rational, [str(self.gen())], self.base)
 
     ##################################################################################
     ### TODO: def increasing_polynomial(self, *args, **kwds)
@@ -178,7 +200,7 @@ class FactorialBasis(PSBasis):
     ### TODO: def equiv_DtC(self, compatibility: str | OreOperator | TypeCompatibility) -> TypeCompatibility
     ### TODO: def equiv_CtD(self, division: TypeCompatibility) -> TypeCompatibility
 
-def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, _extend_by_zero=False):
+def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, variable="n", seq_variable="k", _extend_by_zero=False):
     r'''
         Factory for creating a factorial basis from the root sequence and sequence of coefficients.
 
@@ -187,6 +209,7 @@ def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, _extend_b
         * ``rho``: the sequence of roots for the factorial basis.
         * ``cn``: the sequence of leading coefficients for the factorial basis.
         * ``universe``: the base universe where the :class:`PSBasis` will be created.
+        * ``variable`` and ``seq_variable``: see :class:`FactorialBasis` for further information.
 
         EXAMPLES::
 
@@ -201,10 +224,10 @@ def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, _extend_b
     ## Treating the arguments rho and lc
     if not isinstance(rho, Sequence):
         if universe != None:
-            rho = ExpressionSequence(SR(rho), ["k"], universe)
+            rho = ExpressionSequence(SR(rho), [seq_variable], universe)
     if not isinstance(lc, Sequence): 
         if universe != None:
-            lc = ExpressionSequence(SR(lc), ["k"], universe)
+            lc = ExpressionSequence(SR(lc), [seq_variable], universe)
     if not isinstance(rho, Sequence) or rho.dim != 1:
         raise TypeError(f"[FactorialBasis] The element rho must be a univariate sequence or an expression in 'k'")
     if not isinstance(lc, Sequence) or lc.dim != 1:
@@ -212,7 +235,7 @@ def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, _extend_b
     
     ak = lc.shift()/lc
     bk = -rho*ak
-    return FactorialBasis(ak, bk, universe, _extend_by_zero=_extend_by_zero)
+    return FactorialBasis(ak, bk, universe, variable=variable, seq_variable=seq_variable, _extend_by_zero=_extend_by_zero)
         
 def FallingBasis(a, b, c, universe = None, E: str = 'E'):
     r'''
@@ -271,13 +294,13 @@ def FallingBasis(a, b, c, universe = None, E: str = 'E'):
         E = "Id"
     elif a in ZZ and a > 0: # the shift by 1 is compatible
         E_base = E + f"_{abs(c)}_{abs(a)}"
-        output.set_compatibility(E_base, comp, True, "homomorphism")
+        output.set_homomorphism(E_base, comp, True)
         comp = comp**ZZ(a)
-    output.set_compatibility(E, comp, True, "homomorphism")
+    output.set_homomorphism(E, comp, True)
 
     ## We create the base sequence for generic purposes
-    n, k, i = SR.var("n"), SR.var("k"), SR.var("i")
-    output._PSBasis__original_sequence = ExpressionSequence((a*n + b - c*i).prod(i, 0, k), [k,n], universe)
+    n, k, i = SR(output.gen()), SR.var(output.ore_var()), SR.var("i")
+    output._PSBasis__original_sequence = ExpressionSequence((a*n + b - c*i).prod(i, 0, k-1), [k,n], universe)
 
     return output
 
@@ -305,10 +328,10 @@ def PowerTypeBasis(a = 1, b = 0, universe = None, Dn: str = 'Dn'):
     output = FallingBasis(a, b, 0, universe, None)
     universe = output.base
     R = PolynomialRing(universe, "k"); k = R.gens()[0]
-    output.set_compatibility(Dn, Compatibility([[RationalSequence(a*k, [k], universe), ConstantSequence(0, universe, 1)]], 1, 0, 1), True, "derivation")
+    output.set_derivation(Dn, Compatibility([[RationalSequence(a*k, [k], universe), ConstantSequence(0, universe, 1)]], 1, 0, 1), True)
 
     ## Creating the generic for this type of sequences
-    n,k = SR.var("n"), SR.var("k")
+    n, k = SR(output.gen()), SR.var(output.ore_var())
     output._PSBasis__original_sequence = ExpressionSequence((a*n+b)**k, [k,n], universe)
 
     return output
@@ -356,12 +379,12 @@ def BinomialTypeBasis(a = 1, b = 0, universe = None, E : str = 'E'):
     output = FactorialBasis(ak, bk, universe) # this includes the compatibility with "n"
 
     E_comp = Compatibility([[ConstantSequence(binomial(a, -i), universe, 1) for i in range(-a, 1)]], a, 0, 1)
-    output.set_compatibility(E, E_comp, True, "homomorphism")
+    output.set_homomorphism(E, E_comp, True)
     if a != 1:
-        output.set_compatibility(E + "_t", Compatibility([[ConstantSequence(1, universe, 1), ConstantSequence(1, universe, 1)]], 1, 0, 1), True, "homomorphism")
+        output.set_homomorphism(E + "_t", Compatibility([[ConstantSequence(1, universe, 1), ConstantSequence(1, universe, 1)]], 1, 0, 1), True)
 
     ## Creating the original sequence for this type
-    n,k = SR.var("n"), SR.var("k")
+    n, k = SR(output.gen()), SR.var(output.ore_var())
     output._PSBasis__original_sequence = ExpressionSequence(binomial(a*n+b,k), [k,n], universe)
 
     return output

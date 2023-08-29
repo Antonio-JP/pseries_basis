@@ -12,7 +12,9 @@ from functools import lru_cache
 from sage.all import PolynomialRing, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 
+from ..polynomial.factorial import FactorialBasis
 from ..psbasis import PSBasis, Compatibility
+from ..sequences.element import ExpressionSequence
 from ..sequences.examples import Qn, Q_binomial_type, q_binomial
 from ..sequences.qsequences import QSequence, QRationalSequence
 
@@ -62,6 +64,12 @@ class QBasis(PSBasis):
             return get_double_qshift_algebra("q_k", str(self.q), "Sk", base=self.base)
         else:
             return get_qshift_algebra("q_k", str(self.q), "Sk", base=self.base)
+        
+    def _process_recurrence_sequence(self, sequence, output):
+        seq = ExpressionSequence(sequence.generic(), universe=sequence.universe, variables=[str(self.ore_var())])
+        if output == "rational":
+            seq = QRationalSequence(seq.generic(), universe=seq.universe, variables=[str(self.ore_var())], q=self.q)
+        return seq
 
     ## TODO: Methods to be implemented
     ## Implement method of casting from PSBasis itself and ConstantSequence
@@ -70,7 +78,7 @@ class QBasis(PSBasis):
     ## Implement the _scalar_basis method
     ## Implement the _process_recurrence and _process_ore_algebra for the "ore" and "ore_double" outputs
 
-class QFactorialBasis(QBasis):
+class QFactorialBasis(FactorialBasis, QBasis):
     r'''
         Class that represents a `(q^e)`-factorial basis.
 
@@ -110,7 +118,7 @@ class QFactorialBasis(QBasis):
         Look for ***(upcoming paper, not yet a reference)*** for see condition for compatibilities with 
         other operators.
     ''' 
-    def __init__(self, ak: QSequence, bk: QSequence, universe = None, *, q=None, e: int=1, q_n: str = None, other_seq = None, _extend_by_zero=False):
+    def __init__(self, ak: QSequence, bk: QSequence, universe = None, *, q=None, e: int=1, q_n: str = None, q_k : str = None, other_seq = None, _extend_by_zero=False):
         ## Checking the argument "e"
         if not e in ZZ or e < 1:
             raise TypeError(f"[QFactorialBasis] The exponent for (q^e)-factorial must be a positive integer")
@@ -118,38 +126,19 @@ class QFactorialBasis(QBasis):
         ## Treating the arguments a_k and b_k
         if not isinstance(ak, QSequence):
             if universe != None:
-                ak = QRationalSequence(SR(ak), ["q_k"], universe, q=q)
+                ak = QRationalSequence(SR(ak), [q_k], universe, q=q)
         if not isinstance(bk, QSequence): 
             if universe != None:
-                bk = QRationalSequence(SR(bk), ["q_k"], universe, q=q)
+                bk = QRationalSequence(SR(bk), [q_k], universe, q=q)
         if not isinstance(ak, QSequence) or ak.dim != 1:
             raise TypeError(f"[QFactorialBasis] The element a_k must be a univariate sequence or an expression in 'k'")
         if not isinstance(bk, QSequence) or bk.dim != 1:
             raise TypeError(f"[QFactorialBasis] The element a_k must be a univariate sequence or an expression in 'k'")
         universe = universe if universe != None else pushout(ak.universe, bk.universe)
-        
-        self.__ak = ak.change_universe(universe)
-        self.__bk = bk.change_universe(universe)
-        self.__rho = -bk/ak
-        self.__lc = ak.partial_prod()
 
-        self.__qn = q_n if q_n != None else f"{q}_{e}n" if e > 1 else "q_n"
         self.__base_exponent = e
 
-        self.__poly_ring = PolynomialRing(universe, self.__qn) # this is the polynomial ring for the elements of the sequence
-        self.__gen = self.__poly_ring.gens()[0]
-
-        @lru_cache
-        def __get_element(k):
-            if k < 0: return self.__poly_ring.zero()
-            elif k == 0: return self.__poly_ring.one()
-            else: return (self.ak(k-1)*self.__gen + self.bk(k-1))*__get_element(k-1) #pylint: disable=not-callable
-
-        sequence = other_seq if other_seq != None else lambda k : QRationalSequence(__get_element(k), [self.__qn], universe, q=self.q)
-        super().__init__(sequence, universe, q=q, _extend_by_zero=_extend_by_zero)
-
-        # We create now the compatibility with the multiplication by "n"
-        self.set_compatibility(self.__qn, Compatibility([[self.rho, 1/self.ak]], 0, 1, 1), True, "any")
+        super().__init__(ak, bk, universe=universe, variable=q_n if q_n != None else f"{q}_{f'{e}' if e != 1 else ''}n", seq_variable=q_k, other_seq=other_seq, _extend_by_zero=_extend_by_zero, q=q)
 
     def args_to_self(self):
         return (
@@ -159,19 +148,17 @@ class QFactorialBasis(QBasis):
                 "_extend_by_zero": self._Sequence__extend_by_zero,
                 "q": self.q,
                 "e": self.__base_exponent,
-                "qn": self.__qn,
+                "q_n": str(self.gen()),
+                "q_k": str(self.ore_var()),
                 "other_seq": self._PSBasis__original_sequence
             }
         )
 
-    @property
-    def ak(self): return self.__ak #: Sequence a_k from definition of Factorial basis.
-    @property
-    def bk(self): return self.__bk #: Sequence b_k from definition of Factorial basis.
-    @property
-    def rho(self): return self.__rho #: Root sequence of a Factorial basis.
-    @property
-    def lc(self): return self.__lc #: Leading coefficient sequence of a Factorial basis.
+    def _RationalSequenceBuilder(self, rational): 
+        r'''
+            Method that allows to build a rational sequence depending on the type of factorial basis
+        '''
+        return QRationalSequence(rational, [str(self.gen())], self.base, q=self.q, exp=self.__base_exponent)
 
 def QBinomialBasis(a: int = 1, c: int = 0, t: int = 0, e: int = 1, universe = None, *, q = "q", q_n = None):
     r'''

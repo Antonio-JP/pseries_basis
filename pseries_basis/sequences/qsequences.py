@@ -184,11 +184,16 @@ class QRationalSequence(QSequence, RationalSequence):
 
         TODO: add examples of rational q-sequences.
     '''
-    def __init__(self, rational, variables=None, universe=None, *, q, _extend_by_zero=False):
+    def __init__(self, rational, variables=None, universe=None, *, q, exp:int=1, _extend_by_zero=False):
         # we set up the generic expression and check the arguments
         RationalSequence.__init__(self, rational, variables=variables, universe=universe, _extend_by_zero=_extend_by_zero) 
         # we set up the value for q
         QSequence.__init__(self, None, self.universe, q=q, _extend_by_zero=_extend_by_zero)
+        self.__exp = exp
+
+    @property
+    def exp(self):
+        return self.__exp
 
     ## Methods for the casting of sequences
     @classmethod
@@ -196,7 +201,7 @@ class QRationalSequence(QSequence, RationalSequence):
         return cls._register_class([QSequence], [])
     
     def args_to_self(self):
-        return [self.generic()], {"variables": self.variables(), "universe": self.universe, "q": self.q, "_extend_by_zero": self._Sequence__extend_by_zero}
+        return [self.generic()], {"variables": self.variables(), "universe": self.universe, "q": self.q, "exp": self.__exp, "_extend_by_zero": self._Sequence__extend_by_zero}
     
     def _change_class(self, goal_class, **_):
         if goal_class != QSequence:
@@ -206,6 +211,7 @@ class QRationalSequence(QSequence, RationalSequence):
             self.universe, 
             self.dim, 
             q = self.q,
+            exp = self.exp,
             _extend_by_zero = self._Sequence__extend_by_zero
         )
     
@@ -219,12 +225,14 @@ class QRationalSequence(QSequence, RationalSequence):
             variables=extra_info.get("variables", [f"qn_{i}" for i in range(sequence.dim)] if sequence.dim > 1 else ["qn"]),
             universe=sequence.universe,
             q = extra_info.get("q"),
+            exp = extra_info.get("exp", 1),
             _extend_by_zero=sequence._Sequence__extend_by_zero
         )
        
     def extra_info(self) -> dict:
         dict = QSequence.extra_info(self)
         dict.update(RationalSequence.extra_info(self))
+        dict["exp"] = self.exp
         return dict
     
     ## Methods fro sequence arithmetic
@@ -245,13 +253,14 @@ class QRationalSequence(QSequence, RationalSequence):
     
     ## Methods for operations on Sequences
     def _element(self, *indices: int):
-        return RationalSequence._element(self, *[self.q**i if i in ZZ else SR(self.q)**i for i in indices])
+        return RationalSequence._element(self, *[self.q**(self.exp*i) if i in ZZ else SR(self.q)**(self.exp*i) for i in indices])
 
     def _shift(self, *shifts):
         return QRationalSequence(
-            self.generic()(**{str(v): v * self.q**(i) for (v,i) in zip(self.variables(), shifts)}), 
+            self.generic()(**{str(v): v * self.q**(self.exp*i) for (v,i) in zip(self.variables(), shifts)}), 
             variables=self.variables(), 
             q = self.q,
+            exp = self.exp,
             _extend_by_zero=self._Sequence__extend_by_zero
         )
     
@@ -265,7 +274,7 @@ class QRationalSequence(QSequence, RationalSequence):
             if a != 1 or b != 0:
                 from .element import RationalSequence
                 R = ZZ[self.q, 'n']; n = R.gens()[1]
-                return RationalSequence(R(f"({self.q}**{b})*n**{a}"), variables=['n'], universe=ZZ)
+                return RationalSequence(R(f"{self.q}**({self.exp*b})*n**{a}"), variables=['n'], universe=ZZ)
             else:
                 return False
         return super()._subsequence_input(input)
@@ -279,6 +288,7 @@ class QRationalSequence(QSequence, RationalSequence):
                 variables=self.variables(), 
                 universe=self.universe, 
                 q = self.q,
+                exp = self.exp,
                 _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values())
             )
         except Exception as e:
@@ -289,15 +299,16 @@ class QRationalSequence(QSequence, RationalSequence):
         vars = self.variables()
         rem_vars = [vars[i] for i in range(self.dim) if not i in values]
         return QRationalSequence(
-            self.__generic(**{str(vars[i]): self.q**(val) for (i,val) in values.items()}), 
+            self.__generic(**{str(vars[i]): self.q**(self.exp*val) for (i,val) in values.items()}), 
             variables=rem_vars, 
             universe=self.universe, 
             q = self.q,
+            exp = self.exp,
             _extend_by_zero=self._Sequence__extend_by_zero
         )
     def _swap(self, src: int, dst: int):
         new_vars = list(self.variables())
         new_vars[src], new_vars[dst] = new_vars[dst], new_vars[src]
-        return QRationalSequence(self.__generic, new_vars, self.universe, q = self.q)
+        return QRationalSequence(self.__generic, new_vars, self.universe, q = self.q, exp=self.exp)
 
 __all__ = ["logq", "QSequence", "QRationalSequence"]
