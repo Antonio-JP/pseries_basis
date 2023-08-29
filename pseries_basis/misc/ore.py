@@ -750,6 +750,7 @@ def solution(operator: OreOperator, init: list | tuple, check_init=True, **kwds)
     '''
     logger.debug(f"[solution] Computing a sequence solution to {operator} with initial condition {init}")
     if is_recurrence_algebra(operator.parent()):
+        logger.debug(f"[solution] Recurrence case")
         v,S,alpha = gens_recurrence_algebra(operator.parent()); S = S.polynomial(); Si = None
         if (not alpha in ZZ): 
             raise ValueError(f"The shift must be an integer shift (got {alpha})")
@@ -759,6 +760,7 @@ def solution(operator: OreOperator, init: list | tuple, check_init=True, **kwds)
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : n}))
         _shift = lambda i : alpha*i
     elif is_double_recurrence_algebra(operator.parent()):
+        logger.debug(f"[solution] Double-recurrence case")
         v,S,Si,alpha = gens_double_recurrence_algebra(operator.parent()); S = S.polynomial(); Si = Si.polynomial()
         if (not alpha in ZZ): 
             raise ValueError(f"The shift must be an integer shift (got {alpha})")
@@ -768,6 +770,7 @@ def solution(operator: OreOperator, init: list | tuple, check_init=True, **kwds)
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : n}))
         _shift = lambda i : alpha*i
     elif is_qshift_algebra(operator.parent(), **kwds):
+        logger.debug(f"[solution] Q-recurrence case")
         v,S,q,p = gens_qshift_algebra(operator.parent()); S = S.polynomial(); Si = None
         logger.debug(f"[solution] Found the q-shit case: {v=}, {S=}, {q=}, {p=}")
         if q == None:
@@ -778,6 +781,7 @@ def solution(operator: OreOperator, init: list | tuple, check_init=True, **kwds)
         _eval_coeff = (lambda c,_ : c) if v is None else (lambda c,n : c(**{str(v) : q**(p*n)}))
         _shift = lambda i : i
     elif is_double_qshift_algebra(operator.parent(), **kwds):
+        logger.debug(f"[solution] Double q-recurrence case")
         v,S,Si,q,p = gens_double_qshift_algebra(operator.parent()); S = S.polynomial(); Si = Si.polynomial()
         logger.debug(f"[solution] Found the double q-shit case: {v=}, {S=}, {Si=}, {q=}, {p=}")
         if q == None:

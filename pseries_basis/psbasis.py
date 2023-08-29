@@ -756,7 +756,9 @@ class PSBasis(Sequence):
 
     def _process_recurrence(self, recurrence, output: str = None):
         if isinstance(recurrence, list): # matrix output
+            logger.debug(f"[recurrence] Processing a matrix of recurrences")
             if output in ("ore", "ore_double"):
+                logger.debug(f"[recurrence] Output is ore-related ({output=})")
                 recurrence = [[self._process_recurrence(el, "ore_double") for el in row] for row in recurrence]
                 if output == "ore": # we need to remove the inverse shift in an equal way through the matrix
                     S, Si = self.double_gens()
@@ -773,34 +775,40 @@ class PSBasis(Sequence):
             else: # no need to build a matrix -> we process each input
                 recurrence = [[self._process_recurrence(el, output) for el in row] for row in recurrence]
         else:
+            logger.debug(f"[recurrence] Processing a single recurrence")
             if output in ("rational", "expression"):
+                logger.debug(f"[recurrence] {output=}")
                 for k,v in recurrence.items():
-                    seq = ExpressionSequence(v.generic(), universe=v.universe, variables=[str(self.ore_var())])
-                    if output == "rational":
-                        seq = RationalSequence(seq.generic(), universe=seq.universe, variables=[str(self.ore_var())])
-                    recurrence[k] = seq
-            elif output == "expression":
-                pass
+                    recurrence[k] = self._process_recurrence_sequence(v, output)
             elif output in ("ore_double", "ore"):
+                logger.debug(f"[recurrence] Output is ore-related ({output=})")
                 recurrence = self._process_ore_algebra(recurrence, output == "ore_double")
             elif output != None:
                 raise ValueError(f"Output type ({output}) not recognized")
         return recurrence
             
+    def _process_recurrence_sequence(self, sequence, output):
+        seq = ExpressionSequence(sequence.generic(), universe=sequence.universe, variables=[str(self.ore_var())])
+        if output == "rational":
+            seq = RationalSequence(seq.generic(), universe=seq.universe, variables=[str(self.ore_var())])
+        return seq
+
     def _process_ore_algebra(self, recurrence, double: bool = False):
         recurrence = self._process_recurrence(recurrence, "rational")
         if len(recurrence) == 0:
             return (self.double_algebra() if double else self.ore_algebra()).zero()
         
         if double:
+            logger.debug(f"[recurrence] Processing a double-recurrence operator")
             OA = self.double_algebra()
             E, Ei = self.double_gens()
             return sum((OA(v.generic())*(E**i if i >= 0 else Ei**(-i)) for (i,v) in recurrence.items()), OA.zero())
         else:
+            logger.debug(f"[recurrence] Processing a recurrence operator")
             OA = self.ore_algebra()
             E = self.ore_gen()
             neg_power = -min(0, min(recurrence.keys()))
-            return sum((OA(v.shift(neg_power).generic())*E**(i+neg_power) for (i,v) in recurrence.items()), OA.zero())
+            return sum((OA.base()(v.shift(neg_power).generic())*E**(i+neg_power) for (i,v) in recurrence.items()), OA.zero())
 
     def recurrence(self, operator, sections : int = None, output : str = "ore_double"):
         r'''
@@ -844,8 +852,12 @@ class PSBasis(Sequence):
 
             TODO: add examples.
         '''
+        logger.debug(f"[recurrence] --- STARTING COMPUTATION OF A RECURRENCE")
         recurrence = self._basic_recurrence(operator, sections)
+        logger.debug(f"[recurrence] --- FINISHED COMPUTATION OF A DICTIONARY REPRESENTATION")
         recurrence = self._process_recurrence(recurrence, output)
+        logger.debug(f"[recurrence] --- FINISHED COMPUTATION OF THE FINAL RECURRENCE\n{recurrence=}")
+
         return recurrence
 
     ##########################################################################################################
@@ -1264,6 +1276,20 @@ class Compatibility:
                     logger.debug(f"[equiv] Found different in section {b}, coefficient {i}")
                     return False
         return True
+
+def basis_matrix(basis, nrows=5, ncols=None):
+    r'''
+        Method to build a matrix with the first part of a basis or a 2-size sequence
+    '''
+    if isinstance(basis, PSBasis): basis = basis.as_2dim() # case of a PSBasis
+    if not isinstance(basis, Sequence): basis = Sequence(basis, universe=basis(0,0).parent(), dim=2) # case of just a callable
+
+    if ncols is None: ncols = nrows
+    if not nrows in ZZ or nrows <= 0: raise TypeError(f"Number of rows must be a positive number (got {nrows=})")
+    if not ncols in ZZ or ncols <= 0: raise TypeError(f"Number of columns must be a positive number (got {ncols=})")
+    nrows = ZZ(nrows); ncols = ZZ(ncols)
+
+    return Matrix([[basis((i,j)) for j in range(ncols)] for i in range(nrows)])
 
 def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: Callable, bound: int = 100, *, _full=False):
     r'''
