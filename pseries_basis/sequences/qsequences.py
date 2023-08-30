@@ -207,11 +207,10 @@ class QRationalSequence(QSequence, RationalSequence):
         if goal_class != QSequence:
             raise NotImplementedError
         return QSequence(
-            lambda *n : self.generic()(**{str(v): n[i] for (i,v) in enumerate(self.variables())}),
+            lambda *qn : self.generic()(**{str(v): (qn[i])**self.exp for (i,v) in enumerate(self.variables())}),
             self.universe, 
             self.dim, 
             q = self.q,
-            exp = self.exp,
             _extend_by_zero = self._Sequence__extend_by_zero
         )
     

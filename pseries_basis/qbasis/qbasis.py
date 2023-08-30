@@ -120,8 +120,8 @@ class QFactorialBasis(FactorialBasis, QBasis):
     ''' 
     def __init__(self, ak: QSequence, bk: QSequence, universe = None, *, q=None, e: int=1, q_n: str = None, q_k : str = None, other_seq = None, _extend_by_zero=False):
         ## Checking the argument "e"
-        if not e in ZZ or e < 1:
-            raise TypeError(f"[QFactorialBasis] The exponent for (q^e)-factorial must be a positive integer")
+        if not e in ZZ or e == 0:
+            raise TypeError(f"[QFactorialBasis] The exponent for (q^e)-factorial must be different to 0")
         e = ZZ(e)
         ## Treating the arguments a_k and b_k
         if not isinstance(ak, QSequence):
@@ -137,8 +137,9 @@ class QFactorialBasis(FactorialBasis, QBasis):
         universe = universe if universe != None else pushout(ak.universe, bk.universe)
 
         self.__base_exponent = e
+        name_variable = q_n if q_n != None else f"{q}_{e}n" if e > 1 else f"{q}__{-e}" if e < -1 else f"{q}__n" if e == -1 else f"{q}_n"
 
-        super().__init__(ak, bk, universe=universe, variable=q_n if q_n != None else f"{q}_{f'{e}' if e != 1 else ''}n", seq_variable=q_k, other_seq=other_seq, _extend_by_zero=_extend_by_zero, q=q)
+        super().__init__(ak, bk, universe=universe, variable=name_variable, seq_variable=q_k, other_seq=other_seq, _extend_by_zero=_extend_by_zero, q=q)
 
     def args_to_self(self):
         return (
