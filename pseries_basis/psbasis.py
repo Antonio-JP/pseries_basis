@@ -1237,7 +1237,7 @@ class Compatibility:
 
     def equiv(self, other, bound=None) -> bool:
         r'''
-            Check equavalence between compatibility conditions
+            Check equivalence between compatibility conditions
 
             This method defines the equivalence between two compatibility conditions.
             Let `C_1` and `C_2` be two compatibility conditions with general data 

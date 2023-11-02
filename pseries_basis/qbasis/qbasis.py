@@ -7,7 +7,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 from collections.abc import Callable
-from functools import lru_cache
 
 from sage.all import PolynomialRing, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
