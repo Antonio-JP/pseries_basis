@@ -35,10 +35,9 @@ setup(
     ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords = "holonomic SageMath sequence power-series",
     packages = ["pseries_basis", 
-                "pseries_basis.factorial",
+                "pseries_basis.polynomial",
                 "pseries_basis.misc",
-                "pseries_basis.order",
-                "pseries_basis.orthogonal",
+                "pseries_basis.functional",
                 "pseries_basis.sequences",
                 "pseries_basis.qbasis"],
     setup_requires   = [],
