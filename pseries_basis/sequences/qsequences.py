@@ -273,7 +273,7 @@ class QRationalSequence(QSequence, RationalSequence):
             if a != 1 or b != 0:
                 from .element import RationalSequence
                 R = ZZ[self.q, 'n']; n = R.gens()[1]
-                return RationalSequence(R(f"{self.q}**({self.exp*b})*n**{a}"), variables=['n'], universe=ZZ)
+                return RationalSequence(R(f"{self.q}**({self.exp*b})*{n}**{a}"), variables=['n'], universe=ZZ)
             else:
                 return False
         return super()._subsequence_input(input)

@@ -23,15 +23,16 @@ from functools import lru_cache as cache
 from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
 
-from sage.all import QQ, ZZ, prod, lcm, cached_method, Parent
+from sage.all import QQ, ZZ, prod, lcm, Parent, Matrix
 from sage.categories.fields import Fields
-from sage.categories.pushout import pushout
 from sage.rings.polynomial.polynomial_ring import PolynomialRing_field, is_PolynomialRing
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.fraction_field import FractionField_1poly_field
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 from sage.rings.ring import Algebra # pylint: disable=no-name-in-module
 from sage.structure import element
+
+from typing import Any, Callable
 
 from ..sequences.base import Sequence
 
@@ -611,7 +612,7 @@ def apply_operator_to_seq(operator : OreOperator, sequence : Sequence, **kwds) -
     else:
         raise TypeError(f"Type {operator.__class__} not valid for method 'apply_operator_to_seq'")
 
-    return Sequence(gen, R, 1, False)
+    return Sequence(gen, R, 1, _extend_by_zero=False)
 
 def required_init(operator : OreOperator) -> int:
     r'''
@@ -821,6 +822,20 @@ def solution(operator: OreOperator, init: list | tuple, check_init=True, **kwds)
             return -sum(_eval_coeff(coefficients[i], n-dS)*_eval_monomial(monomials[i], n) for i in range(-dSi, dS))/_eval_coeff(lc, n-dS)
     return Sequence(__aux_sol, universe=universe, dim=1)
 
+def unroll_matrix(operator: OreOperator, seq_builder: Callable[[Any], Sequence], num_cols: int|None = None):
+    if not (is_qshift_algebra(operator.parent(), name_q="q") or is_recurrence_algebra(operator.parent())):
+        raise NotImplementedError("Only implemented for recurrences with 1 shift")
+    req_values = required_init(operator); r = req_values
+    num_cols = req_values if num_cols == None else num_cols
+    
+    transpose = [[1 if i == j else 0 for i in range(req_values)] for j in range(min(num_cols,req_values))]
+    coeffs = [seq_builder(operator[i]) for i in range(operator.order()+1)] # coefficients as sequences
+    
+    while len(transpose) < num_cols:
+        m = len(transpose)
+        transpose.append([sum((-coeffs[r-l][m-r] / coeffs[r][m-r])*transpose[-l][j] for l in range(1, r+1)) for j in range(operator.order())])
+    return Matrix(transpose).transpose()
+
 ## TODO: Maybe review this class
 # class OreSequence(Sequence):
 #     r'''
@@ -990,5 +1005,6 @@ __all__ = [
     "apply_operator_to_seq",
     "required_init",
     "solution",
+    "unroll_matrix",
     "poly_decomposition"
 ]

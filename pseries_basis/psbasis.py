@@ -739,14 +739,14 @@ class PSBasis(Sequence):
         
         ## Computing the recurrence
         if operator.t == 1: # only one sequence
-            recurrence = {-i: operator[0,i].shift(-i) for i in range(-operator.A,operator.B+1)}
+            recurrence = {-i: operator[0,i].shift(-i) for i in range(-operator.A,operator.B+1)} #pylint: disable=invalid-unary-operand-type
         else: # the output is a matrix of recurrences
             recurrence = []
             for r in range(operator.t):
                 row = []
                 for j in range(operator.t):
                     element = dict()
-                    for i in range(-operator.A, operator.B+1):
+                    for i in range(-operator.A, operator.B+1): #pylint: disable=invalid-unary-operand-type
                         if (r-i-j)%operator.t == 0:
                             exp = (r-i-j)//operator.t
                             element[exp] = element.get(exp, 0) + operator[j,i].shift(exp)
@@ -978,16 +978,16 @@ class Compatibility:
         self.__cache_pow = dict()
 
     @property
-    def upper(self): return self.__upper #: Property of the upper bound for the compatibility
+    def upper(self) -> int: return self.__upper #: Property of the upper bound for the compatibility
     @property
-    def lower(self): return self.__lower #: Property of the lower bound for the compatibility
+    def lower(self) -> int: return self.__lower #: Property of the lower bound for the compatibility
     @property
-    def nsections(self): return self.__nsections #: Property of the number of sections for the compatibility
+    def nsections(self) -> int: return self.__nsections #: Property of the number of sections for the compatibility
     A = lower #: alias for the upper bound
     B = upper #: alias for the lower bound
     t = nsections # alias for the number of sections
 
-    def data(self):
+    def data(self) -> tuple[int,int,int]:
         r'''Return the compatibility data (`A`, `B`, `t`)'''
         return self.A, self.B, self.t
     
@@ -1013,7 +1013,7 @@ class Compatibility:
             raise KeyError(f"Compatibility with {self.t} sections. Can not access section {item[0]}")
         elif item[0] is None or item[0] == slice(None,None,None): # requesting the full 
             return self.__data[item[0]]
-        elif item[1] >= -self.A and item[1] <= self.B:
+        elif item[1] >= -self.A and item[1] <= self.B: #pylint: disable=invalid-unary-operand-type
             return self.__data[item[0]][item[1]+self.A]
         else:
             return ConstantSequence(0, self.base(), 1)
@@ -1031,7 +1031,7 @@ class Compatibility:
         coeffs = []
         for s in range(new_sections):
             new_section = []
-            for i in range(-A, B+1):
+            for i in range(-A, B+1): #pylint: disable=invalid-unary-operand-type
                 s0,s1 = ZZ(s).quo_rem(self.t)
                 new_section.append(self[s1,i].subsequence((0, (a, s0))))
             coeffs.append(new_section)
@@ -1193,7 +1193,7 @@ class Compatibility:
     def __repr__(self) -> str:
         start = f"Compatibility condition {self.data()}"
         try:
-            M = Matrix([[self[t,i].generic() for i in range(-self.A, self.B+1)] for t in range(self.t)])
+            M = Matrix([[self[t,i].generic() for i in range(-self.A, self.B+1)] for t in range(self.t)]) #pylint: disable=invalid-unary-operand-type
             start += f" with following coefficient matrix:\n{M}"
         except:
             pass
@@ -1212,7 +1212,7 @@ class Compatibility:
                 code += r"L \cdot P_{k} = "
 
             monomials = []
-            for i in range(-self.A, self.B+1):
+            for i in range(-self.A, self.B+1): #pylint: disable=invalid-unary-operand-type
                 ## Creating the coefficient
                 try:
                     c = self[b,i].generic('k')
