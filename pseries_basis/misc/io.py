@@ -37,6 +37,7 @@ def operator2Mathematica(operator: OreOperator, sequence_var: str = None) -> str
         EXAMPLES::
 
             sage: from pseries_basis.misc.ore import *
+            sage: from pseries_basis.misc.io import operator2Mathematica
             sage: A, (n, E) = get_recurrence_algebra("n")
             sage: L = n^3 *E^2 + (n^2 + 1)*E + (n-1)
             sage: operator2Mathematica(L)
