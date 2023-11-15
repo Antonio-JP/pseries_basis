@@ -19,6 +19,113 @@ from .sequences import Sequence, LambdaSequence
 
 logger = logging.getLogger(__name__)
 
+def operator2Mathematica(operator: OreOperator, sequence_var: str = None) -> str:
+    r'''
+        Method to write an :class:`~ore_algebra.ore_operator.OreOperator` into a string
+
+        This method writes down an Ore Operators as a string where the possible meaning 
+        of extra variables (see the case of `q`-sequences) is translated.
+
+        These strings should be valid input as Mathematica code.
+
+        INPUT: 
+
+        * ``operator``: a :class:`~ore_algebra.ore_operator.OreOperator` to write down to a file.
+        * ``sequence_var``: the variable to be substitute for the sequence name in Mathematica. If not
+          given, we leave the operators as they are.
+
+        EXAMPLES::
+
+            sage: from pseries_basis.misc.ore import *
+            sage: A, (n, E) = get_recurrence_algebra("n")
+            sage: L = n^3 *E^2 + (n^2 + 1)*E + (n-1)
+            sage: operator2Mathematica(L)
+            '(n - 1)*1+(n^2 + 1)*E+(n^3)*E^2'
+            sage: operator2Mathematica(L, "a")
+            '(n - 1)*a[n]+(n^2 + 1)*a[n+1]+(n^3)*a[n+2]'
+            sage: A, (n,E,Ei) = get_double_recurrence_algebra("n")
+            sage: L = n^3 *E^2 + (n^2 + 1)*E + (n-1) + (n^3+1)*Ei - (2*n-1)*Ei^2
+            sage: operator2Mathematica(L)
+            '(n^3)*E^2+(-2*n + 1)*E^(-2)+(n^2 + 1)*E+(n^3 + 1)*E^(-1)+(n - 1)*1'
+            sage: operator2Mathematica(L, "t")
+            '(n^3)*t[n+2]+(-2*n + 1)*t[n-2]+(n^2 + 1)*t[n+1]+(n^3 + 1)*t[n-1]+(n - 1)*t[n]'
+
+        We can also have `q`-shifts in the mix. Then the variable `qn` associated is translated into
+        the corresponding `q^n`::
+
+            sage: A, (qn,S) = get_qshift_algebra('qn', name_qshift="S", base=QQ['q'])
+            sage: q = A.base()('q')
+            sage: L = qn^3 *S^2 + (qn^2 + 1)*S + (qn-1)
+            sage: operator2Mathematica(L)
+            '(q^(1*n) - 1)*1+(q^(2*n) + 1)*S+(q^(3*n))*S^2'
+            sage: operator2Mathematica(L, "p")
+            '(q^(1*n) - 1)*p[n]+(q^(2*n) + 1)*p[n+1]+(q^(3*n))*p[n+2]'
+            sage: A, (qn,S) = get_qshift_algebra('qn', name_qshift="S", base=QQ['q'], power=2)
+            sage: q = A.base()('q')
+            sage: L = q^3*qn^3 *S^2 + (q*qn^2 + 1)*S + (qn-q^2)
+            sage: operator2Mathematica(L)
+            '(q^(2*n) - q^2)*1+(q*q^(4*n) + 1)*S+(q^3*q^(6*n))*S^2'
+            sage: operator2Mathematica(L, "uu")
+            '(q^(2*n) - q^2)*uu[n]+(q*q^(4*n) + 1)*uu[n+1]+(q^3*q^(6*n))*uu[n+2]'
+            sage: A, (qn,S,Si) = get_double_qshift_algebra('qn', name_qshift="S", base=QQ['q'])
+            sage: q = A.base()('q')
+            sage: L = qn^3 *S^2 + (qn^2 + 1)*S + (qn-1) + Si - qn*q*Si^2
+            sage: operator2Mathematica(L)
+            '(q^(3*n))*S^2+(-q*q^(1*n))*S^(-2)+(q^(2*n) + 1)*S+(1)*S^(-1)+(q^(1*n) - 1)*1'
+            sage: operator2Mathematica(L, "y")
+            '(q^(3*n))*y[n+2]+(-q*q^(1*n))*y[n-2]+(q^(2*n) + 1)*y[n+1]+(1)*y[n-1]+(q^(1*n) - 1)*y[n]'
+    '''
+    mons, coeffs = poly_decomposition(operator.polynomial())
+    from .ore import (is_double_qshift_algebra, is_qshift_algebra, gens_double_qshift_algebra, gens_qshift_algebra,
+                      is_recurrence_algebra, is_double_recurrence_algebra, gens_recurrence_algebra, gens_double_recurrence_algebra)
+    import re
+    
+    ## Getting the variables of the parent structure
+    if is_double_qshift_algebra(operator.parent()):
+        qn, S, S_i, q, ex = gens_double_qshift_algebra(operator.parent(), "q")
+    elif is_qshift_algebra(operator.parent()):
+        qn, S, q, ex = gens_qshift_algebra(operator.parent(), "q"); S_i = None
+    elif is_double_recurrence_algebra(operator.parent()):
+        _, S, S_i, _ = gens_double_recurrence_algebra(operator.parent())
+    elif is_recurrence_algebra(operator.parent()):
+        _, S, _ = gens_recurrence_algebra(operator.parent()); S_i = None
+
+    ## Changing the coefficients to strings
+    if is_double_qshift_algebra(operator.parent(), "q") or is_qshift_algebra(operator.parent(), "q"):
+        coeffs = [re.sub(f"{qn}\\^(\\d+|[\\(-?\\d+\\)])", lambda M : f"{q}^({ex*int(M.groups()[0])}*n)", str(coeff)) for coeff in coeffs]
+        coeffs = [re.sub(f"{qn}", lambda M : f"{q}^({ex}*n)", str(coeff)) for coeff in coeffs]
+    else:
+        coeffs = [str(coeff) for coeff in coeffs]
+
+    if sequence_var != None:
+        if S_i != None: ## First remove the inverse shift if existed
+            mons = [re.sub(
+                f"{S_i}(\\^\\(?\\d+\\)?)?", 
+                lambda M : f"{sequence_var}[n-{M.groups()[0].removeprefix('^')}]" if M.groups()[0] != None else f"{sequence_var}[n-1]",
+                str(mon))
+            for mon in mons]
+        ## Then we remove the direct shift
+        mons = [re.sub(
+            f"{S}(\\^\\(?\\d+\\)?)?", 
+            lambda M : f"{sequence_var}[n+{M.groups()[0].removeprefix('^')}]" if M.groups()[0] != None else f"{sequence_var}[n+1]",
+            str(mon))
+        for mon in mons]
+
+        ## We also transform the '1' into sequence notation
+        if "1" in mons:
+            mons[mons.index("1")] = f"{sequence_var}[n]"
+    else:
+        if S_i != None: # We transform the inverse shift to negative powers of the direct shift
+            mons = [re.sub(
+                f"{S_i}(\\^\\(?\\d+\\)?)?", 
+                lambda M : f"{S}^(-{M.groups()[0].removeprefix('^')})" if M.groups()[0] != None else f"{S}^(-1)",
+                str(mon))
+            for mon in mons]
+        else:
+            mons = [str(mon) for mon in mons]
+
+    return "+".join(f"({coeff})*{mon}" for mon,coeff in zip(mons, coeffs))
+
 def operator2file(operator : OreOperator, file : str):
     r'''
         Method to write an :class:`~ore_algebra.ore_operator.OreOperator` into a file

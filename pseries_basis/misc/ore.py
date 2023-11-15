@@ -297,15 +297,18 @@ def gens_double_qshift_algebra(algebra: OreAlgebra_generic, name_q : str = None)
             if len(applied_S.coefficients()) > 1: # some weird behavior for one generator
                 return None
             elif applied_S.coefficients() != [v]: # S does not commute with v
+                if found: # more than one generator is not commuting
+                    return None
                 coeff = applied_S.coefficients()[0]
                 if is_based_field(algebra):
-                    coeff = algebra.base().base()(coeff)
+                    coeff = algebra.base().base()(coeff); v = algebra.base().base()(v)
 
                 if found: # more than one generator is not commuting
                     return None
                 if coeff % v != 0: # it is not a multiple of v
                     return None
-                quot = coeff/v
+                quot = coeff//v
+                
                 power = -1 if q == None else __get_power_q(quot, q)
                 if q != None and power < 0: # the required `q` is not the one obtained
                     return None
@@ -611,7 +614,7 @@ def apply_operator_to_seq(operator : OreOperator, sequence : Sequence, **kwds) -
     else:
         raise TypeError(f"Type {operator.__class__} not valid for method 'apply_operator_to_seq'")
 
-    return Sequence(gen, R, 1, False)
+    return Sequence(gen, R, 1, _extend_by_zero=False)
 
 def required_init(operator : OreOperator) -> int:
     r'''
