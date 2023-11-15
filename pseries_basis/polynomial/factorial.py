@@ -89,7 +89,7 @@ class FactorialBasis(PSBasis):
         
         self.__ak = ak.change_universe(universe)
         self.__bk = bk.change_universe(universe)
-        self.__rho = -bk/ak
+        self.__rho = -(bk/ak) 
         self.__lc = ak.partial_prod()
 
         self.__poly_ring = PolynomialRing(universe, variable) # this is the polynomial ring for the elements of the sequence
@@ -234,7 +234,7 @@ def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, variable=
         raise TypeError(f"[FactorialBasis] The element lc must be a univariate sequence or an expression in 'k'")
     
     ak = lc.shift()/lc
-    bk = -rho*ak
+    bk = -(rho*ak)
     return FactorialBasis(ak, bk, universe, variable=variable, seq_variable=seq_variable, _extend_by_zero=_extend_by_zero)
         
 def FallingBasis(a, b, c, universe = None, E: str = 'E'):

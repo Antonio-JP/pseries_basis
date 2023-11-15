@@ -6,6 +6,9 @@ r'''
 # Sage imports
 from sage.all import cached_method, Matrix, QQ, ZZ, lcm
 
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.fraction_field import FractionField
+
 # Local imports
 from ..misc.ore import poly_decomposition
 from ..psbasis_old import PSBasis, PolyBasis
@@ -874,8 +877,10 @@ class HermitePBasis(OrthogonalBasis):
     def _latex_(self):
         return r"\left\{He_n(%s)\right\}_{n \geq 0}" %str(self.universe.gens()[0])
 
+##############################################################################################################################################
+##############################################################################################################################################
 ## Auxiliary methods to manage the dictionaries to handle the reductions
-from sage.all import PolynomialRing, FractionField
+##############################################################################################################################################
 OrthoRed_R = PolynomialRing(QQ, ['a','b','n'])
 OrthoRed_F = FractionField(OrthoRed_R)
 OrthoRed_RR = PolynomialRing(OrthoRed_F, ['x'])
