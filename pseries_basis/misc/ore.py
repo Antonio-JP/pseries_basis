@@ -18,13 +18,14 @@ from __future__ import annotations
 import logging
 logger = logging.getLogger(__name__)
 
-from functools import lru_cache as cache
+from functools import lru_cache as cache, reduce
 
 from ore_algebra.ore_algebra import OreAlgebra, OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
 
 from sage.all import QQ, ZZ, prod, lcm, Parent, Matrix
 from sage.categories.fields import Fields
+from sage.categories.pushout import pushout
 from sage.rings.polynomial.polynomial_ring import PolynomialRing_field, is_PolynomialRing
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.fraction_field import FractionField_1poly_field
@@ -615,7 +616,7 @@ def apply_operator_to_seq(operator : OreOperator, sequence : Sequence, **kwds) -
     else:
         raise TypeError(f"Type {operator.__class__} not valid for method 'apply_operator_to_seq'")
 
-    return Sequence(gen, R, 1, _extend_by_zero=False)
+    return Sequence(gen, pushout(R, sequence.universe), 1, _extend_by_zero=False)
 
 def required_init(operator : OreOperator) -> int:
     r'''
@@ -799,6 +800,7 @@ def solution(operator: OreOperator, init: list | tuple, check_init=True, **kwds)
         raise TypeError(f"Type {operator.__class__} not valid for method 'solution'")
 
     universe = operator.parent().base() if v is None else operator.parent().base().base_ring()
+    universe = reduce(lambda p, q: pushout(p,q), [el.parent() for el in init], universe)
     required = required_init(operator)
     if len(init) < required:
         raise ValueError(f"More data ({required}) is needed")
@@ -822,7 +824,7 @@ def solution(operator: OreOperator, init: list | tuple, check_init=True, **kwds)
         elif n < from_init:
             return init[n]
         else:
-            return -sum(_eval_coeff(coefficients[i], n-dS)*_eval_monomial(monomials[i], n) for i in range(-dSi, dS))/_eval_coeff(lc, n-dS)
+            return -sum(_eval_coeff(c, n-dS)*_eval_monomial(m, n) for (m,c) in zip(monomials, coefficients))/_eval_coeff(lc, n-dS)
     return Sequence(__aux_sol, universe=universe, dim=1)
 
 def unroll_matrix(operator: OreOperator, seq_builder: Callable[[Any], Sequence], num_cols: int|None = None):

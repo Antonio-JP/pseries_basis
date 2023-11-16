@@ -307,4 +307,4 @@ class EnhOEISSequence(OEISSequence):
                     pass
         return None
     
-__all__ = ["operator2file", "EnhOEISSequence"]
+__all__ = ["operator2Mathematica", "operator2file", "EnhOEISSequence"]
