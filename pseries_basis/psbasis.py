@@ -94,11 +94,13 @@ logger = logging.getLogger(__name__)
 from collections.abc import Callable
 from functools import reduce
 from ore_algebra.ore_algebra import OreAlgebra_generic
+from ore_algebra.ore_operator import OreOperator
 from sage.algebras.free_algebra import FreeAlgebra, is_FreeAlgebra
 from sage.all import cached_method, latex, lcm, Matrix, PolynomialRing, prod, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from .sequences.base import ConstantSequence, Sequence, SequenceSet
 from .sequences.element import ExpressionSequence, RationalSequence
+from .sequences.qsequences import QRationalSequence
 
 class PSBasis(Sequence):
     r'''
@@ -140,6 +142,7 @@ class PSBasis(Sequence):
         ## Other cached variables
         self.__ore_algebra : OreAlgebra_generic = None
         self.__double_algebra : OreAlgebra_generic = None
+        self.__quasi_triangular : Sequence = None
 
         ## Calling the super method
         super().__init__(sequence, SequenceSet(1, universe), 1, _extend_by_zero=_extend_by_zero)
@@ -400,6 +403,117 @@ class PSBasis(Sequence):
     ### INFORMATION OF THE BASIS
     ### 
     ##########################################################################################################
+    @cached_method
+    def is_quasi_triangular(self) -> Sequence:
+        r'''
+            Method to check whether a basis is quasi-triangular or not.
+
+            We say that `\{B_k(n)\}_k` is quasi-triangular if there is a sequence `(i_n)_n` such that:
+
+            * `B_{i_n}(n) \neq 0`.
+            * `B_k(n) = 0` for all `k > i_n`.
+            * `i_{n+1} > i_n`.
+
+            If the sequences `B_k(n)` define formal power series `f_k(x) = \sum_{n>0} B_k(n)x^n`, then
+            this is equivalent to `x^{i_n} | f_k(n)` if `k > i_n` and `x^{i_n} \nmid f_{i_n}(x)`.
+
+            This method returns ``None`` if we do not know if the basis is quasi-triangular and the sequence
+            `i_n`.
+        '''
+        return self.__quasi_triangular
+    
+    def inner_init_values(self, sum_sequence: Sequence, desired_values: int, inner_recurrence: OreOperator = None, full: bool = False):
+        r'''
+            Method to obtain the initial values of an inner sequence using this basis.
+
+            Let `(a_n)_n` be a sequence, and assume that we know that
+
+            .. MATH::
+
+                a_n = \sum_{k\geq 0} c_k B_k(n).
+
+            We say that `(c_k)_k` is the *inner sequence of `(a_n)_n` wrt `B_k(n)`*. This method takes the sequence
+            `(a_n)_n`, the number of elements of `c_k` we want to compute and (optionally) a recurrence for the 
+            sequence `c_k`. 
+
+            If this recurrence for `(c_k)_k` is not provided, we can only compute this for triangular sequences (i.e., 
+            the quasi-triangular sequence given by :func:`is_quasi_triangular` is the identity sequence).
+
+            Otherwise, we can obtain an unrolling matrix `\Lambda_T = (\alpha_{i,k}) \in \mathbb{K}^{r\times T}` such that
+            `(c_0,\ldots, c_{T-1}) = (c_0,\ldots, c_{r-1}) \Lambda_T` where `r` is the order of the ``inner_recurrence``. Then,
+            we can compute for any `T` the product of matrices `\Lambda_T B_{T,N}` where the matrix `B_{T,N}` is the output
+            of :func:`basis_matrix` over ``self`` for `T` rows and `N` columns.
+
+            Moreover, if `T \geq i_N`, then
+
+            .. MATH::
+
+            (a_0,\ldots, a_{N-1}) = (c_0,\ldots, c_{r-1}) \left(\Lambda_T B_{T,N}\right).
+
+            If the matrix `\left(\Lambda_T B_{T,N}\right)` has rank `r`, then there is a pseudo-inverse matrix `A^+` such that
+
+            .. MATH::
+
+            (c_0, \ldots, c_{r-1}) = (a_0,\ldots, a_{N-1}) A^+.
+
+            Then, from this position, we can compue the required terms of `(c_k)_k`. Otherwise, for each `N`, we can compute the 
+            `i_N` of the quasi-triangular sequence and obtain a space of possible solutions for `(c_0,\ldots,c_{r-1})`, denote it by `S_N`.
+            If there is a solution, then `\bigcap_N S_N` has to stabilize. This intersection is still an affine space and any element
+            in it will be a valid solution to this function.
+
+            If this intersection does not stabilize, then we conclude there is no solution.
+
+            INPUT:
+
+            * ``sum_sequence``: the :class:`Sequence` for the `(a_n)_n`.
+            * ``desired_values``: number of elements of the inner sequence we are aiming to compute.
+            * ``inner_recurrence`` (optional): recurrence for the inner sequence.
+        '''
+        from sage.all import vector, infinity
+        from sage.geometry.hyperplane_arrangement.affine_subspace import AffineSubspace
+        from sage.modules.free_module import VectorSpace
+        from .misc.ore import unroll_matrix, is_qshift_algebra, gens_qshift_algebra, is_recurrence_algebra, gens_recurrence_algebra
+
+        I = self.is_quasi_triangular()
+        if I == None:
+            raise TypeError(f"The basis is not quasi-triangular: impossible to compute inner sequences.")
+        elif inner_recurrence == None and I == Sequence(lambda n : n, ZZ):
+            return basis_matrix(self, desired_values).solve_left(vector(sum_sequence[:desired_values]))
+        elif inner_recurrence == None:
+            raise TypeError(f"The basis is not triangular and no recurrence is given: impossible to compute inner sequences.")
+        
+        ## General case
+        gen_seq = (lambda p: QRationalSequence(p, q=getattr(self, "q"))) if hasattr(self, "q") else (lambda p: RationalSequence(p))
+        if ((hasattr(self, "q") and is_qshift_algebra(inner_recurrence.parent(), str(getattr(self, "q")))) or 
+            is_recurrence_algebra(inner_recurrence.parent())
+        ):
+            r = inner_recurrence.order()
+        F = inner_recurrence.parent().base().base_ring() # field to look the affine spaces
+        S = AffineSubspace(r*[F.zero()], VectorSpace(F, r))
+
+        cdimension = S.dimension(); repeated = 0; N = 1
+        while (repeated < 2*r) and (not S is None):
+            A = unroll_matrix(inner_recurrence, gen_seq, I[N])*basis_matrix(self, I[N], N)
+            nS = AffineSubspace(A.solve_left(vector(sum_sequence[:N])), A.left_kernel())
+            S = S.intersection(nS)
+            logger.debug(f"[inner_init_values] Computing the space for {N = } -> I(N) = {I[N]}. Solution: {nS.dimension()}. Dimension: {cdimension} -> {S.dimension()}")
+
+            if not S is None:
+                if cdimension != S.dimension():
+                    cdimension = S.dimension()
+                    repeated = 0
+                else:
+                    repeated += 1
+            N += 1
+        
+        if not S is None:
+            if full:
+                return S
+            else:
+                return S.point()*unroll_matrix(inner_recurrence, gen_seq, desired_values)
+        else:
+            raise ValueError("There is no solution to the given problem")
+
     # @property
     # TODO def functional_seq(self) -> Sequence
     # TODO def functional_matrix(self, nrows: int, ncols: int = None) -> matrix_class:
@@ -465,7 +579,6 @@ class PSBasis(Sequence):
             elif name in self.__derivations: self.__derivations.remove(name)
             elif name in self.__any: self.__any.remove(name)
 
-        from ore_algebra.ore_operator import OreOperator
         if isinstance(compatibility, tuple):
             compatibility = Compatibility(
                 compatibility[-1],                                 # \alpha
@@ -895,13 +1008,6 @@ class PSBasis(Sequence):
             output += r"\right\}"
 
         return output
-    
-    ##########################################################################################################
-    ###
-    ### OTHER METHODS
-    ### 
-    ##########################################################################################################
-    # TODO def system(self, operator: str | OreOperator | TypeCompatibility, sections: int = None)
     
 class Compatibility:
     r'''
@@ -1341,5 +1447,5 @@ def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: C
         rhs = sum(compatibility[s,i](k)*basis[n+i] for i in range(-A, B+1)) # sequence for the rhs
 
         if not lhs.almost_equals(rhs, bound):
-            return (n,lhs, rhs), False if _full else False
+            return ((n,lhs, rhs), False if _full else False)
     return True

@@ -26,7 +26,7 @@ r'''
 '''
 from __future__ import annotations
 
-from functools import lru_cache, reduce
+from functools import lru_cache, reduce, cached_property
 from sage.all import binomial, parent, PolynomialRing, QQ, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from ..sequences.base import Sequence, ConstantSequence
@@ -302,6 +302,11 @@ def FallingBasis(a, b, c, universe = None, E: str = 'E'):
     n, k, i = SR(output.gen()), SR.var(output.ore_var()), SR.var("i")
     output._PSBasis__original_sequence = ExpressionSequence((a*n + b - c*i).prod(i, 0, k-1), [k,n], universe)
 
+    ## We check is the basis is quasi-triangular
+    ## roots are (nc-b)/a then we need n = (ka + b)/c
+    if (c != 0) and (a%c == 0 and b%c == 0 and a//c in ZZ and b//c in ZZ) and (a//c > 0 and b//c >= 0):
+        output._PSBasis__quasi_triangular = Sequence(lambda k : (k*a + b)//c, ZZ)
+
     return output
 
 def PowerTypeBasis(a = 1, b = 0, universe = None, Dn: str = 'Dn'):
@@ -386,6 +391,11 @@ def BinomialTypeBasis(a = 1, b = 0, universe = None, E : str = 'E'):
     ## Creating the original sequence for this type
     n, k = SR(output.gen()), SR.var(output.ore_var())
     output._PSBasis__original_sequence = ExpressionSequence(binomial(a*n+b,k), [k,n], universe)
+    
+    ## We check is the basis is quasi-triangular
+    ## roots are (n-b)/a then we need n = ak + b
+    if b in ZZ and b >= 0: # conditions on a are satisfied above
+        output._PSBasis__quasi_triangular = Sequence(lambda k : (k*a + b), ZZ)
 
     return output
 
@@ -568,6 +578,11 @@ class SievedBasis(FactorialBasis):
         ## 4. Extend "derivations"
         ## 5. Fix all tests of __init__
         raise NotImplementedError(f"[SievedBasis] Initialization not yet implemented")
+    
+        # TODO: Uncomment when this is finished
+        # quasi_triangular_sequences = [factor.is_quasi_triangular() for factor in self.factors]
+        # if all(el != None for el in quasi_triantular_sequences):
+        #     self._PSBasis__quasi_triangular = _SievedQuasiTriangular(quasi_triangular_sequences, self.cycle)
 
     # def _element(self, n: int) -> element.Element:
     #     r'''
@@ -1240,7 +1255,45 @@ def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> Sieve
     TODO        (n^2 + 2*n + 1)*Sn - 16*n^2 - 16*n - 4
     '''
     return SievedBasis(factors, list(range(len(factors))))
-        
+
+class _SievedQuasiTriangular:
+    def __init__(self, quasi_triangular_sequences : list[Sequence], cycle : list[int]):
+        self.__qt_seq = quasi_triangular_sequences
+        if any(el < 0 or el >= self.F for el in cycle):
+            raise ValueError("Incorrect cycle for the number of factors") 
+        self.__cycle = cycle
+        self.__computed : dict[int, int] = dict()
+
+    @property
+    def L(self): return len(self.__cycle)
+    @property
+    def F(self): return len(self.__qt_seq)
+
+    @cached_property
+    def generator(self):
+        n = 0
+        current = self.F * [0]
+        m = 0; # `m` says the current position on the basis
+
+        while True:
+            ## We start the vector of goals for the current n
+            I = self.I(n)
+            while all(i-c >= 0 for (c,i) in zip(current, I)):
+                current[self.__cycle[m%self.L]] += 1
+                m += 1
+            self.__computed[n] = m-1
+            yield m-1
+            n += 1
+
+    def I(self, n: int) -> list[int]:
+        return [ZZ(seq(n)) for seq in self.__qt_seq]
+    
+    def __call__(self, n: int):
+        while n not in self.__computed:
+            next(self.generator)
+        return self.__computed[n]
+
+
 ##################################################################################################################
 ###
 ### DEFINITE SUM SOLUTIONS METHOD (see article)

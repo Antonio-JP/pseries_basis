@@ -13,6 +13,7 @@ from sage.categories.pushout import pushout
 
 from ..polynomial.factorial import FactorialBasis
 from ..psbasis import PSBasis, Compatibility
+from ..sequences.base import Sequence
 from ..sequences.element import ExpressionSequence
 from ..sequences.examples import Qn, Q_binomial_type, q_binomial
 from ..sequences.qsequences import QSequence, QRationalSequence
@@ -214,6 +215,10 @@ def QBinomialBasis(a: int = 1, c: int = 0, t: int = 0, e: int = 1, universe = No
             a, 0, 1
         ), 
         True)
+    
+    ## Computing the quasi_triangular sequence
+    if c >= t:
+        basis._PSBasis__quasi_triangular = Sequence(lambda n : a*n + c - t, ZZ)
     
     return basis
 
