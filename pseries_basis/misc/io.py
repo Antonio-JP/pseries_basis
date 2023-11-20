@@ -15,7 +15,7 @@ from sage.databases.oeis import OEISSequence
 from ore_algebra.ore_operator import OreOperator
 
 from .ore import poly_decomposition, get_recurrence_algebra, solution, required_init
-from .sequences import Sequence, LambdaSequence
+from ..sequences import Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -231,7 +231,7 @@ class EnhOEISSequence(OEISSequence):
         if self.is_dfinite():
             d = required_init(self.dfinite_recurrence())
             return solution(self.dfinite_recurrence(),tuple(off*[0] + list(self.first_terms(d+1))))
-        return LambdaSequence(lambda n : self.first_terms(n+1-off)[-1] if n >= off else None, ZZ)
+        return Sequence(lambda n : self.first_terms(n+1-off)[-1] if n >= off else None, ZZ)
 
     def check_consistency(self, bound: int = 10) -> bool:
         r'''
