@@ -27,8 +27,11 @@ r'''
 from __future__ import annotations
 
 from functools import lru_cache, reduce, cached_property
-from sage.all import binomial, parent, PolynomialRing, QQ, SR, ZZ #pylint: disable=no-name-in-module
+from sage.all import binomial, parent, PolynomialRing, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
+from sage.misc.cachefunc import cached_method #pylint: disable=no-name-in-module
+from typing import Any
+
 from ..sequences.base import Sequence, ConstantSequence
 from ..sequences.element import ExpressionSequence, RationalSequence
 from ..psbasis import PSBasis, Compatibility
@@ -108,7 +111,7 @@ class FactorialBasis(PSBasis):
         # We create now the compatibility with the multiplication by the variable generator
         self.set_compatibility(variable, Compatibility([[self.rho, 1/self.ak]], 0, 1, 1), True, "any")
 
-    def args_to_self(self):
+    def args_to_self(self) -> tuple[list, dict[str]]:
         return [self.ak, self.bk], {"universe": self.base, "variable": str(self.gen()), "seq_variable": str(self.ore_var()), "_extend_by_zero": self._Sequence__extend_by_zero}
 
     @property
@@ -192,8 +195,45 @@ class FactorialBasis(PSBasis):
         return RationalSequence(rational, [str(self.gen())], self.base)
 
     ##################################################################################
+    ### METHODS FOR FACTORIAL_BASIS
+    ##################################################################################
+    def increasing_basis(self, shift: int) -> FactorialBasis:
+        r'''
+            Method to obtain a `k`-th increasing basis.
+
+            A factorial basis is defined by the first order recurrence on sequences:
+
+            .. MATH::
+
+                P_{k+1}(n) = \left(a_k n + b_k\right)P_k(n).
+
+            This implies that the sequence `P_k(n)` is always a polynomial sequence of degree 
+            exactly `k` and that `P_k(n)` divides (in terms of polynomial division) the following
+            element of the basis. Let us consider the polynomials `Q^{(k)}_t(n)` defined by:
+
+            .. MATH::
+
+                Q^{(k)}_t(n) = \frac{P_{k+t}(n)}{P_k(n)}.
+
+            It is clear by definition that `Q^{(k)}_t(n)` is a polynomial of degree exactly `t` and,
+            moreover, it satisfies the following first order recurrence as sequences:
+
+            .. MATH::
+
+                Q^{(k)}_{t+1}(n) = \left(a_{k+t} n + b_{k+t}\right) Q^{(k)}_t(n).
+
+            Hence the set of polynomials `\{Q^{(k)}_t(n)\}_t` is again a factorial basis. This method 
+            returns this new factorial basis for ``shift`` taking the value of `k`.
+
+            TODO: add tests
+        '''
+        _, self_args = self.args_to_self()
+        return FactorialBasis(self.ak.shift(shift), self.bk.shift(shift),
+                              universe=self_args["universe"], variable=self_args["variable"], seq_variable=self_args["seq_variable"]
+        )
+
+    ##################################################################################
     ### TODO: def increasing_polynomial(self, *args, **kwds)
-    ### TODO: def increasing_basis(self, shift: int) -> FactorialBasis
     ### TODO: def compatible_division(self, operator: str | OreOperator) -> Divisibility
     ### TODO: def matrix_ItP(self, src: element.Element, size: int) -> matrix_class
     ### TODO: def matrix_PtI(self, src: element.Element, size: int) -> matrix_class
@@ -454,18 +494,27 @@ class SievedBasis(FactorialBasis):
 
             sage: from pseries_basis.polynomial.factorial import *
             sage: B = BinomialBasis; P = PowerBasis
-            sage: #TODO B2 = SievedBasis([B,P], [0,1,1,0])
-            sage: #TODO B2[:6] ## output: [1, x, x^2, x^3, 1/2*x^4 - 1/2*x^3, 1/6*x^5 - 1/2*x^4 + 1/3*x^3]
+            sage: B2 = SievedBasis([B,P], [0,1,1,0])
+            sage: B2[:4]
+            [Sequence over [Rational Field]: (1, 1, 1,...),
+             Sequence over [Rational Field]: (0, 1, 2,...),
+             Sequence over [Rational Field]: (0, 1, 4,...),
+             Sequence over [Rational Field]: (0, 1, 8,...)]
+            sage: [el.generic() for el in B2[:6]]
+            [1, n, n^2, n^3, 1/2*n^4 - 1/2*n^3, 1/6*n^5 - 1/2*n^4 + 1/3*n^3]
 
         With this system, we can build the same basis changing the order and the values in the cycle::
 
-            sage: #TODO B3 = SievedBasis([P,B], [1,0,0,1])
-            sage: #TODO B3.almost_equals(B2, 30) # checking equality for 30 elements ## output: True
+            sage: B3 = SievedBasis([P,B], [1,0,0,1])
+            sage: B3.almost_equals(B2, 30) # checking equality for 30 elements 
+            True
 
         The length of the cycle is the number of associated sections::
 
-            sage: #TODO B2.nsections() ## output: 4
-            sage: #TODO SievedBasis([B,B,P],[0,0,1,2,1,2]).nsections() ## output: 4
+            sage: B2.nsections
+            4
+            sage: SievedBasis([B,B,P],[0,0,1,2,1,2]).nsections
+            6
 
         This basis can be use to deduce some nice recurrences for the Apery's `\zeta(2)` sequence::
 
@@ -535,7 +584,7 @@ class SievedBasis(FactorialBasis):
     def __init__(self, 
         factors : list[FactorialBasis] | tuple[FactorialBasis], 
         cycle: list[int] |tuple[int], 
-        #init: element.Element = 1, var_name: str = 'x'
+        #var_name: str = 'x'
     ):
         ## Checking the input
         if(not type(factors) in (list,tuple)):
@@ -552,20 +601,68 @@ class SievedBasis(FactorialBasis):
         ## Storing the main elements
         self.__factors = tuple(factors)
         self.__cycle = tuple(cycle)
+        universe = reduce(lambda p,q: pushout(p,q), [f.base for f in self.factors])
+
+        new_ak = Sequence(lambda k : (self.factors[self.cycle[k%self.nsections]]).ak[self.indices[k][self.cycle[k%self.nsections]]], universe)
+        new_bk = Sequence(lambda k : (self.factors[self.cycle[k%self.nsections]]).bk[self.indices[k][self.cycle[k%self.nsections]]], universe)
+        FactorialBasis.__init__(self, new_ak, new_bk, universe)
+
+        ## We reset the compatibility wrt the variable name
 
         ## TODO: Fill from here
-        ## 1. Call the super method of Factorial Basis with the necessary information.
+        ## 1. (DONE) Call the super method of Factorial Basis with the necessary information.
         ##    1.1. Test the creation of elements (fix tests of __init__)
         ## 2. Create the compatibility w.r.t. "n". In particular, extend "any" operators.
         ## 3. Extend "homomorphisms"
         ## 4. Extend "derivations"
         ## 5. Fix all tests of __init__
-        raise NotImplementedError(f"[SievedBasis] Initialization not yet implemented")
+        # raise NotImplementedError(f"[SievedBasis] Initialization not yet implemented")
     
         # TODO: Uncomment when this is finished
-        # quasi_triangular_sequences = [factor.is_quasi_triangular() for factor in self.factors]
-        # if all(el != None for el in quasi_triangular_sequences):
-        #     self._PSBasis__quasi_triangular = _SievedQuasiTriangular(quasi_triangular_sequences, self.cycle)
+        quasi_triangular_sequences = [factor.is_quasi_triangular() for factor in self.factors]
+        if all(el != None for el in quasi_triangular_sequences):
+            self._PSBasis__quasi_triangular = _SievedQuasiTriangular(quasi_triangular_sequences, self.cycle)
+
+    @cached_property
+    def indices(self) -> Sequence:
+        r'''
+            Computes the indices of each factor in the given element.
+        '''
+        def _element(k):
+            counts = [self.cycle.count(i) for i in range(self.nfactors)]
+            K,r = k//len(self.cycle), k%len(self.cycle)
+            extras = [self.cycle[:r].count(i) for i in range(self.nfactors)]
+            return vector([K*c+e for c,e in zip(counts, extras)])
+        return Sequence(_element, ZZ**self.nfactors, 1)
+    
+    @cached_method
+    def division_decomposition(self, indices: tuple[int]) -> tuple[tuple, int, Any]:
+        r'''
+            Any combination of elements of the factors can be written as a maximal element
+            in the sieved basis times a polynomial. This method computes this decomposition.
+
+            It returns the tuple of indices, the index and the polynomial that remains
+        '''
+        if len(indices) != self.nfactors:
+            raise TypeError("Indices must coincide with number of factors")
+        if any(el < 0 for el in indices): 
+            raise ValueError("Indices must be all non-negative")
+        k = self.nsections*min([ind//self.cycle.count(i) for (i,ind) in enumerate(indices)])
+        indices = vector(indices) # guaranteeing the vector structure
+        while all(el >=0 for el in indices-self.indices[k]):
+            k += 1
+        k -= 1
+
+        remaining = indices - self.indices[k]
+        poly = reduce(
+            lambda p, q: p*q, 
+            [
+                factor.increasing_basis(self.indices[k][i])[remaining[i]].generic(str(self.gen())) 
+                for (i,factor) in enumerate(self.factors)
+            ]
+        )
+        return self.indices[k], k, poly
+
 
     # def _element(self, n: int) -> element.Element:
     #     r'''
