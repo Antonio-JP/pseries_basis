@@ -142,7 +142,7 @@ class FactorialBasis(PSBasis):
                 True
 
             The compatibilities from the original basis are automatically created in the 
-            scalared basis::
+            scalar basis::
 
                 sage: Fac_B = BinomialBasis.scalar(Factorial)
                 sage: Fac_B.basic_compatibilities() == BinomialBasis.basic_compatibilities()
@@ -171,7 +171,7 @@ class FactorialBasis(PSBasis):
         new_universe = pushout(self.base, factor.universe)
         quotient = factor.shift() / factor
 
-        ## Gtting other arguments for the builder
+        ## Getting other arguments for the builder
         _, kwds = self.args_to_self()
         kwds["universe"] = new_universe
 
@@ -581,7 +581,7 @@ class SievedBasis(FactorialBasis):
     
         # TODO: Uncomment when this is finished
         # quasi_triangular_sequences = [factor.is_quasi_triangular() for factor in self.factors]
-        # if all(el != None for el in quasi_triantular_sequences):
+        # if all(el != None for el in quasi_triangular_sequences):
         #     self._PSBasis__quasi_triangular = _SievedQuasiTriangular(quasi_triangular_sequences, self.cycle)
 
     # def _element(self, n: int) -> element.Element:
@@ -1273,7 +1273,7 @@ class _SievedQuasiTriangular:
     def generator(self):
         n = 0
         current = self.F * [0]
-        m = 0; # `m` says the current position on the basis
+        m = 0 # `m` says the current position on the basis
 
         while True:
             ## We start the vector of goals for the current n
@@ -1292,7 +1292,6 @@ class _SievedQuasiTriangular:
         while n not in self.__computed:
             next(self.generator)
         return self.__computed[n]
-
 
 ##################################################################################################################
 ###

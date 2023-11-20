@@ -1,5 +1,6 @@
 {
     "cSpell.ignoreWords": [
+        "cdimension",
         "coeff",
         "combinat",
         "degs",
@@ -8,6 +9,7 @@
         "mapsto",
         "mathbb",
         "mathit",
+        "mkauers",
         "multiedges",
         "ncols",
         "nrows",
@@ -15,6 +17,7 @@
         "pmatrix",
         "psbasis",
         "pylint",
+        "readfile",
         "regs",
         "rmul",
         "DREC",

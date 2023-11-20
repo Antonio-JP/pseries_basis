@@ -456,7 +456,7 @@ class PSBasis(Sequence):
 
             (c_0, \ldots, c_{r-1}) = (a_0,\ldots, a_{N-1}) A^+.
 
-            Then, from this position, we can compue the required terms of `(c_k)_k`. Otherwise, for each `N`, we can compute the 
+            Then, from this position, we can compute the required terms of `(c_k)_k`. Otherwise, for each `N`, we can compute the 
             `i_N` of the quasi-triangular sequence and obtain a space of possible solutions for `(c_0,\ldots,c_{r-1})`, denote it by `S_N`.
             If there is a solution, then `\bigcap_N S_N` has to stabilize. This intersection is still an affine space and any element
             in it will be a valid solution to this function.
@@ -469,10 +469,10 @@ class PSBasis(Sequence):
             * ``desired_values``: number of elements of the inner sequence we are aiming to compute.
             * ``inner_recurrence`` (optional): recurrence for the inner sequence.
         '''
-        from sage.all import vector, infinity
+        from sage.all import vector
         from sage.geometry.hyperplane_arrangement.affine_subspace import AffineSubspace
         from sage.modules.free_module import VectorSpace
-        from .misc.ore import unroll_matrix, is_qshift_algebra, gens_qshift_algebra, is_recurrence_algebra, gens_recurrence_algebra
+        from .misc.ore import unroll_matrix, is_qshift_algebra, is_recurrence_algebra
 
         I = self.is_quasi_triangular()
         if I == None:
@@ -1375,7 +1375,7 @@ class Compatibility:
             return self.in_sections(t).equiv(other.in_sections(t))
         ## Now we assume the sections are the same in both
         A = max(self.A, other.A); B = max(self.B, other.B)
-        ## This loop could be Pythonize more, we keep it unrolled to keep debugging notes
+        ## This loop could be more in Python style, we keep it unrolled to keep debugging notes
         for b in range(self.t):
             for i in range(-A, B+1):
                 if not self[b,i].almost_equals(other[b,i], bound if bound else 10):

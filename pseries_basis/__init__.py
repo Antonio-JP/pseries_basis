@@ -156,9 +156,9 @@ logger.propagate = False
 
 
 from .misc import *
+from .order import *
 from .psbasis import *
 from .polynomial import *
-from .functional import *
 from .qbasis import *
 from .sequences import *
 
