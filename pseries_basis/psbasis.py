@@ -53,7 +53,7 @@ r'''
 
     EXAMPLES::
 
-        sage: from pseries_basis.psbasis_new import *
+        sage: from pseries_basis import *
         sage: from pseries_basis.sequences import *
         sage: B = PSBasis(lambda k : RationalSequence(QQ[x](x**k)), QQ) # B_k(x) = x^k
         sage: B[0]
@@ -63,7 +63,7 @@ r'''
         sage: B[2]
         Sequence over [Rational Field]: (0, 1, 4,...)
         sage: B[10].generic()
-        n^10
+        x^10
 
     We can from this point set up the compatibilities for this basis::
 
@@ -71,12 +71,16 @@ r'''
         ....:     'x', 
         ....:     Compatibility([[ConstantSequence(0,QQ,1), ConstantSequence(1,QQ,1)]], 0,1,1), 
         ....:     type="any"
-        ....: ); # compatibility with x
+        ....: ) # compatibility with x
+        Compatibility condition (0, 1, 1) with following coefficient matrix:
+        [0 1]
         sage: B.set_compatibility(
         ....:     'Dx', 
         ....:     Compatibility([[RationalSequence(QQ['n']('n')), ConstantSequence(0,QQ,1)]], 1,0,1), 
         ....:     type="derivation"
-        ....: ); # compatibility with Dx
+        ....: ) # compatibility with Dx
+        Compatibility condition (1, 0, 1) with following coefficient matrix:
+        [n 0]
 
     And then the compatibility conditions can be obtained for any expression involving objects called `x`
     and `Dx`::
@@ -84,7 +88,7 @@ r'''
         sage: B.is_compatible("x**2 * Dx**2 - Dx + x^3")
         True
         sage: B.compatibility_type("x**2 * Dx**2 - Dx + x^3")
-        "derivation"
+        'derivation'
 '''
 from __future__ import annotations
 

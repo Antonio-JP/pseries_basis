@@ -664,6 +664,7 @@ class Sequence(SetMorphism):
                 sage: N.partial_sum() == ExpressionSequence((n*(n-1))/2, universe=QQ)
                 True
                 sage: N.shift().partial_sum() == ExpressionSequence((n*(n+1))/2, universe=QQ)
+                True
         '''
         if self.dim == 1 and index is None: index = 0
         if not index in ZZ or index < 0 or index >= self.dim:

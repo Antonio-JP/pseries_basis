@@ -96,20 +96,20 @@ r'''
     `P_n(x) = \binom{x}{n}`. It is well known that for `n\in\mathbb{N}`, `P_n(x)` is a polynomial of degree `n`. 
     We can create this basis easily::
 
-        sage: B = BinomialBasis()
+        sage: B = BinomialBasis
         sage: B
-        Binomial basis (x) choose n
-        sage: B[:3]
-        [1, x, 1/2*x^2 - 1/2*x]
+        Basis of Sequences over Rational Field: (binomial(n, k))
+        sage: [el.generic() for el in B[:3]]
+        [1, n, 1/2*n^2 - 1/2*n]
 
     We can also create basis using the idea of a *falling factorial*::
 
         sage: F = FallingBasis(1,0,1)
         sage: F
-        Falling Factorial Basis (1, x, x(x-1),...)
-        sage: F[:3]
-        [1, x, x^2 - x]
-        sage: [F.root_sequence()(i) for i in range(10)]
+        Basis of Sequences over Rational Field: (factorial(n)/factorial(-k + n))
+        sage: [el.generic() for el in F[:3]]
+        [1, n, n^2 - n]
+        sage: F.rho[:10]
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
     There are plenty of methods to check compatibility with a basis. We refer to the `documentation <https://antonio-jp.github.io/pseries_basis/>`_ for further information.

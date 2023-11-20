@@ -314,14 +314,14 @@ class RationalSequence(Sequence):
             sage: R.<x,y> = QQ[]
             sage: P = (x+y)/(x-y)
             sage: poly = RationalSequence(P, [x]); poly
-            Sequence over [Fraction Field of Multivariate Polynomial Ring in x, y over Rational Field]: (-1, (y + 1)/(-y + 1), (y + 2)/(-y + 2),...)
+            Sequence over [Fraction Field of Univariate Polynomial Ring in y over Rational Field]: (-1, (-y - 1)/(y - 1), (-y - 2)/(y - 2),...)
             sage: poly[:5]
-            [-1, (y + 1)/(-y + 1), (y + 2)/(-y + 2), (y + 3)/(-y + 3), (y + 4)/(-y + 4)]
+            [-1, (-y - 1)/(y - 1), (-y - 2)/(y - 2), (-y - 3)/(y - 3), (-y - 4)/(y - 4)]
 
         If we do not provide the list of variables, then we considered all variables as variables of the sequence::
 
             sage: poly2 = RationalSequence(P); poly2
-            Sequence with 2 variables over [Fraction Field of Multivariate Polynomial Ring in x, y over Rational Field]
+            Sequence with 2 variables over [Rational Field]
             sage: poly2((10, 5)) # (10+5)/(10-5)
             3
 
@@ -362,7 +362,7 @@ class RationalSequence(Sequence):
             elif universe != None:
                 min_R = universe
             elif variables != None:
-                min_R = R.extend_variables([v for v in variables if (not v in R.gens())])
+                min_R = PolynomialRing(R.base(), list(R.variable_names()) + [str(v) for v in variables if (not v in R.gens())])
             else:
                 min_R = R
             R = pushout(R, min_R)

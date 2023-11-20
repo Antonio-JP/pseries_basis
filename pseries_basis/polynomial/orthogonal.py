@@ -224,8 +224,8 @@ class OrthogonalBasis(PSBasis):
             An difference operator (see :func:`~pseries_basis.psbasis.PSBasis.OS`) that represents
             the compatibility of the derivation with this basis.
         '''
-        if bool(derivation_name):
-            raise NotImplementedError("The general first compatibility with derivation is not implemented")
+        if not derivation_name:
+            return None,None
         raise NotImplementedError("The general first compatibility with derivation is not implemented")
 
     # Static elements

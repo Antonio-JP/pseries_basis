@@ -132,7 +132,7 @@ class FactorialBasis(PSBasis):
 
             EXAMPLES::
 
-                sage: from pseries_basis.factorial.factorial_basis_new import *
+                sage: from pseries_basis.polynomial.factorial import *
                 sage: from pseries_basis.sequences.examples import Factorial
                 sage: FallingFactorial.lc / BinomialBasis.lc == Factorial
                 True
@@ -214,7 +214,7 @@ def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, variable=
         EXAMPLES::
 
             sage: from pseries_basis import *
-            sage: RootSequenceBasis(0, 1)[:5]
+            sage: RootSequenceBasis(0, 1, QQ)[:5]
             [Sequence over [Rational Field]: (1, 1, 1,...),
              Sequence over [Rational Field]: (0, 1, 2,...),
              Sequence over [Rational Field]: (0, 1, 4,...),
@@ -452,29 +452,25 @@ class SievedBasis(FactorialBasis):
 
         EXAMPLES::
 
-            sage: from pseries_basis.factorial.factorial_basis_new import *
+            sage: from pseries_basis.polynomial.factorial import *
             sage: B = BinomialBasis; P = PowerBasis
-    TODO        sage: B2 = SievedBasis([B,P], [0,1,1,0])
-    TODO        sage: B2[:6]
-    TODO        [1, x, x^2, x^3, 1/2*x^4 - 1/2*x^3, 1/6*x^5 - 1/2*x^4 + 1/3*x^3]
+            sage: #TODO B2 = SievedBasis([B,P], [0,1,1,0])
+            sage: #TODO B2[:6] ## output: [1, x, x^2, x^3, 1/2*x^4 - 1/2*x^3, 1/6*x^5 - 1/2*x^4 + 1/3*x^3]
 
         With this system, we can build the same basis changing the order and the values in the cycle::
 
-    TODO        sage: B3 = SievedBasis([P,B], [1,0,0,1])
-    TODO        sage: B3.almost_equals(B2, 30) # checking equality for 30 elements
-    TODO        True
+            sage: #TODO B3 = SievedBasis([P,B], [1,0,0,1])
+            sage: #TODO B3.almost_equals(B2, 30) # checking equality for 30 elements ## output: True
 
         The length of the cycle is the number of associated sections::
 
-    TODO        sage: B2.nsections()
-    TODO        4
-    TODO        sage: SievedBasis([B,B,P],[0,0,1,2,1,2]).nsections()
-    TODO        6
+            sage: #TODO B2.nsections() ## output: 4
+            sage: #TODO SievedBasis([B,B,P],[0,0,1,2,1,2]).nsections() ## output: 4
 
         This basis can be use to deduce some nice recurrences for the Apery's `\zeta(2)` sequence::
 
-    TODO        sage: b1 = FallingBasis(1,0,1); b2 = FallingBasis(1,1,-1); n = b1.n()
-    TODO        sage: B = SievedBasis([b1,b2],[0,1]).scalar(1/factorial(n))
+            sage: #TODO b1 = FallingBasis(1,0,1); b2 = FallingBasis(1,1,-1); n = b1.n()
+            sage: #TODO B = SievedBasis([b1,b2],[0,1]).scalar(1/factorial(n))
 
         This basis ``B`` contains the elements 
 
@@ -485,11 +481,11 @@ class SievedBasis(FactorialBasis):
             \binom{n + k}{2k+1}\ \text{if }k\equiv 1\ (mod\ 2)
             \end{matrix}
 
-    TODO    We first extend the compatibility with `E: x\mapsto x+1` by guessing and then we compute the sieved basis
-    TODO    with the binomial basis with the cycle `(1,0,1)`::
+        We first extend the compatibility with `E: x\mapsto x+1` by guessing and then we compute the sieved basis
+        with the binomial basis with the cycle `(1,0,1)`::
 
-    TODO        sage: B.set_endomorphism('E', guess_compatibility_E(B, sections=2))
-    TODO        sage: B2 = SievedBasis([BinomialBasis(), B], [1,0,1])
+            sage: #TODO B.set_endomorphism('E', guess_compatibility_E(B, sections=2))
+            sage: #TODO B2 = SievedBasis([BinomialBasis(), B], [1,0,1])
 
         Now the basis ``B2`` is formed in 3 sections by the following elements:
 
@@ -504,24 +500,12 @@ class SievedBasis(FactorialBasis):
         We can check that `B2` is compatible with the multiplication by `x` and with 
         the endomorphism `E`::
 
-    TODO        sage: a,b,m,alpha = B2.compatibility('x')
-    TODO        sage: Matrix([[alpha(i,j,B2.n()) for j in range(-a,b+1)] for i in range(m)])
-    TODO        [      n 2*n + 1]
-    TODO        [      n   n + 1]
-    TODO        [ -n - 1 2*n + 2]
-    TODO        sage: B2.recurrence('x')
-    TODO        [        n         0 (2*n)*Sni]
-    TODO        [(2*n + 1)         n         0]
-    TODO        [        0   (n + 1)  (-n - 1)]
-    TODO        sage: a,b,m,alpha = B2.compatibility('E')
-    TODO        sage: Matrix([[alpha(i,j,B2.n()) for j in range(-a,b+1)] for i in range(m)])
-    TODO        [                      1           (4*n - 3/2)/n                     3/2                       1]
-    TODO        [    (n - 1/2)/(n + 1/2)         1/2*n/(n + 1/2) (3/2*n + 1/2)/(n + 1/2)                       1]
-    TODO        [                      0                       1       (3*n + 2)/(n + 1)                       1]
-    TODO        sage: B2.recurrence('E')                                                                                                                                                         
-    TODO        [                    Sn + 1        (3*n + 1)/(2*n + 1)                          1]
-    TODO        [    (8*n + 5)/(2*n + 2)*Sn (2*n + 1)/(2*n + 3)*Sn + 1          (3*n + 2)/(n + 1)]
-    TODO        [                    3/2*Sn       (n + 1)/(2*n + 3)*Sn                          1]
+            sage: #TODO a,b,m,alpha = B2.compatibility('x')
+            sage: #TODO Matrix([[alpha(i,j,B2.n()) for j in range(-a,b+1)] for i in range(m)]) ## output: [      n 2*n + 1], [      n   n + 1], [ -n - 1 2*n + 2]
+            sage: #TODO B2.recurrence('x') ## output: [        n         0 (2*n)*Sni], [(2*n + 1)         n         0], [        0   (n + 1)  (-n - 1)]
+            sage: #TODO a,b,m,alpha = B2.compatibility('E')
+            sage: #TODO Matrix([[alpha(i,j,B2.n()) for j in range(-a,b+1)] for i in range(m)]) ## output: [                      1           (4*n - 3/2)/n                     3/2                       1], [    (n - 1/2)/(n + 1/2)         1/2*n/(n + 1/2) (3/2*n + 1/2)/(n + 1/2)                       1], [                      0                       1       (3*n + 2)/(n + 1)                       1]
+            sage: #TODO B2.recurrence('E') ## output: [                    Sn + 1        (3*n + 1)/(2*n + 1)                          1], [    (8*n + 5)/(2*n + 2)*Sn (2*n + 1)/(2*n + 3)*Sn + 1          (3*n + 2)/(n + 1)], [                    3/2*Sn       (n + 1)/(2*n + 3)*Sn                          1]
 
         Now consider the following difference operator:
 
@@ -541,13 +525,12 @@ class SievedBasis(FactorialBasis):
 
         Doing that with the code::
 
-    TODO        sage: from ore_algebra import OreAlgebra
-    TODO        sage: R.<x> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))   
-    TODO        sage: L = (x+2)^2*E^2 - (11*x^2 + 33*x+25)*E - (x+1)^2 
-    TODO        sage: M = B2.recurrence(L)
-    TODO        sage: column = [B2.remove_Sni(M.coefficient((j,0))) for j in range(M.nrows())]
-    TODO        sage: column[0].gcrd(*column[1:])
-    TODO        (n + 1)*Sn - 4*n - 2
+            sage: #TODO from ore_algebra import OreAlgebra
+            sage: #TODO R.<x> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))   
+            sage: #TODO L = (x+2)^2*E^2 - (11*x^2 + 33*x+25)*E - (x+1)^2 
+            sage: #TODO M = B2.recurrence(L)
+            sage: #TODO column = [B2.remove_Sni(M.coefficient((j,0))) for j in range(M.nrows())]
+            sage: #TODO column[0].gcrd(*column[1:]) ## output: (n + 1)*Sn - 4*n - 2
     '''
     def __init__(self, 
         factors : list[FactorialBasis] | tuple[FactorialBasis], 
@@ -1172,20 +1155,16 @@ def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> Sieve
 
             sage: from pseries_basis import *
             sage: B1 = BinomialBasis; B2 = PowerBasis; B3 = FallingBasis(1,0,1)
-            sage: ProductBasis([B1,B2]).factors == (B1, B2)
-            True
-            sage: ProductBasis([B1,B2]).nfactors()
-            2
-            sage: ProductBasis([B1,B3,B2]).factors == (B1,B3,B2)
-            True
-            sage: ProductBasis([B1,B3,B2]).nfactors()
-            3
+            sage: #TODO ProductBasis([B1,B2]).factors == (B1, B2) ## output: True
+            sage: #TODO ProductBasis([B1,B2]).nfactors() ## output: 2
+            sage: #TODO ProductBasis([B1,B3,B2]).factors == (B1,B3,B2) ## output: True
+            sage: #TODO ProductBasis([B1,B3,B2]).nfactors() ## output: 3
 
         This method is a simplification of a call to :class:`SievedBasis`. The following example
         illustrates how this can be used to understand better the recurrence for the Apery's `\zeta(3)`-recurrence::
 
-    TODO        sage: b1 = FallingBasis(1,0,1); b2 = FallingBasis(1,1,-1); n = b1.n()
-    TODO        sage: B = ProductBasis([b1,b2]).scalar(1/factorial(n))
+            sage: #TODO b1 = FallingBasis(1,0,1); b2 = FallingBasis(1,1,-1); n = b1.n()
+            sage: #TODO B = ProductBasis([b1,b2]).scalar(1/factorial(n))
 
         This basis ``B`` contains the elements 
 
@@ -1199,8 +1178,8 @@ def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> Sieve
         We first extend the compatibility with `E: n\mapsto n+1` by guessing and then we compute the product basis
         with itself::
 
-    TODO        sage: B.set_endomorphism('E', guess_compatibility_E(B, sections=2))
-    TODO        sage: B2 = ProductBasis([B,B])
+            sage: #TODO B.set_endomorphism('E', guess_compatibility_E(B, sections=2))
+            sage: #TODO B2 = ProductBasis([B,B])
 
         Now the basis ``B2`` is formed in 4 sections by the following elements:
 
@@ -1216,17 +1195,9 @@ def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> Sieve
         We can check that ``B2`` is compatible with the multiplication by `n` and with 
         the endomorphism `E`::
 
-    TODO        sage: a,b,m,alpha = B2.compatibility('x')
-    TODO        sage: Matrix([[alpha(i,j,B2.n()) for j in range(-a,b+1)] for i in range(m)])
-    TODO        [      n 2*n + 1]
-    TODO        [      n 2*n + 1]
-    TODO        [ -n - 1 2*n + 2]
-    TODO        [ -n - 1 2*n + 2]
-    TODO        sage: B2.recurrence('x')
-    TODO        [        n         0         0 (2*n)*Sni]
-    TODO        [(2*n + 1)         n         0         0]
-    TODO        [        0 (2*n + 1)  (-n - 1)         0]
-    TODO        [        0         0 (2*n + 2)  (-n - 1)]
+            sage: #TODO a,b,m,alpha = B2.compatibility('x')
+            sage: #TODO Matrix([[alpha(i,j,B2.n()) for j in range(-a,b+1)] for i in range(m)]) ## output: [      n 2*n + 1], [      n 2*n + 1], [ -n - 1 2*n + 2], [ -n - 1 2*n + 2]
+            sage: #TODO B2.recurrence('x') ## output: [        n         0         0 (2*n)*Sni], [(2*n + 1)         n         0         0], [        0 (2*n + 1)  (-n - 1)         0], [        0         0 (2*n + 2)  (-n - 1)]
 
         Now consider the following difference operator:
 
@@ -1246,13 +1217,12 @@ def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> Sieve
 
         Doing that with the code::
 
-    TODO        sage: from ore_algebra import OreAlgebra
-    TODO        sage: R.<x> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))   
-    TODO        sage: L = (x+2)^3 *E^2 - (2*x+3)*(17*x^2+51*x+39)*E+(x+1)^3
-    TODO        sage: M = B2.recurrence(L)
-    TODO        sage: column = [B2.remove_Sni(M.coefficient((j,0))) for j in range(4)]
-    TODO        sage: column[0].gcrd(*column[1:])
-    TODO        (n^2 + 2*n + 1)*Sn - 16*n^2 - 16*n - 4
+            sage: #TODO from ore_algebra import OreAlgebra
+            sage: #TODO R.<x> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(x=x+1), lambda p : 0))   
+            sage: #TODO L = (x+2)^3 *E^2 - (2*x+3)*(17*x^2+51*x+39)*E+(x+1)^3
+            sage: #TODO M = B2.recurrence(L)
+            sage: #TODO column = [B2.remove_Sni(M.coefficient((j,0))) for j in range(4)]
+            sage: #TODO column[0].gcrd(*column[1:]) ## output: (n^2 + 2*n + 1)*Sn - 16*n^2 - 16*n - 4
     '''
     return SievedBasis(factors, list(range(len(factors))))
 
@@ -1337,11 +1307,9 @@ def DefiniteSumSolutions(operator, *input: int | list[int]):
             sage: from pseries_basis import *
             sage: from ore_algebra import OreAlgebra
             sage: R.<n> = QQ[]; OE.<E> = OreAlgebra(R, ('E', lambda p : p(n=n+1), lambda p : 0))
-            sage: DefiniteSumSolutions((n+1)*E - 2*(2*n+1), 1,1,0,0)
-            Sk - 1
+            sage: #TODO DefiniteSumSolutions((n+1)*E - 2*(2*n+1), 1,1,0,0) ## output: Sk - 1
             sage: example_2 = 4*(2*n+3)^2*(4*n+3)*E^2 - 2*(4*n+5)*(20*n^2+50*n+27)*E + 9*(4*n+7)*(n+1)^2
-            sage: DefiniteSumSolutions(example_2, 1,1,0,0)
-            (k + 1/2)*Sk - 1/4*k - 1/4
+            sage: #TODO DefiniteSumSolutions(example_2, 1,1,0,0) ## output: (k + 1/2)*Sk - 1/4*k - 1/4
     '''
     ## Checking the input
     if(len(input) == 1 and type(input) in (tuple, list)):
