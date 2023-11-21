@@ -606,7 +606,7 @@ class Sequence(SetMorphism):
         if scale <= 0 or not scale in ZZ: raise ValueError(f"The scale must be a positive integer. Got {scale}")
         if shift < 0 or not shift in ZZ: raise ValueError(f"The shift given must be a non-negative integer. Got {shift}")
 
-        return self._subsequence((index,(scale,shift)))
+        return self.subsequence((index,(scale,shift)))
     
     def swap(self, src: int = None, dst: int = None):
         r'''
