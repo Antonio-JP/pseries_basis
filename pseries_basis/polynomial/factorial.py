@@ -26,6 +26,8 @@ r'''
 '''
 from __future__ import annotations
 
+import logging
+
 from functools import lru_cache, reduce, cached_property
 from sage.all import binomial, parent, PolynomialRing, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
@@ -35,6 +37,8 @@ from typing import Any
 from ..sequences.base import Sequence, ConstantSequence
 from ..sequences.element import ExpressionSequence, RationalSequence
 from ..psbasis import PSBasis, Compatibility
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 ###
@@ -584,7 +588,7 @@ class SievedBasis(FactorialBasis):
     def __init__(self, 
         factors : list[FactorialBasis] | tuple[FactorialBasis], 
         cycle: list[int] |tuple[int], 
-        #var_name: str = 'x'
+        variable="n", seq_variable="k", _extend_by_zero=False, **kwds
     ):
         ## Checking the input
         if(not type(factors) in (list,tuple)):
@@ -605,9 +609,27 @@ class SievedBasis(FactorialBasis):
 
         new_ak = Sequence(lambda k : (self.factors[self.cycle[k%self.nsections]]).ak[self.indices[k][self.cycle[k%self.nsections]]], universe)
         new_bk = Sequence(lambda k : (self.factors[self.cycle[k%self.nsections]]).bk[self.indices[k][self.cycle[k%self.nsections]]], universe)
-        FactorialBasis.__init__(self, new_ak, new_bk, universe)
+        FactorialBasis.__init__(self, new_ak, new_bk, universe, variable=variable, seq_variable=seq_variable, _extend_by_zero=_extend_by_zero, **kwds)
 
         ## We reset the compatibility wrt the variable name
+        try:
+            self.set_compatibility(variable, self._extend_compatibility_X(), True, "any")
+        except ValueError:
+            logger.warning(f"[SievedBasis] Compatibility with {variable=} was not extended")
+
+        ## We try to extend other compatibilities
+        for E in self.factors[0].compatible_endomorphisms():
+            if all(E in factor.compatible_endomorphisms() for factor in self.factors[1:]):
+                try:
+                    self.set_homomorphism(E, self._extend_compatibility_E(E), True)
+                except (ValueError, NotImplementedError):
+                    logger.info(f"[SievedBasis] Compatibility with endomorphism {E=} could not be extended")
+        for D in self.factors[0].compatible_derivations():
+            if all(D in factor.compatible_derivations() for factor in self.factors[1:]):
+                try:
+                    self.set_derivation(D, self._extend_compatibility_D(D), True)
+                except (ValueError, NotImplementedError):
+                    logger.info(f"[SievedBasis] Compatibility with endomorphism {D=} could not be extended")
 
         ## TODO: Fill from here
         ## 1. (DONE) Call the super method of Factorial Basis with the necessary information.
@@ -618,7 +640,6 @@ class SievedBasis(FactorialBasis):
         ## 5. Fix all tests of __init__
         # raise NotImplementedError(f"[SievedBasis] Initialization not yet implemented")
     
-        # TODO: Uncomment when this is finished
         quasi_triangular_sequences = [factor.is_quasi_triangular() for factor in self.factors]
         if all(el != None for el in quasi_triangular_sequences):
             self._PSBasis__quasi_triangular = _SievedQuasiTriangular(quasi_triangular_sequences, self.cycle)
@@ -663,154 +684,6 @@ class SievedBasis(FactorialBasis):
         )
         return self.indices[k], k, poly
 
-
-    # def _element(self, n: int) -> element.Element:
-    #     r'''
-    #         Method to return the `n`-th element of the basis.
-
-    #         This method *implements* the corresponding abstract method from :class:`~pseries_basis.psbasis.PSBasis`.
-    #         See method :func:`~pseries_basis.psbasis.PSBasis.element` for further information.
-
-    #         For a :class:`SievedBasis` the output will be a polynomial of degree `n`.
-
-    #         OUTPUT:
-
-    #         A polynomial with variable name given by ``var_name`` and degree ``n``.
-
-    #         TODO: add examples
-    #     '''
-    #     indices = [self.index(n,i) for i in range(self.nfactors())]
-    #     return self.__init*prod([self.factors[i].element(indices[i]) for i in range(self.nfactors())])
-
-    # @cached_method
-    # def appear(self, i: int) -> int:
-    #     r'''
-    #         Return the appearances of the basis `i` in the deciding cycle.
-
-    #         This method computes how many times we increase the `i`-th basis
-    #         in each cycle of the :class:`SievedBasis`. This is equivalent to 
-    #         see how many times the number `i` appears on the deciding cycle (see
-    #         property :func:`cycle`).
-
-    #         INPUT:
-
-    #         * ``i``:index we want to check. It must be an element between `0` and
-    #           the number of factors of the :class:`SievedBasis` (see method :func:`nfactors`).
-
-    #         OUTPUT:
-
-    #         It returns the number of appearances of `i` in the deciding cycle.
-
-    #         TODO: add examples.
-    #     '''
-    #     if(not i in ZZ):
-    #         raise TypeError("The index must be an integer")
-    #     i = ZZ(i)
-    #     if((i < 0) or (i > self.nfactors())):
-    #         raise ValueError("The index must be between 0 and %d" %self.nfactors())
-    #     return self.cycle.count(i)
-
-    # def index(self, n: element.Element | list[element.Element, int] | tuple[element.Element, int], i: int) -> element.Element:
-    #     r'''
-    #         Returns the index of the `i`-th basis at the element `n`.
-
-    #         This method computes the actual index of the `i`-th basis in the
-    #         :class:`SievedBasis` for its `n`-th element. Recall that the
-    #         `n = kF + r` element of a :class:`SievedBasis` can be computed 
-    #         with:
-
-    #         .. MATH::
-
-    #             Q_n(x) = \prod_{i=0}^F P_{e_i(n)}^{(i)}(x)
-
-    #         This method returns the value of `e_i(n)`.
-
-    #         INPUT:
-
-    #         * ``n``: element of the basis we are considering. It can be an
-    #           expression involving `n`, but we need that ``n%self.nsections()``
-    #           is an integer. It can also be the tuple `(k,r)` such that `n = kF+r`.
-    #         * ``i``: index we want to check. It must be an element between `0` and
-    #           the number of factors of the :class:`SievedBasis` (see method :func:`nfactors`).
-
-    #         TODO: add examples
-    #     '''
-    #     ## Checking the input 'i' 
-    #     if not i in ZZ:
-    #         raise TypeError("The index must be an integer")
-    #     i = ZZ(i)
-    #     if((i < 0) or (i >= self.nfactors())):
-    #         raise ValueError("The index must be between 0 and %d" %self.nfactors())
-
-    #     ## Checking the input 'n' 
-    #     if not isinstance(n, (list, tuple)):
-    #         m,r = self.extended_quo_rem(n, self.nsections())
-    #     else:
-    #         m,r = n
-    #     if (not r in ZZ) or (r < 0) or (r >= self.nsections()) :
-    #         raise ValueError("The value for 'n' must be compatible with taking module %d" %self.nsections())
-
-    #     r = ZZ(r)
-    #     s = self.cycle[:r].count(i)
-    #     return self.appear(i)*m + s
-
-    # def __repr__(self) -> str:
-    #     return f"Sieved Basis {self.cycle} of the basis:" + "".join([f"\n\t- {f}" for f in self.factors])
-
-    # def _latex_(self) -> str:
-    #     return (r"\prod_{%s}" %self.cycle)  + "".join([f._latex_() for f in self.factors])
-
-    # def root_sequence(self) -> Sequence:
-    #     r'''
-    #         Method that returns the root sequence of the polynomial basis.
-
-    #         This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.root_sequence`
-    #         for a description on the output.
-
-    #         In a sieved basis, the root sequence is a nice entanglement of the root sequences
-    #         given by the deciding cycle (see method :func:`index`).
-
-    #         TODO: add examples
-    #     '''
-    #     def _root_sb(n):
-    #         r = n%self.nsections()
-    #         factor = self.cycle[r]
-    #         return self.factors[factor].rho(self.index(n, factor))
-
-    #     return LambdaSequence(_root_sb, self.base, allow_sym=False)
-
-    # def constant_coefficient(self) -> Sequence:
-    #     r'''
-    #         Getter for the constant coefficient of the factorial basis.
-
-    #         This method *overrides* the corresponding method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
-    #         See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.constant_coefficient` for further information 
-    #         in the description or the output.
-
-    #         TODO: add examples.
-    #     '''
-    #     def _const_sb(n):
-    #         r = n%self.nsections()
-    #         factor = self.cycle[r]
-    #         return self.factors[factor].bn(self.index(n, factor))
-    #     return LambdaSequence(_const_sb, self.base, allow_sym=False)
-    
-    # def linear_coefficient(self) -> Sequence:
-    #     r'''
-    #         Getter for the linear coefficient of the factorial basis.
-
-    #         This method *overrides* the corresponding method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
-    #         See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.linear_coefficient` for further information 
-    #         in the description or the output.
-
-    #         TODO: add examples.
-    #     '''
-    #     def _lin_sb(n):
-    #         r = n%self.nsections()
-    #         factor = self.cycle[r]
-    #         return self.factors[factor].an(self.index(n, factor))
-    #     return LambdaSequence(_lin_sb, self.base, allow_sym=False)
-
     @property
     def factors(self) -> tuple[FactorialBasis]:
         r'''Property to get the factors of the :class:`SievedBasis`'''
@@ -851,6 +724,111 @@ class SievedBasis(FactorialBasis):
         '''
         return len(self.cycle)
     m = nsections #: alias for the number of sections in the cycle
+    
+    ###############################################################################
+    ## Methods for extending compatibilities (protected)
+    ###############################################################################
+    def _extend_compatibility_X(self) -> Compatibility:
+        r'''
+            Method that extend the compatibility of multiplication by the sequence variable.
+
+            This method uses the information in the factor basis to extend 
+            the compatibility behavior of the multiplication by `x` to the 
+            :class:`SievedBasis`.
+        '''
+        m = self.nsections; F = self.nfactors
+        comps = [factor.compatibility(str(factor.gen())) for factor in self.factors]
+        t = [comp.t for comp in comps]
+        S = [self.cycle.count(i) for i in range(F)]
+        s = [self.cycle[:i].count(self.cycle[i]) for i in range(m)]
+        
+        ## Computing the optimal value for the sections
+        T = 1
+        while(any([not T*S[i]%t[i] == 0 for i in range(F)])): T += 1 # this always terminate at most with T = lcm(t_i)
+        
+        a = [T*S[i]//t[i] for i in range(F)]
+
+        new_coeffs = list()
+        for i in range(m*T): # section i
+            section_i = list()
+            i1 = i%m; i0 = (i-i1)//m
+            next = self.cycle[i1]
+            t = comps[next].t
+            i3 = (S[next]*i0 + s[i1])%t; i2 = (S[next]*i0+s[i1]-i3)//t
+            section_i.append(comps[next][(i3,0)].linear_subsequence(0, a[next], i2))
+            section_i.append(comps[next][(i3,1)].linear_subsequence(0, a[next], i2))
+            new_coeffs.append(section_i)
+        print(T, new_coeffs)
+        return Compatibility(new_coeffs, 0, 1, m*T)
+    
+    def _extend_compatibility_E(self, E: str) -> Compatibility:
+        r'''
+            Method that extend the compatibility of an endomorphism `E`.
+
+            This method uses the information in the factor basis to extend 
+            the compatibility behavior of an endomorphism `E` to the 
+            :class:`SievedBasis`.
+
+            This method can be extended in subclasses for a different behavior.
+
+            INPUT:
+
+            * ``E``: name of the endomorphism to extend.
+
+            OUTPUT:
+
+            A tuple `(A,B,m,\alpha_{i,k,j})` representing the compatibility of ``E``
+            with ``self``.
+        '''
+        # A, m, D = self._compatible_division_E(E)
+        # n = self.n()
+        # B = D(0,0,n).degree()-A
+
+        # alphas = []
+        # for i in range(m):
+        #     alphas += [self.matrix_PtI(m*n-A+i,A+B+1)*vector([D(i,0,n)[j] for j in range(A+B+1)])]
+
+        # return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
+        raise NotImplementedError(f"[SievedBasis] Extension of homomorphisms not yet implemented")
+
+    def _extend_compatibility_D(self, D: str) -> Compatibility:
+        r'''
+            Method that extend the compatibility of a derivation `D`.
+
+            This method uses the information in the factor basis to extend 
+            the compatibility behavior of a derivation `D` to the 
+            :class:`SievedBasis`.
+
+            This method can be extended in subclasses for a different behavior.
+
+            INPUT:
+
+            * ``D``: name of the derivation to extend.
+
+            OUTPUT:
+
+            A tuple `(A,B,m,\alpha_{i,k,j})` representing the compatibility of ``D``
+            with ``self``.
+        '''
+        # A, m, Q = self._compatible_division_D(D)
+        # n = self.n()
+        # B = max(Q(0,0,n).degree()-A,0)
+
+        # alphas = []
+        # for i in range(m):
+        #     alphas += [self.matrix_PtI(m*n-A+i,A+B+1)*vector([Q(i,0,n)[j] for j in range(A+B+1)])]
+        
+        # return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
+        raise NotImplementedError(f"[SievedBasis] Extension of derivations not yet implemented")
+
+    ###############################################################################
+    ### Representation methods
+    ###############################################################################
+    def __repr__(self) -> str:
+        return f"Sieved Basis {self.cycle} of the basis:" + "".join([f"\n\t- {f}" for f in self.factors])
+
+    def _latex_(self) -> str:
+        return (r"\prod_{%s}" %self.cycle)  + "".join([f._latex_() for f in self.factors])
 
     # def extend_compatibility_X(self) -> TypeCompatibility:
     #     r'''
@@ -944,95 +922,6 @@ class SievedBasis(FactorialBasis):
     #         self.set_derivation(name, self._extend_compatibility_D(name))
 
     #     return self.compatibility(name)
-
-    # def _extend_compatibility_X(self) -> TypeCompatibility:
-    #     r'''
-    #         Method that extend the compatibility of multiplication by `x`.
-
-    #         This method uses the information in the factor basis to extend 
-    #         the compatibility behavior of the multiplication by `x` to the 
-    #         :class:`SievedBasis`.
-
-    #         This method can be extended in subclasses for a different behavior.
-    #     '''
-    #     X = str(self.universe.gens()[0]); m = self.nsections(); F = self.nfactors()
-    #     comps = [self.factors[i].compatibility(X) for i in range(F)]
-    #     t = [comps[i][2] for i in range(F)]
-    #     S = [self.appear(i) for i in range(F)]
-    #     s = lambda i,r : self.cycle[:r].count(i)        
-    #     alphas = [comps[i][3] for i in range(F)]
-        
-    #     ## Computing the optimal value for the sections
-    #     T = 1
-    #     while(any([not T*S[i]%t[i] == 0 for i in range(F)])): T += 1 # this always terminate at most with T = lcm(t_i)
-        
-    #     a = [T*S[i]//t[i] for i in range(F)]
-
-    #     def new_alphas(i,j,k):
-    #         i0, i1 = self.extended_quo_rem(i,m)
-    #         next = self.cycle[i1]
-    #         i2, i3 = self.extended_quo_rem(S[next]*i0 + s(next,i1), t[next])
-    #         return alphas[next](i3,j,a[next]*k + i2)
-        
-    #     return (0,1,m*T,new_alphas)
-
-    # def _extend_compatibility_E(self, E: str) -> TypeCompatibility:
-    #     r'''
-    #         Method that extend the compatibility of an endomorphism `E`.
-
-    #         This method uses the information in the factor basis to extend 
-    #         the compatibility behavior of an endomorphism `E` to the 
-    #         :class:`SievedBasis`.
-
-    #         This method can be extended in subclasses for a different behavior.
-
-    #         INPUT:
-
-    #         * ``E``: name of the endomorphism to extend.
-
-    #         OUTPUT:
-
-    #         A tuple `(A,B,m,\alpha_{i,k,j})` representing the compatibility of ``E``
-    #         with ``self``.
-    #     '''
-    #     A, m, D = self._compatible_division_E(E)
-    #     n = self.n()
-    #     B = D(0,0,n).degree()-A
-
-    #     alphas = []
-    #     for i in range(m):
-    #         alphas += [self.matrix_PtI(m*n-A+i,A+B+1)*vector([D(i,0,n)[j] for j in range(A+B+1)])]
-
-    #     return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
-
-    # def _extend_compatibility_D(self, D: str) -> TypeCompatibility:
-    #     r'''
-    #         Method that extend the compatibility of a derivation `D`.
-
-    #         This method uses the information in the factor basis to extend 
-    #         the compatibility behavior of a derivation `D` to the 
-    #         :class:`SievedBasis`.
-
-    #         This method can be extended in subclasses for a different behavior.
-
-    #         INPUT:
-
-    #         * ``D``: name of the derivation to extend.
-
-    #         OUTPUT:
-
-    #         A tuple `(A,B,m,\alpha_{i,k,j})` representing the compatibility of ``D``
-    #         with ``self``.
-    #     '''
-    #     A, m, Q = self._compatible_division_D(D)
-    #     n = self.n()
-    #     B = max(Q(0,0,n).degree()-A,0)
-
-    #     alphas = []
-    #     for i in range(m):
-    #         alphas += [self.matrix_PtI(m*n-A+i,A+B+1)*vector([Q(i,0,n)[j] for j in range(A+B+1)])]
-        
-    #     return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
 
     # def increasing_polynomial(self, src: element.Element, diff : int = None, dst: int = None) -> element.Element:
     #     r'''
