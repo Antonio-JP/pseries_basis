@@ -187,6 +187,9 @@ class PSBasis(Sequence):
         ## Recreating the "original_sequence" part
         if self.__original_sequence != None:
             output._PSBasis__original_sequence = self.__original_sequence.change_universe(base)
+        
+        ## We guarantee the quasi-triangular property still remains
+        output.is_quasi_triangular = lambda : self.is_quasi_triangular()
 
         ## Recreating the compatibilities
         for operator in self.basic_compatibilities():
@@ -426,7 +429,7 @@ class PSBasis(Sequence):
         '''
         return self.__quasi_triangular
     
-    def inner_init_values(self, sum_sequence: Sequence, desired_values: int, inner_recurrence: OreOperator = None, full: bool = False):
+    def inner_init_values(self, sum_sequence: Sequence, desired_values: int, inner_recurrence: OreOperator = None, full: bool = False, section: int = 1, shift: int = 0):
         r'''
             Method to obtain the initial values of an inner sequence using this basis.
 
@@ -481,10 +484,12 @@ class PSBasis(Sequence):
         I = self.is_quasi_triangular()
         if I == None:
             raise TypeError(f"The basis is not quasi-triangular: impossible to compute inner sequences.")
-        elif inner_recurrence == None and I == Sequence(lambda n : n, ZZ):
+        elif inner_recurrence == None and I == Sequence(lambda n : n, ZZ) and section == 1:
             return basis_matrix(self, desired_values).solve_left(vector(sum_sequence[:desired_values]))
         elif inner_recurrence == None:
             raise TypeError(f"The basis is not triangular and no recurrence is given: impossible to compute inner sequences.")
+        
+        I = (I//section + 1) if section != 1 else I
         
         ## General case
         gen_seq = (lambda p: QRationalSequence(p, q=getattr(self, "q"))) if hasattr(self, "q") else (lambda p: RationalSequence(p))
@@ -492,15 +497,16 @@ class PSBasis(Sequence):
             is_recurrence_algebra(inner_recurrence.parent())
         ):
             r = inner_recurrence.order()
-        F = inner_recurrence.parent().base().base_ring() # field to look the affine spaces
+        F = inner_recurrence.parent().base().base_ring().fraction_field() # field to look the affine spaces
         S = AffineSubspace(r*[F.zero()], VectorSpace(F, r))
 
         cdimension = S.dimension(); repeated = 0; N = 1
         while (repeated < 2*r) and (not S is None):
-            A = unroll_matrix(inner_recurrence, gen_seq, I[N])*basis_matrix(self, I[N], N)
+            II = I[N]; II = 1 if II == 0 else II            
+            A = (unroll_matrix(inner_recurrence, gen_seq, II)*basis_matrix(self, II, N, section=section, shift=shift)).change_ring(F)
             nS = AffineSubspace(A.solve_left(vector(sum_sequence[:N])), A.left_kernel())
             S = S.intersection(nS)
-            logger.debug(f"[inner_init_values] Computing the space for {N = } -> I(N) = {I[N]}. Solution: {nS.dimension()}. Dimension: {cdimension} -> {S.dimension()}")
+            logger.debug(f"[inner_init_values] Computing the space for {N = } -> I(N) = {II}. Solution: {nS.dimension()}. Dimension: {cdimension} -> {S.dimension()}")
 
             if not S is None:
                 if cdimension != S.dimension():
@@ -1387,9 +1393,11 @@ class Compatibility:
                     return False
         return True
 
-def basis_matrix(basis, nrows=5, ncols=None):
+def basis_matrix(basis, nrows=5, ncols=None, section: int = 1, shift: int = 0):
     r'''
-        Method to build a matrix with the first part of a basis or a 2-size sequence
+        Method to build a matrix with the first part of a basis or a 2-size sequence.
+
+        This method allow the optional arguments ``section`` and shift`` in order to take a subsequence of the basis.
     '''
     if isinstance(basis, PSBasis): basis = basis.as_2dim() # case of a PSBasis
     if not isinstance(basis, Sequence): basis = Sequence(basis, universe=basis(0,0).parent(), dim=2) # case of just a callable
@@ -1399,7 +1407,7 @@ def basis_matrix(basis, nrows=5, ncols=None):
     if not ncols in ZZ or ncols <= 0: raise TypeError(f"Number of columns must be a positive number (got {ncols=})")
     nrows = ZZ(nrows); ncols = ZZ(ncols)
 
-    return Matrix([[basis((i,j)) for j in range(ncols)] for i in range(nrows)])
+    return Matrix([[basis((section*i+shift,j)) for j in range(ncols)] for i in range(nrows)])
 
 def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: Callable, bound: int = 100, *, _full=False):
     r'''
