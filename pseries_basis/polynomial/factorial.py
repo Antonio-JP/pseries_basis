@@ -29,12 +29,12 @@ from __future__ import annotations
 import logging
 
 from functools import lru_cache, reduce, cached_property
-from sage.all import binomial, parent, PolynomialRing, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
+from sage.all import binomial, latex, Matrix, parent, PolynomialRing, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from sage.misc.cachefunc import cached_method #pylint: disable=no-name-in-module
-from typing import Any
+from typing import Any, Collection
 
-from ..sequences.base import Sequence, ConstantSequence
+from ..sequences.base import Sequence, SequenceSet, ConstantSequence
 from ..sequences.element import ExpressionSequence, RationalSequence
 from ..psbasis import PSBasis, Compatibility
 
@@ -451,13 +451,186 @@ PowerBasis = PowerTypeBasis(universe=QQ)
 BinomialBasis = BinomialTypeBasis(universe=QQ)
 
 ###############################################################################
+###
+### DIVISION CONDITIONS FOR COMPATIBILITY
+###
+###############################################################################
+class DivisionCondition:
+    r'''
+        This class represents a division condition for a linear operator over a :class:`FactorialBasis`.
+
+        In :doi:`10.1016/j.jsc.2022.11.002`, Proposition 11, the authors showed that the `(A,B)`-compatibility
+        of a linear operator `L` with a :class:`FactorialBasis` is equivalent to the following two conditions:
+
+        1. For every `k \geq 0`, `\deg(L P_k(n)) \leq k+B`.
+        2. For every `k \geq A`, `P_{k-A}(n)` divides `LP_k(n)`.
+
+        Recall that a factorial basis is a basis `P_k(n)` where the `k`-th element is a polynomial in some sequence
+        `\beta(n)` of degree `k`. Hence, the degree in condition 1. and the division in condition 2. is seeing as
+        a polynomial in `\beta(n)`.
+
+        The equivalence between the condition 1. and 2., and the `(A,B)`-compatibility is a key computational 
+        process for factorial bases. This class allows to represent the conditions 1. and 2. fully and provide 
+        methods to transform these conditions into :class:`Compatibility` for a given factorial basis.
+
+        To represent this divisibility condition, we need to stablish the value for `A` and how the division
+        of `P_{k-A}(n)` and `LP_k(n)` actually happens. Namely, since the degrees of `P_{k-A}(n)` and 
+        `LP_k(n)` are fixed, then we can represent:
+
+        .. MATH::
+
+            \frac{LP_k(n)}{P_{k-A}(n)} = \sum_{i=0}^{A+B} \delta_{i}(k) \beta(n)^i.
+
+        Where `\delta_i(k)` are sequences in `k` that defines how the division condition changes for each `k \geq A`.
+        Hidden in this notation is the case when the compatibility is in `t` sections. It is then clear that the 
+        sequences `\delta_{i}(k)` may be defined in sections too, leading to the same structure as in a compatibility
+        by sections. Namely, let `k = mt+r` for `m\geq 0` and `r\in \{0,\ldots,t-1\}`:
+
+        .. MATH::
+
+            \frac{LP_{mt+r}}{P_{k-A}(n)} = \sum_{i=0}^{A+B} \delta_{r,i}(m) \beta(n)^i`.
+
+
+        INPUT:
+
+        * ``delta``: a list/tuple or a list/tuple of list/tuples with sequences representing the sequences `\delta`.
+        * ``A``: integer representing the lower bound for the division. Used to know exactly where the divisibility condition starts.
+        * ``base`` (optional): the universe of the sequeces in ``delta``. Used optionally to enforce this universe on the sequences.
+          If not given, the universe will be deduced from the arguments in ``delta`` automatically.
+        * ``t`` (optional): number of sections to be used. If not given it is deduced from the input ``delta``. Otherwise, we 
+          enforce that ``delta`` is a list of at least ``t`` lists.
+    '''
+    def __init__(self, delta: Collection[Sequence] | Collection[Collection[Sequence]], A: int, base = None, sections: int = None):
+        ## Checking all the arguments
+        if not isinstance(delta, Collection):
+            raise TypeError(f"[DivisionCondition] The division coefficients must be given as a list (got: {delta.__class__})") 
+        if sections != None: # we force the input delta to have richer structure
+            if sections <= 0: raise ValueError(f"The number of sections must be strictly positive (given {sections})")
+
+            if any(not isinstance(sec, Collection) for sec in delta):
+                raise TypeError(f"[DivisionCondition] When given number of sections, the division coefficients must be given as a list of lists.")
+            if len(delta) < sections:
+                raise ValueError(f"[DivisionCondition] Not enough sections provided (required {sections}, given {len(delta)})")
+        else:
+            if all(isinstance(sec, Collection) for sec in delta):
+                sections = len(delta)
+            else:
+                sections = 1
+                delta = [delta] # now is a list of lists with just one element.
+        
+        if any(len(delta[0]) != len(seq) for seq in delta[1:sections]):
+            raise ValueError(f"[DivisionCondition] Inconsistent number of elements in the ``delta`` coefficients")
+
+        ## Computing the common parent
+        parent = None
+        for sec in delta:
+            for seq in sec:
+                if parent is None: parent = seq.parent()
+                else: parent = pushout(parent, seq.parent())
+                
+        ## We transform elements in delta to a specific sequence ring
+        if not isinstance(parent, SequenceSet): # we consider parent as the constant ring for sequences
+            delta = [[ConstantSequence(seq, universe=parent, dim=1) for sec in seq] for seq in delta]
+        else:
+            delta = [[parent(seq) for seq in sec] for sec in delta]
+        
+        ## We make sure ``base`` is used (if given)
+        if base != None: delta = [[seq.change_universe(base) for seq in sec] for sec in delta]
+
+        self.__delta = delta
+        self.__A = A
+        self.__sections = sections
+        self.__base = base if base != None else (parent  if parent is not isinstance(parent, SequenceSet) else parent.codomain())
+
+    @property
+    def lower_bound(self) -> int: return self.__A
+    A = lower_bound #: alias for ``lower_bound``
+    @property
+    def sections(self) -> int: return self.__sections
+    t = sections #: alias for ``sections``
+
+    def coefficient(self, index: int, section:int = None) -> Sequence:
+        if section == None and self.sections > 1: raise ValueError(f"Sections required when having more than one section.")
+        elif section == None: section = 0
+
+        return self.__delta[section][index]
+    def __getitem__(self, input: int | tuple[int,int]) -> Sequence: 
+        if isinstance(input, int):
+            return self.coefficient(input, 0)
+        else:
+            return self.coefficient(input[1], input[0])
+
+    def base(self): return self.__base
+    def change_base(self, new_base) -> DivisionCondition:
+        return DivisionCondition(self.__delta, self.A, new_base, self.sections)
+    
+    def in_sections(self, new_sections: int) -> DivisionCondition:
+        r'''
+            Represent the division condition for a given number of sections (if possible)
+        '''
+        raise NotImplementedError(f"[DivisionCondition] Method `in_sections` not yet implemented.")
+    
+    def to_compatibility(self, basis: FactorialBasis) -> Compatibility:
+        r'''
+            Method tha implements the equivalence of :doi:`10.1016/j.jsc.2022.11.002`, Proposition 11.
+        '''
+        raise NotImplementedError(f"[DivisionCondition] Method `to_compatibility` not yet implemented.")
+    @staticmethod
+    def from_compatibility(compatibility: Compatibility, basis: FactorialBasis) -> DivisionCondition:
+        r'''
+            Method tha implements the converse equivalence of :doi:`10.1016/j.jsc.2022.11.002`, Proposition 11.
+        '''
+        raise NotImplementedError(f"[DivisionCondition] Method `from_compatibility` not yet implemented.")
+        
+
+    def __repr__(self) -> str:
+        start = f"Divisibility condition (A={self.A}, t={self.sections})"
+        try:
+            M = Matrix([[self[t,i].generic() for i in range(len(self.__delta[0]))] for t in range(self.t)]) 
+            start += f" with following coefficient matrix:\n{M}"
+        except:
+            pass
+        return start
+    def _latex_(self) -> str:
+        code = r"\text{Divisibility condition with shape " + f"(A={self.A}, t={self.sections})" + r":}\\"
+        if self.t > 1:
+            code += r"\left\{\begin{array}{rl}"
+        
+        for r in range(self.sections):
+            if self.sections > 1:
+                code += r"L \cdot \frac{L P_{" + latex(self.t) + r"k + " + latex(r) + r"}}{P_{" + latex(self.t) + r"k + " + latex(r) + r" - " + latex(self.A) + r"}} & = "
+            else:
+                code += r"L \cdot P_{k-" + latex(self.A) + r"} = "
+
+            monomials = []
+            for i in range(len(self.__delta[0])): 
+                ## Creating the coefficient
+                try:
+                    c = self[r,i].generic('k')
+                    if c == 0: continue
+                    new_mon = r"\left(" + latex(c) + r"\right)"
+                except:
+                    if self.t > 1:
+                        new_mon = r"c_{" + latex(r) + r"," + latex(i) + r"}(k)"
+                    else:
+                        new_mon = r"c_{" + latex(i) + r"}(k)"
+                ## Creating the P_{k+i}
+                new_mon += r"X^" + latex(i)
+                monomials.append(new_mon)
+            code += " + ".join(monomials)
+            if self.t > 1: code += r"\\"
+        if self.t > 1:
+            code += r"\end{array}\right."
+        return code 
+    
+###############################################################################
 ### 
 ### SIEVED BASIS AND PRODUCT BASIS
 ### 
 ###############################################################################
-class SievedBasis(FactorialBasis):
+class ShuffledBasis(FactorialBasis):
     r'''
-        Class for a Sieved Basis.
+        Class for a Shuffled Basis.
 
         A sieved basis is a factorial basis built from a finite set
         of source basis `B_i = \left(P_k^{(i)}(n)\right)_k` for `i=0,\ldots,F-1`. This is built 
@@ -498,7 +671,7 @@ class SievedBasis(FactorialBasis):
 
             sage: from pseries_basis.polynomial.factorial import *
             sage: B = BinomialBasis; P = PowerBasis
-            sage: B2 = SievedBasis([B,P], [0,1,1,0])
+            sage: B2 = ShuffledBasis([B,P], [0,1,1,0])
             sage: B2[:4]
             [Sequence over [Rational Field]: (1, 1, 1,...),
              Sequence over [Rational Field]: (0, 1, 2,...),
@@ -509,7 +682,7 @@ class SievedBasis(FactorialBasis):
 
         With this system, we can build the same basis changing the order and the values in the cycle::
 
-            sage: B3 = SievedBasis([P,B], [1,0,0,1])
+            sage: B3 = ShuffledBasis([P,B], [1,0,0,1])
             sage: B3.almost_equals(B2, 30) # checking equality for 30 elements 
             True
 
@@ -517,13 +690,13 @@ class SievedBasis(FactorialBasis):
 
             sage: B2.nsections
             4
-            sage: SievedBasis([B,B,P],[0,0,1,2,1,2]).nsections
+            sage: ShuffledBasis([B,B,P],[0,0,1,2,1,2]).nsections
             6
 
         This basis can be use to deduce some nice recurrences for the Apery's `\zeta(2)` sequence::
 
             sage: #TODO b1 = FallingBasis(1,0,1); b2 = FallingBasis(1,1,-1); n = b1.n()
-            sage: #TODO B = SievedBasis([b1,b2],[0,1]).scalar(1/factorial(n))
+            sage: #TODO B = ShuffledBasis([b1,b2],[0,1]).scalar(1/factorial(n))
 
         This basis ``B`` contains the elements 
 
@@ -538,7 +711,7 @@ class SievedBasis(FactorialBasis):
         with the binomial basis with the cycle `(1,0,1)`::
 
             sage: #TODO B.set_endomorphism('E', guess_compatibility_E(B, sections=2))
-            sage: #TODO B2 = SievedBasis([BinomialBasis(), B], [1,0,1])
+            sage: #TODO B2 = ShuffledBasis([BinomialBasis(), B], [1,0,1])
 
         Now the basis ``B2`` is formed in 3 sections by the following elements:
 
@@ -615,7 +788,7 @@ class SievedBasis(FactorialBasis):
         try:
             self.set_compatibility(variable, self._extend_compatibility_X(), True, "any")
         except ValueError:
-            logger.warning(f"[SievedBasis] Compatibility with {variable=} was not extended")
+            logger.warning(f"[ShuffledBasis] Compatibility with {variable=} was not extended")
 
         ## We try to extend other compatibilities
         for E in self.factors[0].compatible_endomorphisms():
@@ -623,13 +796,13 @@ class SievedBasis(FactorialBasis):
                 try:
                     self.set_homomorphism(E, self._extend_compatibility_E(E), True)
                 except (ValueError, NotImplementedError):
-                    logger.info(f"[SievedBasis] Compatibility with endomorphism {E=} could not be extended")
+                    logger.info(f"[ShuffledBasis] Compatibility with endomorphism {E=} could not be extended")
         for D in self.factors[0].compatible_derivations():
             if all(D in factor.compatible_derivations() for factor in self.factors[1:]):
                 try:
                     self.set_derivation(D, self._extend_compatibility_D(D), True)
                 except (ValueError, NotImplementedError):
-                    logger.info(f"[SievedBasis] Compatibility with endomorphism {D=} could not be extended")
+                    logger.info(f"[ShuffledBasis] Compatibility with endomorphism {D=} could not be extended")
 
         ## TODO: Fill from here
         ## 1. (DONE) Call the super method of Factorial Basis with the necessary information.
@@ -638,11 +811,11 @@ class SievedBasis(FactorialBasis):
         ## 3. Extend "homomorphisms"
         ## 4. Extend "derivations"
         ## 5. Fix all tests of __init__
-        # raise NotImplementedError(f"[SievedBasis] Initialization not yet implemented")
+        # raise NotImplementedError(f"[ShuffledBasis] Initialization not yet implemented")
     
         quasi_triangular_sequences = [factor.is_quasi_triangular() for factor in self.factors]
         if all(el != None for el in quasi_triangular_sequences):
-            self._PSBasis__quasi_triangular = _SievedQuasiTriangular(quasi_triangular_sequences, self.cycle)
+            self._PSBasis__quasi_triangular = _ShuffledQuasiTriangular(quasi_triangular_sequences, self.cycle)
 
     @cached_property
     def indices(self) -> Sequence:
@@ -686,11 +859,11 @@ class SievedBasis(FactorialBasis):
 
     @property
     def factors(self) -> tuple[FactorialBasis]:
-        r'''Property to get the factors of the :class:`SievedBasis`'''
+        r'''Property to get the factors of the :class:`ShuffledBasis`'''
         return self.__factors
     @property
     def cycle(self) -> tuple[int]:
-        r'''Property to get the deciding cycle of the :class:`SievedBasis`'''
+        r'''Property to get the deciding cycle of the :class:`ShuffledBasis`'''
         return self.__cycle
     @property
     def nfactors(self) -> int:
@@ -698,11 +871,11 @@ class SievedBasis(FactorialBasis):
             Method to get the number of factors of the sieved basis.
 
             This method returns the number of factors which compose
-            this :class:`SievedBasis`.
+            this :class:`ShuffledBasis`.
 
             OUTPUT:
 
-            Number of factors of this :class:`SievedBasis`.
+            Number of factors of this :class:`ShuffledBasis`.
             
             TODO: add examples
         '''
@@ -714,11 +887,11 @@ class SievedBasis(FactorialBasis):
             Method to get the number of sections of the sieved basis.
 
             This method returns the number of elements in the deciding cycle which 
-            is the number of sections in which the :class:`SievedBasis` is divided.
+            is the number of sections in which the :class:`ShuffledBasis` is divided.
 
             OUTPUT:
 
-            Number of sections of this :class:`SievedBasis`.
+            Number of sections of this :class:`ShuffledBasis`.
             
             TODO: add examples
         '''
@@ -734,7 +907,7 @@ class SievedBasis(FactorialBasis):
 
             This method uses the information in the factor basis to extend 
             the compatibility behavior of the multiplication by `x` to the 
-            :class:`SievedBasis`.
+            :class:`ShuffledBasis`.
         '''
         m = self.nsections; F = self.nfactors
         comps = [factor.compatibility(str(factor.gen())) for factor in self.factors]
@@ -767,7 +940,7 @@ class SievedBasis(FactorialBasis):
 
             This method uses the information in the factor basis to extend 
             the compatibility behavior of an endomorphism `E` to the 
-            :class:`SievedBasis`.
+            :class:`ShuffledBasis`.
 
             This method can be extended in subclasses for a different behavior.
 
@@ -789,7 +962,7 @@ class SievedBasis(FactorialBasis):
         #     alphas += [self.matrix_PtI(m*n-A+i,A+B+1)*vector([D(i,0,n)[j] for j in range(A+B+1)])]
 
         # return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
-        raise NotImplementedError(f"[SievedBasis] Extension of homomorphisms not yet implemented")
+        raise NotImplementedError(f"[ShuffledBasis] Extension of homomorphisms not yet implemented")
 
     def _extend_compatibility_D(self, D: str) -> Compatibility:
         r'''
@@ -797,7 +970,7 @@ class SievedBasis(FactorialBasis):
 
             This method uses the information in the factor basis to extend 
             the compatibility behavior of a derivation `D` to the 
-            :class:`SievedBasis`.
+            :class:`ShuffledBasis`.
 
             This method can be extended in subclasses for a different behavior.
 
@@ -819,13 +992,13 @@ class SievedBasis(FactorialBasis):
         #     alphas += [self.matrix_PtI(m*n-A+i,A+B+1)*vector([Q(i,0,n)[j] for j in range(A+B+1)])]
         
         # return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
-        raise NotImplementedError(f"[SievedBasis] Extension of derivations not yet implemented")
+        raise NotImplementedError(f"[ShuffledBasis] Extension of derivations not yet implemented")
 
     ###############################################################################
     ### Representation methods
     ###############################################################################
     def __repr__(self) -> str:
-        return f"Sieved Basis {self.cycle} of the basis:" + "".join([f"\n\t- {f}" for f in self.factors])
+        return f"Shuffled Basis {self.cycle} of the basis:" + "".join([f"\n\t- {f}" for f in self.factors])
 
     def _latex_(self) -> str:
         return (r"\prod_{%s}" %self.cycle)  + "".join([f._latex_() for f in self.factors])
@@ -931,11 +1104,11 @@ class SievedBasis(FactorialBasis):
     #         See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_polynomial` for further information 
     #         in the description or the output.
 
-    #         As a :class:`SievedBasis` is composed with several factors, we compute the difference between each element
+    #         As a :class:`ShuffledBasis` is composed with several factors, we compute the difference between each element
     #         in the factors and compute the corresponding product of the increasing polynomials. 
 
     #         In this case, we consider the input given by `n = kF + r` where `F` is the number of sections of the 
-    #         :class:`SievedBasis` (see method :func:`nsections`).
+    #         :class:`ShuffledBasis` (see method :func:`nsections`).
 
     #         INPUT:
 
@@ -976,17 +1149,17 @@ class SievedBasis(FactorialBasis):
     #     return self.__cached_increasing[(k,r,diff)]
 
     # @cached_method
-    # def increasing_basis(self, shift: int) -> SievedBasis:
+    # def increasing_basis(self, shift: int) -> ShuffledBasis:
     #     r'''
     #         Method to get the structure for the `n`-th increasing basis.
 
     #         This method *implements* the corresponding abstract method from :class:`~pseries_basis.factorial.factorial_basis.FactorialBasis`.
     #         See method :func:`~pseries_basis.factorial.factorial_basis.FactorialBasis.increasing_basis` for further information.
 
-    #         For a :class:`SievedBasis`, the increasing basis is again a :class:`SievedBasis` of the increasing basis
+    #         For a :class:`ShuffledBasis`, the increasing basis is again a :class:`ShuffledBasis` of the increasing basis
     #         of its factors. Depending on the actual shift, the increasing basis may differ. Namely, if the shift is 
     #         `N = kF+j` where `F` is the number of sections of ``self`` and `B_i` are those factors, then the we can express 
-    #         the increasing basis as a :class:`SievedBasis` again.
+    #         the increasing basis as a :class:`ShuffledBasis` again.
 
     #         INPUT:
 
@@ -995,7 +1168,7 @@ class SievedBasis(FactorialBasis):
               
     #         OUTPUT:
 
-    #         A :class:`SievedBasis` representing the increasing basis starting at `N`.
+    #         A :class:`ShuffledBasis` representing the increasing basis starting at `N`.
 
     #         WARING: currently the compatibilities aer not extended to the increasing basis.
 
@@ -1014,7 +1187,7 @@ class SievedBasis(FactorialBasis):
     #     new_cycle = self.cycle[shift[1]:] + self.cycle[:shift[1]]
     #     indices = [self.index(shift, i) for i in range(self.nfactors())]
     #     new_basis = [self.factors[i].increasing_basis(indices[i]) for i in range(self.nfactors())]
-    #     return SievedBasis(new_basis, new_cycle, var_name=str(self.universe.gens()[0]))
+    #     return ShuffledBasis(new_basis, new_cycle, var_name=str(self.universe.gens()[0]))
      
     # def compatible_division(self, operator: str | OreOperator) -> Divisibility:
     #     r'''
@@ -1023,7 +1196,7 @@ class SievedBasis(FactorialBasis):
     #         This method *overrides* the implementation from class :class:`FactorialBasis`. See :func:`FactorialBasis.compatible_division`
     #         for a description on the output.
 
-    #         For a :class:`SievedBasis`, since its elements are products of elements of other basis, we can compute this 
+    #         For a :class:`ShuffledBasis`, since its elements are products of elements of other basis, we can compute this 
     #         division using the information in the factors of ``self``. However, we need to know how this operator
     #         acts on products distinguishing between three classes:
 
@@ -1048,7 +1221,7 @@ class SievedBasis(FactorialBasis):
     #     r'''
     #         Method o compute the compatible division for multiplication operators.
     #     '''
-    #     raise NotImplementedError("_compatible_division_X not implemented for Sieved Basis")
+    #     raise NotImplementedError("_compatible_division_X not implemented for Shuffled Basis")
 
     # def _compatible_division_D(self, operator: str | OreOperator) -> Divisibility:
     #     r'''
@@ -1119,9 +1292,9 @@ class SievedBasis(FactorialBasis):
     # def is_quasi_eval_triangular(self) -> bool:
     #     return all(basis.is_quasi_eval_triangular() for basis in self.factors)
 
-def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> SievedBasis:
+def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> ShuffledBasis:
     r'''
-        Factory for creating a special type of :class:`SievedBasis`: Product Basis.
+        Factory for creating a special type of :class:`ShuffledBasis`: Product Basis.
 
         Namely, the `k=lm+j` element of the product of `m` basis, is the product of
 
@@ -1146,7 +1319,7 @@ def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> Sieve
             sage: #TODO ProductBasis([B1,B3,B2]).factors == (B1,B3,B2) ## output: True
             sage: #TODO ProductBasis([B1,B3,B2]).nfactors() ## output: 3
 
-        This method is a simplification of a call to :class:`SievedBasis`. The following example
+        This method is a simplification of a call to :class:`ShuffledBasis`. The following example
         illustrates how this can be used to understand better the recurrence for the Apery's `\zeta(3)`-recurrence::
 
             sage: #TODO b1 = FallingBasis(1,0,1); b2 = FallingBasis(1,1,-1); n = b1.n()
@@ -1210,9 +1383,9 @@ def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> Sieve
             sage: #TODO column = [B2.remove_Sni(M.coefficient((j,0))) for j in range(4)]
             sage: #TODO column[0].gcrd(*column[1:]) ## output: (n^2 + 2*n + 1)*Sn - 16*n^2 - 16*n - 4
     '''
-    return SievedBasis(factors, list(range(len(factors))))
+    return ShuffledBasis(factors, list(range(len(factors))))
 
-class _SievedQuasiTriangular:
+class _ShuffledQuasiTriangular:
     def __init__(self, quasi_triangular_sequences : list[Sequence], cycle : list[int]):
         self.__qt_seq = quasi_triangular_sequences
         if any(el < 0 or el >= self.F for el in cycle):
