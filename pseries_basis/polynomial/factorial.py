@@ -29,7 +29,8 @@ from __future__ import annotations
 import logging
 
 from functools import lru_cache, reduce, cached_property
-from sage.all import binomial, latex, Matrix, parent, PolynomialRing, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
+from itertools import chain, permutations
+from sage.all import binomial, latex, Matrix, parent, PolynomialRing, prod, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from sage.misc.cachefunc import cached_method #pylint: disable=no-name-in-module
 from typing import Any, Collection
@@ -566,23 +567,204 @@ class DivisionCondition:
     
     def in_sections(self, new_sections: int) -> DivisionCondition:
         r'''
-            Represent the division condition for a given number of sections (if possible)
+            Represent the division condition for a given number of sections (if possible).
+
+            Let us assume that for some operator and basis we have the following division condition.
+
+            .. MATH::
+
+                \frac{L P_{mt+r}(n)}{P_{mt+r-A}(n)} = \sum_{i=0}^{A+B} \delta_{r,i}(m)\beta(n)^i.
+
+            This is a divisibility condition in `t` sections. Then, for any `T` multiple of `t`, we can 
+            also write a division condition. Namely, let `k = MT+R` for `M \geq 0`, `R \in \{0,\ldots, T\}`.
+            Then, `k = (Mq_T + q_R) + r_R` where `q_Tt = T` and `q_R t + r_R = R`. Hence,
+
+            .. MATH::
+
+                \frac{L P_{MT+R}(n)}{P_{mt+r-A}(n)} = \frac{L P_{(Mq_T + q_R) + r_R}(n)}{P_{(Mq_T + q_R) + r_R-A}(n)} = 
+                \sum_{i=0}^{A+B} \delta_{r_R, i}(Mq_T+q_R) \beta(n)^i.
+
+            Hence, we have that the new `\tilde{\delta}_{R,i}(M) = \delta_{r_R, i}(Mq_T+q_R)`.
+
+            INPUT:
+
+            * ``new_sections``: number of new sections. It must be a multiple of ``self.sections``.
         '''
-        raise NotImplementedError(f"[DivisionCondition] Method `in_sections` not yet implemented.")
+        q_T, r_T = ZZ(new_sections).quo_rem(self.t)
+
+        if r_T != 0: raise ValueError(f"[DivisionCondition] The new number of sections must be a multiple of the current sections (Got: {new_sections}; Current: {self.t})")
+
+        new_delta = []
+        for R in range(new_sections):
+            q_R, r_R = ZZ(R).quo_rem(self.t)
+            new_section = []
+            for i in range(len(self.__delta[0])): # i = 0, ..., A+B
+                new_section.append(self[r_R, i].linear_subsequence(0, q_T, q_R))
+            new_delta.append(new_section)
+
+        return DivisionCondition(new_delta, self.A, self.base(), sections=new_sections)
     
     def to_compatibility(self, basis: FactorialBasis) -> Compatibility:
         r'''
             Method tha implements the equivalence of :doi:`10.1016/j.jsc.2022.11.002`, Proposition 11.
+
+            Let us assume that for some operator and basis we have the following division condition.
+
+            .. MATH::
+
+                \frac{L P_{mt+r}(n)}{P_{mt+r-A}(n)} = \sum_{i=0}^{A+B} \delta_{r,i}(m)\beta(n)^i.
+
+            Then, we can simply multiply both sides by `P_{mt+r-A}(n)`, and check how the different multiplications with `\beta(n)^i`
+            affects the element `P_{mt+r-A}(n)`. Let us assume that
+
+            .. MATH::
+
+                \beta(n)^i P_{mt+r}(n) = \sum_{j=0}^i \alpha_{r,j}^{(i)}(m)P_{mt+r+j}(n),
+
+            (note that `j \geq 0` since `P_k(n)` is a `\beta(n)`-factorial basis). Let `(r - A) = Qt + R`, where `R \in \{0,\ldots,t-1\}`.
+            Then we have that
+
+            .. MATH::
+
+                \beta(n)^i P_{mt+r-A}(n) = \beta(n)^i P_{(m+Q)t + R}(n) = \sum_{j=0}^i \alpha_{R,j}^{(i)}(m+Q)P_{mt+r-A+j}(n).
+
+            Hence, putting everything together, we obtain the following identity:
+
+            .. MATH::
+
+                L P_{mt+r}(n) = \sum_{i=0}^{A+B} \delta_{r,i}(m)\beta(n)^i P_{mt+r-A}(n)
+                              = \sum_{i=0}^{A+B} \delta_{r,i}(m) \sum_{j=0}^i \alpha_{R,j}^{(i)}(m+Q)P_{mt+r-A+j}(n)
+                              = \sum_{j=0}^{A+B} \sum_{i=j}^{A+B} \delta_{r,i}(m) \alpha_{R,j}^{(i)}(m+Q)P_{mt+r-A+j}(n)
+                              = \sum_{j=-A}^{B}  \sum_{i=j+A}^{A+B} \delta_{r,i}(m) \alpha_{R,j+A}^{(i)}(m+Q)P_{mt+r+j}(n)
+                              = \sum_{j=-A}^{B}  \left(\sum_{i=j+A}^{A+B} \delta_{r,i}(m) \alpha_{R,j+A}^{(i)}(m+Q)\right) P_{mt+r+j}(n),
+            
+            Hence we get that the new compatibility coefficients for exactly `t` sections (i.e., same sections as the division condition) are the following:
+
+            .. MATH::
+
+                \tilde{\alpha}_{r,i}(m) = \sum_{j=i+A}^{A+B} \delta_{r,j}(m) \alpha_{R,i+A}^{(j)}(m+Q)
+
+            INPUT:
+
+            * ``basis``: a :class:`FactorialBasis` to be used for the compatibility with the _variable_ `\beta(n)`.
         '''
-        raise NotImplementedError(f"[DivisionCondition] Method `to_compatibility` not yet implemented.")
+        if not isinstance(basis, FactorialBasis): raise TypeError(f"[DivisionCondition] The basis must be factorial w.r.t. some variable.")
+
+        comp_powers = [basis.compatibility(basis.gen()**j).in_sections(self.t) for j in range(len(self.__delta[0]))] # compatibility of beta(n)^j in `t` sections.
+        A = self.A
+        B = len(self.__delta[0]) - A - 1
+
+        new_alpha = []
+        for r in range(self.t): # we iterate in each of the sections
+            new_section = []
+            for i in range(-A, B+1):
+                Q, R = ZZ(r - A).quo_rem(self.t)
+                new_section.append(sum(self[r,j] * comp_powers[j][R,i+A].shift(Q) for j in range(i+A, A+B+1)))
+            new_alpha.append(new_section)
+        
+        return Compatibility(new_alpha, A, B, self.t)
+    
     @staticmethod
     def from_compatibility(compatibility: Compatibility, basis: FactorialBasis) -> DivisionCondition:
         r'''
             Method tha implements the converse equivalence of :doi:`10.1016/j.jsc.2022.11.002`, Proposition 11.
-        '''
-        raise NotImplementedError(f"[DivisionCondition] Method `from_compatibility` not yet implemented.")
-        
 
+            Let us assume now that we have an `(A,B)`-compatible operator `L` in `t` sections with a basis `P_k(n)`. Then
+            it follows that
+
+            .. MATH::
+
+                L P_{mt+r}(n) = \sum_{i=-A}^{B} \alpha_{r,i}(m) P_{mt+r+i}(n).
+
+            By definition of a factorial basis, the polynomials `P_k(n)` always divide the polynomials `P_K(n)` for every `K \geq k`. 
+            In particular, we can divide the whole identity by `P_{mt+r-A}(n)` obtaining the following:
+
+            .. MATH::
+
+                \frac{L P_{mt+r}(n)}{P_{mt+r-A}(n)} = \sum_{i=-A}^{B} \alpha_{r,i}(m) \frac{P_{mt+r+i}(n)}{P_{mt+r-A}(n)}.
+
+            Clearly, the quotients `\frac{P_{mt+r+i}(n)}{P_{mt+r-A}(n)}` are polynomials of degree `A+i` in the variable of the 
+            factorial basis `\beta(n)`. Hence, we can see that each `P_{mt+r+i}(n)` is a linear combination of `\beta(n)^i P_{mt+r-A}(n)`.
+
+            Let `(r - A) = Qt + R`, where `R \in \{0,\ldots,t-1\}`. Then we have that, following the compatibility with `\beta(n)` (which 
+            comes from the fact of being a factorial basis):
+
+            .. MATH::
+
+                \beta(n)^i P_{mt+r-A}(n) = \beta(n)^i P_{(m+Q)t + R}(n) = \sum_{j=0}^i \alpha_{R,j}^{(i)}(m+Q)P_{mt+r-A+j}(n).
+
+            Let us consider the matrix generated by the sequences `\alpha_{R,j}^{(i)}(m+Q)` and denote it by `\Lambda`. Then
+
+            .. MATH::
+
+                P_{mt+r-A}(n) \begin{pmatrix}1\\\beta(n)\\\beta(n)^2\\\vdots\\\beta(n)^{A+B}\end{pmatrix} = 
+                \Lambda \begin{pmatrix} P_{mt+r-A}(n) \\ P_{mt+r-A+1}(n) \\ \vdots \\ P_{mt+r+B}(n)\end{pmatrix}
+
+            The matrix `\Lambda` is triangular with the diagonal full of 1s. Hence, it is invertible (even in the sequence ring). Multiplying from
+            the left by this inverse, we get the identity
+
+            .. MATH::
+
+                \begin{pmatrix} P_{mt+r-A}(n) \\ P_{mt+r-A+1}(n) \\ \vdots \\ P_{mt+r+B}(n)\end{pmatrix} = 
+                \Lambda^{-1}\begin{pmatrix}1\\\beta(n)\\\beta(n)^2\\\vdots\\\beta(n)^{A+B}\end{pmatrix}P_{mt+r-A}(n).
+
+            Let assume that we obtain something like
+
+            .. MATH::
+
+                P_{mt+r-A+i}(n) = \sum_{j=0}^{i} \lambda_{r,j}^{(i)} \beta(n)^jP_{mt+r-A}(n),
+
+            Then we can plug this into the first equation, obtaining:
+
+            .. MATH::
+
+                \frac{L P_{mt+r}(n)}{P_{mt+r-A}(n)} = \sum_{i=-A}^{B} \alpha_{r,i}(m) \frac{P_{mt+r+i}(n)}{P_{mt+r-A}(n)} 
+                                                    = \sum_{i=0}^{A+B} \alpha_{r,i-A}(m) \frac{P_{mt+r-A+i}(n)}{P_{mt+r-A}(n)}
+                                                    = \sum_{i=0}^{A+B} \alpha_{r,i-A}(m) \left(\sum_{j=0}^{i} \lambda_{r,j}^{(i)} \beta(n)^j\right)
+                                                    = \sum_{i=0}^{A+B} \sum_{j=0}^{i} \alpha_{r,i-A}(m) \lambda_{r,j}^{(i)} \beta(n)^j
+                                                    = \sum_{j=0}^{A+B} \left(\sum_{i=j}^{A+B} \alpha_{r,i-A}(m) \lambda_{r,j}^{(i)}\right) \beta(n)^j
+
+            Hence we obtain that the division coefficients that need to be computed are:
+
+            .. MATH::
+
+                \delta_{r,i}(m) = \sum_{i=j}^{A+B} \alpha_{r,i-A}(m) \lambda_{r,j}^{(i)}
+
+            
+            INPUT:
+
+            * ``compatibility``: a :class:`Compatibility` condition for a linear operator.
+            * ``basis``: a :class:`FactorialBasis` for which the compatibility condition holds.
+
+            OUTPUT:
+
+            The :class:`DivisionCondition` associated to the given ``basis`` and the ``compatibility`` described.
+        '''
+        A = compatibility.A
+        B = compatibility.B
+        t = compatibility.t
+        comp_powers = [basis.compatibility(basis.gen()**j).in_sections(t) for j in range(A+B+1)] # compatibility of beta(n)^j in `t` sections.
+
+        new_delta = []
+        for r in range(t):
+            Q,R = ZZ(r - A).quo_rem(t)
+            ## TODO: The computation of the Lambda_1 should be done in the basis: it has nothing to do with the compatibility and can be stored and reuse for each section.
+            ## TODO: this part was done before in the Matrix_PtI and Matrix_ItP methods. Now can be done with sequences, but we need to be careful computing the inverse of a matrix.
+            ## Computing the matrix Lambda
+            Lambda = [[comp_powers[i][R,j].shift(Q) for j in range(A+B+1)] for i in range(A+B+1)]
+            ## Computing the inverse of Lambda
+            # We compute the adjoint
+            Lambda_Adjoint = [[ZZ((-1)**(i+j))*sum(prod(Lambda[k][p[l]] for l,k in enumerate(chain(range(j), range(j+1,A+B+1)))) for p in permutations(chain(range(i), range(i+1,A+B+1)))) for j in range(A+B+1)] for i in range(A+B+1)]
+            # We compute the determinant
+            det = prod(Lambda[i][i] for i in range(A+B+1))
+            # We divide
+            Lambda_1 = [[Lambda_Adjoint[i][j] / det for j in range(A+B+1)] for i in range(A+B+1)]
+
+            #\delta_{r,i}(m) = \sum_{i=j}^{A+B} \alpha_{r,i-A}(m) \lambda_{r,j}^{(i)}
+            new_delta.append([sum(compatibility[r,i-A]*Lambda_1[i][j]for i in range(j, A+B+1)) for j in range(A+B+1)])
+
+        return DivisionCondition(new_delta, A, base = basis.base, sections=t)
+        
     def __repr__(self) -> str:
         start = f"Divisibility condition (A={self.A}, t={self.sections})"
         try:
