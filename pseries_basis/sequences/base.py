@@ -574,8 +574,8 @@ class Sequence(SetMorphism):
                 raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be a sequence")
             elif seq.dim != 1:
                 raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to match the dimension of the indices (got: {seq.dim}, expected: {1})")
-            elif pushout(seq.universe, ZZ) != ZZ:
-                raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be sequences over integers")
+            # elif pushout(seq.universe, ZZ) != ZZ:
+            #     raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be sequences over integers")
             
         return self._subsequence(dict(final_input))
     
@@ -604,7 +604,6 @@ class Sequence(SetMorphism):
         r'''Method to compute a linear subsequence of ``self``'''
         if index < 0 or index >= self.dim: raise IndexError(f"The index given must be in the dimension ({self.dim}). Got {index}")
         if scale <= 0 or not scale in ZZ: raise ValueError(f"The scale must be a positive integer. Got {scale}")
-        if shift < 0 or not shift in ZZ: raise ValueError(f"The shift given must be a non-negative integer. Got {shift}")
 
         return self.subsequence((index,(scale,shift)))
     

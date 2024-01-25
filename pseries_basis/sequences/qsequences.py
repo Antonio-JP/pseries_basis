@@ -35,7 +35,7 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from sage.all import SR, ZZ
+from sage.all import QQ, SR, ZZ
 from sage.misc.functional import log
 
 from pseries_basis.sequences.base import Sequence
@@ -272,8 +272,8 @@ class QRationalSequence(QSequence, RationalSequence):
             a, b = input
             if a != 1 or b != 0:
                 from .element import RationalSequence
-                R = ZZ[self.q, 'n']; n = R.gens()[1]
-                return RationalSequence(R(f"{self.q}**({self.exp*b})*{n}**{a}"), variables=['n'], universe=ZZ)
+                R = QQ[self.q].fraction_field()['n']; n = R.gens()[1]
+                return RationalSequence(R(f"{self.q}**({self.exp*b})*{n}**{a}"), variables=['n'], universe=QQ[self.q].fraction_field())
             else:
                 return False
         return super()._subsequence_input(input)

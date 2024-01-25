@@ -1142,7 +1142,7 @@ class ShuffledBasis(FactorialBasis):
     def __init__(self, 
         factors : list[FactorialBasis] | tuple[FactorialBasis], 
         cycle: list[int] |tuple[int], 
-        variable="n", seq_variable="k", _extend_by_zero=False, **kwds
+        _extend_by_zero=False, **kwds
     ):
         ## Checking the input
         if(not type(factors) in (list,tuple)):
@@ -1151,6 +1151,7 @@ class ShuffledBasis(FactorialBasis):
             raise TypeError("All the factors has to be factorial basis")
         if any(factor.gen() != factors[0].gen() for factor in factors[1:]):
             raise TypeError("All the factors has to be w.r.t. the same variable")
+        variable = str(factors[0].gen())
 
         if(not type(cycle) in (list,tuple)):
             raise TypeError("The deciding cycle must be a list or a tuple")
@@ -1165,7 +1166,7 @@ class ShuffledBasis(FactorialBasis):
 
         new_ak = Sequence(lambda k : (self.factors[self.cycle[k%self.nsections]]).ak[self.indices[k][self.cycle[k%self.nsections]]], universe)
         new_bk = Sequence(lambda k : (self.factors[self.cycle[k%self.nsections]]).bk[self.indices[k][self.cycle[k%self.nsections]]], universe)
-        FactorialBasis.__init__(self, new_ak, new_bk, universe, variable=variable, seq_variable=seq_variable, _extend_by_zero=_extend_by_zero, **kwds)
+        FactorialBasis.__init__(self, new_ak, new_bk, universe, variable=variable, _extend_by_zero=_extend_by_zero, **kwds)
 
         ## We reset the compatibility wrt the variable name
         try:
@@ -1332,7 +1333,7 @@ class ShuffledBasis(FactorialBasis):
         for r in range(T*C):
             r_0, r_1 = ZZ(r).quo_rem(C); c_r1 = self.cycle[r_1]
             r_2, r_3 = ZZ(r_0*S[c_r1] + s(c_r1, r_1)).quo_rem(t[c_r1])
-            new_coeffs.append([comps[c_r1][r_3,0].linear_subsequence(0, a[r_1], r_2), comps[c_r1][r_3,1].linear_subsequence(0, a[r_1], r_2)])
+            new_coeffs.append([comps[c_r1][r_3,0].linear_subsequence(0, a[c_r1], r_2), comps[c_r1][r_3,1].linear_subsequence(0, a[c_r1], r_2)])
 
         return Compatibility(new_coeffs, 0, 1, T*C)
     
@@ -1367,16 +1368,14 @@ class ShuffledBasis(FactorialBasis):
                 output[i+j] += list1[i]*list2[j]
             return output
         for r in range(T*C):
-            r_0, r_1 = ZZ(r).quo_rem(C); c_r1 = self.cycle[r_1]
+            r_0, r_1 = ZZ(r).quo_rem(C)
             poly_coeffs = []
             for i in range(F): # we iterate through factors
                 r_2, r_3 = ZZ(r_0*S[i] + s(i, r_1)).quo_rem(t[i])
-                r_4, r_5 = ZZ().quo_rem(t_x[i])
-                coeffs = [ZZ(0) for _ in range(A[i]+D[i]+1)]
-                for j in range(A[i]+1):
-                    for k in range(D[j]+1):
-                        coeffs[j+k] += divisions[i][r_3,j].linear_subsequence(0,a[i],r_2) * IB_D[i][r_5][k].linear_subsequence(0, b[i], r_4)
-                poly_coeffs.append(coeffs)
+                r_4, r_5 = ZZ(r_0*S[i] + s(i, r_1) - A[i]- D[i]).quo_rem(t_x[i])
+                div_part = [divisions[i][r_3,j].linear_subsequence(0,a[i],r_2) for j in range(A[i]+1)]
+                quot_part = [IB_D[i][r_5][k].linear_subsequence(0, b[i], r_4) for k in range(D[i]+1)]
+                poly_coeffs.append(poly_mult_list(div_part, quot_part))
             div_coeffs.append(reduce(lambda l1,l2 : poly_mult_list(l1,l2), poly_coeffs, [ZZ(1)]))
             if len(div_coeffs[-1]) < sum(A) + sum(D) + 1: # the degree is smaller than expected
                 div_coeffs[-1] += (sum(A) + sum(D) + 1 - len(div_coeffs[-1]))*[ZZ(0)]
