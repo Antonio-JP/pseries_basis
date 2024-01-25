@@ -30,6 +30,7 @@ import logging
 
 from collections.abc import Callable
 from functools import lru_cache, reduce, cached_property
+from itertools import chain, product
 from sage.all import binomial, latex, Matrix, parent, PolynomialRing, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from sage.misc.cachefunc import cached_method #pylint: disable=no-name-in-module
@@ -1005,7 +1006,7 @@ def check_division_condition(basis: FactorialBasis, division : DivisionCondition
 
 ###############################################################################
 ### 
-### SIEVED BASIS AND PRODUCT BASIS
+### SHUFFLED BASIS AND PRODUCT BASIS
 ### 
 ###############################################################################
 class ShuffledBasis(FactorialBasis):
@@ -1148,6 +1149,8 @@ class ShuffledBasis(FactorialBasis):
             raise TypeError("The factors must be either a list or a tuple")
         if(any(not isinstance(el, FactorialBasis) for el in factors)):
             raise TypeError("All the factors has to be factorial basis")
+        if any(factor.gen() != factors[0].gen() for factor in factors[1:]):
+            raise TypeError("All the factors has to be w.r.t. the same variable")
 
         if(not type(cycle) in (list,tuple)):
             raise TypeError("The deciding cycle must be a list or a tuple")
@@ -1175,14 +1178,19 @@ class ShuffledBasis(FactorialBasis):
             if all(E in factor.compatible_endomorphisms() for factor in self.factors[1:]):
                 try:
                     self.set_homomorphism(E, self._extend_compatibility_E(E), True)
-                except (ValueError, NotImplementedError):
-                    logger.info(f"[ShuffledBasis] Compatibility with endomorphism {E=} could not be extended")
+                except (ValueError, NotImplementedError) as e:
+                    logger.info(f"[ShuffledBasis] Compatibility with endomorphism {E=} could not be extended (error extending)")
+                    raise e
+            else:
+                logger.info(f"[ShuffledBasis] Compatibility with endomorphism {E=} could not be extended (not in all bases)")
         for D in self.factors[0].compatible_derivations():
             if all(D in factor.compatible_derivations() for factor in self.factors[1:]):
                 try:
                     self.set_derivation(D, self._extend_compatibility_D(D), True)
                 except (ValueError, NotImplementedError):
-                    logger.info(f"[ShuffledBasis] Compatibility with endomorphism {D=} could not be extended")
+                    logger.info(f"[ShuffledBasis] Compatibility with derivation {D=} could not be extended")
+            else:
+                logger.info(f"[ShuffledBasis] Compatibility with derivation {E=} could not be extended (not in all bases)")
 
         ## TODO: Fill from here
         ## 1. (DONE) Call the super method of Factorial Basis with the necessary information.
@@ -1198,15 +1206,33 @@ class ShuffledBasis(FactorialBasis):
             self._PSBasis__quasi_triangular = _ShuffledQuasiTriangular(quasi_triangular_sequences, self.cycle)
 
     @cached_property
+    def counts(self) -> tuple:
+        r'''
+            Counting of appearances of each factor during a cycle
+        '''
+        return tuple([self.cycle.count(i) for i in range(self.nfactors)])
+    
+    @cached_method
+    def extra(self, factor: int, remainder: int) -> int:
+        r'''
+            Counting function that computes how many times a factor has appear until the given remainder
+        '''
+        if remainder < 0 or remainder >= self.nsections:
+            raise ValueError("Incompatible `remainder` for method `extra`.")
+        if factor < 0 or factor >= self.nfactors:
+            raise ValueError("Incompatible `factor` for method `extra`.")
+        
+        return self.cycle[:remainder].count(factor)
+
+    @cached_property
     def indices(self) -> Sequence:
         r'''
             Computes the indices of each factor in the given element.
         '''
         def _element(k):
-            counts = [self.cycle.count(i) for i in range(self.nfactors)]
             K,r = k//len(self.cycle), k%len(self.cycle)
-            extras = [self.cycle[:r].count(i) for i in range(self.nfactors)]
-            return vector([K*c+e for c,e in zip(counts, extras)])
+            extras = [self.extra(i, r) for i in range(self.nfactors)]
+            return vector([K*c+e for c,e in zip(self.counts, extras)])
         return Sequence(_element, ZZ**self.nfactors, 1)
     
     @cached_method
@@ -1285,65 +1311,79 @@ class ShuffledBasis(FactorialBasis):
         r'''
             Method that extend the compatibility of multiplication by the sequence variable.
 
-            This method uses the information in the factor basis to extend 
-            the compatibility behavior of the multiplication by `x` to the 
-            :class:`ShuffledBasis`.
+            `\beta(n)`-factorial bases are always compatible with the multiplication by `\beta(n)`.
+            This compatibility may come in `t_i` sections for the `i`-th factor of this basis. Then,
+            for `T` such that `t_i` divides `TS(i)` for all `i = 0, \ldots, F-1`, the multiplication
+            by `\beta(n)` is compatible with the :class:`ShuffledBasis` in `TC` sections.
         '''
-        m = self.nsections; F = self.nfactors
+        C = self.nsections; F = self.nfactors
         comps = [factor.compatibility(str(factor.gen())) for factor in self.factors]
         t = [comp.t for comp in comps]
-        S = [self.cycle.count(i) for i in range(F)]
-        s = [self.cycle[:i].count(self.cycle[i]) for i in range(m)]
-        
-        ## Computing the optimal value for the sections
+        S = self.counts; s = self.extra
+
+        ## Computing the number of sections
         T = 1
         while(any([not T*S[i]%t[i] == 0 for i in range(F)])): T += 1 # this always terminate at most with T = lcm(t_i)
-        
+        ## Computing the a's
         a = [T*S[i]//t[i] for i in range(F)]
 
-        new_coeffs = list()
-        for i in range(m*T): # section i
-            section_i = list()
-            i1 = i%m; i0 = (i-i1)//m
-            next = self.cycle[i1]
-            t = comps[next].t
-            i3 = (S[next]*i0 + s[i1])%t; i2 = (S[next]*i0+s[i1]-i3)//t
-            section_i.append(comps[next][(i3,0)].linear_subsequence(0, a[next], i2))
-            section_i.append(comps[next][(i3,1)].linear_subsequence(0, a[next], i2))
-            new_coeffs.append(section_i)
-        print(T, new_coeffs)
-        return Compatibility(new_coeffs, 0, 1, m*T)
+        ## Computing the new compatibility coefficients
+        new_coeffs = []
+        for r in range(T*C):
+            r_0, r_1 = ZZ(r).quo_rem(C); c_r1 = self.cycle[r_1]
+            r_2, r_3 = ZZ(r_0*S[c_r1] + s(c_r1, r_1)).quo_rem(t[c_r1])
+            new_coeffs.append([comps[c_r1][r_3,0].linear_subsequence(0, a[r_1], r_2), comps[c_r1][r_3,1].linear_subsequence(0, a[r_1], r_2)])
+
+        return Compatibility(new_coeffs, 0, 1, T*C)
     
     def _extend_compatibility_E(self, E: str) -> Compatibility:
         r'''
             Method that extend the compatibility of an endomorphism `E`.
-
-            This method uses the information in the factor basis to extend 
-            the compatibility behavior of an endomorphism `E` to the 
-            :class:`ShuffledBasis`.
-
-            This method can be extended in subclasses for a different behavior.
-
-            INPUT:
-
-            * ``E``: name of the endomorphism to extend.
-
-            OUTPUT:
-
-            A tuple `(A,B,m,\alpha_{i,k,j})` representing the compatibility of ``E``
-            with ``self``.
         '''
-        # A, m, D = self._compatible_division_E(E)
-        # n = self.n()
-        # B = D(0,0,n).degree()-A
+        C = self.nsections; F = self.nfactors
+        divisions = [factor.compatible_division(E) for factor in self.factors]
+        A = [comp.A for comp in divisions]
+        t = [comp.t for comp in divisions]
+        t_x = [factor.compatibility(str(factor.gen())).t for factor in self.factors]
+        S = self.counts; s = self.extra
 
-        # alphas = []
-        # for i in range(m):
-        #     alphas += [self.matrix_PtI(m*n-A+i,A+B+1)*vector([D(i,0,n)[j] for j in range(A+B+1)])]
+        ## Computing the number of sections
+        T = 1
+        while(any(chain((not T*S[i]%t[i] == 0 for i in range(F)),(not T*S[i]%t_x[i] == 0 for i in range(F))))): T += 1 # this always terminate at most with T = lcm(t_i, t_x_i)
+        ## Computing the a's
+        a = [T*S[i]//t[i] for i in range(F)]
+        b = [T*S[i]//t_x[i] for i in range(F)]
 
-        # return (A, B, m, lambda i,j,k : alphas[i][j+A](n=k))
-        raise NotImplementedError(f"[ShuffledBasis] Extension of homomorphisms not yet implemented")
-
+        ## Computing the final `A`
+        fA = 1
+        while(any(fA*S[i] < A[i] for i in range(F))): fA+= 1
+        D = [fA*S[i] - A[i] for i in range(F)]
+        IB_D: list[list[tuple[Sequence]]] = [[factor.matrix_ItP(D[i]+1,r)[D[i]] for r in range(t_x[i])] for i,factor in enumerate(self.factors)]
+        
+        div_coeffs = []
+        def poly_mult_list(list1: list, list2: list) -> list:
+            output = [ZZ(0) for _ in range(len(list1)+len(list2)-1)]
+            for (i,j) in product(range(len(list1)), range(len(list2))):
+                output[i+j] += list1[i]*list2[j]
+            return output
+        for r in range(T*C):
+            r_0, r_1 = ZZ(r).quo_rem(C); c_r1 = self.cycle[r_1]
+            poly_coeffs = []
+            for i in range(F): # we iterate through factors
+                r_2, r_3 = ZZ(r_0*S[i] + s(i, r_1)).quo_rem(t[i])
+                r_4, r_5 = ZZ().quo_rem(t_x[i])
+                coeffs = [ZZ(0) for _ in range(A[i]+D[i]+1)]
+                for j in range(A[i]+1):
+                    for k in range(D[j]+1):
+                        coeffs[j+k] += divisions[i][r_3,j].linear_subsequence(0,a[i],r_2) * IB_D[i][r_5][k].linear_subsequence(0, b[i], r_4)
+                poly_coeffs.append(coeffs)
+            div_coeffs.append(reduce(lambda l1,l2 : poly_mult_list(l1,l2), poly_coeffs, [ZZ(1)]))
+            if len(div_coeffs[-1]) < sum(A) + sum(D) + 1: # the degree is smaller than expected
+                div_coeffs[-1] += (sum(A) + sum(D) + 1 - len(div_coeffs[-1]))*[ZZ(0)]
+        
+        divisibility = DivisionCondition(div_coeffs, C*fA, base=self.base, sections=C*T)
+        return divisibility.to_compatibility(self)
+        
     def _extend_compatibility_D(self, D: str) -> Compatibility:
         r'''
             Method that extend the compatibility of a derivation `D`.
