@@ -28,9 +28,9 @@ from __future__ import annotations
 
 import logging
 
+from collections.abc import Callable
 from functools import lru_cache, reduce, cached_property
-from itertools import chain, permutations
-from sage.all import binomial, latex, Matrix, parent, PolynomialRing, prod, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
+from sage.all import binomial, latex, Matrix, parent, PolynomialRing, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from sage.misc.cachefunc import cached_method #pylint: disable=no-name-in-module
 from typing import Any, Collection
@@ -237,11 +237,155 @@ class FactorialBasis(PSBasis):
                               universe=self_args["universe"], variable=self_args["variable"], seq_variable=self_args["seq_variable"]
         )
 
+    def compatible_division(self, operator) -> DivisionCondition:
+        r'''
+            Method to compute the division condition for a given operator.
+
+            The division condition for a compatible operator comes from the equivalence in :doi:`10.1016/j.jsc.2022.11.002`, Proposition 11. 
+            For further information, check the class :class:`DivisionCondition`
+        '''
+        return DivisionCondition.from_compatibility(self.compatibility(operator), self)
+    
+    @cached_method
+    def matrix_ItP(self, size: int, section: int = 0) -> tuple[tuple[Sequence]]:
+        r'''
+            Computes the matrix that transforms the polynomial basis given by ``self`` into the associated power basis.
+
+            Let `\{P_k(n)\}` be a `\beta(n)`-factorial basis. Then, the element `P_k(n)` is a polynomial in `\beta(n)` 
+            of degree exactly `k` and, moreover, the polynomial `P_k(n)` divides `P_K(n)` for all `k \leq K`. This implies
+            that for any fixed `k \in \mathbb{N}` the sequence `\left(\frac{P_{k+i}(n)}{P_k(i)}\right)_i` is a sequence
+            of polynomials of degree `i` and, hence, a basis of the polynomial ring.
+
+            This method computes the matrix of fixed ``size`` that write the polynomials `\frac{P_{k+i}(n)}{P_k(i)}` 
+            into the power basis `\beta(n)^i`.
+
+            For doing so, the only information we have is the `(1,0)`-compatibility of the :class:`FactorialBasis` with 
+            the multiplication by `\beta(n)` (see ``self.compatibility(self.gen())``). Let us assume that `\beta(n)` 
+            is compatible in `t`sections and let `k = mt+r` for `r \in \{0,\ldots, t-1\}`. Then:
+
+            .. MATH::
+
+                \beta(n)^i P_{mt+r}(n) = \sum_{j=0}^i \alpha_{r,j}^{(i)}(m)P_{mt+r+j},
+
+            where the `\alpha_r,j}^{(i)}(m)` are the compatibility coefficients of the multiplication by `\beta(n)^i`. Then,
+            we can write these identities in a matri-vector multiplication format:
+
+            .. MATH::
+
+                P_{mt+r}(n) \begin{pmatrix} 1\\ \beta(n) \\ \beta(n)^2 \\ \vdots \\ \beta(n)^{S-1} \end{pmatrix} = 
+                \begin{pmatrix}
+                    1 & 0 & 0 & \ldots & 0 \\
+                    \alpha_{r,0}^{(1)}(m) & \alpha_{r,1}^{(1)}(m) & 0 & \ldots & 0 \\
+                    \alpha_{r,0}^{(2)}(m) & \alpha_{r,1}^{(2)}(m) & \alpha_{r,2}^{(2)}(m) & \ldots & 0 \\
+                    \vdots & \vdots & \vdots & \ddots & \vdots \\
+                    \alpha_{r,0}^{(S-1)}(m) & \alpha_{r,1}^{(S-1)}(m) & \alpha_{r,2}^{(S-1)}(m) & \ldots & \alpha_{r,S-1}^{(S-1)}(m)
+                \end{pmatrix}
+                \begin{pmatrix} P_{mt+r}(n)\\ P_{mt+r+1}(n) \\ P_{mt+r+2}(n) \\ \vdots \\ P_{mt+r+S-1}(n)\end{pmatrix}
+
+            This matrix is lower-triangular and has a non-zero determinant (since we know the degrees of the polynomials are exact). Hence,
+            this matrix is always invertible. Multiplying by its inverse from the left and dividing the whole equation by `P_{mt+r}` we
+            obtain formulas for `\frac{P_{mt+r+i}(n)}{P_{mt+r}(n)}` with respect to `\beta(n)` (i.e., transforming the increasing basis 
+            (see method :func:`increasin_basis`) into the power basis).
+
+            REMARK: in order to get information about the matrix for `k = mt+r`, we need to know the exact `r` that we are considering. That
+            is why we ask for an input ``section`` in the method, that will be automatically handled when having simply one section.
+
+            INPUT:
+
+            * ``size``: size of the matrix ti be considered. (May be used in the future to improve performance in this method)
+            * ``section``: value for `r`. This value will always be tuned down depending on the sections of the multiplication 
+              by `\beta(n)`.
+
+            OUTPUT:
+
+                A matrix (in format of tuple of tuples) such that the multiplication from the left with the coordinates of a polynomial
+                of degree at most ``size-1`` w.r.t. the increasing basis provides the coordinates of that polynomial w.r.t. the power basis 
+                induced by `\beta(n)`.
+        '''
+        PtI = self.matrix_PtI(size, section) # this checks the arguments
+        ## Now we need to invert PtI. We can do it with the adjoint matrix (full of determinants) or by iterated substitution (Gaussian elimination)
+        ItP = [[ZZ(0) for _ in range(size)] for _ in range(size)]
+        for i in range(size): ItP[i][i] = ZZ(1)
+
+        ## PtI | ItP will do the gaussian elimination on PtI and obtain at the end ItP
+        for i in range(size): # the pivot is always in the diagonal
+            # making a one in the pivot
+            for j in range(i+1): ItP[i][j] /= PtI[i][i]
+            # now we make zeros below the pivot
+            for k in range(i+1, size):
+                for j in range(i+1):
+                    ItP[k][j] -= PtI[k][i] * ItP[i][j]
+        
+        return tuple(tuple(row) for row in ItP)
+
+    @cached_method
+    def matrix_PtI(self, size: int, section: int = 0) -> tuple[tuple[Sequence]]:
+        r'''
+            Computes the matrix that transforms the power basis into the polynomial basis given by ``self``.
+
+            Let `\{P_k(n)\}` be a `\beta(n)`-factorial basis. Then, the element `P_k(n)` is a polynomial in `\beta(n)` 
+            of degree exactly `k` and, moreover, the polynomial `P_k(n)` divides `P_K(n)` for all `k \leq K`. This implies
+            that for any fixed `k \in \mathbb{N}` the sequence `\left(\frac{P_{k+i}(n)}{P_k(i)}\right)_i` is a sequence
+            of polynomials of degree `i` and, hence, a basis of the polynomial ring.
+
+            This method computes the matrix of fixed ``size`` that write the polynomials `\frac{P_{k+i}(n)}{P_k(i)}` 
+            into the power basis `\beta(n)^i`.
+
+            For doing so, the only information we have is the `(1,0)`-compatibility of the :class:`FactorialBasis` with 
+            the multiplication by `\beta(n)` (see ``self.compatibility(self.gen())``). Let us assume that `\beta(n)` 
+            is compatible in `t`sections and let `k = mt+r` for `r \in \{0,\ldots, t-1\}`. Then:
+
+            .. MATH::
+
+                \beta(n)^i P_{mt+r}(n) = \sum_{j=0}^i \alpha_{r,j}^{(i)}(m)P_{mt+r+j},
+
+            where the `\alpha_r,j}^{(i)}(m)` are the compatibility coefficients of the multiplication by `\beta(n)^i`. Then,
+            we can write these identities in a matri-vector multiplication format:
+
+            .. MATH::
+
+                P_{mt+r}(n) \begin{pmatrix} 1\\ \beta(n) \\ \beta(n)^2 \\ \vdots \\ \beta(n)^{S-1} \end{pmatrix} = 
+                \begin{pmatrix}
+                    1 & 0 & 0 & \ldots & 0 \\
+                    \alpha_{r,0}^{(1)}(m) & \alpha_{r,1}^{(1)}(m) & 0 & \ldots & 0 \\
+                    \alpha_{r,0}^{(2)}(m) & \alpha_{r,1}^{(2)}(m) & \alpha_{r,2}^{(2)}(m) & \ldots & 0 \\
+                    \vdots & \vdots & \vdots & \ddots & \vdots \\
+                    \alpha_{r,0}^{(S-1)}(m) & \alpha_{r,1}^{(S-1)}(m) & \alpha_{r,2}^{(S-1)}(m) & \ldots & \alpha_{r,S-1}^{(S-1)}(m)
+                \end{pmatrix}
+                \begin{pmatrix} P_{mt+r}(n)\\ P_{mt+r+1}(n) \\ P_{mt+r+2}(n) \\ \vdots \\ P_{mt+r+S-1}(n)\end{pmatrix}
+
+            REMARK: in order to get information about the matrix for `k = mt+r`, we need to know the exact `r` that we are considering. That
+            is why we ask for an input ``section`` in the method, that will be automatically handled when having simply one section.
+
+            INPUT:
+
+            * ``size``: size of the matrix ti be considered. (May be used in the future to improve performance in this method)
+            * ``section``: value for `r`. This value will always be tuned down depending on the sections of the multiplication 
+              by `\beta(n)`.
+
+            OUTPUT:
+
+                A matrix (in format of tuple of tuples) such that the multiplication from the left with the coordinates of a polynomial
+                of degree at most ``size-1`` w.r.t. the power basis induced by `\beta(n)` provides the coordinates of that polynomial 
+                w.r.t. the increasing basis.
+        '''
+        beta = self.gen()
+        ## Checking the arguments
+        size = ZZ(size)
+        if size <= 0: raise ValueError(f"[matrix_PtI] The value for size (got {size}) must be a positive integer")
+
+        section = ZZ(section)
+        section %= self.compatibility(beta).t
+
+        result = []
+        for i in range(size): # the rows of the matrix
+            comp_beta_i = self.compatibility(beta**i)
+            result.append(tuple([comp_beta_i[section, j] for j in range(size)])) # get zeros when j > i
+
+        return tuple(result)
+
     ##################################################################################
     ### TODO: def increasing_polynomial(self, *args, **kwds)
-    ### TODO: def compatible_division(self, operator: str | OreOperator) -> Divisibility
-    ### TODO: def matrix_ItP(self, src: element.Element, size: int) -> matrix_class
-    ### TODO: def matrix_PtI(self, src: element.Element, size: int) -> matrix_class
     ### TODO: def equiv_DtC(self, compatibility: str | OreOperator | TypeCompatibility) -> TypeCompatibility
     ### TODO: def equiv_CtD(self, division: TypeCompatibility) -> TypeCompatibility
 
@@ -560,6 +704,7 @@ class DivisionCondition:
             return self.coefficient(input, 0)
         else:
             return self.coefficient(input[1], input[0])
+    def size(self) -> int: return len(self.__delta[0])
 
     def base(self): return self.__base
     def change_base(self, new_base) -> DivisionCondition:
@@ -598,7 +743,7 @@ class DivisionCondition:
         for R in range(new_sections):
             q_R, r_R = ZZ(R).quo_rem(self.t)
             new_section = []
-            for i in range(len(self.__delta[0])): # i = 0, ..., A+B
+            for i in range(self.size()): # i = 0, ..., A+B
                 new_section.append(self[r_R, i].linear_subsequence(0, q_T, q_R))
             new_delta.append(new_section)
 
@@ -650,9 +795,9 @@ class DivisionCondition:
         '''
         if not isinstance(basis, FactorialBasis): raise TypeError(f"[DivisionCondition] The basis must be factorial w.r.t. some variable.")
 
-        comp_powers = [basis.compatibility(basis.gen()**j).in_sections(self.t) for j in range(len(self.__delta[0]))] # compatibility of beta(n)^j in `t` sections.
+        comp_powers = [basis.compatibility(basis.gen()**j).in_sections(self.t) for j in range(self.size())] # compatibility of beta(n)^j in `t` sections.
         A = self.A
-        B = len(self.__delta[0]) - A - 1
+        B = self.size() - A - 1
 
         new_alpha = []
         for r in range(self.t): # we iterate in each of the sections
@@ -743,32 +888,22 @@ class DivisionCondition:
         A = compatibility.A
         B = compatibility.B
         t = compatibility.t
-        comp_powers = [basis.compatibility(basis.gen()**j).in_sections(t) for j in range(A+B+1)] # compatibility of beta(n)^j in `t` sections.
 
         new_delta = []
         for r in range(t):
             Q,R = ZZ(r - A).quo_rem(t)
-            ## TODO: The computation of the Lambda_1 should be done in the basis: it has nothing to do with the compatibility and can be stored and reuse for each section.
-            ## TODO: this part was done before in the Matrix_PtI and Matrix_ItP methods. Now can be done with sequences, but we need to be careful computing the inverse of a matrix.
-            ## Computing the matrix Lambda
-            Lambda = [[comp_powers[i][R,j].shift(Q) for j in range(A+B+1)] for i in range(A+B+1)]
-            ## Computing the inverse of Lambda
-            # We compute the adjoint
-            Lambda_Adjoint = [[ZZ((-1)**(i+j))*sum(prod(Lambda[k][p[l]] for l,k in enumerate(chain(range(j), range(j+1,A+B+1)))) for p in permutations(chain(range(i), range(i+1,A+B+1)))) for j in range(A+B+1)] for i in range(A+B+1)]
-            # We compute the determinant
-            det = prod(Lambda[i][i] for i in range(A+B+1))
-            # We divide
-            Lambda_1 = [[Lambda_Adjoint[i][j] / det for j in range(A+B+1)] for i in range(A+B+1)]
-
-            #\delta_{r,i}(m) = \sum_{i=j}^{A+B} \alpha_{r,i-A}(m) \lambda_{r,j}^{(i)}
-            new_delta.append([sum(compatibility[r,i-A]*Lambda_1[i][j]for i in range(j, A+B+1)) for j in range(A+B+1)])
+            ## The method matrix_ItP do the job of computing Lambda^{-1}. We need to take the appropriate section and shift
+            Lambda_1 = [[el.shift(Q) if isinstance(el, Sequence) else el for el in row] for row in basis.matrix_ItP(A+B+1, section=R)]
+            
+            ## We collect the new delta coefficients following the formula in documentation
+            new_delta.append([sum(compatibility[r,i-A]*Lambda_1[i][j] for i in range(j, A+B+1)) for j in range(A+B+1)])
 
         return DivisionCondition(new_delta, A, base = basis.base, sections=t)
         
     def __repr__(self) -> str:
         start = f"Divisibility condition (A={self.A}, t={self.sections})"
         try:
-            M = Matrix([[self[t,i].generic() for i in range(len(self.__delta[0]))] for t in range(self.t)]) 
+            M = Matrix([[self[t,i].generic() for i in range(self.size())] for t in range(self.t)]) 
             start += f" with following coefficient matrix:\n{M}"
         except:
             pass
@@ -785,7 +920,7 @@ class DivisionCondition:
                 code += r"L \cdot P_{k-" + latex(self.A) + r"} = "
 
             monomials = []
-            for i in range(len(self.__delta[0])): 
+            for i in range(self.size()): 
                 ## Creating the coefficient
                 try:
                     c = self[r,i].generic('k')
@@ -805,6 +940,69 @@ class DivisionCondition:
             code += r"\end{array}\right."
         return code 
     
+def check_division_condition(basis: FactorialBasis, division : DivisionCondition, action: Callable, bound: int = 100, *, _full=False):
+    r'''
+        Method that checks whether a basis has a particular division condition for a given action.
+
+        This method takes a :class:`FactorialBasis` (i.e., a sequence of sequences), a given
+        operator compatible with it (or simply the :class:`DivisionCondition` object representing
+        such compatibility) and check whether the action that is defined for the operator/division condition
+        (which is provided by the argument ``action``) has precisely this division condition.
+
+        More precisely, if an operator `L` has a division condition (see :class:`DivisionCondition`) in `t`
+        sections given by the formula:
+        
+        .. MATH::
+
+            \frac{LP_{mt+r}(n)}{P_{mt+r-A}(n)} = \sum_{i=0}^{A+B} \delta_{r,i}(m) \beta(n)^i.
+
+        then this method checks this identity for the ``action`` defining `L`, and the division condition
+        defined in ``division``. To avoid problems with the division by zero, we will compute this identity
+        multiplying everything by `P_{k-A}(n)`, namely:
+
+        .. MATH::
+
+            LP_{mt+r}(n) = \sum_{i=0}^{A+B} \delta_{r,i}(m) \beta(n)^iP_{mt+r-A}(n).
+
+        This checking is perform until a given `m` and `n` bounded by the input ``bound``.
+
+        INPUT:
+
+        * ``basis``: a :class:`PSBasis` that defines the basis `P=(P_n)_n`.
+        * ``division``: a division condition. If an operator is given, then division condition
+          for ``basis`` is computed (check method :func:`FactorialBasis.compatible_division`)
+        * ``action``: a callable that actually computes the element `L P_n` so it can be compared.
+        * ``bound``: a bound for the limit this equality will be checked. Since `L P_n` is a sequence
+          this bound is used both for checking equality at each level `n` and until which level the 
+          identity is checked.
+
+        OUTPUT:
+
+        ``True`` if all the checking provide equality, and ``False`` otherwise. Be cautious when reading
+        this output: ``False`` guarantees that the compatibility is **not** for the action, however, ``True``
+        provides a nice hint the result should be True, but it is not a complete proof.
+
+        TODO: add examples 
+    '''
+    if not isinstance(basis, FactorialBasis):
+        raise TypeError(f"[check_division] The given basis must be factorial")
+    if not isinstance(division, DivisionCondition):
+        division = basis.compatible_division(division)
+
+    A = division.A
+    t = division.t
+    beta = basis._RationalSequenceBuilder(basis.gen())
+
+    for k in range(A, bound):
+        lhs:Sequence = action(basis[k]) # sequence obtained from L P_n
+        m,r = ZZ(k).quo_rem(t)
+        # \sum_{i=0}^{A+B} \delta_{r,i}(m) \beta(n)^iP_{mt+r-A}(n).
+        rhs = sum(division[r,i][m] * beta**i * basis[k-A] for i in range(division.size())) # sequence for the rhs
+
+        if not lhs.almost_equals(rhs, bound):
+            return ((k,lhs, rhs), False if _full else False)
+    return True
+
 ###############################################################################
 ### 
 ### SIEVED BASIS AND PRODUCT BASIS
