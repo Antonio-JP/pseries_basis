@@ -188,7 +188,7 @@ class Sequence(SetMorphism):
 
         However, we have overridden the method __mul__ to fit better to the parent-element Sage framework.
     '''
-    def __init__(self, sequence: Callable, universe = None, dim : int = 1, *, _extend_by_zero=False):
+    def __init__(self, sequence: Callable, universe = None, dim : int = 1, *, _extend_by_zero=False, **kwds):
         if universe is None:
             raise TypeError("The universe of a sequence must never be None")
         self.__sequence = sequence
@@ -199,6 +199,7 @@ class Sequence(SetMorphism):
 
         super().__init__(parent, func)
         self.__class__.register_class()
+        self.__extra_args = kwds
 
     #############################################################################
     ## Methods related to the Graph of sequences classes
@@ -269,7 +270,7 @@ class Sequence(SetMorphism):
         return Sequence
 
     def extra_info(self) -> dict:
-        return dict()
+        return {"extra_args": self.__extra_args}
 
     ### Other static attributes
     EQUALITY_BOUND: int = 50
@@ -302,7 +303,7 @@ class Sequence(SetMorphism):
             ``self.__class__``, it creates an equal sequence to ``self``. It is useful to 
             change some of the arguments or to create copies of the sequences.
         '''
-        return [self._element], {"universe": self.universe, "dim": self.dim, "_extend_by_zero": self.__extend_by_zero}
+        return [self._element], {"universe": self.universe, "dim": self.dim, "_extend_by_zero": self.__extend_by_zero, **self.__extra_args}
 
     def change_universe(self, new_universe):
         r'''
@@ -337,7 +338,7 @@ class Sequence(SetMorphism):
     def _change_dimension(self, new_dim: int, old_dims: list[int], **_):
         def new_to_old(*n):
             return [n[i] for i in old_dims]
-        return Sequence(lambda *n : self._element(*new_to_old(*n)), universe=self.universe, dim=new_dim, _extend_by_zero=self.__extend_by_zero)
+        return Sequence(lambda *n : self._element(*new_to_old(*n)), universe=self.universe, dim=new_dim, _extend_by_zero=self.__extend_by_zero, **self.__extra_args)
 
     def change_class(self, goal_class, **extra_info):
         r'''
@@ -382,7 +383,7 @@ class Sequence(SetMorphism):
     
     @classmethod
     def _change_from_class(cls, sequence: Sequence, **extra_info): # pylint: disable=unused-argument
-        return Sequence(lambda *n : sequence._element(*n), sequence.universe, sequence.dim)
+        return Sequence(lambda *n : sequence._element(*n), sequence.universe, sequence.dim, {**sequence.__extra_args, **extra_info.get("extra_args", dict())})
         
     #############################################################################
     ## Element methods
@@ -494,7 +495,7 @@ class Sequence(SetMorphism):
         r'''
             Return the actual shifted sequence. Can assume ``shifts`` is a list of appropriate length and type.
         '''
-        return Sequence(lambda *n : self._element(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim)
+        return Sequence(lambda *n : self._element(*[n[i]+shifts[i] for i in range(self.dim)]), self.universe, dim=self.dim, **self.__extra_args)
 
     def slicing(self, *vals : tuple[int,int]) -> Sequence:
         r'''
@@ -532,7 +533,7 @@ class Sequence(SetMorphism):
                 else:
                     result.append(n[read]); read += 1
             return result
-        return Sequence(lambda *n: self._element(*to_original_input(n)), self.universe, self.dim - len(values))
+        return Sequence(lambda *n: self._element(*to_original_input(n)), self.universe, self.dim - len(values), **self.__extra_args)
 
     def subsequence(self, *vals: tuple[int, Sequence]) -> Sequence:
         r'''
@@ -574,8 +575,8 @@ class Sequence(SetMorphism):
                 raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be a sequence")
             elif seq.dim != 1:
                 raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to match the dimension of the indices (got: {seq.dim}, expected: {1})")
-            # elif pushout(seq.universe, ZZ) != ZZ:
-            #     raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be sequences over integers")
+            elif pushout(seq.universe, ZZ) != ZZ:
+                raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be sequences over integers")
             
         return self._subsequence(dict(final_input))
     
@@ -595,7 +596,12 @@ class Sequence(SetMorphism):
         return False # the sequence looks like the identity
     
     def _subsequence(self, final_input: dict[int, Sequence]):
-        return Sequence(lambda *n : self._element(*[final_input[i]._element(n[i]) if i in final_input else n[i] for i in range(self.dim)]), self.universe, self.dim)
+        return Sequence(
+            lambda *n : self._element(*[final_input[i]._element(n[i]) if i in final_input else n[i] for i in range(self.dim)]), 
+            self.universe, 
+            self.dim
+            **self.__extra_args
+        )
 
     def interlace(self, *others : Sequence, dim_to_interlace: int = 0):
         raise NotImplementedError("Method 'interlacing' not yet implemented.")
@@ -634,7 +640,7 @@ class Sequence(SetMorphism):
             n[src], n[dst] = n[dst], n[src]
             return tuple(n)
 
-        return Sequence(lambda *n : self._element(*__swap_index(*n)), self.universe, self.dim, _extend_by_zero = self.__extend_by_zero)
+        return Sequence(lambda *n : self._element(*__swap_index(*n)), self.universe, self.dim, _extend_by_zero = self.__extend_by_zero, **self.__extra_args)
         
     def partial_sum(self, index: int = None) -> Sequence:
         r'''
@@ -677,7 +683,7 @@ class Sequence(SetMorphism):
             def _partial_sum(n):
                 return sum(self(i) for i in range(n))
             
-        return Sequence(_partial_sum, self.universe, self.dim, _extend_by_zero=self.__extend_by_zero)
+        return Sequence(_partial_sum, self.universe, self.dim, _extend_by_zero=self.__extend_by_zero, **self.__extra_args)
     
     def partial_prod(self, index: int = None) -> Sequence:
         r'''
@@ -718,7 +724,7 @@ class Sequence(SetMorphism):
             def _partial_prod(n):
                 return prod((self(i) for i in range(n)), z=self.universe.one())
             
-        return Sequence(_partial_prod, self.universe, self.dim, _extend_by_zero=self.__extend_by_zero)
+        return Sequence(_partial_prod, self.universe, self.dim, _extend_by_zero=self.__extend_by_zero, **self.__extra_args)
 
     #############################################################################
     ## Arithmetic methods
@@ -752,47 +758,42 @@ class Sequence(SetMorphism):
     def _add_(self, other: Sequence) -> Sequence:
         _, (sc, oc) = self.__coerce_into_common_class__(other)
         return sc._final_add(oc)
-    
     def _sub_(self, other: Sequence) -> Sequence:
         _, (sc, oc) = self.__coerce_into_common_class__(other)
-        return sc._final_sub(oc)
-        
+        return sc._final_sub(oc)   
     def _mul_(self, other: Sequence) -> Sequence:
         _, (sc, oc) = self.__coerce_into_common_class__(other)
-        return sc._final_mul(oc)
-        
+        return sc._final_mul(oc)    
     def _div_(self, other: Sequence) -> Sequence:
         if not self.universe.is_field():
             self = self.change_universe(self.universe.fraction_field())
             other = other.change_universe(other.universe.fraction_field())
         _, (sc, oc) = self.__coerce_into_common_class__(other)
-        return sc._final_div(oc)
-    
+        return sc._final_div(oc) 
     def _mod_(self, other: Sequence) -> Sequence:
         _, (sc, oc) = self.__coerce_into_common_class__(other)
-        return sc._final_mod(oc)
-    
+        return sc._final_mod(oc) 
     def _floordiv_(self, other: Sequence) -> Sequence:
         _, (sc, oc) = self.__coerce_into_common_class__(other)
         return sc._final_floordiv(oc)
 
     ## This is special because is unary. This is equivalent to the other __final_op methods.
     def _neg_(self) -> Sequence:
-        return Sequence(lambda *n : (-1)*self._element(*n), self.universe, dim = self.dim) 
+        return Sequence(lambda *n : (-1)*self._element(*n), self.universe, dim = self.dim, **self.__extra_args) 
     
     ## Final operation method for the basic sequence type
     def _final_add(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) + other._element(*n), self.universe, self.dim)
+        return Sequence(lambda *n: self._element(*n) + other._element(*n), self.universe, self.dim, **self.__extra_args)
     def _final_sub(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) - other._element(*n), self.universe, self.dim)
+        return Sequence(lambda *n: self._element(*n) - other._element(*n), self.universe, self.dim, **self.__extra_args)
     def _final_mul(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) * other._element(*n), self.universe, self.dim)
+        return Sequence(lambda *n: self._element(*n) * other._element(*n), self.universe, self.dim, **self.__extra_args)
     def _final_div(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) / other._element(*n), self.universe, self.dim)
+        return Sequence(lambda *n: self._element(*n) / other._element(*n), self.universe, self.dim, **self.__extra_args)
     def _final_mod(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) % other._element(*n), self.universe, self.dim)
+        return Sequence(lambda *n: self._element(*n) % other._element(*n), self.universe, self.dim, **self.__extra_args)
     def _final_floordiv(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) // other._element(*n), self.universe, self.dim)
+        return Sequence(lambda *n: self._element(*n) // other._element(*n), self.universe, self.dim, **self.__extra_args)
     
     #############################################################################
     ## Equality and checking methods
@@ -916,15 +917,16 @@ class Sequence(SetMorphism):
             return f"Sequence with {self.dim} variables over [{self.universe}]"
 
 class ConstantSequence(Sequence):
-    def __init__(self, value, universe=None, dim: int = 1, *, _extend_by_zero=True):
-        super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
+    def __init__(self, value, universe=None, dim: int = 1, *, _extend_by_zero=True, **kwds):
+        super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero, **kwds)
         self.__value = self.universe(value)
 
     def args_to_self(self):
-        return [self.__value], {"universe": self.universe, "dim": self.dim, "_extend_by_zero": self._Sequence__extend_by_zero}
+        _, args_sequence = super().args_to_self()
+        return [self.__value], args_sequence
     
     def _change_dimension(self, new_dim: int, old_dims: list[int], **_):
-        return ConstantSequence(self.__value, self.universe, new_dim)
+        return ConstantSequence(self.__value, self.universe, new_dim, **self.extra_info()["extra_args"])
     
     def _change_class(self, cls, **extra_info): # pylint: disable=unused-argument
         raise NotImplementedError(f"Class {cls} not recognized from a ConstantSequence")
@@ -933,20 +935,20 @@ class ConstantSequence(Sequence):
         raise NotImplementedError(f"Class {sequence.__class__} not recognized from ConstantSequence")
 
     def _neg_(self) -> ConstantSequence:
-        return ConstantSequence(-self.__value, self.universe, self.dim)
+        return ConstantSequence(-self.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
     
     def _final_add(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value + other.__value, self.universe, self.dim)
+        return ConstantSequence(self.__value + other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
     def _final_sub(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value - other.__value, self.universe, self.dim)
+        return ConstantSequence(self.__value - other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
     def _final_mul(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value * other.__value, self.universe, self.dim)
+        return ConstantSequence(self.__value * other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
     def _final_div(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value / other.__value, self.universe, self.dim)
+        return ConstantSequence(self.__value / other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
     def _final_mod(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value % other.__value, self.universe, self.dim)
+        return ConstantSequence(self.__value % other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
     def _final_floordiv(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value // other.__value, self.universe, self.dim)
+        return ConstantSequence(self.__value // other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
 
     def _element(self, *_: int):
         return self.__value
@@ -957,8 +959,8 @@ class ConstantSequence(Sequence):
     def _slicing(self, values: dict[int, int]):
         if len(values) >= self.dim:
             return self.__value
-        return ConstantSequence(self.__value, self.universe, self.dim - len(values))
-    def _swap(self, src: int, dst: int):
+        return ConstantSequence(self.__value, self.universe, self.dim - len(values), **self.extra_info()["extra_args"])
+    def _swap(self, _: int, __: int):
         return self
 
 from sage.categories.all import Rings

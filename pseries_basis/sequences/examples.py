@@ -5,7 +5,7 @@ r'''
 '''
 
 from .base import Sequence
-from .qsequences import QSequence
+from .qsequences import QSequence, QRationalSequence
 
 from functools import lru_cache, reduce
 from sage.all import binomial, factorial, NaN, parent, PolynomialRing, QQ, ZZ # pylint: disable=no-name-in-module
@@ -41,13 +41,13 @@ def Fibonacci(a = 1, b = 1):
 ###
 ###############################################################################################################
 from sage.combinat.q_analogues import q_binomial, q_int, q_pochhammer, q_factorial
-from .qsequences import logq
 
 __Rq = PolynomialRing(QQ, "q").fraction_field(); __q = __Rq.gens()[0]
+__Rqn = PolynomialRing(__Rq.fraction_field(), "qn"); __qn = __Rqn.gens()[0]
 
-Qn = QSequence(lambda qn : qn, __Rq, 1, q=__q)
-Q_int = QSequence(lambda qn : q_int(logq(qn, __q), q=__q), __Rq, 1, q=__q)
-Q_factorial = QSequence(lambda qn : q_factorial(logq(qn, __q), q=__q), __Rq, 1, q=__q)
+Qn = QRationalSequence(__qn, variables=["qn"], universe=__Rq, q=__q)
+Q_int = QSequence(lambda n : q_int(n, q=__q), __Rq, 1, q=__q)
+Q_factorial = QSequence(lambda n : q_factorial(n, q=__q), __Rq, 1, q=__q)
 @lru_cache(maxsize=256)
 def Q_binomial_type(a:int = 1, b: int = 0, c: int = 0, r : int = 0, s: int = 1, t: int = 0, e: int = 1):
     r'''
@@ -60,11 +60,7 @@ def Q_binomial_type(a:int = 1, b: int = 0, c: int = 0, r : int = 0, s: int = 1, 
     e = ZZ(e)
 
     return QSequence(
-        lambda qn, qk: q_binomial(
-            a*logq(qn, __q) + b*logq(qk, __q) + c, 
-            r*logq(qn, __q) + s*logq(qk, __q) + t, 
-            __q**e
-        ),
+        lambda n, k: q_binomial(a*n + b*k + c, r*n + s*k + t, __q**e),
         universe=R,
         dim = 2,
         q = __q
@@ -78,7 +74,7 @@ def Q_pochhammer(a=__q, q=__q):
     # We compute the corresponding pochhammer sequence
     R = pushout(a.parent(), __Rq) if not a in __Rq else __Rq
     a = R(a); q = R(q)
-    return QSequence(lambda qn: q_pochhammer(logq(qn, __q), a, q=q), R, 1, q=__q)
+    return QSequence(lambda n: q_pochhammer(n, a, q=q), R, 1, q=__q)
 
 
 __all__ = [

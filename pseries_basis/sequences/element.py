@@ -25,6 +25,7 @@ r'''
 '''
 from __future__ import annotations
 
+from typing import Collection, Mapping
 from .base import ConstantSequence, Sequence
 from sage.all import Expression, PolynomialRing, var, SR #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
@@ -126,14 +127,35 @@ class ExpressionSequence(Sequence):
             sage: Exp.slicing((1,10)).generic()
             e^(x - 10)
     '''
-    def __init__(self, expression: Expression, variables=None, universe=None, *, _extend_by_zero=False):
+    def __init__(self, expression: Expression, variables=None, universe=None, *, meanings: Sequence | Collection[Sequence] | Mapping[str,Sequence] = None, _extend_by_zero=False, **kwds):
         if variables == None:
             variables = expression.variables()
         dim = len(variables)
         self.__generic = expression
         self.__variables = [SR(el) for el in variables]
 
-        super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
+        super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero, **kwds)
+        
+        ## Now we check argument "meaning"
+        if meanings == None:
+            meanings = dim*[Sequence(lambda n : n, universe=universe, dim=1, **kwds)]
+        elif isinstance(meanings, Sequence):
+            meanings = dim*[meanings]
+
+        if not isinstance(meanings, Collection):
+            raise TypeError(f"[ExpressionSequence] The meanings of the variables is ill-formatted: incorrect type")
+        if not isinstance(meanings, Mapping): # If it is not a map, we convert it
+            if len(meanings) != dim:
+                raise ValueError(f"[ExpressionSequence] The meanings of the variables is ill-formated: incorrect size")
+            meanings = {str(var): val for (var,val) in zip(self.__variables, meanings)}
+        
+        if any(SR(v) not in self.__variables for v in meanings):
+            raise ValueError(f"[ExpressionSequence] The meanings of the variables is ill-formatted: incorrect names")
+        if any(not (isinstance(el, Sequence) or (el in self.universe)) for el in meanings.values()):
+            raise ValueError(f"[ExpressionSequence] The meanings of the variables is ill-formatted: incorrect values for meanings")
+        
+        # We guarantee that meanings are some sequences
+        self.__meanings = {str(var): val if isinstance(val, Sequence) else ConstantSequence(val, universe, 1, **kwds) for (var,val) in meanings.items()}
 
     ## Methods for the casting of sequences
     @classmethod
@@ -141,28 +163,55 @@ class ExpressionSequence(Sequence):
         return cls._register_class([Sequence], [ConstantSequence])
     
     def args_to_self(self):
-        return [self.__generic], {"variables" : self.variables(), "universe": self.universe, "_extend_by_zero": self._Sequence__extend_by_zero}
+        args_sequence = super().extra_info().get("extra_args", dict())
+        args_sequence.update(universe=self.universe, variables=self.variables(), meanings=self.__meanings)
+        return [self.__generic], args_sequence
     
-    def _change_dimension(self, new_dim: int, old_dims: list[int], new_variables = None):
+    def _change_dimension(self, new_dim: int, old_dims: list[int], new_variables = None, new_meanings: Sequence | Collection[Sequence] | Mapping[Sequence] = None):
         args, kwds = self.args_to_self()
         generic = args[0]
-        variables = kwds["variables"]; universe=kwds["universe"]; extend = kwds["_extend_by_zero"]
+        variables = kwds.pop("variables"); universe=kwds.pop("universe"); extend = kwds.pop("_extend_by_zero"); meanings = kwds.pop("meanings")
 
         ## Checking the new variable names
         if not isinstance(new_variables, (list,tuple)) or len(new_variables) != new_dim - self.dim:
             raise TypeError(f"[change_dim] The new variables must be a valid list of valid length")
-        for (i, v) in sorted(zip(old_dims, variables), key=lambda k : k[0]): new_variables.insert(i, v)
+        
+        ## Checking the argument for new meanings
+        if new_meanings == None:
+            meanings = len(new_variables)*[Sequence(lambda n : n, universe=universe, dim=1, **kwds)]
+        elif isinstance(new_meanings, Sequence):
+            meanings = len(new_variables)*[new_meanings]
 
-        return self.__class__(generic, new_variables, universe=universe, _extend_by_zero=extend)
+        if not isinstance(new_meanings, Collection):
+            raise TypeError(f"[change_dim] The new meanings must be of appropriate type")
+        if not isinstance(new_meanings, Mapping): # If it is not a map, we convert it
+            if len(new_meanings) != len(new_variables):
+                raise ValueError(f"[change_dim] The new meanings must be of appropriate length")
+            new_meanings = {str(var): val for (var,val) in zip(self.__variables, new_meanings)}
+        
+        if any(v not in new_variables for v in new_meanings):
+            raise ValueError(f"[change_dim] The new meanings are given for wrign names")
+        if any(not (isinstance(el, Sequence) or (el in self.universe)) for el in new_meanings.values()):
+            raise ValueError(f"[change_dim] The new meanings must be of appropriate shape")
+        ## We add the new variables and their meanings
+        for (i, v) in sorted(zip(old_dims, variables), key=lambda k : k[0]): new_variables.insert(i, v)
+        meanings.update(**new_meanings)
+
+        return self.__class__(generic, new_variables, universe=universe, meanings=new_meanings, _extend_by_zero=extend, **kwds)
 
     @classmethod
     def _change_from_class(cls, sequence: Sequence, **extra_info):
         if isinstance(sequence, ConstantSequence):
+            variables = extra_info.get("variables", [var(f"n_{i}") for i in range(sequence.dim)] if sequence.dim > 1 else [var("n")])
+            meanings = extra_info.get("meanings", dict())
+            extra_args = extra_info.get("extra_args", dict()); extra_args.update(sequence.extra_info().get("extra_args", dict()))
             return ExpressionSequence(
                 SR(sequence.element(*[0 for _ in range(sequence.dim)])), 
-                variables=extra_info.get("variables", [var(f"n_{i}") for i in range(sequence.dim)] if sequence.dim > 1 else [var("n")]), 
+                variables=variables, 
                 universe=sequence.universe, 
-                _extend_by_zero=sequence._Sequence__extend_by_zero
+                meanings=meanings,
+                _extend_by_zero=sequence._Sequence__extend_by_zero,
+                **extra_args
             )
         else:
             raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of ExpressionSequence")
@@ -170,115 +219,154 @@ class ExpressionSequence(Sequence):
     def extra_info(self) -> dict:
         dict = super().extra_info()
         dict["variables"] = self.variables()
+        dict["meanings"] = self.__meanings
         return dict
 
     ## Methods for sequence arithmetic
+    def _compatible_ExpressionSequence_(self, other: ExpressionSequence):
+        r'''Method that checks whether two ExpressionSequences are valid to be operated'''
+        ## We need that the names of the variables coincide
+        if self.variables() != other.variables():
+            return False
+        ## We also need that the sequence they represent are the same
+        if any(self.__meanings[str(v)] != other.__meanings[str(v)] for v in self.variables()):
+            return False
+        return True
+
     def _neg_(self) -> ExpressionSequence:
-        return ExpressionSequence(
-            self.generic()._neg_(), 
-            variables=self.variables(), 
-            universe=self.universe, 
-            _extend_by_zero=self._Sequence__extend_by_zero
-        )
+        gen, args = self.args_to_self()
+        return ExpressionSequence(gen[0]._neg_(), **args)
 
     def _final_add(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self.variables() != other.variables():
+        if self._compatible_ExpressionSequence_(other):
             return NotImplemented
-
+        
         return ExpressionSequence(
             self.generic() + other.generic(), 
             variables=self.variables(), 
             universe=self.universe, 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
     def _final_sub(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self.variables() != other.variables():
+        if self._compatible_ExpressionSequence_(other):
             return NotImplemented
 
         return ExpressionSequence(
             self.generic() - other.generic(), 
             variables=self.variables(), 
             universe=self.universe, 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
     def _final_mul(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self.variables() != other.variables():
+        if self._compatible_ExpressionSequence_(other):
             return NotImplemented
 
         return ExpressionSequence(
             self.generic() * other.generic(), 
             variables=self.variables(), 
             universe=self.universe, 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
     def _final_div(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self.variables() != other.variables():
+        if self._compatible_ExpressionSequence_(other):
             return NotImplemented
 
         return ExpressionSequence(
             self.generic() / other.generic(), 
             variables=self.variables(), 
             universe=self.universe, 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
     def _final_mod(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self.variables() != other.variables():
+        if self._compatible_ExpressionSequence_(other):
             return NotImplemented
 
         return ExpressionSequence(
             self.generic() % other.generic(), 
             variables=self.variables(), 
             universe=self.universe, 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
     def _final_floordiv(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self.variables() != other.variables():
+        if self._compatible_ExpressionSequence_(other):
             return NotImplemented
 
         return ExpressionSequence(
             self.generic() // other.generic(), 
             variables=self.variables(), 
             universe=self.universe, 
-            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
 
     ## Methods for operations on Sequences
     def _element(self, *indices: int):
-        return self.__generic.subs(**{str(v) : i for (v,i) in zip(self.variables(), indices)})
+        return self.__generic.subs(**{str(v) : self.__meanings[str(v)]._element(i) for (v,i) in zip(self.variables(), indices)})
 
     def _shift(self, *shifts):
-        return ExpressionSequence(
-            self.__generic.subs(**{str(v): v + i for (v,i) in zip(self.variables(), shifts)}), 
-            variables=self.variables(), 
-            universe=self.universe, 
-            _extend_by_zero=self._Sequence__extend_by_zero
-        )
+        try:
+            return ExpressionSequence(
+                self.__generic.subs(**{str(v): self.__meanings[str(v)]._element(v+i) for (v,i) in zip(self.variables(), shifts)}), 
+                variables=self.variables(), 
+                universe=self.universe, 
+                _extend_by_zero=self._Sequence__extend_by_zero,
+                meanings=self.__meanings,
+                **self.extra_info().get("extra_args", dict())
+            )
+        except:
+            return super()._shifts(*shifts)
+        
     def _subsequence(self, final_input: dict[int, Sequence]):
         try:
             vars = self.variables()
             generics = {i : seq.generic(str(vars[i])) for (i,seq) in final_input.items()}
             return ExpressionSequence(
-                self.__generic.subs(**{str(vars[i]): gen for (i,gen) in generics.items()}), 
+                self.__generic.subs(**{str(vars[i]): self.__meanings[str(vars[i])]._element(gen) for (i,gen) in generics.items()}), 
                 variables=self.variables(), 
                 universe=self.universe, 
-                _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values())
+                _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values()),
+                meanings=self.__meanings,
+                **self.extra_info().get("extra_args", dict())
             )
         except:
             return super()._subsequence(final_input)
     def _slicing(self, values: dict[int, int]):
         vars = self.variables()
         rem_vars = [vars[i] for i in range(self.dim) if not i in values]
+        meanings = {str(v): self.__meanings[str(v)] for v in rem_vars if v in self.__meanings}
         return ExpressionSequence(
-            self.__generic.subs(**{str(vars[i]): val for (i,val) in values.items()}), 
+            self.__generic.subs(**{str(vars[i]): self.__meanings[str(vars[i])]._element(val) for (i,val) in values.items()}), 
             variables=rem_vars, 
             universe=self.universe, 
-            _extend_by_zero=self._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero,
+            meanings=meanings,
+            **self.extra_info().get("extra_args", dict())
         )
     
     def _swap(self, src: int, dst: int):
         new_vars = list(self.variables())
         new_vars[src], new_vars[dst] = new_vars[dst], new_vars[src]
-        return ExpressionSequence(self.generic(), new_vars, self.universe, _extend_by_zero = self._Sequence__extend_by_zero)
+        new_meanings = self.__meanings.copy()
+        new_meanings[new_vars[src]], new_meanings[new_vars[dst]] = new_meanings[new_vars[dst]], new_meanings[new_vars[src]]
+        return ExpressionSequence(
+            self.generic(), 
+            new_vars, 
+            self.universe, 
+            meanings=new_meanings, 
+            _extend_by_zero = self._Sequence__extend_by_zero, 
+            **self.extra_info().get("extra_args", dict())
+        )
 
     ## Other overridden methods
     def generic(self, *names: str):
@@ -345,7 +433,7 @@ class RationalSequence(Sequence):
 
             TODO: add examples using :func:`~.base.Sequence.subsequence`, :func:`~.base.Sequence.slicing`, :func:`~.base.Sequence.shift`
     '''
-    def __init__(self, rational, variables=None, universe=None, *, _extend_by_zero=False):
+    def __init__(self, rational, variables=None, universe=None, *, meanings: Sequence | Collection[Sequence] | Mapping[str,Sequence] = None, _extend_by_zero=False, **kwds):
         ## Checking rational is a rational expression
         R = rational.parent()
         if is_FractionField(R):
@@ -373,11 +461,6 @@ class RationalSequence(Sequence):
         
         F = R.fraction_field()
         rational = F(rational)
-
-        ## Storing the data for the sequence
-        self.__generic = rational
-        self.__F = F
-        self.__variables = tuple(variables)
         dim = len(variables)
 
         ## Computing the remaining universe
@@ -389,8 +472,32 @@ class RationalSequence(Sequence):
             else:
                 universe = R.remove_var(*variables)
             universe = universe.fraction_field() if not universe.is_field() else universe
+
+        ## Now we check argument "meaning"
+        if meanings == None:
+            meanings = dim*[Sequence(lambda n : n, universe=universe, dim=1, **kwds)]
+        elif isinstance(meanings, Sequence):
+            meanings = dim*[meanings]
+
+        if not isinstance(meanings, Collection):
+            raise TypeError(f"[ExpressionSequence] The meanings of the variables is ill-formatted: incorrect type")
+        if not isinstance(meanings, Mapping): # If it is not a map, we convert it
+            if len(meanings) != dim:
+                raise ValueError(f"[ExpressionSequence] The meanings of the variables is ill-formated: incorrect size")
+            meanings = {str(var): val for (var,val) in zip(variables, meanings)}
+        
+        if any(SR(v) not in variables for v in meanings):
+            raise ValueError(f"[ExpressionSequence] The meanings of the variables is ill-formatted: incorrect names")
+        if any(not (isinstance(el, Sequence) or (el in self.universe)) for el in meanings.values()):
+            raise ValueError(f"[ExpressionSequence] The meanings of the variables is ill-formatted: incorrect values for meanings")
+        
+        ## Storing the data for the sequence
+        self.__generic = rational
+        self.__F = F
+        self.__variables = tuple(variables)
+        self.__meanings = meanings
             
-        super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero)
+        super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero, **kwds)
 
     ## Methods for the casting of sequences
     @classmethod
@@ -398,7 +505,9 @@ class RationalSequence(Sequence):
         return cls._register_class([ExpressionSequence], [ConstantSequence])
     
     def args_to_self(self):
-        return [self.generic()], {"variables": self.variables(), "universe": self.universe, "_extend_by_zero": self._Sequence__extend_by_zero}
+        args_sequence = super().extra_info().get("extra_args", dict())
+        args_sequence.update(universe=self.universe, variables=self.variables(), meanings=self.__meanings, _extend_by_zero=self._Sequence__extend_by_zero)
+        return [self.generic()], args_sequence
     
     def _change_class(self, cls, **extra_info):
         if cls == ExpressionSequence:
@@ -406,7 +515,9 @@ class RationalSequence(Sequence):
                 self.__generic,
                 self.variables(),
                 self.universe,
-                _extend_by_zero = self._Sequence__extend_by_zero
+                _extend_by_zero = self._Sequence__extend_by_zero,
+                meanings=self.__meanings,
+                **self.extra_info().get("extra_args", dict())
             )
         else:
             return super()._change_class(cls, **extra_info)
@@ -418,7 +529,9 @@ class RationalSequence(Sequence):
                 extra_info["field"](sequence.element(*[0 for _ in range(sequence.dim)])), 
                 variables = extra_info.get("variables", [f"n_{i}" for i in range(sequence.dim)] if sequence.dim > 1 else ["n"]), 
                 universe=sequence.universe, 
-                _extend_by_zero=sequence._Sequence__extend_by_zero
+                _extend_by_zero=sequence._Sequence__extend_by_zero,
+                meanings=extra_info.get("meanings", None),
+                **{**extra_info.get("extra_args", dict()), **sequence.extra_info().get("extra_args", dict())}
             )
         else:
             raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of ExpressionSequence")
@@ -427,85 +540,101 @@ class RationalSequence(Sequence):
         dict = super().extra_info()
         dict["variables"] = self.variables()
         dict["field"] = self.__F
+        dict["meanings"] = self.__meanings
         return dict
 
     ## Methods fro sequence arithmetic
+    def _compatible_RationalSequence_(self, other: ExpressionSequence):
+        r'''Method that checks whether two ExpressionSequences are valid to be operated'''
+        ## We need that the names of the variables coincide
+        if self.variables() != other.variables():
+            return False
+        ## We also need that the sequence they represent are the same
+        if any(self.__meanings[str(v)] != other.__meanings[str(v)] for v in self.variables()):
+            return False
+        return True
+
     def _neg_(self) -> RationalSequence:
+        gen, args = self.args_to_self()
         return self.__class__(
-            self.generic()._neg_(), 
-            variables=self.variables(),  
-            _extend_by_zero=self._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
+            gen[0]._neg_(), 
+            **args
         )
 
     def _final_add(self, other: RationalSequence) -> RationalSequence:
-        if self.variables() != other.variables():
+        if self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
             self.generic() + other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
     def _final_sub(self, other: RationalSequence) -> RationalSequence:
-        if self.variables() != other.variables():
+        if self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
             self.generic() - other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
     def _final_mul(self, other: RationalSequence) -> RationalSequence:
-        if self.variables() != other.variables():
+        if self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
             self.generic() * other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
     def _final_div(self, other: RationalSequence) -> RationalSequence:
-        if self.variables() != other.variables():
+        if self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
             self.generic() / other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
     def _final_mod(self, other: RationalSequence) -> RationalSequence:
-        if self.variables() != other.variables():
+        if self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
             self.generic() % other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
     def _final_floordiv(self, other: RationalSequence) -> RationalSequence:
-        if self.variables() != other.variables():
+        if self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
             self.generic() // other.generic(), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
-            **{k:v for k,v in self.extra_info().items() if k not in ("variables", "_extend_by_zero", "field")}
+            meanings=self.__meanings,
+            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
         )
 
     ## Methods for operations on Sequences
     def _element(self, *indices: int):
-        return self.__generic(**{str(v) : i for (v,i) in zip(self.variables(), indices)})
+        return self.__generic(**{str(v) : self.__meanings[str(v)]._element(i) for (v,i) in zip(self.variables(), indices)})
 
     def _shift(self, *shifts):
         return RationalSequence(
-            self.__generic(**{str(v): v + i for (v,i) in zip(self.variables(), shifts)}), 
+            self.__generic(**{str(v): self.__meanings[str(v)]._element(v + i) for (v,i) in zip(self.variables(), shifts)}), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero,
         )
@@ -514,7 +643,7 @@ class RationalSequence(Sequence):
             vars = self.variables()
             generics = {i : seq.generic(str(vars[i])) for (i,seq) in final_input.items()}
             return RationalSequence(
-                self.__generic(**{str(vars[i]): gen for (i,gen) in generics.items()}), 
+                self.__generic(**{str(vars[i]): self.__meanings[str(vars[i])]._element(gen) for (i,gen) in generics.items()}), 
                 variables=self.variables(), 
                 universe=self.universe, 
                 _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values())
@@ -525,7 +654,7 @@ class RationalSequence(Sequence):
         vars = self.variables()
         rem_vars = [vars[i] for i in range(self.dim) if not i in values]
         return RationalSequence(
-            self.__generic(**{str(vars[i]): val for (i,val) in values.items()}), 
+            self.__generic(**{str(vars[i]): self.__meanings[str(vars[i])]._element(val) for (i,val) in values.items()}), 
             variables=rem_vars, 
             universe=self.universe, 
             _extend_by_zero=self._Sequence__extend_by_zero
@@ -533,7 +662,10 @@ class RationalSequence(Sequence):
     def _swap(self, src: int, dst: int):
         new_vars = list(self.variables())
         new_vars[src], new_vars[dst] = new_vars[dst], new_vars[src]
-        return RationalSequence(self.__generic, new_vars, self.universe, _extend_by_zero = self._Sequence__extend_by_zero)
+        new_meanings = self.__meanings.copy()
+        new_meanings[new_vars[src]], new_meanings[new_vars[dst]] = new_meanings[new_vars[dst]], new_meanings[new_vars[src]]
+
+        return RationalSequence(self.__generic, new_vars, self.universe, meanings=new_meanings, _extend_by_zero = self._Sequence__extend_by_zero)
     
     ## Other overridden methods
     def generic(self, *names: str):
