@@ -292,6 +292,12 @@ class Sequence(SetMorphism):
         '''
         return self.parent().dimension()
     
+    def __getattr__(self, attr: str):
+        if attr in self.__extra_args:
+            return self.__extra_args[attr]
+        
+        raise AttributeError(f"Attrbute {attr} not found")
+
     #############################################################################
     ## Casting methods
     #############################################################################
@@ -383,7 +389,7 @@ class Sequence(SetMorphism):
     
     @classmethod
     def _change_from_class(cls, sequence: Sequence, **extra_info): # pylint: disable=unused-argument
-        return Sequence(lambda *n : sequence._element(*n), sequence.universe, sequence.dim, {**sequence.__extra_args, **extra_info.get("extra_args", dict())})
+        return Sequence(lambda *n : sequence._element(*n), sequence.universe, sequence.dim, **{**sequence.__extra_args, **extra_info.get("extra_args", dict())})
         
     #############################################################################
     ## Element methods
@@ -599,7 +605,7 @@ class Sequence(SetMorphism):
         return Sequence(
             lambda *n : self._element(*[final_input[i]._element(n[i]) if i in final_input else n[i] for i in range(self.dim)]), 
             self.universe, 
-            self.dim
+            self.dim,
             **self.__extra_args
         )
 
@@ -783,17 +789,17 @@ class Sequence(SetMorphism):
     
     ## Final operation method for the basic sequence type
     def _final_add(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) + other._element(*n), self.universe, self.dim, **self.__extra_args)
+        return Sequence(lambda *n: self._element(*n) + other._element(*n), self.universe, self.dim, **{**self.__extra_args, **other.__extra_args})
     def _final_sub(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) - other._element(*n), self.universe, self.dim, **self.__extra_args)
+        return Sequence(lambda *n: self._element(*n) - other._element(*n), self.universe, self.dim, **{**self.__extra_args, **other.__extra_args})
     def _final_mul(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) * other._element(*n), self.universe, self.dim, **self.__extra_args)
+        return Sequence(lambda *n: self._element(*n) * other._element(*n), self.universe, self.dim, **{**self.__extra_args, **other.__extra_args})
     def _final_div(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) / other._element(*n), self.universe, self.dim, **self.__extra_args)
+        return Sequence(lambda *n: self._element(*n) / other._element(*n), self.universe, self.dim, **{**self.__extra_args, **other.__extra_args})
     def _final_mod(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) % other._element(*n), self.universe, self.dim, **self.__extra_args)
+        return Sequence(lambda *n: self._element(*n) % other._element(*n), self.universe, self.dim, **{**self.__extra_args, **other.__extra_args})
     def _final_floordiv(self, other:Sequence) -> Sequence:
-        return Sequence(lambda *n: self._element(*n) // other._element(*n), self.universe, self.dim, **self.__extra_args)
+        return Sequence(lambda *n: self._element(*n) // other._element(*n), self.universe, self.dim, **{**self.__extra_args, **other.__extra_args})
     
     #############################################################################
     ## Equality and checking methods
@@ -864,6 +870,9 @@ class Sequence(SetMorphism):
                 return False
         return self.almost_equals(other, order=Sequence.EQUALITY_BOUND)
     
+    def __ne__(self, other) -> bool:
+        return not (self == other)
+    
     #############################################################################
     ## Other methods
     #############################################################################
@@ -905,7 +914,19 @@ class Sequence(SetMorphism):
         quotient = self.shift(tuple([1 if i == index else 0 for i in range(self.dim)])) / self
         if quotient.is_rational():
             return True, quotient.as_rational()
+        elif quotient.is_constant():
+            return True, quotient.as_constant()
         return False, None
+
+    def is_constant(self, bound: int = None) -> bool:
+        return all(self(el) == self(self.dim*[0]) for el in product(range(bound if bound != None else self.EQUALITY_BOUND), repeat=self.dim))
+    
+    def as_constant(self, bound = None) -> ConstantSequence:
+        if self.is_constant(bound):
+            return ConstantSequence(self(self.dim*[0]), self.universe, self.dim, _extend_by_zero = self.__extend_by_zero, **self.__extra_args)
+        else:
+            raise ValueError(f"{self} is not a constant sequence.")
+        
 
     #############################################################################
     ## Representation methods
@@ -917,6 +938,16 @@ class Sequence(SetMorphism):
             return f"Sequence with {self.dim} variables over [{self.universe}]"
 
 class ConstantSequence(Sequence):
+    r'''
+        Class representing constant elements in the Sequence ring.
+
+        This class is the entry-point from other SageMath structures to the sequence setting. Namely, 
+        if `x` is an element in a universe ring `R` for a sequence set (see class :class:`SequenceSet`),
+        then it can represent the constant sequence `(x, x, x, \ldots)`.
+
+        This class is, hence, at the bottom of the Sequence hierarchy. This class has no default tranfromation to any other type
+        of sequences and all other sequences types **must** implement a tranformation from :class:`ConstantSequence`.
+    '''
     def __init__(self, value, universe=None, dim: int = 1, *, _extend_by_zero=True, **kwds):
         super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero, **kwds)
         self.__value = self.universe(value)
@@ -938,17 +969,17 @@ class ConstantSequence(Sequence):
         return ConstantSequence(-self.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
     
     def _final_add(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value + other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
+        return ConstantSequence(self.__value + other.__value, self.universe, self.dim, **{**self.extra_info()["extra_args"], **other.extra_info()["extra_args"]})
     def _final_sub(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value - other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
+        return ConstantSequence(self.__value - other.__value, self.universe, self.dim, **{**self.extra_info()["extra_args"], **other.extra_info()["extra_args"]})
     def _final_mul(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value * other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
+        return ConstantSequence(self.__value * other.__value, self.universe, self.dim, **{**self.extra_info()["extra_args"], **other.extra_info()["extra_args"]})
     def _final_div(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value / other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
+        return ConstantSequence(self.__value / other.__value, self.universe, self.dim, **{**self.extra_info()["extra_args"], **other.extra_info()["extra_args"]})
     def _final_mod(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value % other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
+        return ConstantSequence(self.__value % other.__value, self.universe, self.dim, **{**self.extra_info()["extra_args"], **other.extra_info()["extra_args"]})
     def _final_floordiv(self, other: ConstantSequence) -> ConstantSequence:
-        return ConstantSequence(self.__value // other.__value, self.universe, self.dim, **self.extra_info()["extra_args"])
+        return ConstantSequence(self.__value // other.__value, self.universe, self.dim, **{**self.extra_info()["extra_args"], **other.extra_info()["extra_args"]})
 
     def _element(self, *_: int):
         return self.__value

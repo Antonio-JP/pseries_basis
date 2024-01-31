@@ -163,7 +163,7 @@ class ExpressionSequence(Sequence):
         return cls._register_class([Sequence], [ConstantSequence])
     
     def args_to_self(self):
-        args_sequence = super().extra_info().get("extra_args", dict())
+        args_sequence = super().extra_info()["extra_args"]
         args_sequence.update(universe=self.universe, variables=self.variables(), meanings=self.__meanings)
         return [self.__generic], args_sequence
     
@@ -204,14 +204,13 @@ class ExpressionSequence(Sequence):
         if isinstance(sequence, ConstantSequence):
             variables = extra_info.get("variables", [var(f"n_{i}") for i in range(sequence.dim)] if sequence.dim > 1 else [var("n")])
             meanings = extra_info.get("meanings", dict())
-            extra_args = extra_info.get("extra_args", dict()); extra_args.update(sequence.extra_info().get("extra_args", dict()))
             return ExpressionSequence(
                 SR(sequence.element(*[0 for _ in range(sequence.dim)])), 
                 variables=variables, 
                 universe=sequence.universe, 
                 meanings=meanings,
                 _extend_by_zero=sequence._Sequence__extend_by_zero,
-                **extra_args
+                **{**extra_info["extra_args"], **sequence.extra_info()["extra_args"]}
             )
         else:
             raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of ExpressionSequence")
@@ -238,7 +237,7 @@ class ExpressionSequence(Sequence):
         return ExpressionSequence(gen[0]._neg_(), **args)
 
     def _final_add(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self._compatible_ExpressionSequence_(other):
+        if not self._compatible_ExpressionSequence_(other):
             return NotImplemented
         
         return ExpressionSequence(
@@ -247,10 +246,10 @@ class ExpressionSequence(Sequence):
             universe=self.universe, 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **other.extra_info()["extra_args"]}
         )
     def _final_sub(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self._compatible_ExpressionSequence_(other):
+        if not self._compatible_ExpressionSequence_(other):
             return NotImplemented
 
         return ExpressionSequence(
@@ -259,10 +258,10 @@ class ExpressionSequence(Sequence):
             universe=self.universe, 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **self.extra_info()["extra_args"]}
         )
     def _final_mul(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self._compatible_ExpressionSequence_(other):
+        if not self._compatible_ExpressionSequence_(other):
             return NotImplemented
 
         return ExpressionSequence(
@@ -271,10 +270,10 @@ class ExpressionSequence(Sequence):
             universe=self.universe, 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **self.extra_info()["extra_args"]}
         )
     def _final_div(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self._compatible_ExpressionSequence_(other):
+        if not self._compatible_ExpressionSequence_(other):
             return NotImplemented
 
         return ExpressionSequence(
@@ -283,10 +282,10 @@ class ExpressionSequence(Sequence):
             universe=self.universe, 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **self.extra_info()["extra_args"]}
         )
     def _final_mod(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self._compatible_ExpressionSequence_(other):
+        if not self._compatible_ExpressionSequence_(other):
             return NotImplemented
 
         return ExpressionSequence(
@@ -295,10 +294,10 @@ class ExpressionSequence(Sequence):
             universe=self.universe, 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **self.extra_info()["extra_args"]}
         )
     def _final_floordiv(self, other: ExpressionSequence) -> ExpressionSequence:
-        if self._compatible_ExpressionSequence_(other):
+        if not self._compatible_ExpressionSequence_(other):
             return NotImplemented
 
         return ExpressionSequence(
@@ -307,7 +306,7 @@ class ExpressionSequence(Sequence):
             universe=self.universe, 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **self.extra_info()["extra_args"]}
         )
 
     ## Methods for operations on Sequences
@@ -322,7 +321,7 @@ class ExpressionSequence(Sequence):
                 universe=self.universe, 
                 _extend_by_zero=self._Sequence__extend_by_zero,
                 meanings=self.__meanings,
-                **self.extra_info().get("extra_args", dict())
+                **self.extra_info()["extra_args"]
             )
         except:
             return super()._shifts(*shifts)
@@ -337,7 +336,7 @@ class ExpressionSequence(Sequence):
                 universe=self.universe, 
                 _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values()),
                 meanings=self.__meanings,
-                **self.extra_info().get("extra_args", dict())
+                **self.extra_info()["extra_args"]
             )
         except:
             return super()._subsequence(final_input)
@@ -351,7 +350,7 @@ class ExpressionSequence(Sequence):
             universe=self.universe, 
             _extend_by_zero=self._Sequence__extend_by_zero,
             meanings=meanings,
-            **self.extra_info().get("extra_args", dict())
+            **self.extra_info()["extra_args"]
         )
     
     def _swap(self, src: int, dst: int):
@@ -365,7 +364,7 @@ class ExpressionSequence(Sequence):
             self.universe, 
             meanings=new_meanings, 
             _extend_by_zero = self._Sequence__extend_by_zero, 
-            **self.extra_info().get("extra_args", dict())
+            **self.extra_info()["extra_args"]
         )
 
     ## Other overridden methods
@@ -505,9 +504,14 @@ class RationalSequence(Sequence):
         return cls._register_class([ExpressionSequence], [ConstantSequence])
     
     def args_to_self(self):
-        args_sequence = super().extra_info().get("extra_args", dict())
-        args_sequence.update(universe=self.universe, variables=self.variables(), meanings=self.__meanings, _extend_by_zero=self._Sequence__extend_by_zero)
-        return [self.generic()], args_sequence
+        return ([self.generic()], 
+                {
+                    "variables": self.variables(), 
+                    "universe": self.universe, 
+                    "meanings": self.__meanings, 
+                    "_extend_by_zero": self._Sequence__extend_by_zero, 
+                    **super().extra_info()["extra_args"]
+                })
     
     def _change_class(self, cls, **extra_info):
         if cls == ExpressionSequence:
@@ -517,7 +521,7 @@ class RationalSequence(Sequence):
                 self.universe,
                 _extend_by_zero = self._Sequence__extend_by_zero,
                 meanings=self.__meanings,
-                **self.extra_info().get("extra_args", dict())
+                **self.extra_info()["extra_args"]
             )
         else:
             return super()._change_class(cls, **extra_info)
@@ -531,7 +535,7 @@ class RationalSequence(Sequence):
                 universe=sequence.universe, 
                 _extend_by_zero=sequence._Sequence__extend_by_zero,
                 meanings=extra_info.get("meanings", None),
-                **{**extra_info.get("extra_args", dict()), **sequence.extra_info().get("extra_args", dict())}
+                **{**extra_info["extra_args"], **sequence.extra_info()["extra_args"]}
             )
         else:
             raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of ExpressionSequence")
@@ -562,7 +566,7 @@ class RationalSequence(Sequence):
         )
 
     def _final_add(self, other: RationalSequence) -> RationalSequence:
-        if self._compatible_RationalSequence_(other):
+        if not self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
@@ -570,10 +574,10 @@ class RationalSequence(Sequence):
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **self.extra_info()["extra_args"]}
         )
     def _final_sub(self, other: RationalSequence) -> RationalSequence:
-        if self._compatible_RationalSequence_(other):
+        if not self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
@@ -581,10 +585,10 @@ class RationalSequence(Sequence):
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **self.extra_info()["extra_args"]}
         )
     def _final_mul(self, other: RationalSequence) -> RationalSequence:
-        if self._compatible_RationalSequence_(other):
+        if not self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
@@ -592,10 +596,10 @@ class RationalSequence(Sequence):
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **self.extra_info()["extra_args"]}
         )
     def _final_div(self, other: RationalSequence) -> RationalSequence:
-        if self._compatible_RationalSequence_(other):
+        if not self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
@@ -603,10 +607,10 @@ class RationalSequence(Sequence):
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **self.extra_info()["extra_args"]}
         )
     def _final_mod(self, other: RationalSequence) -> RationalSequence:
-        if self._compatible_RationalSequence_(other):
+        if not self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
@@ -614,10 +618,10 @@ class RationalSequence(Sequence):
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **self.extra_info()["extra_args"]}
         )
     def _final_floordiv(self, other: RationalSequence) -> RationalSequence:
-        if self._compatible_RationalSequence_(other):
+        if not self._compatible_RationalSequence_(other):
             return NotImplemented
 
         return self.__class__(
@@ -625,7 +629,7 @@ class RationalSequence(Sequence):
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero and other._Sequence__extend_by_zero,
             meanings=self.__meanings,
-            **{**self.extra_info().get("extra_args", dict()), **self.extra_info().get("extra_args", dict())}
+            **{**self.extra_info()["extra_args"], **self.extra_info()["extra_args"]}
         )
 
     ## Methods for operations on Sequences

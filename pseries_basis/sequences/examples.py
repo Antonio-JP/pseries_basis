@@ -43,9 +43,19 @@ def Fibonacci(a = 1, b = 1):
 from sage.combinat.q_analogues import q_binomial, q_int, q_pochhammer, q_factorial
 
 __Rq = PolynomialRing(QQ, "q").fraction_field(); __q = __Rq.gens()[0]
-__Rqn = PolynomialRing(__Rq.fraction_field(), "qn"); __qn = __Rqn.gens()[0]
 
-Qn = QRationalSequence(__qn, variables=["qn"], universe=__Rq, q=__q)
+def QPower(base = __Rq, q = __q, power: int = 1, exponent: int = 1):
+    if power <= 0: raise ValueError(f"Incorrect value for power of `q` ({power})")
+
+    ## We need that exponent divides power so we can split the exponential into two exponents
+    if not power%exponent == 0: raise ValueError(f"Incorrect relation between exponent and for power of `q` ({power=}, {exponent=})")
+
+    name_qn = f"{q}_{f'{exponent}' if exponent != 1 else ''}n"
+    R = PolynomialRing(base.fraction_field(), name_qn)
+    qn = R.gens()[0]
+    return QRationalSequence(qn**(power//exponent), variables=[name_qn], universe=base, q=q, power=exponent)
+
+Qn = QPower()
 Q_int = QSequence(lambda n : q_int(n, q=__q), __Rq, 1, q=__q)
 Q_factorial = QSequence(lambda n : q_factorial(n, q=__q), __Rq, 1, q=__q)
 @lru_cache(maxsize=256)
@@ -79,5 +89,5 @@ def Q_pochhammer(a=__q, q=__q):
 
 __all__ = [
     "Factorial", "Binomial", "Fibonacci",
-    "Qn", "Q_int", "Q_factorial", "Q_binomial", "Q_pochhammer"
+    "QPower", "Qn", "Q_int", "Q_factorial", "Q_binomial", "Q_pochhammer"
 ]
