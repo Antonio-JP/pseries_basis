@@ -26,7 +26,7 @@ r'''
 from __future__ import annotations
 
 from typing import Collection, Mapping
-from .base import ConstantSequence, Sequence
+from .base import ConstantSequence, Sequence, IdentitySequence
 from sage.all import Expression, PolynomialRing, var, SR #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from sage.rings.fraction_field import is_FractionField 
@@ -138,7 +138,7 @@ class ExpressionSequence(Sequence):
         
         ## Now we check argument "meaning"
         if meanings == None:
-            meanings = dim*[Sequence(lambda n : n, universe=universe, dim=1, **kwds)]
+            meanings = dim*[IdentitySequence(universe, **kwds)]
         elif isinstance(meanings, Sequence):
             meanings = dim*[meanings]
 
@@ -178,7 +178,7 @@ class ExpressionSequence(Sequence):
         
         ## Checking the argument for new meanings
         if new_meanings == None:
-            meanings = len(new_variables)*[Sequence(lambda n : n, universe=universe, dim=1, **kwds)]
+            meanings = len(new_variables)*[IdentitySequence(universe, **kwds)]
         elif isinstance(new_meanings, Sequence):
             meanings = len(new_variables)*[new_meanings]
 
@@ -474,7 +474,7 @@ class RationalSequence(Sequence):
 
         ## Now we check argument "meaning"
         if meanings == None:
-            meanings = dim*[Sequence(lambda n : n, universe=universe, dim=1, **kwds)]
+            meanings = dim*[IdentitySequence(universe, **kwds)]
         elif isinstance(meanings, Sequence):
             meanings = dim*[meanings]
 

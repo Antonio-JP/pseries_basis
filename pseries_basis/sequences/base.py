@@ -994,6 +994,9 @@ class ConstantSequence(Sequence):
     def _swap(self, _: int, __: int):
         return self
 
+def IdentitySequence(base, **kwds):
+    return Sequence(lambda n : n, base, 1, **kwds)
+
 from sage.categories.all import Rings
 _Rings = Rings.__classcall__(Rings)
 class SequenceSet(Homset,UniqueRepresentation):
@@ -1062,4 +1065,4 @@ class SequenceFunctor(ConstructionFunctor):
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.__dim == other.__dim
 
-__all__=["Sequence", "ConstantSequence"]
+__all__=["Sequence", "ConstantSequence", "IdentitySequence"]
