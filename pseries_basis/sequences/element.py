@@ -325,22 +325,23 @@ class ExpressionSequence(Sequence):
         return result
 
     def _subsequence_input(self, index: int, input: tuple[int,int] | Sequence) -> Expression | Sequence | bool: # TODO
+        vars = self.variables()
+        inner = self.__meanings[str(vars[index])]
         if isinstance(input, (list,tuple)): # case of a linear subsequence
                 if len(input) != 2:
                     raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
                 elif any((not el in ZZ) for el in input):
                     raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
-                a, b = input
+                a, b = input; a = ZZ(a); b = ZZ(b)
                 if a != 1 or b != 0:
                     from .qsequences import is_QSequence
-                    inner = self.__meanings[index]
                     if inner == IdentitySequence(self.universe, **self.extra_info()["extra_args"]):
-                        return self.variables()[index]*a + b
+                        return vars[index]*a + b
                     elif is_QSequence(inner):
                         if hasattr(inner, "power"): # This is a special q-sequence representing q^{en}
                             # q^{e(an+b)} = (q^{en})^a * q^{e*b} = q^{eb} * var^a
                             # Since `inner` is a q-sequence, it has attribute `q`
-                            return self.variables[index]**a * inner.q * b
+                            return vars[index]**a * inner.q * b
         ## Any other behavior will fall into the original method
         return super()._subsequence_input(self, index, input)
     
@@ -371,19 +372,11 @@ class ExpressionSequence(Sequence):
                 self.__generic.subs(**subseqs), 
                 variables=self.variables(), 
                 universe=self.universe, 
-                _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values()),
+                _extend_by_zero=self._Sequence__extend_by_zero,
                 meanings=self.__meanings,
                 **self.extra_info()["extra_args"]
             )
-        except:
-            ## Something may be expressions in final_input: we convert them to sequences
-            final_input = {i : (seq if isinstance(seq, Sequence) 
-                                else self.__class__(seq, self.variables(), self.universe, 
-                                    meanings=self.__meanings, 
-                                    **self.extra_info()["extra_args"]
-                                    )
-                                )
-                            for (i,seq) in final_input.items()}
+        except TypeError:
             return super()._subsequence(final_input)
         
     def _slicing(self, values: dict[int, int]):
