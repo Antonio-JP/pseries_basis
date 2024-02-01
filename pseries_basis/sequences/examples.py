@@ -5,7 +5,7 @@ r'''
 '''
 
 from .base import Sequence
-from .qsequences import QSequence, QRationalSequence
+from .qsequences import QSequence, QPower
 
 from functools import lru_cache, reduce
 from sage.all import binomial, factorial, NaN, parent, PolynomialRing, QQ, ZZ # pylint: disable=no-name-in-module
@@ -42,17 +42,6 @@ def Fibonacci(a = 1, b = 1):
 from sage.combinat.q_analogues import q_binomial, q_int, q_pochhammer, q_factorial
 
 __Rq = PolynomialRing(QQ, "q").fraction_field(); __q = __Rq.gens()[0]
-
-def QPower(base = __Rq, q = __q, power: int = 1, exponent: int = 1):
-    if power <= 0: raise ValueError(f"Incorrect value for power of `q` ({power})")
-
-    ## We need that exponent divides power so we can split the exponential into two exponents
-    if not power%exponent == 0: raise ValueError(f"Incorrect relation between exponent and for power of `q` ({power=}, {exponent=})")
-
-    name_qn = f"{q}_{f'{exponent}' if exponent != 1 else ''}n"
-    R = PolynomialRing(base.fraction_field(), name_qn)
-    qn = R.gens()[0]
-    return QRationalSequence(qn**(power//exponent), variables=[name_qn], universe=base, q=q, power=exponent)
 
 Qn = QPower()
 Q_int = QSequence(lambda n : q_int(n, q=__q), __Rq, 1, q=__q)

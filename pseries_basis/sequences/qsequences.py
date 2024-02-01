@@ -45,23 +45,27 @@ def is_QSequence(element: Sequence):
     return isinstance(element, Sequence) and hasattr(element, "q")
 
 def QSequence(sequence: Callable[..., Any], universe=None, dim: int = 1, *, q, _extend_by_zero=False, **kwds):
-    output = Sequence(sequence, universe, dim, _extend_by_zero=_extend_by_zero, q=q)
+    output = Sequence(sequence, universe, dim, _extend_by_zero=_extend_by_zero, q=q, **kwds)
     if not q in output.universe:
         raise TypeError("[QSequence] The element `q` must be in the universe.")
     return output
 
+def QPower(power, universe, *, q, **kwds):
+    return QSequence(lambda n : SR(q)**(power*n), universe, 1, q=q, power=power, **kwds)
+
 def QExpressionSequence(expression: Expression, variables=None, universe=None, *, q, power: int = 1, _extend_by_zero=False, **kwds):
-    meanings = QSequence(lambda n : SR(q)**(power*n), universe, 1, q=q, **kwds)
+    meanings = QPower(power, universe, q=q, **kwds)
     output = ExpressionSequence(expression, variables, universe, meanings=meanings, _extend_by_zero=_extend_by_zero, q=q, **kwds)
     if not q in output.universe:
         raise TypeError("[QSequence] The element `q` must be in the universe.")
     return output
 
 def QRationalSequence(rational, variables=None, universe=None, *, q, power: int = 1, _extend_by_zero=False, **kwds):
-    meanings = QSequence(lambda n : SR(q)**(power*n), universe, 1, q=q, **kwds)
+    meanings = QPower(power, universe, q=q, **kwds)
     output = RationalSequence(rational, variables, universe, meanings=meanings, _extend_by_zero=_extend_by_zero, q=q, **kwds)
     if not q in output.universe:
         raise TypeError("[QSequence] The element `q` must be in the universe.")
     return output
+    
 
 __all__ = ["QSequence", "QExpressionSequence", "QRationalSequence", "is_QSequence"]
