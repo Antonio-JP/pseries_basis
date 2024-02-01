@@ -498,6 +498,8 @@ class Sequence(SetMorphism):
             raise TypeError("The shift must be integers")
         if len(shifts) != self.dim:
             raise ValueError(f"We need {self.dim} shifts but {len(shifts)} were given")
+        
+        if all(shift == 0 for shift in shifts): return self
         return self._shift(*shifts)
 
     def _shift(self, *shifts):

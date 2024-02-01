@@ -36,7 +36,7 @@ from sage.categories.pushout import pushout
 from sage.misc.cachefunc import cached_method #pylint: disable=no-name-in-module
 from typing import Any, Collection
 
-from ..sequences.base import Sequence, SequenceSet, ConstantSequence
+from ..sequences.base import Sequence, SequenceSet, ConstantSequence, IdentitySequence
 from ..sequences.element import ExpressionSequence, RationalSequence
 from ..psbasis import PSBasis, Compatibility
 
@@ -51,24 +51,24 @@ class FactorialBasis(PSBasis):
     r'''
         Class representing a Factorial Basis.
 
-        A factorial basis is a specific type of Sequences basis where the elements
+        A `beta(n)`-factorial basis is a specific type of Sequences basis where the elements
         are defined using a recurrence of order 1. This can be seen also as a specific
         type of hypergeometric sequence of sequences.
 
-        More precisely, a factorial basis is a basis of sequences `B = \{P_k(n)\}` where 
-        the `k`-th element is a polynomial sequence of degree `k` such that 
+        More precisely, a `\beta(n)`-factorial basis is a basis of sequences `B = \{P_k(n)\}` where 
+        the `k`-th element is a polynomial w.r.t. `\beta(n)` of degree `k` such that 
 
         .. MATH::
 
-            P_{k+1}(n) = (a_{k}n + b_{k})P_{k}.
+            P_{k+1}(n) = (a_{k}\beta(n) + b_{k})P_{k}(n).
 
         This type of basis have special types of compatibilities. More precisely, they are 
-        **always** compatible with the "multiplication by `n`" operation. This is a special type
+        **always** compatible with the "multiplication by `\beta(n)`" operation. This is a special type
         of homomorphism, and always satisfies:
 
         .. MATH::
 
-            nP_k = \frac{1}{a_k}P_{k+1}(n) - \frac{b_k}{a_k}P_k.
+            \beta(n)P_k = \frac{1}{a_k}P_{k+1}(n) - \frac{b_k}{a_k}P_k(n).
 
         Besides the sequences `(a_k)_k` and `(b_k)_k` that define the elements of the basis, 
         there are two other equivalent sequences: the root sequences and the leading coefficient sequence:
@@ -79,17 +79,36 @@ class FactorialBasis(PSBasis):
 
         The root sequence `\rho_k` defines for each element the new root added to the element `P_k(n)`. On the 
         other hand, the leading coefficient sequence provides the leading coefficient of the polynomial `P_k(n)`.
-        Then, there are two main criteria to determine whether a Factorial sequence is compatible with an 
+        Then, there are two main criteria to determine whether a `\beta(n)`-factorial sequence is compatible with an 
         homomorphism and a derivation (see :doi:`10.1016/j.jsc.2022.11.002`, Propositions 14 and 16).
+
+        INPUT:
+
+            * ``ak``: a sequence to be used for `a_k`. It can be a rational expression in some variable (see argument ``gamma``)
+            * ``bk``: a sequence to be used for `b_k`. See argument ``ak``.
+            * ``universe`` (optional): universe for the elements of the basis.
+            * ``beta``: either ``None`` or a tuple ``(name, seq)``. This defines the sequence `beta(n)` and a name for it. If
+              not given, it takes as default the values ``(`n`, n -> n)``.
+            * ``gamma``: either ``None`` or a tuple ``(name, seq)``. This defines a sequence `\gamma(k)` such that `a_k` and `b_k`
+              are built (if necessary) as :class:`RationalSequence` w.r.t. `gamma(k)`. By default, it takes the value ``(`k`, n -> n)``.
+            * ``as_2seq`` (optional): sequence in 2 variables that will be use for generic purposes in :class:`PSBasis`.
     '''
-    def __init__(self, ak: Sequence, bk: Sequence, universe = None, *, variable="n", seq_variable="k", other_seq: Sequence = None, _extend_by_zero=False, **kwds):
+    def __init__(self, ak: Sequence, bk: Sequence, universe = None, *, 
+                 beta: tuple[str, Sequence]=None, 
+                 gamma: tuple[str, Sequence]=None, 
+                 as_2seq: Sequence = None, _extend_by_zero=False, 
+                 **kwds):
+        ## Treating the beta/gamma arguments
+        beta = beta if beta != None else ('n', IdentitySequence(ZZ, **kwds))
+        gamma = gamma if gamma != None else ('k', IdentitySequence(ZZ, **kwds))
+
         ## Treating the arguments a_k and b_k
         if not isinstance(ak, Sequence):
             if universe != None:
-                ak = ExpressionSequence(SR(ak), [seq_variable], universe)
+                ak = ExpressionSequence(SR(ak), [gamma[0]], universe, meanings=gamma[1], **kwds)
         if not isinstance(bk, Sequence): 
             if universe != None:
-                bk = ExpressionSequence(SR(bk), [seq_variable], universe)
+                bk = ExpressionSequence(SR(bk), [gamma[0]], universe, meanings=gamma[1], **kwds)
         if not isinstance(ak, Sequence) or ak.dim != 1:
             raise TypeError(f"[FactorialBasis] The element a_k must be a univariate sequence or an expression in 'k'")
         if not isinstance(bk, Sequence) or bk.dim != 1:
@@ -101,7 +120,8 @@ class FactorialBasis(PSBasis):
         self.__rho = -(bk/ak) 
         self.__lc = ak.partial_prod()
 
-        self.__poly_ring = PolynomialRing(universe, variable) # this is the polynomial ring for the elements of the sequence
+        self.__poly_ring = PolynomialRing(universe, beta[0]) # this is the polynomial ring for the elements of the sequence
+        self.__beta = beta; self.__gamma = gamma
         self.__gen = self.__poly_ring.gens()[0]
 
         @lru_cache
@@ -110,15 +130,24 @@ class FactorialBasis(PSBasis):
             elif k == 0: return self.__poly_ring.one()
             else: return (self.ak(k-1)*self.__gen + self.bk(k-1))*__get_element(k-1) #pylint: disable=not-callable
 
-        sequence = other_seq if other_seq != None else lambda k : self._RationalSequenceBuilder(__get_element(k))
+        sequence = as_2seq if as_2seq != None else lambda k : self._RationalSequenceBuilder(__get_element(k))
 
         super().__init__(sequence, universe, _extend_by_zero=_extend_by_zero, **kwds)
 
         # We create now the compatibility with the multiplication by the variable generator
-        self.set_compatibility(variable, Compatibility([[self.rho, 1/self.ak]], 0, 1, 1), True, "any")
+        self.set_compatibility(beta[0], Compatibility([[self.rho, 1/self.ak]], 0, 1, 1), True, "any")
 
     def args_to_self(self) -> tuple[list, dict[str]]:
-        return [self.ak, self.bk], {"universe": self.base, "variable": str(self.gen()), "seq_variable": str(self.ore_var()), "_extend_by_zero": self._Sequence__extend_by_zero}
+        return (
+            [self.ak, self.bk], 
+            {"universe": self.base, 
+             "beta": self.__beta, 
+             "gamma": self.__gamma, 
+             "as_2seq": self.as_2dim(),
+             "_extend_by_zero": self._Sequence__extend_by_zero,
+             **self.extra_info()["extra_args"]
+             }
+        )
 
     @property
     def ak(self): return self.__ak                  #: Sequence a_k from definition of Factorial basis.
@@ -198,7 +227,7 @@ class FactorialBasis(PSBasis):
         r'''
             Method that allows to build a rational sequence depending on the type of factorial basis
         '''
-        return RationalSequence(rational, [str(self.gen())], self.base)
+        return RationalSequence(rational, [self.__beta[0]], self.base, meanings=self.__beta[1])
 
     ##################################################################################
     ### METHODS FOR FACTORIAL_BASIS
@@ -234,9 +263,7 @@ class FactorialBasis(PSBasis):
             TODO: add tests
         '''
         _, self_args = self.args_to_self()
-        return FactorialBasis(self.ak.shift(shift), self.bk.shift(shift),
-                              universe=self_args["universe"], variable=self_args["variable"], seq_variable=self_args["seq_variable"]
-        )
+        return FactorialBasis(self.ak.shift(shift), self.bk.shift(shift), **self_args)
 
     def compatible_division(self, operator) -> DivisionCondition:
         r'''
@@ -390,7 +417,12 @@ class FactorialBasis(PSBasis):
     ### TODO: def equiv_DtC(self, compatibility: str | OreOperator | TypeCompatibility) -> TypeCompatibility
     ### TODO: def equiv_CtD(self, division: TypeCompatibility) -> TypeCompatibility
 
-def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, variable="n", seq_variable="k", _extend_by_zero=False):
+def RootSequenceBasis(rho: Sequence, lc: Sequence, 
+                        universe = None, *, 
+                        beta: tuple[str, Sequence]=None, 
+                        gamma: tuple[str, Sequence]=None, 
+                        as_2seq: Sequence = None, _extend_by_zero=False, 
+                        **kwds):
     r'''
         Factory for creating a factorial basis from the root sequence and sequence of coefficients.
 
@@ -414,10 +446,10 @@ def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, variable=
     ## Treating the arguments rho and lc
     if not isinstance(rho, Sequence):
         if universe != None:
-            rho = ExpressionSequence(SR(rho), [seq_variable], universe)
+            rho = ExpressionSequence(SR(rho), [gamma[0]], universe, meanings=gamma[1], **kwds)
     if not isinstance(lc, Sequence): 
         if universe != None:
-            lc = ExpressionSequence(SR(lc), [seq_variable], universe)
+            lc = ExpressionSequence(SR(lc), [gamma[0]], universe, meanings=gamma[1], **kwds)
     if not isinstance(rho, Sequence) or rho.dim != 1:
         raise TypeError(f"[FactorialBasis] The element rho must be a univariate sequence or an expression in 'k'")
     if not isinstance(lc, Sequence) or lc.dim != 1:
@@ -425,7 +457,7 @@ def RootSequenceBasis(rho: Sequence, lc: Sequence, universe = None, *, variable=
     
     ak = lc.shift()/lc
     bk = -(rho*ak)
-    return FactorialBasis(ak, bk, universe, variable=variable, seq_variable=seq_variable, _extend_by_zero=_extend_by_zero)
+    return FactorialBasis(ak, bk, universe, beta=beta, gamma=gamma, as_2seq=as_2seq, _extend_by_zero=_extend_by_zero, **kwds)
         
 def FallingBasis(a, b, c, universe = None, E: str = 'E'):
     r'''
@@ -1166,6 +1198,10 @@ class ShuffledBasis(FactorialBasis):
 
         new_ak = Sequence(lambda k : (self.factors[self.cycle[k%self.nsections]]).ak[self.indices[k][self.cycle[k%self.nsections]]], universe)
         new_bk = Sequence(lambda k : (self.factors[self.cycle[k%self.nsections]]).bk[self.indices[k][self.cycle[k%self.nsections]]], universe)
+
+        ## mixing all the "kwds" argumenst
+        for factor in factors: kwds.update(factor.extra_info()["extra_args"])
+        ## We call the constructor for a factorial basis
         FactorialBasis.__init__(self, new_ak, new_bk, universe, variable=variable, _extend_by_zero=_extend_by_zero, **kwds)
 
         ## We reset the compatibility wrt the variable name
@@ -1422,99 +1458,6 @@ class ShuffledBasis(FactorialBasis):
     def _latex_(self) -> str:
         return (r"\prod_{%s}" %self.cycle)  + "".join([f._latex_() for f in self.factors])
 
-    # def extend_compatibility_X(self) -> TypeCompatibility:
-    #     r'''
-    #         Method to extend the compatibility of the multiplication by `x`.
-
-    #         This method computes the compatibility of a he multiplication by `x` over
-    #         the ring `\mathbb{K}[x]`. This operator is always compatible with all 
-    #         :class:`FactorialBasis`.
-
-    #         If this method was already called (or the compatibility was found in another way)
-    #         this method only returns the compatibility
-
-    #         OUTPUT:
-
-    #         The compatibility for the multiplication by `x` computed during this process.
-
-    #         TODO: add examples
-    #     '''
-    #     X = str(self.universe.gens()[0])
-    #     if(not self.has_compatibility(X)):
-    #         self.set_compatibility(X, self._extend_compatibility_X())
-
-    #     return self.compatibility(X)
-
-    # def extend_compatibility_E(self, name: str) -> TypeCompatibility:
-    #     r'''
-    #         Method to extend the compatibility of an endomorphism.
-
-    #         This method computes the compatibility of an endomorphism `L` over
-    #         the ring `\mathbb{K}[x]`. Such derivation must be compatible with all the
-    #         factors on the basis.
-
-    #         If the operator `L` was already compatible with ``self``, this method does
-    #         nothing.
-
-    #         INPUT:
-
-    #         * ``name``: name of the derivation or a generator of a *ore_algebra*
-    #           ring of operators.
-
-    #         OUTPUT:
-
-    #         The compatibility for `L` computed during this process.
-
-    #         WARNING:
-
-    #         This method do not check whether the operator given is an endomorphism
-    #         or not. That remains as a user responsibility.
-
-    #         TODO: add examples
-    #     '''
-    #     if(not (type(name) is str)):
-    #         name = str(name)
-
-    #     if(not self.has_compatibility(name)):
-    #         self.set_endomorphism(name, self._extend_compatibility_E(name))
-
-    #     return self.compatibility(name)
-
-    # def extend_compatibility_D(self, name: str) -> TypeCompatibility:
-    #     r'''
-    #         Method to extend the compatibility of a derivation.
-
-    #         This method computes the compatibility of a derivation `L` over
-    #         the ring `\mathbb{K}[x]`. Such derivation must be compatible with all the
-    #         factors on the basis.
-
-    #         If the operator `L` was already compatible with ``self``, this method does
-    #         nothing.
-
-    #         INPUT:
-
-    #         * ``name``: name of the derivation or a generator of a *ore_algebra*
-    #           ring of operators.
-
-    #         OUTPUT:
-
-    #         The compatibility for `L` computed during this process.
-
-    #         WARNING:
-
-    #         This method do not check whether the operator given is a derivation
-    #         or not. That remains as a user responsibility.
-
-    #         TODO: add examples
-    #     '''
-    #     if(not (type(name) is str)):
-    #         name = str(name)
-
-    #     if(not self.has_compatibility(name)):
-    #         self.set_derivation(name, self._extend_compatibility_D(name))
-
-    #     return self.compatibility(name)
-
     # def increasing_polynomial(self, src: element.Element, diff : int = None, dst: int = None) -> element.Element:
     #     r'''
     #         Returns the increasing factorial for the factorial basis.
@@ -1706,8 +1649,6 @@ class ShuffledBasis(FactorialBasis):
             
     #     return (m*A, m*T,new_D)
 
-    # def is_quasi_func_triangular(self) -> bool:
-    #     return all(basis.is_quasi_func_triangular() for basis in self.factors)
     # def is_quasi_eval_triangular(self) -> bool:
     #     return all(basis.is_quasi_eval_triangular() for basis in self.factors)
 

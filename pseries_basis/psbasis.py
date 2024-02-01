@@ -104,7 +104,7 @@ from sage.all import cached_method, latex, lcm, Matrix, PolynomialRing, prod, SR
 from sage.categories.pushout import pushout
 from .sequences.base import ConstantSequence, Sequence, SequenceSet
 from .sequences.element import ExpressionSequence, RationalSequence
-from .sequences.qsequences import QRationalSequence
+from .sequences.qsequences import is_QSequence, QExpressionSequence, QRationalSequence
 
 class PSBasis(Sequence):
     r'''
@@ -125,7 +125,7 @@ class PSBasis(Sequence):
         This class will implement any other method for basis of formal power series related with
         the compatibility of a sequence.
     '''
-    def __init__(self, sequence: Callable[[int], Sequence], universe=None, *, _extend_by_zero=False):
+    def __init__(self, sequence: Callable[[int], Sequence], universe=None, *, _extend_by_zero=False, **kwds):
         # We check the case we provide a 2-dimensional sequence
         if isinstance(sequence, Sequence) and sequence.dim == 2:
             universe = sequence.universe if universe is None else universe; or_sequence = sequence
@@ -149,7 +149,7 @@ class PSBasis(Sequence):
         self.__quasi_triangular : Sequence = None
 
         ## Calling the super method
-        super().__init__(sequence, SequenceSet(1, universe), 1, _extend_by_zero=_extend_by_zero)
+        super().__init__(sequence, SequenceSet(1, universe), 1, _extend_by_zero=_extend_by_zero, **kwds)
 
     ##########################################################################################################
     ###
@@ -204,7 +204,7 @@ class PSBasis(Sequence):
     @cached_method
     def as_2dim(self) -> Sequence:
         return (self.__original_sequence if self.__original_sequence != None else 
-                Sequence(lambda n,k : self(n)(k), self.base, 2, _extend_by_zero = self._Sequence__extend_by_zero))
+                Sequence(lambda n,k : self(n)(k), self.base, 2, _extend_by_zero = self._Sequence__extend_by_zero, **self.extra_info()["extra_args"]))
     
     def generic(self, *names : str):
         if self.__original_sequence:
@@ -221,18 +221,18 @@ class PSBasis(Sequence):
     ##########################################################################################################
     ### Casting methods
     def args_to_self(self):
-        return [self.as_2dim()], {"universe":self.base, "_extend_by_zero": self._Sequence__extend_by_zero}
+        return [self.as_2dim()], {"universe":self.base, "_extend_by_zero": self._Sequence__extend_by_zero, **self.extra_info()["extra_args"]}
         
     def _change_class(self, cls, **extra_info): # pylint: disable=unused-argument
         if cls != Sequence:
             raise NotImplementedError(f"Class {cls} not recognized as {self.__class__}")
-        return Sequence(self._element, self.universe, 1, _extend_by_zero=self._Sequence__extend_by_zero)
+        return Sequence(self._element, self.universe, 1, _extend_by_zero=self._Sequence__extend_by_zero, **self.extra_info()["extra_args"])
     
     @classmethod
     def _change_from_class(cls, sequence: Sequence, **extra_info): # pylint: disable=unused-argument
         if not isinstance(ConstantSequence):
             raise NotImplementedError(f"Class {sequence.__class__} not recognized from {cls}")
-        return PSBasis(lambda _ : sequence, sequence.universe)
+        return PSBasis(lambda _ : sequence, sequence.universe, **extra_info.get("extra_args"))
     
     ### Arithmetic methods
     def _neg_(self) -> PSBasis:
@@ -264,21 +264,21 @@ class PSBasis(Sequence):
             
             **WARNING**: No compatibility is extended!
         '''
-        return PSBasis(lambda n: self._element(n) + other._element(n), self.universe)
+        return PSBasis(lambda n: self._element(n) + other._element(n), self.universe, **{**self.extra_info()["extra_args"], **other.extra_info()["extra_args"]})
     def _final_sub(self, other:PSBasis) -> PSBasis:
         r'''
             Difference of two :class:`PSBasis`
             
             **WARNING**: No compatibility is extended!
         '''
-        return PSBasis(lambda n: self._element(n) - other._element(n), self.universe)
+        return PSBasis(lambda n: self._element(n) - other._element(n), self.universe, **{**self.extra_info()["extra_args"], **other.extra_info()["extra_args"]})
     def _final_mul(self, other:PSBasis) -> PSBasis:
         r'''
             Hadamard product of two :class:`PSBasis`
             
             **WARNING**: No compatibility is extended!
         '''
-        return PSBasis(lambda n: self._element(n)*other._element(n), self.universe)
+        return PSBasis(lambda n: self._element(n)*other._element(n), self.universe, **{**self.extra_info()["extra_args"], **other.extra_info()["extra_args"]})
     def _final_div(self, _:PSBasis) -> PSBasis:
         r'''
             Quotient of two :class:`PSBasis`
@@ -304,7 +304,7 @@ class PSBasis(Sequence):
     ### Other sequences operations
     def _shift(self, *shifts):
         shift = shifts[0] # we know the dimension is 1
-        output = PSBasis(lambda n : self._element(n + shift), self.universe)
+        output = PSBasis(lambda n : self._element(n + shift), self.universe, **self.extra_info()["extra_args"])
         for operator in self.basic_compatibilities():
             compatibility = self.compatibility(operator)
             ctype = self.compatibility_type(operator)
@@ -317,7 +317,7 @@ class PSBasis(Sequence):
         return output
     ## Slicing not implemented because PSBasis have dimension 1.
     def _subsequence(self, final_input: dict[int, Sequence]):
-        return PSBasis(lambda n : self._element(final_input[0]._element(n) if 0 in final_input else n), self.universe)
+        return PSBasis(lambda n : self._element(final_input[0]._element(n) if 0 in final_input else n), self.universe, **self.extra_info()["extra_args"])
 
     ### Creating new PSBasis by scaling its elements
     def scalar(self, factor: Sequence) -> PSBasis:
@@ -403,7 +403,7 @@ class PSBasis(Sequence):
             This method assume the factor sequences is of correct format. This method can be
             overridden for creating more specific types of basis.
         '''
-        return PSBasis(lambda n : self._element(n)*factor(n), self.base)
+        return PSBasis(lambda n : self._element(n)*factor(n), self.base, **self.extra_info()["extra_args"])
     
     ##########################################################################################################
     ###
@@ -492,8 +492,8 @@ class PSBasis(Sequence):
         I = (I//section + 1) if section != 1 else I
         
         ## General case
-        gen_seq = (lambda p: QRationalSequence(p, q=getattr(self, "q"))) if hasattr(self, "q") else (lambda p: RationalSequence(p))
-        if ((hasattr(self, "q") and is_qshift_algebra(inner_recurrence.parent(), str(getattr(self, "q")))) or 
+        gen_seq = (lambda p: QRationalSequence(p, universe=self.base, q=self.q)) if is_QSequence(self) else (lambda p: RationalSequence(p, universe=self.base))
+        if ((is_QSequence(self) and is_qshift_algebra(inner_recurrence.parent(), str(self.q))) or 
             is_recurrence_algebra(inner_recurrence.parent())
         ):
             r = inner_recurrence.order()
@@ -801,11 +801,18 @@ class PSBasis(Sequence):
         r'''
             Method to create uniformly in a class a (double) shift ore algebra when needed.
         '''
-        from .misc.ore import get_recurrence_algebra, get_double_recurrence_algebra
-        if double:
-            return get_double_recurrence_algebra("k", "Sk", base=self.base)
+        if is_QSequence(self):
+            from .misc.ore import get_qshift_algebra, get_double_qshift_algebra
+            if double:
+                return get_double_qshift_algebra("q_k", str(self.q), "Sk", base=self.base)
+            else:
+                return get_qshift_algebra("q_k", str(self.q), "Sk", base=self.base)
         else:
-            return get_recurrence_algebra("k", "Sk", base=self.base)
+            from .misc.ore import get_recurrence_algebra, get_double_recurrence_algebra
+            if double:
+                return get_double_recurrence_algebra("k", "Sk", base=self.base)
+            else:
+                return get_recurrence_algebra("k", "Sk", base=self.base)
 
     def ore_algebra(self):
         r'''
@@ -911,10 +918,18 @@ class PSBasis(Sequence):
         return recurrence
             
     def _process_recurrence_sequence(self, sequence, output):
-        seq = ExpressionSequence(sequence.generic(), universe=sequence.universe, variables=[str(self.ore_var())])
-        if output == "rational":
-            seq = RationalSequence(seq.generic(str(self.ore_var())), universe=seq.universe, variables=[str(self.ore_var())])
-        return seq
+        if not isinstance(sequence, ExpressionSequence):
+            if is_QSequence(self):
+                seq = QExpressionSequence(sequence.generic(str(self.ore_var())), universe=sequence.universe, variables=[str(self.ore_var())], q = self.q)
+                if output == "rational":
+                    seq = QRationalSequence(seq.generic(str(self.ore_var())), universe=seq.universe, variables=[str(self.ore_var())], q=self.q)
+                return seq
+            else:
+                seq = ExpressionSequence(sequence.generic(str(self.ore_var())), universe=sequence.universe, variables=[str(self.ore_var())])
+                if output == "rational":
+                    seq = RationalSequence(seq.generic(str(self.ore_var())), universe=seq.universe, variables=[str(self.ore_var())])
+                return seq
+        return sequence
 
     def _process_ore_algebra(self, recurrence, double: bool = False):
         recurrence = self._process_recurrence(recurrence, "rational")

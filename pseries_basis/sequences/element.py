@@ -319,7 +319,7 @@ class ExpressionSequence(Sequence):
     ## Methods for operations on Sequences
     def _element(self, *indices: int):
         self_meanings = self.meanings()
-        return self._eval_generic(**{str(v) : self_meanings[str(v)]._element(i) for (v,i) in zip(self.variables(), indices)})
+        return self._eval_generic(**{str(v) : self_meanings[str(v)].element(i) for (v,i) in zip(self.variables(), indices)})
 
     def _subsequences_input(self, *vals) -> dict[int, Sequence]:
         original_inputs = dict(vals)
@@ -356,7 +356,7 @@ class ExpressionSequence(Sequence):
     def _shift(self, *shifts):
         try:
             subseqs = [self._subsequence_input(i, (1,shifts[i])) for i in range(len(shifts))] # this take into account the meaning
-            if any(isinstance(subseq, Sequence) or isinstance(subseq, bool) for subseq in subseqs):
+            if any(isinstance(subseq, Sequence) for subseq in subseqs):
                 raise TypeError(f"Falling back to usual shifting")
             subseqs = {str(v): subseq for (v,subseq) in zip(self.variables(), subseqs) if subseq}
             return self.__class__(
@@ -368,7 +368,7 @@ class ExpressionSequence(Sequence):
                 **self.extra_info()["extra_args"]
             )
         except:
-            return super()._shifts(*shifts)
+            return super()._shift(*shifts)
         
     def _subsequence(self, final_input: dict[int, Sequence] | dict[int, Expression]):
         try:
