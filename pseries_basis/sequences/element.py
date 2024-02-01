@@ -313,7 +313,7 @@ class ExpressionSequence(Sequence):
     def _element(self, *indices: int):
         return self.__generic.subs(**{str(v) : self.__meanings[str(v)]._element(i) for (v,i) in zip(self.variables(), indices)})
 
-    def _shift(self, *shifts):
+    def _shift(self, *shifts): ## TODO
         try:
             return ExpressionSequence(
                 self.__generic.subs(**{str(v): self.__meanings[str(v)]._element(v+i) for (v,i) in zip(self.variables(), shifts)}), 
@@ -326,7 +326,7 @@ class ExpressionSequence(Sequence):
         except:
             return super()._shifts(*shifts)
         
-    def _subsequence(self, final_input: dict[int, Sequence]):
+    def _subsequence(self, final_input: dict[int, Sequence]): # TODO
         try:
             vars = self.variables()
             generics = {i : seq.generic(str(vars[i])) for (i,seq) in final_input.items()}
@@ -340,7 +340,7 @@ class ExpressionSequence(Sequence):
             )
         except:
             return super()._subsequence(final_input)
-    def _slicing(self, values: dict[int, int]):
+    def _slicing(self, values: dict[int, int]): # TODO
         vars = self.variables()
         rem_vars = [vars[i] for i in range(self.dim) if not i in values]
         meanings = {str(v): self.__meanings[str(v)] for v in rem_vars if v in self.__meanings}
@@ -353,7 +353,7 @@ class ExpressionSequence(Sequence):
             **self.extra_info()["extra_args"]
         )
     
-    def _swap(self, src: int, dst: int):
+    def _swap(self, src: int, dst: int): # TODO
         new_vars = list(self.variables())
         new_vars[src], new_vars[dst] = new_vars[dst], new_vars[src]
         new_meanings = self.__meanings.copy()
@@ -639,7 +639,7 @@ class RationalSequence(Sequence):
     def _element(self, *indices: int):
         return self.__generic(**{str(v) : self.__meanings[str(v)]._element(i) for (v,i) in zip(self.variables(), indices)})
 
-    def _shift(self, *shifts):
+    def _shift(self, *shifts): # TODO
         return self.__class__(
             self.__generic(**{str(v): self.__meanings[str(v)]._element(v + i) for (v,i) in zip(self.variables(), shifts)}), 
             variables=self.variables(), 
@@ -647,7 +647,7 @@ class RationalSequence(Sequence):
             meanings=self.extra_info().get("meanings", None),
             **self.extra_info()["extra_args"]
         )
-    def _subsequence(self, final_input: dict[int, Sequence]):
+    def _subsequence(self, final_input: dict[int, Sequence]): # TODO
         try:
             vars = self.variables()
             generics = {i : seq.generic(str(vars[i])) for (i,seq) in final_input.items()}
@@ -661,7 +661,7 @@ class RationalSequence(Sequence):
             )
         except:
             return super()._subsequence(final_input)
-    def _slicing(self, values: dict[int, int]):
+    def _slicing(self, values: dict[int, int]): # TODO
         vars = self.variables()
         rem_vars = [vars[i] for i in range(self.dim) if not i in values]
         return self.__class__(
@@ -672,7 +672,7 @@ class RationalSequence(Sequence):
             meanings=self.extra_info().get("meanings", None),
             **self.extra_info()["extra_args"]
         )
-    def _swap(self, src: int, dst: int):
+    def _swap(self, src: int, dst: int): # TODO
         new_vars = list(self.variables())
         new_vars[src], new_vars[dst] = new_vars[dst], new_vars[src]
         new_meanings = self.__meanings.copy()
