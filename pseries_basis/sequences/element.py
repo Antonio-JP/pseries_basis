@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from typing import Collection, Mapping
 from .base import ConstantSequence, Sequence, IdentitySequence
-from sage.all import Expression, PolynomialRing, var, SR #pylint: disable=no-name-in-module
+from sage.all import Expression, PolynomialRing, var, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from sage.rings.fraction_field import is_FractionField 
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
@@ -373,6 +373,9 @@ class ExpressionSequence(Sequence):
             return self.__generic
         return super().generic(*names)
 
+    def _generic(self, *names: str):
+        return self.__generic.subs(**{str(v) : self.__meanings[str(v)].generic(names[i]) for (i,v) in enumerate(self.variables())})
+
     ## Other methods
     def variables(self):
         return self.__variables
@@ -637,31 +640,37 @@ class RationalSequence(Sequence):
         return self.__generic(**{str(v) : self.__meanings[str(v)]._element(i) for (v,i) in zip(self.variables(), indices)})
 
     def _shift(self, *shifts):
-        return RationalSequence(
+        return self.__class__(
             self.__generic(**{str(v): self.__meanings[str(v)]._element(v + i) for (v,i) in zip(self.variables(), shifts)}), 
             variables=self.variables(), 
             _extend_by_zero=self._Sequence__extend_by_zero,
+            meanings=self.extra_info().get("meanings", None),
+            **self.extra_info()["extra_args"]
         )
     def _subsequence(self, final_input: dict[int, Sequence]):
         try:
             vars = self.variables()
             generics = {i : seq.generic(str(vars[i])) for (i,seq) in final_input.items()}
-            return RationalSequence(
+            return self.__class__(
                 self.__generic(**{str(vars[i]): self.__meanings[str(vars[i])]._element(gen) for (i,gen) in generics.items()}), 
                 variables=self.variables(), 
                 universe=self.universe, 
-                _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values())
+                _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values()),
+                meanings=self.extra_info().get("meanings", None),
+                **self.extra_info()["extra_args"]
             )
         except:
             return super()._subsequence(final_input)
     def _slicing(self, values: dict[int, int]):
         vars = self.variables()
         rem_vars = [vars[i] for i in range(self.dim) if not i in values]
-        return RationalSequence(
+        return self.__class__(
             self.__generic(**{str(vars[i]): self.__meanings[str(vars[i])]._element(val) for (i,val) in values.items()}), 
             variables=rem_vars, 
             universe=self.universe, 
-            _extend_by_zero=self._Sequence__extend_by_zero
+            _extend_by_zero=self._Sequence__extend_by_zero,
+            meanings=self.extra_info().get("meanings", None),
+            **self.extra_info()["extra_args"]
         )
     def _swap(self, src: int, dst: int):
         new_vars = list(self.variables())
@@ -669,13 +678,23 @@ class RationalSequence(Sequence):
         new_meanings = self.__meanings.copy()
         new_meanings[new_vars[src]], new_meanings[new_vars[dst]] = new_meanings[new_vars[dst]], new_meanings[new_vars[src]]
 
-        return RationalSequence(self.__generic, new_vars, self.universe, meanings=new_meanings, _extend_by_zero = self._Sequence__extend_by_zero)
+        return self.__class__(
+            self.__generic, 
+            new_vars, 
+            self.universe, 
+            meanings=new_meanings, 
+            _extend_by_zero = self._Sequence__extend_by_zero,
+            **self.extra_info()["extra_args"]
+        )
     
     ## Other overridden methods
     def generic(self, *names: str):
         if len(names) == 0:
             return self.__generic
         return super().generic(*names)
+
+    def _generic(self, *names: str):
+        return self.__generic.subs(**{str(v) : self.__meanings[str(v)].generic(names[i]) for (i,v) in enumerate(self.variables())})
 
     ## Other methods
     def variables(self):

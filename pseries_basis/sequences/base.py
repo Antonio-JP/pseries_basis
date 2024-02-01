@@ -433,11 +433,14 @@ class Sequence(SetMorphism):
 
             The given names are used as variable names.
         '''
-        
         if len(names) == 0: # if nothing provided we create default names
             names = ["n"] if self.dim == 1 else [f"n_{i}" for i in range(1,self.dim+1)]
         if len(names) < self.dim:
             raise TypeError(f"Insufficient variables names provided")
+        
+        return self._generic(*names)
+    
+    def _generic(self, *names):
         names = var(names) # we create the variables
         result = SR(self.element(*names[:self.dim], _generic=True))
         if result.has(NaN):
@@ -566,7 +569,7 @@ class Sequence(SetMorphism):
             i, seq = value
             if not i in ZZ or i < 0 or i >= self.dim:
                 raise IndexError(f"[subsequence] The given index is not valid (got {i}). It must be a non-negative integer smaller than {self.dim}")
-            seq = self._subsequence_input(seq)
+            seq = self._subsequence_input(i, seq)
             if not (seq is False):
                 final_input.append((i, seq))
 
@@ -586,8 +589,21 @@ class Sequence(SetMorphism):
             
         return self._subsequence(dict(final_input))
     
-    def _subsequence_input(self, input):
-        if isinstance(input, (list,tuple)):
+    def _subsequence_input(self, _: int, input: tuple[int,int] | Sequence):
+        r'''
+            Method that process the input of :func:`subsequence` and converts it into a valid sequence to be substituted.
+
+            The input of this method can be:
+
+            * `(i, f: \mathbb{N} \rightarrow \mathbb{N}): changes the index `i` by the sequence `f`.
+            * `(i, (a,b))`: transforms the `i`-th index of the sequence linearly by taking the subsequence `ai+b`.
+
+            This method returns:
+
+            * A sequence with the information to be used in :func:`_subsequence` to build the corresponding subsequence.
+            * ``False`` when the input indicates the subsequence is the identity
+        '''
+        if isinstance(input, (list,tuple)): # case of a linear subsequence
                 if len(input) != 2:
                     raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
                 elif any((not el in ZZ) for el in input):
@@ -596,7 +612,7 @@ class Sequence(SetMorphism):
                 if a != 1 or b != 0:
                     from .element import RationalSequence
                     return RationalSequence(ZZ['n'](f"{a}*n + {b}"), universe=ZZ)
-        elif input != Sequence(lambda n : n, self.universe, 1): 
+        elif input != IdentitySequence(self.universe): 
             return input
         
         return False # the sequence looks like the identity
