@@ -43,7 +43,7 @@ from sage.combinat.q_analogues import q_binomial, q_int, q_pochhammer, q_factori
 
 __Rq = PolynomialRing(QQ, "q").fraction_field(); __q = __Rq.gens()[0]
 
-Qn = QPower()
+Qn = QPower(1, __Rq, q=__q)
 Q_int = QSequence(lambda n : q_int(n, q=__q), __Rq, 1, q=__q)
 Q_factorial = QSequence(lambda n : q_factorial(n, q=__q), __Rq, 1, q=__q)
 @lru_cache(maxsize=256)
