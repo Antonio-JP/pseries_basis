@@ -313,10 +313,45 @@ class ExpressionSequence(Sequence):
     def _element(self, *indices: int):
         return self.__generic.subs(**{str(v) : self.__meanings[str(v)]._element(i) for (v,i) in zip(self.variables(), indices)})
 
-    def _shift(self, *shifts): ## TODO
+    def _subsequences_input(self, *vals) -> dict[int, Sequence]:
+        original_inputs = dict(vals)
+        result = super()._subsequences_input(*vals)
+        ## We check if all were expressions
+        if any(isinstance(seq, Sequence) for seq in result.values()): # we need to fall-back to sequences
+            for (i, seq) in result.items():
+                if not isinstance(seq, Sequence):
+                    result[i] = super()._subsequence_input(original_inputs[i])
+        
+        return result
+
+    def _subsequence_input(self, index: int, input: tuple[int,int] | Sequence) -> Expression | Sequence | bool: # TODO
+        if isinstance(input, (list,tuple)): # case of a linear subsequence
+                if len(input) != 2:
+                    raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
+                elif any((not el in ZZ) for el in input):
+                    raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
+                a, b = input
+                if a != 1 or b != 0:
+                    from .qsequences import is_QSequence
+                    inner = self.__meanings[index]
+                    if inner == IdentitySequence(self.universe, **self.extra_info()["extra_args"]):
+                        return self.variables()[index]*a + b
+                    elif is_QSequence(inner):
+                        if hasattr(inner, "power"): # This is a special q-sequence representing q^{en}
+                            # q^{e(an+b)} = (q^{en})^a * q^{e*b} = q^{eb} * var^a
+                            # Since `inner` is a q-sequence, it has attribute `q`
+                            return self.variables[index]**a * inner.q * b
+        ## Any other behavior will fall into the original method
+        return super()._subsequence_input(self, index, input)
+    
+    def _shift(self, *shifts):
         try:
+            subseqs = [self._subsequence_input(i, (1,shifts[i])) for i in range(len(shifts))] # this take into account the meaning
+            if any(not isinstance(subseq, Expression) for subseq in subseqs):
+                raise TypeError(f"Falling back to usual shifting")
+            subseqs = {str(v): subseq for (v,subseq) in zip(self.variables(), subseqs) if subseq}
             return ExpressionSequence(
-                self.__generic.subs(**{str(v): self.__meanings[str(v)]._element(v+i) for (v,i) in zip(self.variables(), shifts)}), 
+                self.__generic.subs(**subseqs), 
                 variables=self.variables(), 
                 universe=self.universe, 
                 _extend_by_zero=self._Sequence__extend_by_zero,
@@ -326,12 +361,14 @@ class ExpressionSequence(Sequence):
         except:
             return super()._shifts(*shifts)
         
-    def _subsequence(self, final_input: dict[int, Sequence]): # TODO
+    def _subsequence(self, final_input: dict[int, Sequence] | dict[int, Expression]):
         try:
+            if isinstance(next(iter(final_input.values())), Sequence):
+                raise TypeError(f"Falling back to usual subsequencing")
             vars = self.variables()
-            generics = {i : seq.generic(str(vars[i])) for (i,seq) in final_input.items()}
+            subseqs = {str(vars[i]): final_input[i] for i in final_input}
             return ExpressionSequence(
-                self.__generic.subs(**{str(vars[i]): self.__meanings[str(vars[i])]._element(gen) for (i,gen) in generics.items()}), 
+                self.__generic.subs(**subseqs), 
                 variables=self.variables(), 
                 universe=self.universe, 
                 _extend_by_zero=all(el._Sequence__extend_by_zero for el in final_input.values()),
@@ -339,8 +376,17 @@ class ExpressionSequence(Sequence):
                 **self.extra_info()["extra_args"]
             )
         except:
+            ## Something may be expressions in final_input: we convert them to sequences
+            final_input = {i : (seq if isinstance(seq, Sequence) 
+                                else self.__class__(seq, self.variables(), self.universe, 
+                                    meanings=self.__meanings, 
+                                    **self.extra_info()["extra_args"]
+                                    )
+                                )
+                            for (i,seq) in final_input.items()}
             return super()._subsequence(final_input)
-    def _slicing(self, values: dict[int, int]): # TODO
+        
+    def _slicing(self, values: dict[int, int]):
         vars = self.variables()
         rem_vars = [vars[i] for i in range(self.dim) if not i in values]
         meanings = {str(v): self.__meanings[str(v)] for v in rem_vars if v in self.__meanings}
@@ -353,7 +399,7 @@ class ExpressionSequence(Sequence):
             **self.extra_info()["extra_args"]
         )
     
-    def _swap(self, src: int, dst: int): # TODO
+    def _swap(self, src: int, dst: int):
         new_vars = list(self.variables())
         new_vars[src], new_vars[dst] = new_vars[dst], new_vars[src]
         new_meanings = self.__meanings.copy()

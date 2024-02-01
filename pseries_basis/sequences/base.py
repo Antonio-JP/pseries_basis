@@ -564,32 +564,26 @@ class Sequence(SetMorphism):
 
             The corresponding subsequence after taking the consideration of the input.
         '''
-        final_input = []
+        final_input = self._subsequences_input(*vals) # process the input to a common format
+        
+        if len(final_input) == 0: # all subsequences were trivial
+            return self
+
+        return self._subsequence(dict(final_input))
+    
+    def _subsequences_input(self, *vals) -> dict[int, Sequence]:
+        result = []
         for value in vals:
             i, seq = value
             if not i in ZZ or i < 0 or i >= self.dim:
                 raise IndexError(f"[subsequence] The given index is not valid (got {i}). It must be a non-negative integer smaller than {self.dim}")
             seq = self._subsequence_input(i, seq)
             if not (seq is False):
-                final_input.append((i, seq))
+                result.append((i, seq))
 
-        if len(final_input) == 0: # all subsequences were trivial
-            return self
-
-        for value in final_input:
-            index, seq = value
-            if (not index in ZZ) or index < 0 or index >= self.dim:
-                raise ValueError(f"[subsequence] Indices are given wrongly: they need to be non-negative integers smaller than {self.dim}")
-            elif not isinstance(seq, Sequence):
-                raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be a sequence")
-            elif seq.dim != 1:
-                raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to match the dimension of the indices (got: {seq.dim}, expected: {1})")
-            elif pushout(seq.universe, ZZ) != ZZ:
-                raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be sequences over integers")
-            
-        return self._subsequence(dict(final_input))
+        return dict(result)
     
-    def _subsequence_input(self, _: int, input: tuple[int,int] | Sequence):
+    def _subsequence_input(self, _: int, input: tuple[int,int] | Sequence) -> Sequence | bool:
         r'''
             Method that process the input of :func:`subsequence` and converts it into a valid sequence to be substituted.
 
@@ -612,8 +606,14 @@ class Sequence(SetMorphism):
                 if a != 1 or b != 0:
                     from .element import RationalSequence
                     return RationalSequence(ZZ['n'](f"{a}*n + {b}"), universe=ZZ)
+        elif not isinstance(input, Sequence):
+            raise TypeError(f"[subsequence] The given element for subsequence is of wrong format")
         elif input != IdentitySequence(self.universe): 
             return input
+        elif input.dim != 1:
+            raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to match the dimension of the indices (got: {input.dim}, expected: {1})")
+        elif pushout(input.universe, ZZ) != ZZ:
+            raise TypeError(f"[subsequence] Subsequence values are given wrongly: they need to be sequences over integers")
         
         return False # the sequence looks like the identity
     
