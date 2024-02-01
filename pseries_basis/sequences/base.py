@@ -137,7 +137,7 @@ from __future__ import annotations
 
 import logging
 
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from functools import cached_property
 from itertools import product
 from sage.all import (cached_method, cartesian_product, parent, prod, var, oo, NaN, SR, ZZ)
@@ -731,6 +731,38 @@ class Sequence(SetMorphism):
                 return prod((self(i) for i in range(n)), z=self.universe.one())
             
         return Sequence(_partial_prod, self.universe, self.dim, _extend_by_zero=self.__extend_by_zero, **self.__extra_args)
+
+    def diagonal(self, to_diag: Collection[int] = None) -> Sequence:
+        r'''
+            Method that return the diagonal sequence of a multi-variate sequence
+        '''
+        ## Checking the argument "to_diag"
+        if to_diag is None:
+            to_diag = list(range(self.dim))
+        elif any(ind<0 or ind>=self.dim for ind in to_diag):
+            raise ValueError(f"[diagonal] Indices to diagonalize must be valid indices for dimensions of the sequence")
+        to_diag = list(set(to_diag)); to_diag.sort() # We remove repeated indices
+
+        if self.dim == 1: # nothing to diagonalize
+            return self
+
+        new_dim = self.dim - len(to_diag) + 1
+
+        def __to_old_indices(*n: int) -> list[int]:
+            new_indices = []; j = 0
+            for i in range(self.dim):
+                if i in to_diag: new_indices.append(n[-1])
+                else: 
+                    new_indices.append(n[j]); j+=1
+            return new_indices
+        
+        return Sequence(
+            lambda *n : self._element(*__to_old_indices(*n)), 
+            universe=self.universe, 
+            dim = new_dim, 
+            _extend_by_zero=self.__extend_by_zero,
+            **self.__extra_args
+        )
 
     #############################################################################
     ## Arithmetic methods
