@@ -237,7 +237,7 @@ class Sequence(SetMorphism):
                 logger.debug(f"[Sequence - register] Adding edge ({sub_class}) -> ({cls})")
                 Sequence.CLASSES_GRAPH.add_edge(sub_class, cls)
         else:
-            logger.debug(f"[Sequence - register] Trying to register repeatedly a sequence class ({cls})")
+            logger.log(logging.DEBUG-1, f"[Sequence - register] Trying to register repeatedly a sequence class ({cls})")
 
     @staticmethod
     def MinimalCommonClass(cls1, cls2):

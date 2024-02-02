@@ -918,18 +918,24 @@ class PSBasis(Sequence):
         return recurrence
             
     def _process_recurrence_sequence(self, sequence, output):
-        if not isinstance(sequence, ExpressionSequence):
-            if is_QSequence(self):
-                seq = QExpressionSequence(sequence.generic(str(self.ore_var())), universe=sequence.universe, variables=[str(self.ore_var())], q = self.q)
-                if output == "rational":
-                    seq = QRationalSequence(seq.generic(str(self.ore_var())), universe=seq.universe, variables=[str(self.ore_var())], q=self.q)
-                return seq
-            else:
-                seq = ExpressionSequence(sequence.generic(str(self.ore_var())), universe=sequence.universe, variables=[str(self.ore_var())])
-                if output == "rational":
-                    seq = RationalSequence(seq.generic(str(self.ore_var())), universe=seq.universe, variables=[str(self.ore_var())])
-                return seq
-        return sequence
+        logger.log(logging.DEBUG-1, f"[recurrence @ process] Processing a sequence of type {sequence.__class__} into {output}")
+        if isinstance(sequence, ExpressionSequence): # this includes both expression and rational
+            logger.log(logging.DEBUG-1, f"[recurrence @ process] Variables: {sequence.variables()}; Expr: {sequence.generic()}")
+        if is_QSequence(self):
+            RatSeqCreation = lambda rational : QRationalSequence(rational, variables=[str(self.ore_var())], universe=sequence.universe, q=self.q)
+            ExprSeqCreation = lambda expr : QExpressionSequence(expr, variables=[str(self.ore_var())], universe=sequence.universe, q=self.q)
+        else:
+            RatSeqCreation = lambda rational : RationalSequence(rational, variables=[str(self.ore_var())], universe=sequence.universe)
+            ExprSeqCreation = lambda expr : ExpressionSequence(expr, variables=[str(self.ore_var())], universe=sequence.universe)
+
+        ## Getting the generic with the "self.ore_var()" as value
+        if isinstance(sequence, RationalSequence): # we evaluate the generic formula substituing the variable by the ore_var
+            var = sequence.variables()[0]
+            expr = sequence._eval_generic(**{str(var): self.ore_var()})
+        else:
+            expr = sequence.generic(str(self.ore_var())) # we try blindly
+
+        return ExprSeqCreation(expr) if output == "expression" else RatSeqCreation(expr)
 
     def _process_ore_algebra(self, recurrence, double: bool = False):
         recurrence = self._process_recurrence(recurrence, "rational")

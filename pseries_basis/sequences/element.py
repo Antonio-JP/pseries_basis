@@ -349,7 +349,7 @@ class ExpressionSequence(Sequence):
                         if hasattr(inner, "power"): # This is a special q-sequence representing q^{en}
                             # q^{e(an+b)} = (q^{en})^a * q^{e*b} = q^{eb} * var^a
                             # Since `inner` is a q-sequence, it has attribute `q`
-                            return vars[index]**a * inner.q * b
+                            return (vars[index]**a) * (inner.q ** b)
         ## Any other behavior will fall into the original method
         return super()._subsequence_input(self, index, input)
     
