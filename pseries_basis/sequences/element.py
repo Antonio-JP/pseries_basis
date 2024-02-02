@@ -351,7 +351,7 @@ class ExpressionSequence(Sequence):
                             # Since `inner` is a q-sequence, it has attribute `q`
                             return (vars[index]**a) * (inner.q ** b)
         ## Any other behavior will fall into the original method
-        return super()._subsequence_input(self, index, input)
+        return super()._subsequence_input(index, input)
     
     def _shift(self, *shifts):
         try:
