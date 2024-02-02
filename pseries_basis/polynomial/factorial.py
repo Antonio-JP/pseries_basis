@@ -31,7 +31,7 @@ import logging
 from collections.abc import Callable
 from functools import lru_cache, reduce, cached_property
 from itertools import chain, product
-from sage.all import binomial, latex, Matrix, parent, PolynomialRing, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
+from sage.all import binomial, latex, Matrix, parent, PolynomialRing, prod, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from sage.misc.cachefunc import cached_method #pylint: disable=no-name-in-module
 from typing import Any, Collection
@@ -1190,6 +1190,11 @@ class ShuffledBasis(FactorialBasis):
         cycle = [ZZ(el) for el in cycle]
         if(any(el < 0 or el > len(factors) for el in cycle)):
             raise ValueError("The deciding cycle must be composed of integers indexing the factors basis")
+        
+        ## Checking the factorial bases are valid
+        beta = factors[0]._FactorialBasis__beta
+        if any(beta[1] != factor._FactorialBasis__beta[1] for factor in factors[1:]):
+            raise TypeError(f"[ShuffledBasis] Incompatible bases: the b(n)-factorial basis have different values for `b(n)`.")
 
         ## Storing the main elements
         self.__factors = tuple(factors)
@@ -1199,10 +1204,11 @@ class ShuffledBasis(FactorialBasis):
         new_ak = Sequence(lambda k : (self.factors[self.cycle[k%self.nsections]]).ak[self.indices[k][self.cycle[k%self.nsections]]], universe)
         new_bk = Sequence(lambda k : (self.factors[self.cycle[k%self.nsections]]).bk[self.indices[k][self.cycle[k%self.nsections]]], universe)
 
-        ## mixing all the "kwds" argumenst
+        ## Mixing all the "kwds" and "_extend_by_zero" arguments
         for factor in factors: kwds.update(factor.extra_info()["extra_args"])
+        _extend_by_zero = _extend_by_zero and all(factor._Sequence__extend_by_zero for factor in factors)
         ## We call the constructor for a factorial basis
-        FactorialBasis.__init__(self, new_ak, new_bk, universe, variable=variable, _extend_by_zero=_extend_by_zero, **kwds)
+        FactorialBasis.__init__(self, new_ak, new_bk, universe, beta=beta, _extend_by_zero=_extend_by_zero, **kwds)
 
         ## We reset the compatibility wrt the variable name
         try:
@@ -1272,6 +1278,10 @@ class ShuffledBasis(FactorialBasis):
             return vector([K*c+e for c,e in zip(self.counts, extras)])
         return Sequence(_element, ZZ**self.nfactors, 1)
     
+    def _element(self, *indices):
+        index = indices[0] # we know the dimension is 1
+        return prod(factor[i] for (factor, i) in zip(self.factors, self.indices(index)))
+
     @cached_method
     def division_decomposition(self, indices: tuple[int]) -> tuple[tuple, int, Any]:
         r'''
@@ -1652,7 +1662,7 @@ class ShuffledBasis(FactorialBasis):
     # def is_quasi_eval_triangular(self) -> bool:
     #     return all(basis.is_quasi_eval_triangular() for basis in self.factors)
 
-def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> ShuffledBasis:
+def ProductBasis(*factors: FactorialBasis) -> ShuffledBasis:
     r'''
         Factory for creating a special type of :class:`ShuffledBasis`: Product Basis.
 
@@ -1667,15 +1677,13 @@ def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> Shuff
         INPUT:
 
         * ``factors``: list of :class:`FactorialBasis`.
-        ??* ``init``: value for the constant element of the basis.
-        ??* ``var_name``: name of the operator representing the multiplication by `x`.
 
         EXAMPLES::
 
             sage: from pseries_basis import *
             sage: B1 = BinomialBasis; B2 = PowerBasis; B3 = FallingBasis(1,0,1)
-            sage: #TODO ProductBasis([B1,B2]).factors == (B1, B2) ## output: True
-            sage: #TODO ProductBasis([B1,B2]).nfactors() ## output: 2
+            sage: #TODO ProductBasis(B1,B2).factors == (B1, B2) ## output: True
+            sage: #TODO ProductBasis(B1,B2).nfactors() ## output: 2
             sage: #TODO ProductBasis([B1,B3,B2]).factors == (B1,B3,B2) ## output: True
             sage: #TODO ProductBasis([B1,B3,B2]).nfactors() ## output: 3
 
@@ -1743,6 +1751,8 @@ def ProductBasis(factors: list[FactorialBasis] | tuple[FactorialBasis]) -> Shuff
             sage: #TODO column = [B2.remove_Sni(M.coefficient((j,0))) for j in range(4)]
             sage: #TODO column[0].gcrd(*column[1:]) ## output: (n^2 + 2*n + 1)*Sn - 16*n^2 - 16*n - 4
     '''
+    if len(factors) == 1 and isinstance(factors[0], Collection): # we allow ProductBasis(B1,B2) and ProductBasis([B1,B2])
+        factors = factors[0]
     return ShuffledBasis(factors, list(range(len(factors))))
 
 class _ShuffledQuasiTriangular:
