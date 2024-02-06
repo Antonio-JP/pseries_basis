@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from typing import Collection, Mapping
 from .base import ConstantSequence, Sequence, IdentitySequence
-from sage.all import Expression, PolynomialRing, var, SR, ZZ #pylint: disable=no-name-in-module
+from sage.all import Expression, parent, PolynomialRing, var, SR, ZZ #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from sage.rings.fraction_field import is_FractionField 
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
@@ -184,26 +184,26 @@ class ExpressionSequence(Sequence):
         
         ## Checking the argument for new meanings
         if new_meanings == None:
-            meanings = len(new_variables)*[IdentitySequence(universe, **kwds)]
+            new_meanings = len(new_variables)*[IdentitySequence(universe, **kwds)]
         elif isinstance(new_meanings, Sequence):
-            meanings = len(new_variables)*[new_meanings]
+            new_meanings = len(new_variables)*[new_meanings]
 
         if not isinstance(new_meanings, Collection):
             raise TypeError(f"[change_dim] The new meanings must be of appropriate type")
         if not isinstance(new_meanings, Mapping): # If it is not a map, we convert it
             if len(new_meanings) != len(new_variables):
                 raise ValueError(f"[change_dim] The new meanings must be of appropriate length")
-            new_meanings = {str(var): val for (var,val) in zip(self.__variables, new_meanings)}
+            new_meanings = {str(var): val for (var,val) in zip(new_variables, new_meanings)}
         
         if any(v not in new_variables for v in new_meanings):
-            raise ValueError(f"[change_dim] The new meanings are given for wrign names")
+            raise ValueError(f"[change_dim] The new meanings are given for wrong names")
         if any(not (isinstance(el, Sequence) or (el in self.universe)) for el in new_meanings.values()):
             raise ValueError(f"[change_dim] The new meanings must be of appropriate shape")
         ## We add the new variables and their meanings
         for (i, v) in sorted(zip(old_dims, variables), key=lambda k : k[0]): new_variables.insert(i, v)
         meanings.update(**new_meanings)
 
-        return self.__class__(generic, new_variables, universe=universe, meanings=new_meanings, _extend_by_zero=extend, **kwds)
+        return self.__class__(generic, new_variables, universe=universe, meanings=meanings, _extend_by_zero=extend, **kwds)
 
     @classmethod
     def _change_from_class(cls, sequence: Sequence, **extra_info):
@@ -391,7 +391,7 @@ class ExpressionSequence(Sequence):
         vars = self.variables()
         rem_vars = [vars[i] for i in range(self.dim) if not i in values]
         self_meanings = self.meanings()
-        meanings = {str(v): self_meanings[str(v)] for v in rem_vars if v in self_meanings}
+        meanings = {str(v): self_meanings[str(v)] for v in rem_vars if str(v) in self_meanings}
         return self.__class__(
             self._eval_generic(**{str(vars[i]): self_meanings[str(vars[i])]._element(val) for (i,val) in values.items()}), 
             variables=rem_vars, 
@@ -425,6 +425,30 @@ class ExpressionSequence(Sequence):
     def _generic(self, *names: str):
         return self._eval_generic(**{str(v) : self.__meanings[str(v)].generic(names[i]) for (i,v) in enumerate(self.variables())})
 
+    def is_polynomial(self) -> bool:
+        try:
+            expr = SR(self.generic()).simplify_full()
+            return all(expr.is_polynomial(x) for x in self.variables())
+        except:
+            return False
+    def as_polynomial(self) -> RationalSequence:
+        if self.is_polynomial():
+            from .element import RationalSequence
+            return RationalSequence(SR(self.generic()).simplify_full(), self.variables(), self.universe, meanings=self.meanings())
+        else:
+            raise ValueError(f"{self} is not a polynomial sequence.")
+    def is_rational(self) -> bool:
+        try:
+            return SR(self.generic()).simplify_full().is_rational_expression()
+        except:
+            return False
+    def as_rational(self) -> RationalSequence:
+        if self.is_rational():
+            from .element import RationalSequence
+            return RationalSequence(SR(self.generic()).simplify_full(), self.variables(), self.universe, meanings=self.meanings())
+        else:
+            raise ValueError(f"{self} is not a polynomial sequence.")
+      
     ## Other methods
     def variables(self):
         return self.__variables
@@ -488,7 +512,7 @@ class RationalSequence(ExpressionSequence):
     '''
     def __init__(self, rational, variables=None, universe=None, *, meanings: Sequence | Collection[Sequence] | Mapping[str,Sequence] = None, _extend_by_zero=False, **kwds):
         ## Checking rational is a rational expression
-        R = rational.parent()
+        R = rational.parent() if hasattr(rational, "parent") else parent(rational)
         if is_FractionField(R):
             R = R.base()
         if not (is_PolynomialRing(R) or is_MPolynomialRing(R)):
@@ -593,4 +617,16 @@ class RationalSequence(ExpressionSequence):
     def _eval_generic(self, **values):
         return self.generic()(**values)
 
+    def is_polynomial(self) -> bool:
+        return self.generic().denominator() == 1
+    def as_polynomial(self) -> Sequence:
+        if self.is_polynomial():
+            return self
+        else:
+            raise ValueError(f"{self} is not a polynomial sequence.")
+    def is_rational(self) -> bool:
+        return True
+    def as_rational(self) -> Sequence:
+        return self
+    
 __all__=["ExpressionSequence", "RationalSequence"]

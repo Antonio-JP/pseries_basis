@@ -962,10 +962,11 @@ class Sequence(SetMorphism):
             else:
                 raise TypeError("Sequence.is_hypergeometric() missing 1 required positional argument: 'index'")
         quotient = self.shift(tuple([1 if i == index else 0 for i in range(self.dim)])) / self
-        if quotient.is_rational():
-            return True, quotient.as_rational()
-        elif quotient.is_constant():
+        if quotient.is_constant():
             return True, quotient.as_constant()
+        elif quotient.is_rational():
+            return True, quotient.as_rational()
+        
         return False, None
 
     def is_constant(self, bound: int = None) -> bool:
@@ -973,10 +974,14 @@ class Sequence(SetMorphism):
             return all(self(el) == self(0) for el in range(bound if bound != None else self.EQUALITY_BOUND))
         else:
             return all(self(el) == self(self.dim*[0]) for el in product(range(bound if bound != None else self.EQUALITY_BOUND), repeat=self.dim))
-    
     def as_constant(self, bound = None) -> ConstantSequence:
         if self.is_constant(bound):
-            return ConstantSequence(self(self.dim*[0]), self.universe, self.dim, _extend_by_zero = self.__extend_by_zero, **self.__extra_args)
+            return ConstantSequence(
+                self(self.dim*[0]) if self.dim > 1 else self(0), 
+                self.universe, 
+                self.dim, 
+                _extend_by_zero = self.__extend_by_zero, 
+                **self.__extra_args)
         else:
             raise ValueError(f"{self} is not a constant sequence.")
         

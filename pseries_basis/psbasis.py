@@ -367,32 +367,15 @@ class PSBasis(Sequence):
         ## Creating the new basis object
         new_basis = self._scalar_basis(factor)
 
-        ## Checking hypergeometric behavior
-        is_hyper, quot = factor.is_hypergeometric()
-
         ## Extending compatibilities
         for operator in self.basic_compatibilities():
             if not operator in new_basis.basic_compatibilities():
-                compatibility = self.compatibility(operator)
-                A, B, t = compatibility.data()
-                
-                new_coeffs = []
-                for b in range(t):
-                    section = []
-                    for i in range(-A,B+1):
-                        if i == 0:
-                            to_mul = ConstantSequence(1, self.base, 1)
-                        if not is_hyper:
-                            to_mul = factor.linear_subsequence(0, t, b)/factor.linear_subsequence(0, t, b+i)
-                        else:
-                            if i > 0:
-                                to_mul = 1/prod((quot.linear_subsequence(0, t, b+j) for j in range(i+1)), z=ConstantSequence(1, self.base, 1))
-                            elif i < 0:
-                                to_mul = prod((quot.linear_subsequence(0, t, b+j) for j in range(-i+1, 1)), z=ConstantSequence(1, self.base, 1))
-                        section.append(compatibility[b,i] * to_mul)
-                    new_coeffs.append(section)
-                new_compatibility = Compatibility(new_coeffs, A, B, t)
-                new_basis.set_compatibility(operator, new_compatibility)
+                new_basis.set_compatibility(
+                    operator, 
+                    self.compatibility(operator).scale_basis(factor), 
+                    True, 
+                    self.compatibility_type(operator)
+                )
 
         return new_basis
 
@@ -1299,6 +1282,50 @@ class Compatibility:
         ## Here we can assume that the base ring coincides 
         return self.mul(Compatibility([[factor]], 0, 0, 1))
 
+    def scale_basis(self, factor: Sequence) -> Compatibility:
+        r'''
+            Method that computes the equivalent compatibility for the sacled basis.
+
+            Let us assume that a :class:`Compatibility` is associated with a basis `P_k(n)`. Now,
+            assume we consider the scaled basis `Q_k(n) = c(k)P_k(n)`. Then the operator
+            of ``self`` is also compatible with the new basis and such compatibility is closely related
+            with ``self``. Namely, for `k = mt + r`
+
+            .. MATH::
+
+                L Q_k(n) = c(k) L P_k(n) = c(k) \sum_{i=-A}^B \alpha_{r,i}(m) P_{k+i}(n) = \sum_{i=-A}^B \alpha_{r,i}(m) \frac{c(k)}{c(k+i)}Q_{k+i}(n)
+
+            Then the compatibility of `L` w.r.t. `Q_k(n)` is again `(A,B)`-compatible in `t` sections and the new compatibility coefficients are::
+
+            .. MATH::
+
+                \tilde{\alpha}_{r,i}(m) = \alpha_{r,i}(m) \frac{c(mt+r)}{c(mt+r+i)}
+
+            This computation has several layers of simplification:
+
+            * If the sequence `c(k)` is a :class:`RationalSequence`, then all the quotients `\frac{c(mt+r)}{c(mt+r+i)}` are again rational sequences, 
+              hence we can use these computations right away.
+            * If the sequence `c(k)` is **not** rational but it is hypergeometric. Then `c(k+1)/c(k)` is a rational function and all the quotients necessary 
+              can be computed as rational sequences.
+            * Otherwise, we simply compute the values as they appear in the formula and hope they are useful later on.
+        '''
+        is_hyper, quot = factor.is_hypergeometric()
+        if isinstance(factor, RationalSequence) or (not is_hyper): # easiest case
+            new_coeffs = [[
+                self[r,i]*factor.linear_subsequence(0, self.t, r)/factor.linear_subsequence(0, self.t, (r+i)%self.t).shift((r+i)//self.t) 
+                for i in range(-self.A, self.B+1)]
+            for r in range(self.t)]
+        else:
+            quots = {0: ConstantSequence(1, self.base())}
+            for i in range(1,max(self.A, self.B)+1):
+                if i <= self.A:
+                    quots[-i] = quots[-i+1]*quot.shift(-i)
+                if i <= self.B:
+                    quots[i] = quots[i-1]/quot.shift(i-1)
+            new_coeffs = [[self[r,i]*quots[i].linear_subsequence(0, self.t, r) for i in range(-self.A, self.B+1)] for r in range(self.t)]
+
+        return Compatibility(new_coeffs, self.A, self.B, self.t)
+                
     def __coerce_into_compatibility__(self, other) -> Compatibility:
         if isinstance(other, Compatibility):
             return other

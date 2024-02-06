@@ -212,12 +212,11 @@ class FactorialBasis(PSBasis):
         ## Getting other arguments for the builder
         _, kwds = self.args_to_self()
         kwds["universe"] = new_universe
-
+        kwds["as_2seq"] = factor.change_dimension(2, [0], new_variables=[str(self.__beta[0])], new_meanings=[self.__beta[1]])*kwds["as_2seq"]
+        
         ## Building the new basis
         output = FactorialBasis(self.ak*quotient, self.bk*quotient, **kwds)
-        ## Creating (if was present) the original sequence
-        if self._PSBasis__original_sequence != None:
-            output._PSBasis__original_sequence = factor.change_dimension(2, [0], new_variables=[str(self.gen())])*self._PSBasis__original_sequence
+        
         return output
 
     ##################################################################################
@@ -510,7 +509,8 @@ def FallingBasis(a, b, c, universe = None, E: str = 'E'):
 
     output = FactorialBasis(ak, bk, universe)
     # This object already has the compatibility with "n". The shift remains
-    comp = Compatibility([[ConstantSequence(c, universe, 1), ConstantSequence(1,universe, 1)]], 1, 0, 1)
+    equiv_comp = output.compatibility(f"{a}*n + {b+c}")
+    comp = Compatibility([[equiv_comp[(0,i)].shift(-1) for i in range(0,2)]], 1, 0, 1)
 
     if c == 0: # no shift is compatible --> just identity
         E = "Id"
