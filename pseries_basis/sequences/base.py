@@ -969,7 +969,10 @@ class Sequence(SetMorphism):
         return False, None
 
     def is_constant(self, bound: int = None) -> bool:
-        return all(self(el) == self(self.dim*[0]) for el in product(range(bound if bound != None else self.EQUALITY_BOUND), repeat=self.dim))
+        if self.dim == 1:
+            return all(self(el) == self(0) for el in range(bound if bound != None else self.EQUALITY_BOUND))
+        else:
+            return all(self(el) == self(self.dim*[0]) for el in product(range(bound if bound != None else self.EQUALITY_BOUND), repeat=self.dim))
     
     def as_constant(self, bound = None) -> ConstantSequence:
         if self.is_constant(bound):
