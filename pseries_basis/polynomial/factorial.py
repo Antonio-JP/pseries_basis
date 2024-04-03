@@ -262,6 +262,7 @@ class FactorialBasis(PSBasis):
             TODO: add tests
         '''
         _, self_args = self.args_to_self()
+        self_args.pop("as_2seq") # we remove the previous 2-dimensional sequence representation
         return FactorialBasis(self.ak.shift(shift), self.bk.shift(shift), **self_args)
 
     def compatible_division(self, operator) -> DivisionCondition:
@@ -410,11 +411,45 @@ class FactorialBasis(PSBasis):
             result.append(tuple([comp_beta_i[section, j] for j in range(size)])) # get zeros when j > i
 
         return tuple(result)
+    
+    def equiv_CtD(self, compatibility: Compatibility) -> DivisionCondition:
+        r'''
+            Method that transforms a compatibility condition with ``self`` into a division condition.
+
+            INPUT:
+
+            * ``compatibility``: element representing the compatibility condition. If the input is not of type
+              :class:`Compatibility`, we call the method :func:`~PSBasis.compatibility` to get one out of this input.
+
+            OUTPUT:
+
+            The equivalent :class:`DivisionCondition` related with ``compatibility`` and this basis.
+        '''
+        if not isinstance(compatibility, Compatibility):
+            compatibility = self.compatibility(compatibility)
+        return DivisionCondition.from_compatibility(compatibility, self)
+    
+    def equiv_DtC(self, division: DivisionCondition) -> Compatibility:
+        r'''
+            Method that transforms a division condition with ``self`` into a compatibility condition.
+
+            INPUT:
+
+            * ``division``: element representing the division condition. If the input is not of type
+              :class:`DivisionCondition`, we call the method :func:`~FactorialBasis.compatible_division` to 
+              get one out of this input.
+
+            OUTPUT:
+
+            The equivalent :class:`Compatibility` related with ``division`` and this basis.
+        '''
+        if not isinstance(division, DivisionCondition):
+            division = self.compatible_division(division)
+        return division.to_compatibility(self)
+        
 
     ##################################################################################
     ### TODO: def increasing_polynomial(self, *args, **kwds)
-    ### TODO: def equiv_DtC(self, compatibility: str | OreOperator | TypeCompatibility) -> TypeCompatibility
-    ### TODO: def equiv_CtD(self, division: TypeCompatibility) -> TypeCompatibility
 
 def RootSequenceBasis(rho: Sequence, lc: Sequence, 
                         universe = None, *, 
@@ -948,9 +983,9 @@ class DivisionCondition:
         
         for r in range(self.sections):
             if self.sections > 1:
-                code += r"L \cdot \frac{L P_{" + latex(self.t) + r"k + " + latex(r) + r"}}{P_{" + latex(self.t) + r"k + " + latex(r) + r" - " + latex(self.A) + r"}} & = "
+                code += r"\frac{L \cdot L P_{" + latex(self.t) + r"k + " + latex(r) + r"}}{P_{" + latex(self.t) + r"k + " + latex(r) + r" - " + latex(self.A) + r"}} & = "
             else:
-                code += r"L \cdot P_{k-" + latex(self.A) + r"} = "
+                code += r"\frac{L \cdot P_k}{P_{k-" + latex(self.A) + r"}} = "
 
             monomials = []
             for i in range(self.size()): 
@@ -1466,7 +1501,7 @@ class ShuffledBasis(FactorialBasis):
         return f"Shuffled Basis {self.cycle} of the basis:" + "".join([f"\n\t- {f}" for f in self.factors])
 
     def _latex_(self) -> str:
-        return (r"\prod_{%s}" %self.cycle)  + "".join([f._latex_() for f in self.factors])
+        return r"\prod_{" +str(self.cycle) + r"}"  + "".join([f._latex_() for f in self.factors])
 
     # def increasing_polynomial(self, src: element.Element, diff : int = None, dst: int = None) -> element.Element:
     #     r'''
@@ -1873,7 +1908,7 @@ def DefiniteSumSolutions(operator, *input: int | list[int]):
     matrix_recurrences = B.recurrence(operator, output="ore")
         
     ## Extracting the gcrd for the first column
-    result = matrix_recurrences[0][0].gcrd(*[matrix_recurrences[j][0] for j in range(m)])
+    result = matrix_recurrences[0,0].gcrd(*[matrix_recurrences[j,0] for j in range(m)])
     
     return result
 
