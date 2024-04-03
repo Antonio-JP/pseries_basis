@@ -6,7 +6,7 @@ r'''
     Sequence.
 
     All other types of sequences will inherit from the main class :class:`Sequence` and must define a relation among other
-    previously implemented sequence in order to provide appropriate conversion among different types of sequences. This is somehow
+    previously implemented sequences in order to provide appropriate conversion among different types of sequences. This is somehow
     similar to the inheritance or coercion systems from Python or SageMath, but adding an extra layer of flexibility when 
     implementing sequences within the same ring.
 
@@ -76,7 +76,7 @@ r'''
 
     The coercion will also work with more complexes types of SageMath rings::
 
-        sage: a = NumberField(QQ["a"]("a^2 - 2"), "a").gens()[0]
+        sage: a = NumberField(QQ["a"]("a^2 - 2"), "a").0
         sage: SeqA = ConstantSequence(a, a.parent(), 1)
         sage: Seq2 + SeqA
         Sequence over [Number Field in a with defining polynomial a^2 - 2]: (a + 2, a + 2, a + 2,...)
@@ -296,7 +296,7 @@ class Sequence(SetMorphism):
         if attr in self.__extra_args:
             return self.__extra_args[attr]
         
-        raise AttributeError(f"Attrbute {attr} not found")
+        raise AttributeError(f"Attribute {attr} not found")
 
     #############################################################################
     ## Casting methods

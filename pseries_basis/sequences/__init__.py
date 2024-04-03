@@ -28,6 +28,8 @@ r'''
     * :mod:`~.element`: this module contains the main classes that implements the sequences in different ways.
       These subclasses will define a poset (partially-ordered set) of subclasses that will be used when
       computing with sequences to decide the final class of a sequence.
+    * :mod:`~.examples`: this module contains several examples of sequences and methods to generate classes 
+      of sequences.
     * :mod:`~.qsequences`: implement all the necessary classes to handle and manipulate `q`-sequences.
 '''
 from .base import *
