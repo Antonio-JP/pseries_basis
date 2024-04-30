@@ -6,10 +6,13 @@ r'''
 from __future__ import annotations
 
 from functools import reduce, lru_cache
-from sage.all import cached_method, QQ, ZZ, SR #pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
 from sage.functions.orthogonal_polys import chebyshev_T, chebyshev_U, gegenbauer, hermite, jacobi_P, laguerre
+from sage.misc.cachefunc import cached_method
+from sage.rings.integer_ring import ZZ
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.rational_field import QQ
+from sage.symbolic.ring import SR
 from typing import Any
 
 # Local imports
@@ -61,27 +64,27 @@ class OrthogonalBasis(PSBasis):
                  as_2seq: Sequence = None, _extend_by_zero=False, 
                  **kwds):
         ## Treating the beta/gamma arguments
-        beta = beta if beta != None else ('n', IdentitySequence(ZZ, **kwds))
-        gamma = gamma if gamma != None else ('k', IdentitySequence(ZZ, **kwds))
+        beta = beta if beta is not None else ('n', IdentitySequence(ZZ, **kwds))
+        gamma = gamma if gamma is not None else ('k', IdentitySequence(ZZ, **kwds))
 
         ## Treating the arguments a_k and b_k
         if not isinstance(ak, Sequence):
-            if universe != None:
+            if universe is not None:
                 try:
                     ak = RationalSequence(ak, [gamma[0]], universe, meanings=gamma[1], **kwds)
-                except:
+                except Exception:
                     ak = ExpressionSequence(SR(ak), [gamma[0]], universe, meanings=gamma[1], **kwds)
         if not isinstance(bk, Sequence): 
-            if universe != None:
+            if universe is not None:
                 try:
                     bk = RationalSequence(bk, [gamma[0]], universe, meanings=gamma[1], **kwds)
-                except:
+                except Exception:
                     bk = ExpressionSequence(SR(bk), [gamma[0]], universe, meanings=gamma[1], **kwds)
         if not isinstance(ck, Sequence): 
-            if universe != None:
+            if universe is not None:
                 try:
                     ck = RationalSequence(ck, [gamma[0]], universe, meanings=gamma[1], **kwds)
-                except:
+                except Exception:
                     ck = ExpressionSequence(SR(ck), [gamma[0]], universe, meanings=gamma[1], **kwds)
         if not isinstance(ak, Sequence) or ak.dim != 1:
             raise TypeError(f"[FactorialBasis] The element a_k must be a univariate sequence or an expression in 'k'")
@@ -89,23 +92,26 @@ class OrthogonalBasis(PSBasis):
             raise TypeError(f"[FactorialBasis] The element a_k must be a univariate sequence or an expression in 'k'")
         if not isinstance(ck, Sequence) or ck.dim != 1:
             raise TypeError(f"[FactorialBasis] The element a_k must be a univariate sequence or an expression in 'k'")
-        universe = universe if universe != None else reduce(pushout, (ak.universe, bk.universe, ck.universe))
+        universe = universe if universe is not None else reduce(pushout, (ak.universe, bk.universe, ck.universe))
         
         self.__ak = ak.change_universe(universe)
         self.__bk = bk.change_universe(universe)
         self.__ck = ck.change_universe(universe)
 
         self.__poly_ring = PolynomialRing(universe, beta[0]) # this is the polynomial ring for the elements of the sequence
-        self.__beta = beta; self.__gamma = gamma
+        self.__beta, self.__gamma = beta, gamma
         self.__gen = self.__poly_ring.gens()[0]
 
         @lru_cache
         def __get_element(k):
-            if k < 0: return self.__poly_ring.zero()
-            elif k == 0: return self.__poly_ring.one()
-            else: return (self.ak(k-1)*self.__gen + self.bk(k-1))*__get_element(k-1) - self.ck(k-1)*__get_element(k-2) #pylint: disable=not-callable
+            if k < 0: 
+                return self.__poly_ring.zero()
+            elif k == 0: 
+                return self.__poly_ring.one()
+            else: 
+                return (self.ak(k-1)*self.__gen + self.bk(k-1))*__get_element(k-1) - self.ck(k-1)*__get_element(k-2) #pylint: disable=not-callable
 
-        sequence = as_2seq if as_2seq != None else lambda k : self._RationalSequenceBuilder(__get_element(k))
+        sequence = as_2seq if as_2seq is not None else lambda k : self._RationalSequenceBuilder(__get_element(k))
 
         super().__init__(sequence, universe, _extend_by_zero=_extend_by_zero, **kwds)
 
@@ -151,7 +157,8 @@ class OrthogonalBasis(PSBasis):
         '''
         ## Getting the new universe and new quotient for changing the sequences
         new_universe = pushout(self.base, factor.universe)
-        quotient_1 = factor.shift() / factor; quotient_2 = factor.shift(2) / factor
+        quotient_1 = factor.shift() / factor
+        quotient_2 = factor.shift(2) / factor
 
         ## Getting other arguments for the builder
         _, kwds = self.args_to_self()
@@ -160,7 +167,7 @@ class OrthogonalBasis(PSBasis):
         ## Building the new basis
         output = OrthogonalBasis(self.ak*quotient_1, self.bk*quotient_1, self.ck * quotient_2.shift(-1), **kwds)
         ## Creating (if was present) the original sequence
-        if self._PSBasis__original_sequence != None:
+        if self._PSBasis__original_sequence is not None:
             output._PSBasis__original_sequence = factor.change_dimension(2, [0], new_variables=[str(self.gen())])*self._PSBasis__original_sequence
         return output
 
@@ -268,10 +275,11 @@ class OrthogonalBasis(PSBasis):
         raise NotImplementedError("The general first compatibility with derivation is not implemented")
 
 def JacobiBasis(alpha, beta, universe=QQ):
-    if universe is None: raise ValueError(f"[Jacobi] The universe can not be ``None``")
-    if alpha not in universe or alpha <= -1:
+    if universe is None: 
+        raise ValueError(f"[Jacobi] The universe can not be ``None``")
+    elif alpha not in universe or alpha <= -1:
         raise ValueError(f"[Jacobi] The value {alpha=} must be greater than -1.")
-    if beta not in universe or beta <= -1:
+    elif beta not in universe or beta <= -1:
         raise ValueError(f"[Jacobi] The value {beta=} must be greater than -1.")
 
     ak = f"(2*k + {alpha + beta} + 1)*(2*k + {alpha + beta} + 2)/(2*(k+1)*(k+{alpha+beta}+1))"
@@ -280,8 +288,9 @@ def JacobiBasis(alpha, beta, universe=QQ):
         
     return OrthogonalBasis(ak,bk,ck,universe,as_2seq=ExpressionSequence(jacobi_P(SR('k'), alpha, beta, SR('n')), variables=['k','n'], universe=universe))
 def GegenbauerBasis(_lambda, universe=QQ):
-    if universe is None: raise ValueError(f"[Gegenbauer] The universe can not be ``None``")
-    if _lambda not in universe or _lambda == 0 or _lambda <= -1/QQ(2):
+    if universe is None: 
+        raise ValueError(f"[Gegenbauer] The universe can not be ``None``")
+    elif _lambda not in universe or _lambda == 0 or _lambda <= -1/QQ(2):
         raise ValueError(f"[Gegenbauer] The value {_lambda=} must be a rational greater than -1/2 different from 0")
     
     ak = f"2*(k+{_lambda})/(k+1)"
@@ -292,18 +301,25 @@ def GegenbauerBasis(_lambda, universe=QQ):
 def LegendreBasis(universe=QQ):
     return JacobiBasis(0, 0, universe)
 def TChebyshevBasis(universe=QQ):
-    if universe is None: raise ValueError(f"[Chebyshev-T] The universe can not be ``None``")
+    if universe is None: 
+        raise ValueError(f"[Chebyshev-T] The universe can not be ``None``")
+
     ak = Sequence(lambda k : 2 if k > 0 else 1, QQ)
     bk = 0
     ck = 1
+
     return OrthogonalBasis(ak,bk,ck,universe,as_2seq=ExpressionSequence(chebyshev_T(SR('k'), SR('n')), variables=['k','n'], universe=universe))  
 def UChebyshevBasis(universe=QQ):
-    if universe is None: raise ValueError(f"[Chebyshev-U] The universe can not be ``None``")
-    ak = 2; bk = 0; ck = 1
+    if universe is None: 
+        raise ValueError(f"[Chebyshev-U] The universe can not be ``None``")
+    
+    ak, bk, ck = 2, 0, 1
+
     return OrthogonalBasis(ak,bk,ck,universe,as_2seq=ExpressionSequence(chebyshev_U(SR('k'), SR('n')), variables=['k','n'], universe=universe))  
 def LaguerreBasis(alpha, universe=QQ):
-    if universe is None: raise ValueError(f"[Laguerre] The universe can not be ``None``")
-    if alpha not in QQ or alpha <= -1:
+    if universe is None: 
+        raise ValueError(f"[Laguerre] The universe can not be ``None``")
+    elif alpha not in QQ or alpha <= -1:
         raise ValueError(f"[Laguerre] The value {alpha=} must be a rational number greater than -1")
     
     ak = f"-1/(k+1)"
@@ -312,14 +328,18 @@ def LaguerreBasis(alpha, universe=QQ):
     
     return OrthogonalBasis(ak,bk,ck,universe,as_2seq=ExpressionSequence(laguerre(SR('k'), SR('n')), variables=['k','n'], universe=universe))  
 def HermiteBasis(universe=QQ):
-    if universe is None: raise ValueError(f"[Hermite] The universe can not be ``None``")
-    ak = 2; bk = 0; ck = f"2*k"
+    if universe is None: 
+        raise ValueError(f"[Hermite] The universe can not be ``None``")
+    
+    ak, bk, ck = 2, 0, f"2*k"
+
     output = OrthogonalBasis(ak,bk,ck,universe,as_2seq=ExpressionSequence(hermite(SR('k'), SR('n')), variables=['k','n'], universe=universe))
     ## We set compatibility with derivative (special case)
     output.set_derivation("Dn", Compatibility([[RationalSequence(2*output.ore_var(), universe=universe), ConstantSequence(0, universe=universe)]], 1, 0, 1), True)
     return output
 def HermitePBasis(universe=QQ):
-    ak = 1; bk = 0; ck = f"k"
+    ak, bk, ck = 1, 0, "k"
+
     output = OrthogonalBasis(ak,bk,ck,universe)  
     ## We set compatibility with derivative (special case)
     output.set_derivation("Dn", Compatibility([[RationalSequence(output.ore_var(), universe=universe), ConstantSequence(0, universe=universe)]], 1, 0, 1), True)

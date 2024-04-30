@@ -27,11 +27,16 @@ from __future__ import annotations
 
 from typing import Collection, Mapping
 from .base import ConstantSequence, Sequence, IdentitySequence
-from sage.all import Expression, parent, PolynomialRing, var, SR, ZZ #pylint: disable=no-name-in-module
+from sage.calculus.var import var
 from sage.categories.pushout import pushout
+from sage.rings.integer_ring import ZZ
 from sage.rings.fraction_field import is_FractionField 
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.structure.element import parent
+from sage.symbolic.expression import Expression
+from sage.symbolic.ring import SR
 
 class ExpressionSequence(Sequence):
     r'''
@@ -54,7 +59,7 @@ class ExpressionSequence(Sequence):
             sage: poly[:5]
             [1, 2, 5, 10, 17]
 
-        On top of this class we fin the callable sequences. When we operate whe these, we lose the information of the expression 
+        On top of this class we find the callable sequences. When we operate with these, we lose the information of the expression 
         and, maybe, the generic expression::
 
             sage: poly + Fibonacci(1,1)
@@ -128,7 +133,7 @@ class ExpressionSequence(Sequence):
             e^(x - 10)
     '''
     def __init__(self, expression: Expression, variables=None, universe=None, *, meanings: Sequence | Collection[Sequence] | Mapping[str,Sequence] = None, _extend_by_zero=False, **kwds):
-        if variables == None:
+        if variables is None:
             variables = expression.variables()
         dim = len(variables)
         self.__generic = expression
@@ -138,7 +143,7 @@ class ExpressionSequence(Sequence):
         super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero, **kwds)
         
         ## Now we check argument "meaning"
-        if meanings == None:
+        if meanings is None:
             meanings = dim*[IdentitySequence(universe, **kwds)]
         elif isinstance(meanings, Sequence):
             meanings = dim*[meanings]
@@ -176,14 +181,17 @@ class ExpressionSequence(Sequence):
     def _change_dimension(self, new_dim: int, old_dims: list[int], new_variables = None, new_meanings: Sequence | Collection[Sequence] | Mapping[Sequence] = None):
         args, kwds = self.args_to_self()
         generic = args[0]
-        variables = kwds.pop("variables"); universe=kwds.pop("universe"); extend = kwds.pop("_extend_by_zero"); meanings = kwds.pop("meanings")
+        variables = kwds.pop("variables")
+        universe=kwds.pop("universe")
+        extend = kwds.pop("_extend_by_zero")
+        meanings = kwds.pop("meanings")
 
         ## Checking the new variable names
         if not isinstance(new_variables, (list,tuple)) or len(new_variables) != new_dim - self.dim:
             raise TypeError(f"[change_dim] The new variables must be a valid list of valid length")
         
         ## Checking the argument for new meanings
-        if new_meanings == None:
+        if new_meanings is None:
             new_meanings = len(new_variables)*[IdentitySequence(universe, **kwds)]
         elif isinstance(new_meanings, Sequence):
             new_meanings = len(new_variables)*[new_meanings]
@@ -234,7 +242,9 @@ class ExpressionSequence(Sequence):
         if self.variables() != other.variables():
             return False
         ## We also need that the sequence they represent are the same
-        self_meanings = self.meanings(); other_meanings = other.meanings()
+        self_meanings = self.meanings()
+        other_meanings = other.meanings()
+
         if any(self_meanings[str(v)] != other_meanings[str(v)] for v in self.variables()):
             return False
         return True
@@ -338,9 +348,11 @@ class ExpressionSequence(Sequence):
         if isinstance(input, (list,tuple)): # case of a linear subsequence
             if len(input) != 2:
                 raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
-            elif any((not el in ZZ) for el in input):
+            elif any((el not in ZZ) for el in input):
                 raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
-            a, b = input; a = ZZ(a); b = ZZ(b)
+            
+            a, b = [ZZ(el) for el in input]
+
             if a != 1 or b != 0:
                 from .qsequences import is_QSequence
                 if inner == IdentitySequence(self.universe, **self.extra_info()["extra_args"]):
@@ -354,7 +366,9 @@ class ExpressionSequence(Sequence):
         elif isinstance(input, Sequence):
             try:
                 return input.generic(str(vars[index]))
-            except: pass
+            except Exception: 
+                pass
+
         return super()._subsequence_input(index, input)
     
     def _shift(self, *shifts):
@@ -371,7 +385,7 @@ class ExpressionSequence(Sequence):
                 meanings=self.meanings(),
                 **self.extra_info()["extra_args"]
             )
-        except:
+        except Exception:
             return super()._shift(*shifts)
         
     def _subsequence(self, final_input: dict[int, Sequence] | dict[int, Expression]):
@@ -393,7 +407,7 @@ class ExpressionSequence(Sequence):
         
     def _slicing(self, values: dict[int, int]):
         vars = self.variables()
-        rem_vars = [vars[i] for i in range(self.dim) if not i in values]
+        rem_vars = [vars[i] for i in range(self.dim) if i not in values]
         self_meanings = self.meanings()
         meanings = {str(v): self_meanings[str(v)] for v in rem_vars if str(v) in self_meanings}
         return self.__class__(
@@ -433,7 +447,7 @@ class ExpressionSequence(Sequence):
         try:
             expr = SR(self.generic()).simplify_full()
             return all(expr.is_polynomial(x) for x in self.variables())
-        except:
+        except Exception:
             return False
     def as_polynomial(self) -> RationalSequence:
         if self.is_polynomial():
@@ -444,7 +458,7 @@ class ExpressionSequence(Sequence):
     def is_rational(self) -> bool:
         try:
             return SR(self.generic()).simplify_full().is_rational_expression()
-        except:
+        except Exception:
             return False
     def as_rational(self) -> RationalSequence:
         if self.is_rational():
@@ -494,7 +508,7 @@ class RationalSequence(ExpressionSequence):
             sage: poly2((10, 5)) # (10+5)/(10-5)
             3
 
-        On top of this class we find the Expression sequences. When we operate whe these, we lose the information of the rational expression 
+        On top of this class we find the Expression sequences. When we operate with these, we lose the information of the rational expression 
         and fall into the symbolic ring::
 
             TODO: add examples with Expression sequences
@@ -526,17 +540,17 @@ class RationalSequence(ExpressionSequence):
                 R = PolynomialRing(universe, [str(v) for v in variables])
                 variables = R.gens()
         else:
-            if universe != None and variables != None:
+            if universe is not None and variables is not None:
                 min_R = PolynomialRing(universe, variables)
-            elif universe != None:
+            elif universe is not None:
                 min_R = universe
-            elif variables != None:
-                min_R = PolynomialRing(R.base(), list(R.variable_names()) + [str(v) for v in variables if (not v in R.gens())])
+            elif variables is not None:
+                min_R = PolynomialRing(R.base(), list(R.variable_names()) + [str(v) for v in variables if (v not in R.gens())])
             else:
                 min_R = R
             R = pushout(R, min_R)
 
-            variables = [R(v) for v in variables] if variables != None else R.gens()
+            variables = [R(v) for v in variables] if variables is not None else R.gens()
             if any(v not in R.gens() for v in variables):
                 raise TypeError("Incorrect information: a variable requested is not a generator of the polynomial ring.")
         
@@ -545,7 +559,7 @@ class RationalSequence(ExpressionSequence):
         # dim = len(variables) TODO: remove
 
         ## Computing the remaining universe
-        if universe == None:
+        if universe is None:
             if is_PolynomialRing(R) and len(variables) > 0:
                 universe = R.base()
             elif is_PolynomialRing(R):
@@ -555,7 +569,7 @@ class RationalSequence(ExpressionSequence):
             universe = universe.fraction_field() if not universe.is_field() else universe
 
         # ## Now we check argument "meaning"  TODO: remove
-        # if meanings == None:
+        # if meanings is None:
         #     meanings = dim*[IdentitySequence(universe, **kwds)]
         # elif isinstance(meanings, Sequence):
         #     meanings = dim*[meanings]

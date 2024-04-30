@@ -34,7 +34,9 @@ import logging
 
 from collections.abc import Callable
 from typing import Any
-from sage.all import Expression, SR
+
+from sage.symbolic.expression import Expression
+from sage.symbolic.ring import SR
 
 from .base import Sequence
 from .element import ExpressionSequence, RationalSequence
@@ -46,7 +48,7 @@ def is_QSequence(element: Sequence):
 
 def QSequence(sequence: Callable[..., Any], universe=None, dim: int = 1, *, q, _extend_by_zero=False, **kwds):
     output = Sequence(sequence, universe, dim, _extend_by_zero=_extend_by_zero, q=q, **kwds)
-    if not q in output.universe:
+    if q not in output.universe:
         raise TypeError("[QSequence] The element `q` must be in the universe.")
     return output
 
@@ -56,14 +58,14 @@ def QPower(power, universe, *, q, **kwds):
 def QExpressionSequence(expression: Expression, variables=None, universe=None, *, q, power: int = 1, _extend_by_zero=False, **kwds):
     meanings = QPower(power, universe, q=q, **kwds)
     output = ExpressionSequence(expression, variables, universe, meanings=meanings, _extend_by_zero=_extend_by_zero, q=q, **kwds)
-    if not q in output.universe:
+    if q not in output.universe:
         raise TypeError("[QSequence] The element `q` must be in the universe.")
     return output
 
 def QRationalSequence(rational, variables=None, universe=None, *, q, power: int = 1, _extend_by_zero=False, **kwds):
     meanings = QPower(power, universe, q=q, **kwds)
     output = RationalSequence(rational, variables, universe, meanings=meanings, _extend_by_zero=_extend_by_zero, q=q, **kwds)
-    if not q in output.universe:
+    if q not in output.universe:
         raise TypeError("[QSequence] The element `q` must be in the universe.")
     return output
     

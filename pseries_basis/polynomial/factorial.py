@@ -31,9 +31,20 @@ import logging
 from collections.abc import Callable
 from functools import lru_cache, reduce, cached_property
 from itertools import chain, product
-from sage.all import binomial, latex, Matrix, parent, PolynomialRing, prod, vector, QQ, SR, ZZ #pylint: disable=no-name-in-module
+
 from sage.categories.pushout import pushout
+from sage.functions.other import binomial
+from sage.matrix.constructor import Matrix
 from sage.misc.cachefunc import cached_method #pylint: disable=no-name-in-module
+from sage.misc.latex import latex
+from sage.misc.misc_c import prod
+from sage.modules.free_module_element import vector
+from sage.rings.integer_ring import ZZ
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.rational_field import QQ
+from sage.structure.element import parent
+from sage.symbolic.ring import SR
+
 from typing import Any, Collection
 
 from ..sequences.base import Sequence, SequenceSet, ConstantSequence, IdentitySequence
@@ -99,21 +110,21 @@ class FactorialBasis(PSBasis):
                  as_2seq: Sequence = None, _extend_by_zero=False, 
                  **kwds):
         ## Treating the beta/gamma arguments
-        beta = beta if beta != None else ('n', IdentitySequence(ZZ, **kwds))
-        gamma = gamma if gamma != None else ('k', IdentitySequence(ZZ, **kwds))
+        beta = beta if beta is not None else ('n', IdentitySequence(ZZ, **kwds))
+        gamma = gamma if gamma is not None else ('k', IdentitySequence(ZZ, **kwds))
 
         ## Treating the arguments a_k and b_k
         if not isinstance(ak, Sequence):
-            if universe != None:
+            if universe is not None:
                 ak = ExpressionSequence(SR(ak), [gamma[0]], universe, meanings=gamma[1], **kwds)
         if not isinstance(bk, Sequence): 
-            if universe != None:
+            if universe is not None:
                 bk = ExpressionSequence(SR(bk), [gamma[0]], universe, meanings=gamma[1], **kwds)
         if not isinstance(ak, Sequence) or ak.dim != 1:
             raise TypeError(f"[FactorialBasis] The element a_k must be a univariate sequence or an expression in 'k'")
         if not isinstance(bk, Sequence) or bk.dim != 1:
             raise TypeError(f"[FactorialBasis] The element a_k must be a univariate sequence or an expression in 'k'")
-        universe = universe if universe != None else pushout(ak.universe, bk.universe)
+        universe = universe if universe is not None else pushout(ak.universe, bk.universe)
         
         self.__ak = ak.change_universe(universe)
         self.__bk = bk.change_universe(universe)
@@ -121,16 +132,19 @@ class FactorialBasis(PSBasis):
         self.__lc = ak.partial_prod()
 
         self.__poly_ring = PolynomialRing(universe, beta[0]) # this is the polynomial ring for the elements of the sequence
-        self.__beta = beta; self.__gamma = gamma
+        self.__beta, self.__gamma = beta, gamma
         self.__gen = self.__poly_ring.gens()[0]
 
         @lru_cache
         def __get_element(k):
-            if k < 0: return self.__poly_ring.zero()
-            elif k == 0: return self.__poly_ring.one()
-            else: return (self.ak(k-1)*self.__gen + self.bk(k-1))*__get_element(k-1) #pylint: disable=not-callable
+            if k < 0: 
+                return self.__poly_ring.zero()
+            elif k == 0: 
+                return self.__poly_ring.one()
+            else: 
+                return (self.ak(k-1)*self.__gen + self.bk(k-1))*__get_element(k-1) #pylint: disable=not-callable
 
-        sequence = as_2seq if as_2seq != None else lambda k : self._RationalSequenceBuilder(__get_element(k))
+        sequence = as_2seq if as_2seq is not None else lambda k : self._RationalSequenceBuilder(__get_element(k))
 
         super().__init__(sequence, universe, _extend_by_zero=_extend_by_zero, **kwds)
 
@@ -333,12 +347,14 @@ class FactorialBasis(PSBasis):
         PtI = self.matrix_PtI(size, section) # this checks the arguments
         ## Now we need to invert PtI. We can do it with the adjoint matrix (full of determinants) or by iterated substitution (Gaussian elimination)
         ItP = [[ZZ(0) for _ in range(size)] for _ in range(size)]
-        for i in range(size): ItP[i][i] = ZZ(1)
+        for i in range(size): 
+            ItP[i][i] = ZZ(1)
 
         ## PtI | ItP will do the gaussian elimination on PtI and obtain at the end ItP
         for i in range(size): # the pivot is always in the diagonal
             # making a one in the pivot
-            for j in range(i+1): ItP[i][j] /= PtI[i][i]
+            for j in range(i+1): 
+                ItP[i][j] /= PtI[i][i]
             # now we make zeros below the pivot
             for k in range(i+1, size):
                 for j in range(i+1):
@@ -400,7 +416,8 @@ class FactorialBasis(PSBasis):
         beta = self.gen()
         ## Checking the arguments
         size = ZZ(size)
-        if size <= 0: raise ValueError(f"[matrix_PtI] The value for size (got {size}) must be a positive integer")
+        if size <= 0: 
+            raise ValueError(f"[matrix_PtI] The value for size (got {size}) must be a positive integer")
 
         section = ZZ(section)
         section %= self.compatibility(beta).t
@@ -482,15 +499,15 @@ def RootSequenceBasis(rho: Sequence, lc: Sequence,
              Sequence over [Rational Field]: (0, 1, 16,...)]
     '''
     ## Treating the beta/gamma arguments
-    beta = beta if beta != None else ('n', IdentitySequence(ZZ, **kwds))
-    gamma = gamma if gamma != None else ('k', IdentitySequence(ZZ, **kwds))
+    beta = beta if beta is not None else ('n', IdentitySequence(ZZ, **kwds))
+    gamma = gamma if gamma is not None else ('k', IdentitySequence(ZZ, **kwds))
 
     ## Treating the arguments rho and lc
     if not isinstance(rho, Sequence):
-        if universe != None:
+        if universe is not None:
             rho = ExpressionSequence(SR(rho), [gamma[0]], universe, meanings=gamma[1], **kwds)
     if not isinstance(lc, Sequence): 
-        if universe != None:
+        if universe is not None:
             lc = ExpressionSequence(SR(lc), [gamma[0]], universe, meanings=gamma[1], **kwds)
     if not isinstance(rho, Sequence) or rho.dim != 1:
         raise TypeError(f"[FactorialBasis] The element rho must be a univariate sequence or an expression in 'k'")
@@ -547,7 +564,11 @@ def FallingBasis(a, b, c, universe = None, E: str = 'E'):
     a,b,c = [universe(el) for el in (a,b,c)]
     
     ak = ConstantSequence(a, universe, 1)
-    R = PolynomialRing(universe, "k"); k = R.gens()[0]
+    
+    # Creating the polynomial ring with the variable (used for bk)
+    R = PolynomialRing(universe, "k")
+    k = R.gens()[0]
+
     bk = RationalSequence(b - k*c, [k], universe=universe)
 
     output = FactorialBasis(ak, bk, universe)
@@ -597,7 +618,10 @@ def PowerTypeBasis(a = 1, b = 0, universe = None, Dn: str = 'Dn'):
     '''
     output = FallingBasis(a, b, 0, universe, None)
     universe = output.base
-    R = PolynomialRing(universe, "k"); k = R.gens()[0]
+
+    R = PolynomialRing(universe, "k")
+    k = R.gens()[0]
+
     output.set_derivation(Dn, Compatibility([[RationalSequence(a*k, [k], universe), ConstantSequence(0, universe, 1)]], 1, 0, 1), True)
 
     ## Creating the generic for this type of sequences
@@ -635,14 +659,17 @@ def BinomialTypeBasis(a = 1, b = 0, universe = None, E : str = 'E'):
 
         A :class:`FactorialBasis` with the corresponding compatibilities and the binomial structure.
     '''
-    if(not a in ZZ or a <= 0):
+    if(a not in ZZ or a <= 0):
         raise ValueError("The value for 'a' must be a natural number")
     
     if universe is None: # we need to compute a base universe
         universe = reduce(lambda p,q: pushout(p,q), (parent(a), parent(b)), QQ)
 
-    a = ZZ(a); b = universe(b)
-    R = PolynomialRing(universe, "k"); k = R.gens()[0] # creating the polynomial ring for the sequences
+    a, b = ZZ(a), universe(b)
+
+    # Creating the polynomial ring for the sequences
+    R = PolynomialRing(universe, "k")
+    k = R.gens()[0] 
     ak = RationalSequence(a/(k+1), [k], universe)
     bk = RationalSequence((b-k)/(k+1), [k], universe)
 
@@ -716,7 +743,7 @@ class DivisionCondition:
 
         * ``delta``: a list/tuple or a list/tuple of list/tuples with sequences representing the sequences `\delta`.
         * ``A``: integer representing the lower bound for the division. Used to know exactly where the divisibility condition starts.
-        * ``base`` (optional): the universe of the sequeces in ``delta``. Used optionally to enforce this universe on the sequences.
+        * ``base`` (optional): the universe of the sequences in ``delta``. Used optionally to enforce this universe on the sequences.
           If not given, the universe will be deduced from the arguments in ``delta`` automatically.
         * ``t`` (optional): number of sections to be used. If not given it is deduced from the input ``delta``. Otherwise, we 
           enforce that ``delta`` is a list of at least ``t`` lists.
@@ -725,8 +752,9 @@ class DivisionCondition:
         ## Checking all the arguments
         if not isinstance(delta, Collection):
             raise TypeError(f"[DivisionCondition] The division coefficients must be given as a list (got: {delta.__class__})") 
-        if sections != None: # we force the input delta to have richer structure
-            if sections <= 0: raise ValueError(f"The number of sections must be strictly positive (given {sections})")
+        if sections is not None: # we force the input delta to have richer structure
+            if sections <= 0: 
+                raise ValueError(f"The number of sections must be strictly positive (given {sections})")
 
             if any(not isinstance(sec, Collection) for sec in delta):
                 raise TypeError(f"[DivisionCondition] When given number of sections, the division coefficients must be given as a list of lists.")
@@ -746,8 +774,10 @@ class DivisionCondition:
         parent = None
         for sec in delta:
             for seq in sec:
-                if parent is None: parent = seq.parent()
-                else: parent = pushout(parent, seq.parent())
+                if parent is None: 
+                    parent = seq.parent()
+                else:
+                    parent = pushout(parent, seq.parent())
                 
         ## We transform elements in delta to a specific sequence ring
         if not isinstance(parent, SequenceSet): # we consider parent as the constant ring for sequences
@@ -756,12 +786,13 @@ class DivisionCondition:
             delta = [[parent(seq) for seq in sec] for sec in delta]
         
         ## We make sure ``base`` is used (if given)
-        if base != None: delta = [[seq.change_universe(base) for seq in sec] for sec in delta]
+        if base is not None: 
+            delta = [[seq.change_universe(base) for seq in sec] for sec in delta]
 
         self.__delta = delta
         self.__A = A
         self.__sections = sections
-        self.__base = base if base != None else (parent  if parent is not isinstance(parent, SequenceSet) else parent.codomain())
+        self.__base = base if base is not None else (parent  if parent is not isinstance(parent, SequenceSet) else parent.codomain())
 
     @property
     def lower_bound(self) -> int: return self.__A
@@ -771,8 +802,10 @@ class DivisionCondition:
     t = sections #: alias for ``sections``
 
     def coefficient(self, index: int, section:int = None) -> Sequence:
-        if section == None and self.sections > 1: raise ValueError(f"Sections required when having more than one section.")
-        elif section == None: section = 0
+        if section is None and self.sections > 1: 
+            raise ValueError(f"Sections required when having more than one section.")
+        elif section is None: 
+            section = 0
 
         return self.__delta[section][index]
     def __getitem__(self, input: int | tuple[int,int]) -> Sequence: 
@@ -813,7 +846,8 @@ class DivisionCondition:
         '''
         q_T, r_T = ZZ(new_sections).quo_rem(self.t)
 
-        if r_T != 0: raise ValueError(f"[DivisionCondition] The new number of sections must be a multiple of the current sections (Got: {new_sections}; Current: {self.t})")
+        if r_T != 0: 
+            raise ValueError(f"[DivisionCondition] The new number of sections must be a multiple of the current sections (Got: {new_sections}; Current: {self.t})")
 
         new_delta = []
         for R in range(new_sections):
@@ -827,7 +861,7 @@ class DivisionCondition:
     
     def to_compatibility(self, basis: FactorialBasis) -> Compatibility:
         r'''
-            Method tha implements the equivalence of :doi:`10.1016/j.jsc.2022.11.002`, Proposition 11.
+            Method that implements the equivalence of :doi:`10.1016/j.jsc.2022.11.002`, Proposition 11.
 
             Let us assume that for some operator and basis we have the following division condition.
 
@@ -869,7 +903,8 @@ class DivisionCondition:
 
             * ``basis``: a :class:`FactorialBasis` to be used for the compatibility with the _variable_ `\beta(n)`.
         '''
-        if not isinstance(basis, FactorialBasis): raise TypeError(f"[DivisionCondition] The basis must be factorial w.r.t. some variable.")
+        if not isinstance(basis, FactorialBasis): 
+            raise TypeError(f"[DivisionCondition] The basis must be factorial w.r.t. some variable.")
 
         comp_powers = [basis.compatibility(basis.gen()**j).in_sections(self.t) for j in range(self.size())] # compatibility of beta(n)^j in `t` sections.
         A = self.A
@@ -888,7 +923,7 @@ class DivisionCondition:
     @staticmethod
     def from_compatibility(compatibility: Compatibility, basis: FactorialBasis) -> DivisionCondition:
         r'''
-            Method tha implements the converse equivalence of :doi:`10.1016/j.jsc.2022.11.002`, Proposition 11.
+            Method that implements the converse equivalence of :doi:`10.1016/j.jsc.2022.11.002`, Proposition 11.
 
             Let us assume now that we have an `(A,B)`-compatible operator `L` in `t` sections with a basis `P_k(n)`. Then
             it follows that
@@ -981,7 +1016,7 @@ class DivisionCondition:
         try:
             M = Matrix([[self[t,i].generic() for i in range(self.size())] for t in range(self.t)]) 
             start += f" with following coefficient matrix:\n{M}"
-        except:
+        except Exception:
             pass
         return start
     def _latex_(self) -> str:
@@ -1000,9 +1035,10 @@ class DivisionCondition:
                 ## Creating the coefficient
                 try:
                     c = self[r,i].generic('k')
-                    if c == 0: continue
+                    if c == 0: 
+                        continue
                     new_mon = r"\left(" + latex(c) + r"\right)"
-                except:
+                except Exception:
                     if self.t > 1:
                         new_mon = r"c_{" + latex(r) + r"," + latex(i) + r"}(k)"
                     else:
@@ -1011,7 +1047,7 @@ class DivisionCondition:
                 new_mon += r"X^" + latex(i)
                 monomials.append(new_mon)
             code += " + ".join(monomials)
-            if self.t > 1: code += r"\\"
+            code += r"\\" if self.t > 1 else ""
         if self.t > 1:
             code += r"\end{array}\right."
         return code 
@@ -1224,7 +1260,7 @@ class ShuffledBasis(FactorialBasis):
         _extend_by_zero=False, **kwds
     ):
         ## Checking the input
-        if(not type(factors) in (list,tuple)):
+        if(type(factors) not in (list,tuple)):
             raise TypeError("The factors must be either a list or a tuple")
         if(any(not isinstance(el, FactorialBasis) for el in factors)):
             raise TypeError("All the factors has to be factorial basis")
@@ -1232,7 +1268,7 @@ class ShuffledBasis(FactorialBasis):
             raise TypeError("All the factors has to be w.r.t. the same variable")
         variable = str(factors[0].gen())
 
-        if(not type(cycle) in (list,tuple)):
+        if(type(cycle) not in (list,tuple)):
             raise TypeError("The deciding cycle must be a list or a tuple")
         cycle = [ZZ(el) for el in cycle]
         if(any(el < 0 or el > len(factors) for el in cycle)):
@@ -1252,8 +1288,11 @@ class ShuffledBasis(FactorialBasis):
         new_bk = Sequence(lambda k : (self.factors[self.cycle[k%self.nsections]]).bk[self.indices[k][self.cycle[k%self.nsections]]], universe)
 
         ## Mixing all the "kwds" and "_extend_by_zero" arguments
-        for factor in factors: kwds.update(factor.extra_info()["extra_args"])
+        for factor in factors: 
+            kwds.update(factor.extra_info()["extra_args"])
+
         _extend_by_zero = _extend_by_zero and all(factor._Sequence__extend_by_zero for factor in factors)
+
         ## We call the constructor for a factorial basis
         FactorialBasis.__init__(self, new_ak, new_bk, universe, beta=beta, _extend_by_zero=_extend_by_zero, **kwds)
 
@@ -1292,7 +1331,7 @@ class ShuffledBasis(FactorialBasis):
         # raise NotImplementedError(f"[ShuffledBasis] Initialization not yet implemented")
     
         quasi_triangular_sequences = [factor.is_quasi_triangular() for factor in self.factors]
-        if all(el != None for el in quasi_triangular_sequences):
+        if all(el is not None for el in quasi_triangular_sequences):
             self._PSBasis__quasi_triangular = _ShuffledQuasiTriangular(quasi_triangular_sequences, self.cycle)
 
     @cached_property
@@ -1410,22 +1449,27 @@ class ShuffledBasis(FactorialBasis):
             for `T` such that `t_i` divides `TS(i)` for all `i = 0, \ldots, F-1`, the multiplication
             by `\beta(n)` is compatible with the :class:`ShuffledBasis` in `TC` sections.
         '''
-        C = self.nsections; F = self.nfactors
+        C, F = self.nsections, self.nfactors
         comps = [factor.compatibility(str(factor.gen())) for factor in self.factors]
         t = [comp.t for comp in comps]
-        S = self.counts; s = self.extra
+        S, s = self.counts, self.extra
 
         ## Computing the number of sections
+        # this always terminate at most with T = lcm(t_i)
         T = 1
-        while(any([not T*S[i]%t[i] == 0 for i in range(F)])): T += 1 # this always terminate at most with T = lcm(t_i)
+        while(any([not T*S[i]%t[i] == 0 for i in range(F)])): 
+            T += 1 
         ## Computing the a's
         a = [T*S[i]//t[i] for i in range(F)]
 
         ## Computing the new compatibility coefficients
         new_coeffs = []
         for r in range(T*C):
-            r_0, r_1 = ZZ(r).quo_rem(C); c_r1 = self.cycle[r_1]
+            r_0, r_1 = ZZ(r).quo_rem(C)
+            c_r1 = self.cycle[r_1]
+
             r_2, r_3 = ZZ(r_0*S[c_r1] + s(c_r1, r_1)).quo_rem(t[c_r1])
+
             new_coeffs.append([comps[c_r1][r_3,0].linear_subsequence(0, a[c_r1], r_2), comps[c_r1][r_3,1].linear_subsequence(0, a[c_r1], r_2)])
 
         return Compatibility(new_coeffs, 0, 1, T*C)
@@ -1434,32 +1478,39 @@ class ShuffledBasis(FactorialBasis):
         r'''
             Method that extend the compatibility of an endomorphism `E`.
         '''
-        C = self.nsections; F = self.nfactors
+        C, F = self.nsections, self.nfactors
         divisions = [factor.compatible_division(E) for factor in self.factors]
         A = [comp.A for comp in divisions]
         t = [comp.t for comp in divisions]
         t_x = [factor.compatibility(str(factor.gen())).t for factor in self.factors]
-        S = self.counts; s = self.extra
+        S, s = self.counts, self.extra
 
         ## Computing the number of sections
+        # this always terminate at most with T = lcm(t_i, t_x_i)
         T = 1
-        while(any(chain((not T*S[i]%t[i] == 0 for i in range(F)),(not T*S[i]%t_x[i] == 0 for i in range(F))))): T += 1 # this always terminate at most with T = lcm(t_i, t_x_i)
+        while(any(chain((not T*S[i]%t[i] == 0 for i in range(F)),(not T*S[i]%t_x[i] == 0 for i in range(F))))): 
+            T += 1 
+
         ## Computing the a's
         a = [T*S[i]//t[i] for i in range(F)]
         b = [T*S[i]//t_x[i] for i in range(F)]
 
         ## Computing the final `A`
         fA = 1
-        while(any(fA*S[i] < A[i] for i in range(F))): fA+= 1
+        while(any(fA*S[i] < A[i] for i in range(F))): 
+            fA+= 1
+
         D = [fA*S[i] - A[i] for i in range(F)]
         IB_D: list[list[tuple[Sequence]]] = [[factor.matrix_ItP(D[i]+1,r)[D[i]] for r in range(t_x[i])] for i,factor in enumerate(self.factors)]
         
         div_coeffs = []
+
         def poly_mult_list(list1: list, list2: list) -> list:
             output = [ZZ(0) for _ in range(len(list1)+len(list2)-1)]
             for (i,j) in product(range(len(list1)), range(len(list2))):
                 output[i+j] += list1[i]*list2[j]
             return output
+        
         for r in range(T*C):
             r_0, r_1 = ZZ(r).quo_rem(C)
             poly_coeffs = []
@@ -1536,21 +1587,21 @@ class ShuffledBasis(FactorialBasis):
     #         * ``dst``: value for `m`. It could be either its value or a tuple `(t,s)` where `m = tF + s`.
     #     '''
     #     ## Checking the input "src"
-    #     if(not type(src) in (tuple, list)):
+    #     if(type(src) not in (tuple, list)):
     #         k,r = self.extended_quo_rem(src, self.nsections())
-    #         if(not r in ZZ):
+    #         if(r not in ZZ):
     #             raise ValueError("The value for the starting point must be an object where we can deduce the section")
     #     else:
     #         k, r = src
 
     #     ## If no diff, we use dst instead to build diff
-    #     if(diff == None):
+    #     if(diff is None):
     #         if(type(dst) in (tuple, list)):
     #             dst = dst[0]*self.nsections() + dst[1]
     #         diff = dst - src
         
     #     ## Now we check the value for 'diff'
-    #     if(not diff in ZZ):
+    #     if(diff not in ZZ):
     #         raise TypeError("The value of 'diff' must be an integer")
     #     diff = ZZ(diff)
     #     if(diff < 0):
@@ -1558,7 +1609,7 @@ class ShuffledBasis(FactorialBasis):
     #     if(diff == 0):
     #         return self.universe.one()
 
-    #     if(not (k,r,diff) in self.__cached_increasing):
+    #     if((k,r,diff) not in self.__cached_increasing):
     #         original_index = [self.index((k,r), i) for i in range(self.nfactors())]
     #         t, s = self.extended_quo_rem(diff+r, self.nsections())
     #         end_index = [self.index((k+t, s), i) for i in range(self.nfactors())]
@@ -1589,7 +1640,7 @@ class ShuffledBasis(FactorialBasis):
 
     #         A :class:`ShuffledBasis` representing the increasing basis starting at `N`.
 
-    #         WARING: currently the compatibilities aer not extended to the increasing basis.
+    #         WARNING: currently the compatibilities aer not extended to the increasing basis.
 
     #         TODO: add examples
     #     '''
@@ -1895,9 +1946,10 @@ def DefiniteSumSolutions(operator, *input: int | list[int]):
         raise TypeError("The input must be a even number of elements")
     elif(len(input) !=  2 or any(type(el) not in (list,tuple) for el in input)):
         m = len(input)//2
-        a = input[:m]; b = input[m:]
+        a, b = input[:m], input[m:]
     else:
-        a,b = input; m = len(a)
+        a, b = input
+        m = len(a)
     
     if(len(a) != len(b)):
         raise TypeError("The length of the two arguments must be exactly the same")

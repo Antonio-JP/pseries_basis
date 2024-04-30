@@ -99,9 +99,17 @@ from collections.abc import Callable
 from functools import reduce
 from ore_algebra.ore_algebra import OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
+
 from sage.algebras.free_algebra import FreeAlgebra, is_FreeAlgebra
-from sage.all import cached_method, latex, lcm, Matrix, PolynomialRing, prod, SR, ZZ #pylint: disable=no-name-in-module
+from sage.arith.functions import lcm
 from sage.categories.pushout import pushout
+from sage.matrix.constructor import Matrix
+from sage.misc.cachefunc import cached_method
+from sage.misc.latex import latex
+from sage.rings.integer_ring import ZZ
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.symbolic.ring import SR
+
 from .sequences.base import ConstantSequence, Sequence, SequenceSet
 from .sequences.element import ExpressionSequence, RationalSequence
 from .sequences.qsequences import is_QSequence, QExpressionSequence, QRationalSequence
@@ -128,7 +136,9 @@ class PSBasis(Sequence):
     def __init__(self, sequence: Callable[[int], Sequence], universe=None, *, _extend_by_zero=False, **kwds):
         # We check the case we provide a 2-dimensional sequence
         if isinstance(sequence, Sequence) and sequence.dim == 2:
-            universe = sequence.universe if universe is None else universe; or_sequence = sequence
+            universe = sequence.universe if universe is None else universe
+            or_sequence = sequence
+
             sequence = lambda k : or_sequence.slicing((0,k))
             self.__original_sequence = or_sequence
         else:
@@ -185,7 +195,7 @@ class PSBasis(Sequence):
         output = self.__class__(*args, **kwds)
 
         ## Recreating the "original_sequence" part
-        if self.__original_sequence != None:
+        if self.__original_sequence is not None:
             output._PSBasis__original_sequence = self.__original_sequence.change_universe(base)
         
         ## We guarantee the quasi-triangular property still remains
@@ -193,7 +203,7 @@ class PSBasis(Sequence):
 
         ## Recreating the compatibilities
         for operator in self.basic_compatibilities():
-            if not operator in output.basic_compatibilities():
+            if operator not in output.basic_compatibilities():
                 output.set_compatibility(operator, self.compatibility(operator).change_base(base), True, self.compatibility_type(operator))
         return output
     
@@ -203,7 +213,7 @@ class PSBasis(Sequence):
     
     @cached_method
     def as_2dim(self) -> Sequence:
-        return (self.__original_sequence if self.__original_sequence != None else 
+        return (self.__original_sequence if self.__original_sequence is not None else 
                 Sequence(lambda n,k : self(n)(k), self.base, 2, _extend_by_zero = self._Sequence__extend_by_zero, **self.extra_info()["extra_args"]))
     
     def generic(self, *names : str):
@@ -333,7 +343,7 @@ class PSBasis(Sequence):
             * First, we create a new :class:`PSBasis` with the corresponding elements.
               This may differ from different classes and can be extended in the method
               :func:`_scalar_basis`.
-            * Second, we extend te compatibilities. Since some of the compatibilities
+            * Second, we extend the compatibilities. Since some of the compatibilities
               can be automatically computed when creating the basis, we only extends those
               compatibilities that are not already created.
 
@@ -369,7 +379,7 @@ class PSBasis(Sequence):
 
         ## Extending compatibilities
         for operator in self.basic_compatibilities():
-            if not operator in new_basis.basic_compatibilities():
+            if operator not in new_basis.basic_compatibilities():
                 new_basis.set_compatibility(
                     operator, 
                     self.compatibility(operator).scale_basis(factor), 
@@ -459,17 +469,17 @@ class PSBasis(Sequence):
             * ``desired_values``: number of elements of the inner sequence we are aiming to compute.
             * ``inner_recurrence`` (optional): recurrence for the inner sequence.
         '''
-        from sage.all import vector
         from sage.geometry.hyperplane_arrangement.affine_subspace import AffineSubspace
         from sage.modules.free_module import VectorSpace
+        from sage.modules.free_module_element import vector
         from .misc.ore import unroll_matrix, is_qshift_algebra, is_recurrence_algebra
 
         I = self.is_quasi_triangular()
-        if I == None:
+        if I is None:
             raise TypeError(f"The basis is not quasi-triangular: impossible to compute inner sequences.")
-        elif inner_recurrence == None and I == Sequence(lambda n : n, ZZ) and section == 1:
+        elif inner_recurrence is None and I == Sequence(lambda n : n, ZZ) and section == 1:
             return basis_matrix(self, desired_values).solve_left(vector(sum_sequence[:desired_values]))
-        elif inner_recurrence == None:
+        elif inner_recurrence is None:
             raise TypeError(f"The basis is not triangular and no recurrence is given: impossible to compute inner sequences.")
         
         I = (I//section + 1) if section != 1 else I
@@ -483,9 +493,14 @@ class PSBasis(Sequence):
         F = inner_recurrence.parent().base().base_ring().fraction_field() # field to look the affine spaces
         S = AffineSubspace(r*[F.zero()], VectorSpace(F, r))
 
-        cdimension = S.dimension(); repeated = 0; N = 1
+        cdimension = S.dimension()
+        repeated = 0
+        N = 1
         while (repeated < 2*r) and (not S is None):
-            II = I[N]; II = 1 if II == 0 else II            
+            ## We take the value from I. We make it 1 if it takes value 0.
+            II = I[N]
+            II = 1 if II == 0 else II
+
             A = (unroll_matrix(inner_recurrence, gen_seq, II)*basis_matrix(self, II, N, section=section, shift=shift)).change_ring(F)
             nS = AffineSubspace(A.solve_left(vector(sum_sequence[:N])), A.left_kernel())
             S = S.intersection(nS)
@@ -568,9 +583,12 @@ class PSBasis(Sequence):
 
         if name in self.__basic_compatibilities:
             del self.__basic_compatibilities[name]
-            if name in self.__homomorphisms: self.__homomorphisms.remove(name)
-            elif name in self.__derivations: self.__derivations.remove(name)
-            elif name in self.__any: self.__any.remove(name)
+            if name in self.__homomorphisms: 
+                self.__homomorphisms.remove(name)
+            elif name in self.__derivations: 
+                self.__derivations.remove(name)
+            elif name in self.__any: 
+                self.__any.remove(name)
 
         if isinstance(compatibility, tuple):
             compatibility = Compatibility(
@@ -585,9 +603,12 @@ class PSBasis(Sequence):
             raise TypeError(f"The given compatibility is not of valid type.")
         
         self.__basic_compatibilities[name] = compatibility
-        if type == "homomorphism": self.__homomorphisms.append(name)
-        elif type == "derivation": self.__derivations.append(name)
-        elif type == "any": self.__any.append(name)
+        if type == "homomorphism": 
+            self.__homomorphisms.append(name)
+        elif type == "derivation": 
+            self.__derivations.append(name)
+        elif type == "any": 
+            self.__any.append(name)
 
         return compatibility
     
@@ -632,12 +653,19 @@ class PSBasis(Sequence):
         
     def __cast_to_algebra(self, operator: str):
         from sage.misc.sage_eval import sage_eval
-        A = self.__get_algebra(); C = A
+        A = self.__get_algebra()
+
+        ## We now look for the "constants" by taking parents until the 1 is the generator of `C`
+        C = A
         locals = dict()
-        while not 1 in C.gens():
+        while 1 not in C.gens():
             locals.update(C.gens_dict())
             C = C.base()
+
+        ## We evaluate now the operator
         value = sage_eval(operator, locals=locals)
+
+        ## We cast the output
         return A(value)
 
     @cached_method
@@ -722,7 +750,7 @@ class PSBasis(Sequence):
         try:
             self.__cast_to_algebra(str(operator))
             return True
-        except:
+        except Exception:
             return False
         
     @cached_method
@@ -757,21 +785,31 @@ class PSBasis(Sequence):
             TODO: add examples
         '''
         if isinstance(operator, str) and operator in self.__basic_compatibilities:
-            if operator in self.__homomorphisms: return "homomorphism"
-            elif operator in self.__derivations: return "derivation"
-            elif operator in self.__any: return "any"
-            else: return None
+            if operator in self.__homomorphisms: 
+                return "homomorphism"
+            elif operator in self.__derivations: 
+                return "derivation"
+            elif operator in self.__any: 
+                return "any"
+            else:
+                return None
         
         operator = self.__cast_to_algebra(str(operator))
         basic_operations = [self.compatibility_type(str(v)) for v in operator.variables()]
         output = basic_operations[0]
         for basic in basic_operations[1:]:
-            if output is None: break
-            if basic == "homomorphism" and output in ("any", "homomorphism"): output = "homomorphism"
-            elif basic == "homomorphism": output = None
-            elif basic == "derivation" and output in ("any", "derivation"): output = "derivation"
-            elif basic == "derivation": output = None
-            elif basic is None: output = None
+            if output is None: 
+                break
+            elif basic == "homomorphism" and output in ("any", "homomorphism"): 
+                output = "homomorphism"
+            elif basic == "homomorphism": 
+                output = None
+            elif basic == "derivation" and output in ("any", "derivation"): 
+                output = "derivation"
+            elif basic == "derivation": 
+                output = None
+            elif basic is None: 
+                output = None
             # The else case means that basic == "any", so output does not change
         return output
 
@@ -804,7 +842,7 @@ class PSBasis(Sequence):
             This method builds the corresponding Ore Algebra that can will appear in the 
             recurrences that are derived from compatibility conditions.
         '''
-        if self.__ore_algebra == None:
+        if self.__ore_algebra is None:
             self.__ore_algebra = self._create_algebra(False)
         return self.__ore_algebra[0]
     
@@ -825,7 +863,7 @@ class PSBasis(Sequence):
             This method builds the corresponding Ore Algebra that can will appear in the 
             recurrences that are derived from compatibility conditions.
         '''
-        if self.__double_algebra == None:
+        if self.__double_algebra is None:
             # We create the corresponding ore algebra
             self.__double_algebra = self._create_algebra(True)
             
@@ -847,7 +885,7 @@ class PSBasis(Sequence):
             operator = self.compatibility(operator)
         
         ## Putting appropriate number of sections
-        if sections != None and sections > 0 and sections % operator.t == 0:
+        if sections is not None and sections > 0 and sections % operator.t == 0:
             operator = operator.in_sections(sections)
         
         ## Computing the recurrence
@@ -896,7 +934,7 @@ class PSBasis(Sequence):
             elif output in ("ore_double", "ore"):
                 logger.debug(f"[recurrence] Output is ore-related ({output=})")
                 recurrence = self._process_ore_algebra(recurrence, output == "ore_double")
-            elif output != None:
+            elif output is not None:
                 raise ValueError(f"Output type ({output}) not recognized")
         return recurrence
             
@@ -912,7 +950,7 @@ class PSBasis(Sequence):
             ExprSeqCreation = lambda expr : ExpressionSequence(expr, variables=[str(self.ore_var())], universe=sequence.universe)
 
         ## Getting the generic with the "self.ore_var()" as value
-        if isinstance(sequence, RationalSequence): # we evaluate the generic formula substituing the variable by the ore_var
+        if isinstance(sequence, RationalSequence): # we evaluate the generic formula substituting the variable by the ore_var
             var = sequence.variables()[0]
             expr = sequence._eval_generic(**{str(var): self.ore_var()})
         else:
@@ -1145,7 +1183,7 @@ class Compatibility:
         if new_sections%self.t != 0:
             raise ValueError(f"[compatibility] Compatibilities can only be extended when the new sections ({new_sections}) are multiple of previous sections ({self.t}).")
         
-        A = self.A; B = self.B
+        A, B = self.A, self.B
         a = new_sections // self.t # proportion to new sections
 
         coeffs = []
@@ -1200,7 +1238,7 @@ class Compatibility:
 
         ## Here we can assume that the base ring coincides and the number of sections is the same        
         ## Creating the elements for the compatibility
-        A = max(self.A, other.A); B = max(self.B, other.B)
+        A, B = max(self.A, other.A), max(self.B, other.B)
         coeffs = []
         for b in range(self.t):
             section = []
@@ -1252,7 +1290,7 @@ class Compatibility:
 
         ## Here we can assume that the base ring coincides and the number of sections is the same        
         ## Creating the elements for the compatibility
-        A = self.A + other.A; B = self.B + other.B
+        A, B = (self.A + other.A), (self.B + other.B)
         coeffs = []
         for b in range(self.t):
             section = []
@@ -1270,7 +1308,7 @@ class Compatibility:
         if not isinstance(factor, Sequence):
             try:
                 factor = ConstantSequence(factor, factor.parent(), 1)
-            except:
+            except Exception:
                 raise TypeError(f"[comp-scale] Scaling element must be a Sequence or something with a parent.")
             
         if not factor.dim == 1:
@@ -1284,7 +1322,7 @@ class Compatibility:
 
     def scale_basis(self, factor: Sequence) -> Compatibility:
         r'''
-            Method that computes the equivalent compatibility for the sacled basis.
+            Method that computes the equivalent compatibility for the scaled basis.
 
             Let us assume that a :class:`Compatibility` is associated with a basis `P_k(n)`. Now,
             assume we consider the scaled basis `Q_k(n) = c(k)P_k(n)`. Then the operator
@@ -1341,16 +1379,18 @@ class Compatibility:
     def __rmul__(self, other) -> Compatibility:
         return self.__coerce_into_compatibility__(other).mul(self)
     def __pow__(self, other) -> Compatibility:
-        if not other in ZZ or other < 0:
+        if other not in ZZ or other < 0:
             raise TypeError(f"[compatibility] Power only valid for natural numbers")
-        if not other in self.__cache_pow:
+        if other not in self.__cache_pow:
             if other == 0:
                 self.__cache_pow[other] = Compatibility([[ConstantSequence(1, self.base())]], 0,0,1)
             elif other == 1:
                 self.__cache_pow[other] = self
             else:
-                p1 = other//2; p2 = p1 + other%2
-                comp1 = self**p1; comp2 = self**p2
+                p1 = other//2
+                p2 = p1 + other%2
+                comp1 = self**p1
+                comp2 = self**p2
                 self.__cache_pow[other] = comp1 * comp2
         return self.__cache_pow[other]
 
@@ -1359,7 +1399,7 @@ class Compatibility:
         try:
             M = Matrix([[self[t,i].generic() for i in range(-self.A, self.B+1)] for t in range(self.t)]) #pylint: disable=invalid-unary-operand-type
             start += f" with following coefficient matrix:\n{M}"
-        except:
+        except Exception:
             pass
         return start
     
@@ -1380,9 +1420,10 @@ class Compatibility:
                 ## Creating the coefficient
                 try:
                     c = self[b,i].generic('k')
-                    if c == 0: continue
+                    if c == 0: 
+                        continue
                     new_mon = r"\left(" + latex(c) + r"\right)"
-                except:
+                except Exception:
                     if self.t > 1:
                         new_mon = r"c_{" + latex(b) + r"," + latex(i) + r"}(k)"
                     else:
@@ -1394,7 +1435,7 @@ class Compatibility:
                     new_mon += r"P_{k" + int_with_sign(i) + r"}"
                 monomials.append(new_mon)
             code += " + ".join(monomials)
-            if self.t > 1: code += r"\\"
+            code += r"\\" if self.t > 1 else ""
         if self.t > 1:
             code += r"\end{array}\right."
         return code 
@@ -1432,7 +1473,7 @@ class Compatibility:
             logger.debug(f"[equiv] We need to extend to more sections ({self.t}, {other.t}) --> {t}")
             return self.in_sections(t).equiv(other.in_sections(t))
         ## Now we assume the sections are the same in both
-        A = max(self.A, other.A); B = max(self.B, other.B)
+        A, B = max(self.A, other.A), max(self.B, other.B)
         ## This loop could be more in Python style, we keep it unrolled to keep debugging notes
         for b in range(self.t):
             for i in range(-A, B+1):
@@ -1447,13 +1488,20 @@ def basis_matrix(basis, nrows=5, ncols=None, section: int = 1, shift: int = 0):
 
         This method allow the optional arguments ``section`` and shift`` in order to take a subsequence of the basis.
     '''
-    if isinstance(basis, PSBasis): basis = basis.as_2dim() # case of a PSBasis
-    if not isinstance(basis, Sequence): basis = Sequence(basis, universe=basis(0,0).parent(), dim=2) # case of just a callable
+    if isinstance(basis, PSBasis): # case of a PSBasis
+        basis = basis.as_2dim() 
+    if not isinstance(basis, Sequence): # case of just a callable
+        basis = Sequence(basis, universe=basis(0,0).parent(), dim=2) 
 
-    if ncols is None: ncols = nrows
-    if not nrows in ZZ or nrows <= 0: raise TypeError(f"Number of rows must be a positive number (got {nrows=})")
-    if not ncols in ZZ or ncols <= 0: raise TypeError(f"Number of columns must be a positive number (got {ncols=})")
-    nrows = ZZ(nrows); ncols = ZZ(ncols)
+    if ncols is None: 
+        ncols = nrows
+
+    if nrows not in ZZ or nrows <= 0: 
+        raise TypeError(f"Number of rows must be a positive number (got {nrows=})")
+    elif ncols not in ZZ or ncols <= 0: 
+        raise TypeError(f"Number of columns must be a positive number (got {ncols=})")
+    
+    nrows, ncols = ZZ(nrows), ZZ(ncols)
 
     return Matrix([[basis((section*i+shift,j)) for j in range(ncols)] for i in range(nrows)])
 
@@ -1473,7 +1521,7 @@ def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: C
 
             L P_n = \sum_{i=-A}^B \alpha_{n,i}P_{n+i},
 
-        then thi method checks this identity for the ``action`` defining `L`, and the compatibility
+        then this method checks this identity for the ``action`` defining `L`, and the compatibility
         condition `(A,B,m,\alpha)` defined in ``compatibility``.
 
         This checking is perform until a given `n` bounded by the input ``bound``.

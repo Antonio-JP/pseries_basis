@@ -9,8 +9,11 @@ r'''
 import logging
 import re
 
-from sage.all import ZZ, var, lcm, cached_method
+from sage.arith.functions import lcm
+from sage.calculus.var import var
 from sage.databases.oeis import OEISSequence
+from sage.misc.cachefunc import cached_method
+from sage.rings.integer_ring import ZZ
 
 from ore_algebra.ore_operator import OreOperator
 
@@ -85,11 +88,13 @@ def operator2Mathematica(operator: OreOperator, sequence_var: str = None) -> str
     if is_double_qshift_algebra(operator.parent()):
         qn, S, S_i, q, ex = gens_double_qshift_algebra(operator.parent(), "q")
     elif is_qshift_algebra(operator.parent()):
-        qn, S, q, ex = gens_qshift_algebra(operator.parent(), "q"); S_i = None
+        qn, S, q, ex = gens_qshift_algebra(operator.parent(), "q")
+        S_i = None
     elif is_double_recurrence_algebra(operator.parent()):
         _, S, S_i, _ = gens_double_recurrence_algebra(operator.parent())
     elif is_recurrence_algebra(operator.parent()):
-        _, S, _ = gens_recurrence_algebra(operator.parent()); S_i = None
+        _, S, _ = gens_recurrence_algebra(operator.parent())
+        S_i = None
 
     ## Changing the coefficients to strings
     if is_double_qshift_algebra(operator.parent(), "q") or is_qshift_algebra(operator.parent(), "q"):
@@ -98,17 +103,17 @@ def operator2Mathematica(operator: OreOperator, sequence_var: str = None) -> str
     else:
         coeffs = [str(coeff) for coeff in coeffs]
 
-    if sequence_var != None:
-        if S_i != None: ## First remove the inverse shift if existed
+    if sequence_var is not None:
+        if S_i is not None: ## First remove the inverse shift if existed
             mons = [re.sub(
                 f"{S_i}(\\^\\(?\\d+\\)?)?", 
-                lambda M : f"{sequence_var}[n-{M.groups()[0].removeprefix('^')}]" if M.groups()[0] != None else f"{sequence_var}[n-1]",
+                lambda M : f"{sequence_var}[n-{M.groups()[0].removeprefix('^')}]" if M.groups()[0] is not None else f"{sequence_var}[n-1]",
                 str(mon))
             for mon in mons]
         ## Then we remove the direct shift
         mons = [re.sub(
             f"{S}(\\^\\(?\\d+\\)?)?", 
-            lambda M : f"{sequence_var}[n+{M.groups()[0].removeprefix('^')}]" if M.groups()[0] != None else f"{sequence_var}[n+1]",
+            lambda M : f"{sequence_var}[n+{M.groups()[0].removeprefix('^')}]" if M.groups()[0] is not None else f"{sequence_var}[n+1]",
             str(mon))
         for mon in mons]
 
@@ -116,10 +121,10 @@ def operator2Mathematica(operator: OreOperator, sequence_var: str = None) -> str
         if "1" in mons:
             mons[mons.index("1")] = f"{sequence_var}[n]"
     else:
-        if S_i != None: # We transform the inverse shift to negative powers of the direct shift
+        if S_i is not None: # We transform the inverse shift to negative powers of the direct shift
             mons = [re.sub(
                 f"{S_i}(\\^\\(?\\d+\\)?)?", 
-                lambda M : f"{S}^(-{M.groups()[0].removeprefix('^')})" if M.groups()[0] != None else f"{S}^(-1)",
+                lambda M : f"{S}^(-{M.groups()[0].removeprefix('^')})" if M.groups()[0] is not None else f"{S}^(-1)",
                 str(mon))
             for mon in mons]
         else:
@@ -195,7 +200,7 @@ class EnhOEISSequence(OEISSequence):
                     start_pos += 1
                 # getting the part of the formula until a "with" a "." or the end of the line
                 operator = self.__analyze_formula(formula, start_pos)
-                if operator != None:
+                if operator is not None:
                     logger.info(f"dfinite_recurrence: found a recurrence operator for OEIS sequence {self.id()}")
                     return operator
                 else:
@@ -206,7 +211,7 @@ class EnhOEISSequence(OEISSequence):
         for formula in self.formulas(): # trying to find a plain formula
             try:
                 operator = self.__analyze_formula(formula, 0)
-                if operator != None:
+                if operator is not None:
                     logger.info(f"dfinite_recurrence: found a recurrence operator for OEIS sequence {self.id()}")
                     return operator
                 else:
@@ -283,10 +288,12 @@ class EnhOEISSequence(OEISSequence):
             (r"a\(n-(\d+)\)", r"E**(-\1 + "+str(neg_order)+")"),
             (r"a\(n\)", r"E**("+str(neg_order)+")"),
             (r"(\d+)n", r"\1*n")]
+        
         def __apply_iterative(reg_expressions, string):
             for reg in reg_expressions:
                 string = re.sub(*reg, string)
             return string
+        
         for part in parts:
             part = part.replace(":", "")
             if part.find(" = ") > -1:
@@ -302,7 +309,7 @@ class EnhOEISSequence(OEISSequence):
                     cleaned_denom = lcm([el.denominator() for el in coeffs])
                     return get_recurrence_algebra('x','E', rational=False)[0](cleaned_denom * output)
 
-                except:
+                except Exception:
                     logger.info(f"extract_recurrence: Can not convert this: {part} (({lhs} ||| {rhs}))")
                     pass
         return None

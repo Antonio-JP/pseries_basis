@@ -141,20 +141,32 @@ r'''
     * The Île-de-France region: by the project "XOR".
     * The Poul Due Jensen Foundation: grant 883901.
 '''
-import logging, sys
+import logging
+import sys
 
 ## Configuring logger for this package
+
+# Getting the logger
 logger = logging.getLogger(__name__)
+# Base level = logging.INFO
 logger.setLevel(logging.INFO)
+
+# Formatting messages for the logger
 formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+# Configuring handlers -> one on file, other in stderr
 fh = logging.FileHandler(f"{__name__}.log")
 ch = logging.StreamHandler(sys.stderr)
-fh.setFormatter(formatter); ch.setFormatter(formatter)
-logger.addHandler(fh); logger.addHandler(ch)
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
+
+# Remove the propagation of logger to avoid repeated messages
 logger.propagate = False
-# logger.setLevel(logging.DEBUG) # setting up a level for logging
 
 
+## Configuring generic imports from the `pseries_basis` module
 from .misc import *
 from .order import *
 from .psbasis import *
@@ -162,9 +174,13 @@ from .polynomial import *
 from .qbasis import *
 from .sequences import *
 
-# fixing imports that were destroyed from these
-from sage.all import factorial, order # pylint: disable=unused-import
+## Fixing imports that were destroyed from these
+from sage.functions.other import factorial # pylint: disable=unused-import
+from sage.misc.functional import order # pylint: disable=unused-import
 
 def pseries_bases_version():
+    r'''
+        Method to obtain the current version of the installed package :mod:`pseries_basis`.
+    '''
     import pkg_resources
     return pkg_resources.get_distribution('pseries_basis').version

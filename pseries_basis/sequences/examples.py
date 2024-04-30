@@ -8,8 +8,13 @@ from .base import Sequence
 from .qsequences import QSequence, QPower
 
 from functools import lru_cache, reduce
-from sage.all import binomial, factorial, NaN, parent, PolynomialRing, QQ, ZZ # pylint: disable=no-name-in-module
 from sage.categories.pushout import pushout
+from sage.functions.other import binomial, factorial
+from sage.rings.integer_ring import ZZ
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.rational_field import QQ
+from sage.structure.element import parent
+from sage.symbolic.constants import NaN
 
 ###############################################################################################################
 ###
@@ -26,9 +31,10 @@ def Fibonacci(a = 1, b = 1):
         The universe of the sequence is defined on the fly depending on the given values.
     '''
     universe = pushout(ZZ,pushout(parent(a), parent(b)))
+    
     @lru_cache(maxsize=None)
     def __fib(n: int): 
-        if not n in ZZ or n < 0:
+        if n not in ZZ or n < 0:
             return NaN
         return __fib(n-1) + __fib(n-2) if n > 1 else a if n == 0 else b
 
@@ -41,7 +47,8 @@ def Fibonacci(a = 1, b = 1):
 ###############################################################################################################
 from sage.combinat.q_analogues import q_binomial, q_int, q_pochhammer, q_factorial
 
-__Rq = PolynomialRing(QQ, "q").fraction_field(); __q = __Rq.gens()[0]
+__Rq = PolynomialRing(QQ, "q").fraction_field()
+__q = __Rq.gens()[0]
 
 Qn = QPower(1, __Rq, q=__q)
 Q_int = QSequence(lambda n : q_int(n, q=__q), __Rq, 1, q=__q)
@@ -53,7 +60,7 @@ def Q_binomial_type(a:int = 1, b: int = 0, c: int = 0, r : int = 0, s: int = 1, 
     '''
     R = reduce(lambda p, q : pushout(p,q), [__Rq] + [parent(el) for el in (a,b,c,r,s,t)])
     a,b,c,r,s,t = [R(el) for el in (a,b,c,r,s,t)]
-    if not e in ZZ:
+    if e not in ZZ:
         raise TypeError(f"[q_binomial] The exponent for `q` must be an integer")
     e = ZZ(e)
 
@@ -70,8 +77,8 @@ def Q_pochhammer(a=__q, q=__q):
         Builds the sequence `(a;q)_n` as a `q`-sequence.
     '''
     # We compute the corresponding pochhammer sequence
-    R = pushout(a.parent(), __Rq) if not a in __Rq else __Rq
-    a = R(a); q = R(q)
+    R = pushout(a.parent(), __Rq) if a not in __Rq else __Rq
+    a, q = R(a), R(q)
     return QSequence(lambda n: q_pochhammer(n, a, q=q), R, 1, q=__q)
 
 

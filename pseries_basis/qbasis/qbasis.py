@@ -8,7 +8,8 @@ logger = logging.getLogger(__name__)
 
 from collections.abc import Callable
 
-from sage.all import PolynomialRing, ZZ #pylint: disable=no-name-in-module
+from sage.rings.integer_ring import ZZ
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 
 from ..polynomial.factorial import FactorialBasis
 from ..psbasis import PSBasis, Compatibility
@@ -32,8 +33,11 @@ def QFactorialBasis(ak: Sequence, bk: Sequence, universe = None, *, q, e: int=1,
         raise TypeError(f"[QFactorialBasis] The argument ak must be a q-sequence")
     
     # We compare the values for q
-    if ak.q != bk.q: raise ValueError(f"[QFactorialBasis] The q-values do not coincide: {ak.q} != {bk.q}")
-    if q == None: q = ak.q
+    if ak.q != bk.q: 
+        raise ValueError(f"[QFactorialBasis] The q-values do not coincide: {ak.q} != {bk.q}")
+    
+    if q is None: 
+        q = ak.q
     elif isinstance(q, str) and str(ak.q) != q: 
         raise ValueError(f"[QFactorialBasis] The q-values do not coincide: {q} != {ak.q}")
     elif q != ak.q:
@@ -68,21 +72,22 @@ def QBinomialBasis(a: int = 1, c: int = 0, t: int = 0, e: int = 1, universe = No
         * ``q``: the name or value for the `q`.
         * ``q_n``: the name of the operator that will be use for the multiplication by `q^{aen}`. 
     '''
-    if not a in ZZ or a < 0:
+    if a not in ZZ or a < 0:
         raise TypeError(f"[QBinomialBasis] The value for the parameter `a` must be a natural number.")
-    if not c in ZZ or c < 0:
+    if c not in ZZ or c < 0:
         raise TypeError(f"[QBinomialBasis] The value for the parameter `c` must be a natural number.")
-    if not t in ZZ or t < 0:
+    if t not in ZZ or t < 0:
         raise TypeError(f"[QBinomialBasis] The value for the parameter `t` must be a natural number.")
-    if not e in ZZ or e <= 0:
+    if e not in ZZ or e <= 0:
         raise TypeError(f"[QBinomialBasis] The value for the parameter `b` must be a natural number.")
-    a = ZZ(a); c = ZZ(c); t = ZZ(t); e = ZZ(e)
+    a, c, t, e = ZZ(a), ZZ(c), ZZ(t), ZZ(e)
 
-    universe = Qn.universe if universe == None else universe
+    universe = Qn.universe if universe is None else universe
 
     logger.debug(f"[QBinomialBasis] Creating the basis with {a=}, {c=}, {t=}, {e=}")
     q = universe(q)
-    R = PolynomialRing(universe, "q_k"); q_k = R.gens()[0]
+    R = PolynomialRing(universe, "q_k")
+    q_k = R.gens()[0]
 
     ak = QRationalSequence(-(q**(e*(c-t)))/(q_k**e*(1-q_k**e*q**(e*t+e))), [q_k], universe=universe, q=q)
     bk = QRationalSequence((1)/(1-q_k**e*q**(e*t+e)), [q_k], universe=universe, q=q)
@@ -124,13 +129,15 @@ def QPowerBasis(a: int = 1, universe=None, *, q= "q", q_n = None):
 
         TODO: add examples
     '''
-    if not a in ZZ or a < 0:
+    if a not in ZZ or a < 0:
         raise TypeError(f"[QPowerBasis] The value for the parameter `a` must be a natural number.")
     a = ZZ(a)
 
-    universe = universe if universe != None else Qn.universe
+    universe = universe if universe is not None else Qn.universe
     q = universe(q)
-    R = PolynomialRing(universe, "q_k"); q_k = R.gens()[0]
+    R = PolynomialRing(universe, "q_k")
+    q_k = R.gens()[0]
+
     basis = QFactorialBasis(
         QRationalSequence(ZZ(1), ["q_k"], universe, q=q), #a_k
         QRationalSequence(ZZ(0), ["q_k"], universe, q=q), #b_k

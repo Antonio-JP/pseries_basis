@@ -140,15 +140,24 @@ import logging
 from collections.abc import Callable, Collection
 from functools import cached_property
 from itertools import product
-from sage.all import (cached_method, cartesian_product, parent, prod, var, oo, NaN, SR, ZZ)
-from sage.categories.all import CommutativeRings, Sets
+
+from sage.calculus.var import var
+from sage.categories.cartesian_product import cartesian_product
+from sage.categories.commutative_rings import CommutativeRings
 from sage.categories.homset import Homset
 from sage.categories.homsets import Homsets
-from sage.categories.morphism import SetMorphism # pylint: disable=no-name-in-module
+from sage.categories.morphism import SetMorphism 
 from sage.categories.pushout import ConstructionFunctor, pushout
+from sage.categories.sets_cat import Sets
 from sage.graphs.digraph import DiGraph
-from sage.structure.element import Element #pylint: disable=no-name-in-module
+from sage.misc.cachefunc import cached_method
+from sage.misc.misc_c import prod
+from sage.rings.infinity import Infinity as oo
+from sage.rings.integer_ring import ZZ
+from sage.structure.element import Element, parent
 from sage.structure.unique_representation import UniqueRepresentation
+from sage.symbolic.constants import NaN
+from sage.symbolic.ring import SR
 
 _Sets = Sets.__classcall__(Sets)
 _CommutativeRings = CommutativeRings.__classcall__(CommutativeRings)
@@ -217,22 +226,22 @@ class Sequence(SetMorphism):
 
     @classmethod
     def _register_class(cls, super_classes: list = None, sub_classes: list = None):
-        if (super_classes == None or len(super_classes) == 0) and cls != Sequence:
+        if (super_classes is None or len(super_classes) == 0) and cls != Sequence:
             super_classes = [Sequence]
-        if (sub_classes == None or len(sub_classes) == 0) and cls != ConstantSequence:
+        if (sub_classes is None or len(sub_classes) == 0) and cls != ConstantSequence:
             sub_classes = [ConstantSequence]
         
-        if not cls in Sequence.CLASSES_GRAPH.vertices(sort=False):
+        if cls not in Sequence.CLASSES_GRAPH.vertices(sort=False):
             Sequence.CLASSES_GRAPH.add_vertex(cls)
             for sup_class in super_classes:
                 logger.debug(f"[Sequence - register] Checking if {sup_class} is registered...")
-                if not sup_class in Sequence.CLASSES_GRAPH.vertices(sort=False):
+                if sup_class not in Sequence.CLASSES_GRAPH.vertices(sort=False):
                     sup_class.register_class()
                 logger.debug(f"[Sequence - register] Adding edge ({cls}) -> ({sup_class})")
                 Sequence.CLASSES_GRAPH.add_edge(cls, sup_class)
             for sub_class in sub_classes:
                 logger.debug(f"[Sequence - register] Checking if {sub_class} is registered...")
-                if not sub_class in Sequence.CLASSES_GRAPH.vertices(sort=False):
+                if sub_class not in Sequence.CLASSES_GRAPH.vertices(sort=False):
                     sub_class.register_class()
                 logger.debug(f"[Sequence - register] Adding edge ({sub_class}) -> ({cls})")
                 Sequence.CLASSES_GRAPH.add_edge(sub_class, cls)
@@ -241,7 +250,8 @@ class Sequence(SetMorphism):
 
     @staticmethod
     def MinimalCommonClass(cls1, cls2):
-        if cls1 == cls2: return cls1
+        if cls1 == cls2: 
+            return cls1
 
         if any(cls not in Sequence.CLASSES_GRAPH.vertices(sort=False) for cls in (cls1,cls2)):
             raise ValueError(f"One the the classes ({cls1} or {cls2}) not registered")
@@ -252,7 +262,7 @@ class Sequence(SetMorphism):
         while len(to_check) > 0:
             current = to_check.pop(0)
             for v in Sequence.CLASSES_GRAPH.neighbor_out_iterator(current):
-                if not v in depth:
+                if v not in depth:
                     depth[v] = depth[current] + 1
                     to_check.append(v)
         
@@ -327,16 +337,18 @@ class Sequence(SetMorphism):
             This method creates a copy of this sequences with several extra dimensions and 
             giving the old dimensions a new position.
         '''
-        if not new_dim in ZZ or new_dim < self.dim:
+        if new_dim not in ZZ or new_dim < self.dim:
             raise ValueError(f"[change_dim] Change dimension requires as new dimension an integer with value, at least, the old dimension ({self.dim})")
         
-        if old_dims == None: old_dims = list(range(self.dim)) # old dimensions are the first new dimensions
+        # old dimensions are the first new dimensions
+        if old_dims is None:
+            old_dims = list(range(self.dim)) 
 
         if not isinstance(old_dims, (list, tuple)):
             raise TypeError(f"[change_dim] The type for old dimension must be a list or tuple.")
         elif len(old_dims) != self.dim:
             raise TypeError(f"[change_dim] The number of old dimensions must be exact ({self.dim} in this case)")
-        elif any(nd < 0 or nd >= new_dim for nd in old_dims):
+        elif any(old_dim < 0 or old_dim >= new_dim for old_dim in old_dims):
             raise ValueError(f"[change_dim] The old dimensions must be valid new dimensions.")
         
         return self._change_dimension(new_dim, old_dims, **kwds)
@@ -356,22 +368,29 @@ class Sequence(SetMorphism):
             return self
         
         # we first check that the class is registered and is compatible with self.__class__
-        if not goal_class in Sequence.CLASSES_GRAPH.vertices(sort=False):
+        if goal_class not in Sequence.CLASSES_GRAPH.vertices(sort=False):
             raise TypeError(f"Class {goal_class} not recognized in the Sequence framework.")
         
         # we do a search by breadth to find the goal_class from self.__class__
-        to_check = [self.__class__]; prev_class = dict()
-        while len(to_check) > 0 and (not goal_class in to_check):
+        to_check = [self.__class__]
+        prev_class = dict()
+
+        while len(to_check) > 0 and (goal_class not in to_check):
             current = to_check.pop(0)
             for v in Sequence.CLASSES_GRAPH.neighbor_out_iterator(current):
-                to_check.append(v); prev_class[v] = current
-                if v == goal_class: break
+                to_check.append(v)
+                prev_class[v] = current
+
+                if v == goal_class: 
+                    break
             else: # if we do not break, we are not finished
                 continue
             break # otherwise we simply get out of the loop
         else: # if we never break, it means we did not find "goal_class"
             raise TypeError(f"The class {goal_class} is not admissible for {self.__class__}")
-        path_to_goal = [goal_class]; current = goal_class
+        
+        path_to_goal = [goal_class]
+        current = goal_class
         while prev_class[current] != self.__class__:
             current = prev_class[current]
             path_to_goal.insert(0, current)
@@ -401,7 +420,7 @@ class Sequence(SetMorphism):
         if (not _generic) and any(index < 0 for index in indices):
             return 0 if self.__extend_by_zero else NaN
         
-        if not tuple(indices) in self.__CACHE_ELEMENTS:
+        if tuple(indices) not in self.__CACHE_ELEMENTS:
             try:
                 output = self._element(*indices)
             except ZeroDivisionError as e:
@@ -416,7 +435,8 @@ class Sequence(SetMorphism):
             if (not output is NaN) and (not output is oo):
                 try:
                     output = self.universe(output) #pylint: disable=not-callable
-                    if self.universe == SR: output = output.simplify_full()
+                    if self.universe == SR: 
+                        output = output.simplify_full()
                 except Exception as e:
                     if not _generic or _debug:
                         raise e
@@ -454,7 +474,8 @@ class Sequence(SetMorphism):
             res = []
             st = 0 if key.start is None else key.start # we start at 0 if not given beginning
             # the ending must be given, otherwise, we raise an error
-            if key.stop is None: raise TypeError("The ending of a slice must be fixed (to guarantee the end of the method)")
+            if key.stop is None: 
+                raise TypeError("The ending of a slice must be fixed (to guarantee the end of the method)")
             end = key.stop
             jump = 1 if key.step is None else key.step # the step is, by default, 1
             
@@ -494,12 +515,13 @@ class Sequence(SetMorphism):
         elif len(shifts) == 1 and isinstance(shifts[0], (tuple, list)):
             shifts = shifts[0]
 
-        if any(not sh in ZZ for sh in shifts):
+        if any(sh not in ZZ for sh in shifts):
             raise TypeError("The shift must be integers")
         if len(shifts) != self.dim:
             raise ValueError(f"We need {self.dim} shifts but {len(shifts)} were given")
         
-        if all(shift == 0 for shift in shifts): return self
+        if all(shift == 0 for shift in shifts): 
+            return self
         return self._shift(*shifts)
 
     def _shift(self, *shifts):
@@ -526,7 +548,7 @@ class Sequence(SetMorphism):
 
             * A list of tuples `(i,n)` such that we will fix the `i`-th entry to take the value `n`.
         '''
-        if any(i < 0 or i >= self.dim or not n in ZZ for (i,n) in vals):
+        if any(i < 0 or i >= self.dim or n not in ZZ for (i,n) in vals):
             raise ValueError(f"Slicing require as input a list of tuples (i,n) with valid indices `i` and integers `n`")
         values = dict(vals)
 
@@ -537,12 +559,15 @@ class Sequence(SetMorphism):
     
     def _slicing(self, values: dict[int,int]):
         def to_original_input(n: list):
-            result = []; read = 0
+            result = []
+            read = 0
+
             for i in range(self.dim):
                 if i in values:
                     result.append(values[i])
                 else:
-                    result.append(n[read]); read += 1
+                    result.append(n[read])
+                    read += 1
             return result
         return Sequence(lambda *n: self._element(*to_original_input(n)), self.universe, self.dim - len(values), **self.__extra_args)
 
@@ -577,7 +602,7 @@ class Sequence(SetMorphism):
         result = []
         for value in vals:
             i, seq = value
-            if not i in ZZ or i < 0 or i >= self.dim:
+            if i not in ZZ or i < 0 or i >= self.dim:
                 raise IndexError(f"[subsequence] The given index is not valid (got {i}). It must be a non-negative integer smaller than {self.dim}")
             seq = self._subsequence_input(i, seq)
             if not (seq is False):
@@ -602,7 +627,7 @@ class Sequence(SetMorphism):
         if isinstance(input, (list,tuple)): # case of a linear subsequence
                 if len(input) != 2:
                     raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
-                elif any((not el in ZZ) for el in input):
+                elif any((el not in ZZ) for el in input):
                     raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
                 a, b = input
                 if a != 1 or b != 0:
@@ -632,8 +657,10 @@ class Sequence(SetMorphism):
 
     def linear_subsequence(self, index: int, scale: int, shift: int):
         r'''Method to compute a linear subsequence of ``self``'''
-        if index < 0 or index >= self.dim: raise IndexError(f"The index given must be in the dimension ({self.dim}). Got {index}")
-        if scale <= 0 or not scale in ZZ: raise ValueError(f"The scale must be a positive integer. Got {scale}")
+        if index < 0 or index >= self.dim: 
+            raise IndexError(f"The index given must be in the dimension ({self.dim}). Got {index}")
+        elif scale <= 0 or scale not in ZZ: 
+            raise ValueError(f"The scale must be a positive integer. Got {scale}")
 
         return self.subsequence((index,(scale,shift)))
     
@@ -641,9 +668,9 @@ class Sequence(SetMorphism):
         r'''
             Method that exchange the indices of a multi-dimensional sequence.
         '''
-        if src == None and dst == None and self.dim == 2:
-            src = 0; dst = 1
-        elif src == None and dst == None:
+        if src is None and dst is None and self.dim == 2:
+            src, dst = 0, 1
+        elif src is None and dst is None:
             raise TypeError(f"If a sequence is not bi-dimensional, the arguments ``src`` and ``dst`` are mandatory")
         elif any(el < 0 or el >= self.dim for el in (src,dst)):
             raise IndexError(f"Required valid indices for swapping.")
@@ -695,13 +722,16 @@ class Sequence(SetMorphism):
                 sage: N.shift().partial_sum() == ExpressionSequence((n*(n+1))/2, universe=QQ)
                 True
         '''
-        if self.dim == 1 and index is None: index = 0
-        if not index in ZZ or index < 0 or index >= self.dim:
+        if self.dim == 1 and index is None: 
+            index = 0
+        elif index not in ZZ or index < 0 or index >= self.dim:
             raise IndexError(f"The index for partial sum must be a valid index for this sequence.")
         
         if self.dim > 1:
             def _partial_sum(*n):
-                bf = list(n[:index]); lt = list(n[index+1:])
+                bf = list(n[:index])
+                lt = list(n[index+1:])
+
                 return sum(self(bf+[i]+lt) for i in range(n[index]))
         else:
             def _partial_sum(n):
@@ -736,13 +766,16 @@ class Sequence(SetMorphism):
                 sage: N.shift().partial_prod() == Factorial
                 True
         '''
-        if self.dim == 1 and index is None: index = 0
-        if not index in ZZ or index < 0 or index >= self.dim:
+        if self.dim == 1 and index is None: 
+            index = 0
+        elif index not in ZZ or index < 0 or index >= self.dim:
             raise IndexError(f"The index for partial sum must be a valid index for this sequence.")
         
         if self.dim > 1:
             def _partial_prod(*n):
-                bf = list(n[:index]); lt = list(n[index+1:])
+                bf = list(n[:index])
+                lt = list(n[index+1:])
+
                 return prod((self(bf+[i]+lt) for i in range(n[index])), z=self.universe.one())
         else:
             def _partial_prod(n):
@@ -759,7 +792,10 @@ class Sequence(SetMorphism):
             to_diag = list(range(self.dim))
         elif any(ind<0 or ind>=self.dim for ind in to_diag):
             raise ValueError(f"[diagonal] Indices to diagonalize must be valid indices for dimensions of the sequence")
-        to_diag = list(set(to_diag)); to_diag.sort() # We remove repeated indices
+        
+        # We remove repeated indices
+        to_diag = list(set(to_diag))
+        to_diag.sort() 
 
         if self.dim == 1: # nothing to diagonalize
             return self
@@ -767,11 +803,15 @@ class Sequence(SetMorphism):
         new_dim = self.dim - len(to_diag) + 1
 
         def __to_old_indices(*n: int) -> list[int]:
-            new_indices = []; j = 0
+            new_indices = []
+            j = 0
+
             for i in range(self.dim):
-                if i in to_diag: new_indices.append(n[-1])
+                if i in to_diag: 
+                    new_indices.append(n[-1])
                 else: 
-                    new_indices.append(n[j]); j+=1
+                    new_indices.append(n[j])
+                    j+=1
             return new_indices
         
         return Sequence(
@@ -791,20 +831,25 @@ class Sequence(SetMorphism):
         return self._composition(other)
 
     def __pow__(self, power: int):
-        if not power in ZZ or power < 0:
+        if power not in ZZ or power < 0:
             raise ValueError("Power must be a non-negative integer for Sequences")
         if power == 0:
             return ConstantSequence(1, self.universe, self.dim)
         elif power == 1:
             return self
         else:
-            p1 = power//2; p2 = p1 + power%2
+            p1 = power//2
+            p2 = p1 + power%2
+
             return (self**p1)*(self**p2)
 
     def __coerce_into_common_class__(self, other: Sequence):
         r'''We assume ``other`` is in the same parent as ``self``. Hence it is a :class:`Sequence`'''
         common_class = Sequence.MinimalCommonClass(self.__class__, other.__class__)
-        all_info = self.extra_info(); all_info.update(other.extra_info())
+
+        all_info = self.extra_info()
+        all_info.update(other.extra_info())
+
         self_casted = self.change_class(common_class, **all_info)
         other_casted = other.change_class(common_class, **all_info)
 
@@ -914,9 +959,9 @@ class Sequence(SetMorphism):
         if not isinstance(other, Sequence):
             try:
                 R = pushout(self.parent(), other.parent())
-                self = R(self); other = R(other)
+                self, other = R(self), R(other)
                 return self == other
-            except:
+            except Exception:
                 return False
         return self.almost_equals(other, order=Sequence.EQUALITY_BOUND)
     
@@ -931,7 +976,7 @@ class Sequence(SetMorphism):
         try:
             expr = SR(self.generic()).simplify_full()
             return all(expr.is_polynomial(x) for x in expr.variables())
-        except:
+        except Exception:
             return False
     def as_polynomial(self) -> Sequence:
         r'''Method to cast a sequence to a polynomial sequence'''
@@ -944,7 +989,7 @@ class Sequence(SetMorphism):
         r'''Method to check if a sequence is rational'''
         try:
             return SR(self.generic()).simplify_full().is_rational_expression()
-        except:
+        except Exception:
             return False
     def as_rational(self) -> Sequence:
         r'''Method to cast a sequence to a rational sequence'''
@@ -956,7 +1001,7 @@ class Sequence(SetMorphism):
         
     def is_hypergeometric(self, index: int = None) -> tuple[bool, Sequence]:
         r'''Method to check if a sequence is hypergeometric or not'''
-        if index == None:
+        if index is None:
             if self.dim == 1:
                 index = 0
             else:
@@ -971,9 +1016,9 @@ class Sequence(SetMorphism):
 
     def is_constant(self, bound: int = None) -> bool:
         if self.dim == 1:
-            return all(self(el) == self(0) for el in range(bound if bound != None else self.EQUALITY_BOUND))
+            return all(self(el) == self(0) for el in range(bound if bound is not None else self.EQUALITY_BOUND))
         else:
-            return all(self(el) == self(self.dim*[0]) for el in product(range(bound if bound != None else self.EQUALITY_BOUND), repeat=self.dim))
+            return all(self(el) == self(self.dim*[0]) for el in product(range(bound if bound is not None else self.EQUALITY_BOUND), repeat=self.dim))
     def as_constant(self, bound = None) -> ConstantSequence:
         if self.is_constant(bound):
             return ConstantSequence(
@@ -1004,7 +1049,7 @@ class ConstantSequence(Sequence):
         then it can represent the constant sequence `(x, x, x, \ldots)`.
 
         This class is, hence, at the bottom of the Sequence hierarchy. This class has no default tranfromation to any other type
-        of sequences and all other sequences types **must** implement a tranformation from :class:`ConstantSequence`.
+        of sequences and all other sequences types **must** implement a transformation from :class:`ConstantSequence`.
     '''
     def __init__(self, value, universe=None, dim: int = 1, *, _extend_by_zero=True, **kwds):
         super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero, **kwds)
@@ -1055,7 +1100,7 @@ class ConstantSequence(Sequence):
 def IdentitySequence(base, **kwds):
     return Sequence(lambda n : n, base, 1, **kwds)
 
-from sage.categories.all import Rings
+from sage.categories.rings import Rings
 _Rings = Rings.__classcall__(Rings)
 class SequenceSet(Homset,UniqueRepresentation):
     r'''
