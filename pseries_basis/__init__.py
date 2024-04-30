@@ -106,7 +106,7 @@ r'''
 
         sage: F = FallingBasis(1,0,1)
         sage: F
-        Basis of Sequences over Rational Field: (factorial(n)/factorial(-k + n))
+        Basis of Sequences over Rational Field: (1, n, n^2 - n, n^3 - 3*n^2 + 2*n, n^4 - 6*n^3 + 11*n^2 - 6*n,...)
         sage: [el.generic() for el in F[:3]]
         [1, n, n^2 - n]
         sage: F.rho[:10]

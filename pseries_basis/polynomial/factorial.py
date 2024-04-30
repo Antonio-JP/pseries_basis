@@ -187,10 +187,10 @@ class FactorialBasis(PSBasis):
                 True
                 sage: Fac_B.compatibility("E")
                 Compatibility condition (1, 0, 1) with following coefficient matrix:
-                [1 1]
+                [n 1]
                 sage: FallingFactorial.compatibility("E")
                 Compatibility condition (1, 0, 1) with following coefficient matrix:
-                [1 1]
+                [k 1]
                 sage: Fac_B.compatibility("n")
                 Compatibility condition (0, 1, 1) with following coefficient matrix:
                 [                                    n (n + 1)*factorial(n)/factorial(n + 1)]
@@ -463,8 +463,12 @@ def RootSequenceBasis(rho: Sequence, lc: Sequence,
         INPUT:
 
         * ``rho``: the sequence of roots for the factorial basis.
-        * ``cn``: the sequence of leading coefficients for the factorial basis.
+        * ``lc``: the sequence of leading coefficients for the factorial basis.
         * ``universe``: the base universe where the :class:`PSBasis` will be created.
+        * ``beta``: either ``None`` or a tuple ``(name, seq)``. This defines the sequence `beta(n)` and a name for it. If
+            not given, it takes as default the values ``(`n`, n -> n)``.
+        * ``gamma``: either ``None`` or a tuple ``(name, seq)``. This defines a sequence `\gamma(k)` such that `a_k` and `b_k`
+            are built (if necessary) as :class:`RationalSequence` w.r.t. `gamma(k)`. By default, it takes the value ``(`k`, n -> n)``.
         * ``variable`` and ``seq_variable``: see :class:`FactorialBasis` for further information.
 
         EXAMPLES::
@@ -477,6 +481,10 @@ def RootSequenceBasis(rho: Sequence, lc: Sequence,
              Sequence over [Rational Field]: (0, 1, 8,...),
              Sequence over [Rational Field]: (0, 1, 16,...)]
     '''
+    ## Treating the beta/gamma arguments
+    beta = beta if beta != None else ('n', IdentitySequence(ZZ, **kwds))
+    gamma = gamma if gamma != None else ('k', IdentitySequence(ZZ, **kwds))
+
     ## Treating the arguments rho and lc
     if not isinstance(rho, Sequence):
         if universe != None:
@@ -556,8 +564,8 @@ def FallingBasis(a, b, c, universe = None, E: str = 'E'):
     output.set_homomorphism(E, comp, True)
 
     ## We create the base sequence for generic purposes
-    n, k, i = SR(output.gen()), SR.var(output.ore_var()), SR.var("i")
-    output._PSBasis__original_sequence = ExpressionSequence((a*n + b - c*i).prod(i, 0, k-1), [k,n], universe)
+    # n, k, i = SR(output.gen()), SR.var(output.ore_var()), SR.var("i")
+    # output._PSBasis__original_sequence = ExpressionSequence((a*n + b - c*i).prod(i, 0, k-1), [k,n], universe)
 
     ## We check is the basis is quasi-triangular
     ## roots are (nc-b)/a then we need n = (ka + b)/c
@@ -1120,6 +1128,7 @@ class ShuffledBasis(FactorialBasis):
             sage: from pseries_basis.polynomial.factorial import *
             sage: B = BinomialBasis; P = PowerBasis
             sage: B2 = ShuffledBasis([B,P], [0,1,1,0])
+            ... [ShuffledBasis] Compatibility with endomorphism E='E' could not be extended (not in all bases)
             sage: B2[:4]
             [Sequence over [Rational Field]: (1, 1, 1,...),
              Sequence over [Rational Field]: (0, 1, 2,...),
@@ -1131,6 +1140,8 @@ class ShuffledBasis(FactorialBasis):
         With this system, we can build the same basis changing the order and the values in the cycle::
 
             sage: B3 = ShuffledBasis([P,B], [1,0,0,1])
+            ... [ShuffledBasis] Compatibility with endomorphism E='Id' could not be extended (not in all bases)
+            ... [ShuffledBasis] Compatibility with derivation D='Dn' could not be extended (not in all bases)
             sage: B3.almost_equals(B2, 30) # checking equality for 30 elements 
             True
 
@@ -1139,6 +1150,7 @@ class ShuffledBasis(FactorialBasis):
             sage: B2.nsections
             4
             sage: ShuffledBasis([B,B,P],[0,0,1,2,1,2]).nsections
+            ... [ShuffledBasis] Compatibility with endomorphism E='E' could not be extended (not in all bases)
             6
 
         This basis can be use to deduce some nice recurrences for the Apery's `\zeta(2)` sequence::
@@ -1268,7 +1280,7 @@ class ShuffledBasis(FactorialBasis):
                 except (ValueError, NotImplementedError):
                     logger.info(f"[ShuffledBasis] Compatibility with derivation {D=} could not be extended")
             else:
-                logger.info(f"[ShuffledBasis] Compatibility with derivation {E=} could not be extended (not in all bases)")
+                logger.info(f"[ShuffledBasis] Compatibility with derivation {D=} could not be extended (not in all bases)")
 
         ## TODO: Fill from here
         ## 1. (DONE) Call the super method of Factorial Basis with the necessary information.

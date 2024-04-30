@@ -319,7 +319,7 @@ class ExpressionSequence(Sequence):
     ## Methods for operations on Sequences
     def _element(self, *indices: int):
         self_meanings = self.meanings()
-        return self._eval_generic(**{str(v) : self_meanings[str(v)].element(i) for (v,i) in zip(self.variables(), indices)})
+        return self._eval_generic(**{str(v) : self_meanings[str(v)]._element(i) for (v,i) in zip(self.variables(), indices)})
 
     def _subsequences_input(self, *vals) -> dict[int, Sequence]:
         original_inputs = dict(vals)
@@ -336,21 +336,25 @@ class ExpressionSequence(Sequence):
         vars = self.variables()
         inner = self.meanings()[str(vars[index])]
         if isinstance(input, (list,tuple)): # case of a linear subsequence
-                if len(input) != 2:
-                    raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
-                elif any((not el in ZZ) for el in input):
-                    raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
-                a, b = input; a = ZZ(a); b = ZZ(b)
-                if a != 1 or b != 0:
-                    from .qsequences import is_QSequence
-                    if inner == IdentitySequence(self.universe, **self.extra_info()["extra_args"]):
-                        return vars[index]*a + b
-                    elif is_QSequence(inner):
-                        if hasattr(inner, "power"): # This is a special q-sequence representing q^{en}
-                            # q^{e(an+b)} = (q^{en})^a * q^{e*b} = q^{eb} * var^a
-                            # Since `inner` is a q-sequence, it has attribute `q`
-                            return (vars[index]**a) * (inner.q ** b)
+            if len(input) != 2:
+                raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
+            elif any((not el in ZZ) for el in input):
+                raise TypeError(f"[subsequence - linear] Error in format for a linear subsequence. Expected a pair of integers")
+            a, b = input; a = ZZ(a); b = ZZ(b)
+            if a != 1 or b != 0:
+                from .qsequences import is_QSequence
+                if inner == IdentitySequence(self.universe, **self.extra_info()["extra_args"]):
+                    return vars[index]*a + b
+                elif is_QSequence(inner):
+                    if hasattr(inner, "power"): # This is a special q-sequence representing q^{en}
+                        # q^{e(an+b)} = (q^{en})^a * q^{e*b} = q^{eb} * var^a
+                        # Since `inner` is a q-sequence, it has attribute `q`
+                        return (vars[index]**a) * (inner.q ** b)
         ## Any other behavior will fall into the original method
+        elif isinstance(input, Sequence):
+            try:
+                return input.generic(str(vars[index]))
+            except: pass
         return super()._subsequence_input(index, input)
     
     def _shift(self, *shifts):
