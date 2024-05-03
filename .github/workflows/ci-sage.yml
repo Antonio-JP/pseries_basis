@@ -33,7 +33,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Checking pycodestyle-minimal
       run: |
-        sage --version
+        sage -tox -e pycodestyle-minimal -- pseries_basis
 
   # Job for running the automatic tests in Sagemath
   testing:
