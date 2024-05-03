@@ -1419,7 +1419,7 @@ class Compatibility:
             for i in range(-self.A, self.B+1): #pylint: disable=invalid-unary-operand-type
                 ## Creating the coefficient
                 try:
-                    c = self[b,i].generic('k')
+                    c = self[b,i].generic()
                     if c == 0: 
                         continue
                     new_mon = r"\left(" + latex(c) + r"\right)"

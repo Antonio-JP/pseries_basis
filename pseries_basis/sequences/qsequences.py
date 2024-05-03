@@ -53,7 +53,7 @@ def QSequence(sequence: Callable[..., Any], universe=None, dim: int = 1, *, q, _
     return output
 
 def QPower(power, universe, *, q, **kwds):
-    return QSequence(lambda n : SR(q)**(power*n), universe, 1, q=q, power=power, **kwds)
+    return QSequence(lambda n : q**(power*n), universe, 1, q=q, power=power, **kwds)
 
 def QExpressionSequence(expression: Expression, variables=None, universe=None, *, q, power: int = 1, _extend_by_zero=False, **kwds):
     meanings = QPower(power, universe, q=q, **kwds)
