@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Interface for Sequences &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</title>
+    <title>Infinite Sequences Framework: working with sequences in SageMath &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.4.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
@@ -14,12 +14,12 @@
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script async="async" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Interface with other platforms" href="io.html" />
-    <link rel="prev" title="Access and communication with ore_algebra" href="ore.html" /> 
+    <link rel="next" title="Basic framework for Sequences" href="sequences/base.html" />
+    <link rel="prev" title="Power Series basis: basic structure and functionality" href="psbasis.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -31,13 +31,13 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="io.html" title="Interface with other platforms"
+          <a href="sequences/base.html" title="Basic framework for Sequences"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="ore.html" title="Access and communication with ore_algebra"
+          <a href="psbasis.html" title="Power Series basis: basic structure and functionality"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Interface for Sequences</a></li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pseries_basis</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Infinite Sequences Framework: working with sequences in SageMath</a></li> 
       </ul>
     </div>  
 
@@ -47,74 +47,51 @@
           <div class="body" role="main">
             
   <section id="module-pseries_basis.sequences">
-<span id="interface-for-sequences"></span><h1>Interface for Sequences<a class="headerlink" href="#module-pseries_basis.sequences" title="Permalink to this headline">¶</a></h1>
-<p>Module containing methods, strucutres and functions related with Sequences.</p>
-<p>A sequence is a function <span class="math notranslate nohighlight">\(f: \mathbb{N} \rightarrow \mathbb{K}\)</span> where the space <span class="math notranslate nohighlight">\(\mathbb{K}\)</span> is 
-called the <em>universe</em> of the sequence. The package <code class="xref py py-mod docutils literal notranslate"><span class="pre">pseries_basis</span></code> is oriented towards 
-formal power series, which are equivalent to sequences.</p>
-<p>This module will create a framework for the whole package to manage, access and manipulate sequences
-in a generic fashion.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="pseries_basis.sequences.LambdaSequence">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.</span></span><span class="sig-name descname"><span class="pre">LambdaSequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.LambdaSequence" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pseries_basis.sequences.Sequence" title="pseries_basis.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.sequences.Sequence</span></code></a></p>
-<p>Simplest implementation of <a class="reference internal" href="#pseries_basis.sequences.Sequence" title="pseries_basis.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>.</p>
-<p>This class computes a sequence by calling a function with some integer coefficient. It does not check whether this 
-defining function will always work. This class implements some basic arithmetic for sequences, simplifying 
-their use.</p>
-<p>INPUT:</p>
+<span id="infinite-sequences-framework-working-with-sequences-in-sagemath"></span><h1>Infinite Sequences Framework: working with sequences in SageMath<a class="headerlink" href="#module-pseries_basis.sequences" title="Permalink to this headline">¶</a></h1>
+<p>Sequences module.</p>
+<p>This module contains the main structures and algorithms to handle generic infinite sequences.
+This module differs from the module <code class="xref py py-mod docutils literal notranslate"><span class="pre">sage.structure.sequence.Sequence</span></code> in the sense that
+the data of the sequence can be infinite.</p>
+<p>A sequence is a map from a cartesian product of the natural numbers to a <em>universe</em>. 
+The universe has to be a Parent structure in SageMath.</p>
+<div class="math notranslate nohighlight">
+\[s: \mathbb{N}^k \longrightarrow \mathbb{U}\]</div>
+<p>As for any usual function, there is a natural algebraic structure inherited from the universe
+<span class="math notranslate nohighlight">\(\mathbb{U}\)</span>. If <span class="math notranslate nohighlight">\(\mathbb{U}\)</span> is a ring, then the set of sequences inherits a ring structure
+using termwise operations.</p>
+<div class="math notranslate nohighlight">
+\[(s_1 + s_2)(n) = s_1(n) + s_2(n),\qquad (s_1 s_2)(n) = s_1(n)s_2(n).\]</div>
+<p>This module have several submodules:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">func</span></code>: a callable that defines the sequence as their output with natural input.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">universe</span></code>: a parent structure where all the elements of the sequence will be (a specific casting is performed)</p></li>
+<li><p><a class="reference internal" href="sequences/base.html#module-pseries_basis.sequences.base" title="pseries_basis.sequences.base"><code class="xref py py-mod docutils literal notranslate"><span class="pre">base</span></code></a>: this module contains the base structure for sequences (see <a class="reference internal" href="sequences/base.html#pseries_basis.sequences.base.Sequence" title="pseries_basis.sequences.base.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Sequence</span></code></a>) that
+is used later for further specializations and special cases of sequences. In particular, it includes
+the connection to the Sage categories and Sage Parent-Element framework.</p></li>
+<li><p><a class="reference internal" href="sequences/element.html#module-pseries_basis.sequences.element" title="pseries_basis.sequences.element"><code class="xref py py-mod docutils literal notranslate"><span class="pre">element</span></code></a>: this module contains the main classes that implements the sequences in different ways.
+These subclasses will define a poset (partially-ordered set) of subclasses that will be used when
+computing with sequences to decide the final class of a sequence.</p></li>
+<li><p><a class="reference internal" href="sequences/examples.html#module-pseries_basis.sequences.examples" title="pseries_basis.sequences.examples"><code class="xref py py-mod docutils literal notranslate"><span class="pre">examples</span></code></a>: this module contains several examples of sequences and methods to generate classes 
+of sequences.</p></li>
+<li><p><a class="reference internal" href="sequences/qsequences.html#module-pseries_basis.sequences.qsequences" title="pseries_basis.sequences.qsequences"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qsequences</span></code></a>: implement all the necessary classes to handle and manipulate <span class="math notranslate nohighlight">\(q\)</span>-sequences.</p></li>
 </ul>
-<p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis.sequences</span> <span class="kn">import</span> <span class="n">LambdaSequence</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">C</span> <span class="o">=</span> <span class="n">LambdaSequence</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span> <span class="p">:</span> <span class="n">catalan_number</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">ZZ</span><span class="p">)</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">C</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
-<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">42</span><span class="p">,</span> <span class="mi">132</span><span class="p">,</span> <span class="mi">429</span><span class="p">,</span> <span class="mi">1430</span><span class="p">,</span> <span class="mi">4862</span><span class="p">]</span>
-<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">C</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
-<span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">42</span><span class="p">]</span>
-<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">C</span> <span class="o">+</span> <span class="n">C</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
-<span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">28</span><span class="p">]</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">F</span> <span class="o">=</span> <span class="n">LambdaSequence</span><span class="p">(</span><span class="n">fibonacci</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">)</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">F</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
-<span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">34</span><span class="p">]</span>
-</pre></div>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sequences/base.html">Basic framework for Sequences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequences/element.html">Different implementations of special sequences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequences/qsequences.html">Implementing <span class="math notranslate nohighlight">\(q\)</span>-sequences into SageMath</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequences/examples.html">Examples of Sequences and <span class="math notranslate nohighlight">\(q\)</span>-Sequences</a></li>
+</ul>
 </div>
-<dl class="py method">
-<dt class="sig sig-object py" id="pseries_basis.sequences.LambdaSequence.element">
-<span class="sig-name descname"><span class="pre">element</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.LambdaSequence.element" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pseries_basis.sequences.Sequence">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.</span></span><span class="sig-name descname"><span class="pre">Sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">universe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.Sequence" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Main calss for sequences. It defines a universe for its elements and a general interface to access the sequence.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="pseries_basis.sequences.Sequence.almost_zero">
-<span class="sig-name descname"><span class="pre">almost_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.Sequence.almost_zero" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method that checks if a sequence is zero at the beginning.</p>
-<p>This method receives a number of elements to be checked and then it proceeds to check if all the first 
-elements of the sequence are equal to zero. This is helpful in some sequence to guarantee that the whole 
-sequence is exactly zero.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pseries_basis.sequences.Sequence.element">
-<span class="sig-name descname"><span class="pre">element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.Sequence.element" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="pseries_basis.sequences.Sequence.universe">
-<span class="sig-name descname"><span class="pre">universe</span></span><a class="headerlink" href="#pseries_basis.sequences.Sequence.universe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attribute with the common parent for all the elements of this sequence</p>
-</dd></dl>
-
-</dd></dl>
-
+</section>
+<section id="indices-and-tables">
+<h2>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="../search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
 </section>
 
 
@@ -125,14 +102,25 @@ sequence is exactly zero.</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Infinite Sequences Framework: working with sequences in SageMath</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and Tables</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
     <h4>Previous topic</h4>
-    <p class="topless"><a href="ore.html"
-                          title="previous chapter">Access and communication with <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code></a></p>
+    <p class="topless"><a href="psbasis.html"
+                          title="previous chapter">Power Series basis: basic structure and functionality</a></p>
   </div>
   <div>
     <h4>Next topic</h4>
-    <p class="topless"><a href="io.html"
-                          title="next chapter">Interface with other platforms</a></p>
+    <p class="topless"><a href="sequences/base.html"
+                          title="next chapter">Basic framework for Sequences</a></p>
   </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
@@ -165,17 +153,17 @@ sequence is exactly zero.</p>
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="io.html" title="Interface with other platforms"
+          <a href="sequences/base.html" title="Basic framework for Sequences"
              >next</a> |</li>
         <li class="right" >
-          <a href="ore.html" title="Access and communication with ore_algebra"
+          <a href="psbasis.html" title="Power Series basis: basic structure and functionality"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.0.1 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Interface for Sequences</a></li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">pseries_basis</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Infinite Sequences Framework: working with sequences in SageMath</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2019.
+        &#169; Copyright 2022.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>

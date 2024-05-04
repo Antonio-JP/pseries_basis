@@ -1,6 +1,6 @@
 .. nodoctest
 
-Funtional basis: the most basi order bases
+Funtional basis: the most basic order bases
 ======================================================
 
 .. automodule:: pseries_basis.order.fun_basis

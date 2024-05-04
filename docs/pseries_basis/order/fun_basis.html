@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Funtional basis: the most basi order bases &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
+    <title>Funtional basis: the most basic order bases &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.4.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
     
@@ -14,7 +14,6 @@
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
-    <script async="async" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -36,9 +35,9 @@
         <li class="right" >
           <a href="../order.html" title="Order basis: more bases for formal power series"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../order.html" accesskey="U">Order basis: more bases for formal power series</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Funtional basis: the most basi order bases</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Funtional basis: the most basic order bases</a></li> 
       </ul>
     </div>  
 
@@ -48,75 +47,8 @@
           <div class="body" role="main">
             
   <section id="module-pseries_basis.order.fun_basis">
-<span id="funtional-basis-the-most-basi-order-bases"></span><h1>Funtional basis: the most basi order bases<a class="headerlink" href="#module-pseries_basis.order.fun_basis" title="Permalink to this headline">¶</a></h1>
+<span id="funtional-basis-the-most-basic-order-bases"></span><h1>Funtional basis: the most basic order bases<a class="headerlink" href="#module-pseries_basis.order.fun_basis" title="Permalink to this headline">¶</a></h1>
 <p>Sage package for Functional order Basis.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="pseries_basis.order.fun_basis.FunctionalBasis">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.order.fun_basis.</span></span><span class="sig-name descname"><span class="pre">FunctionalBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'f'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.order.fun_basis.FunctionalBasis" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="../psbasis.html#pseries_basis.psbasis.OrderBasis" title="pseries_basis.psbasis.OrderBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.psbasis.OrderBasis</span></code></a></p>
-<p>Class for representing a basis of power functions.</p>
-<p>A basis of power functions is a type of order basis for power series
-where the <span class="math notranslate nohighlight">\(n\)</span>-th element is the <span class="math notranslate nohighlight">\(n\)</span>-th power of an order 1 power series <span class="math notranslate nohighlight">\(f(x)\)</span>.</p>
-<p>The first element in the sequence will always be the constant polynomial 1.</p>
-<p>The second element in the sequence is a function <span class="math notranslate nohighlight">\(f(x)\)</span> such that <span class="math notranslate nohighlight">\(f(0) = 0\)</span>
-and <span class="math notranslate nohighlight">\(f'(0) \neq 0\)</span></p>
-<dl class="simple">
-<dt>INPUT:</dt><dd><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(f(x)\)</span>.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pseries_basis.order.fun_basis.ExponentialBasis">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.order.fun_basis.</span></span><span class="sig-name descname"><span class="pre">ExponentialBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'E'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dx'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.order.fun_basis.ExponentialBasis" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pseries_basis.order.fun_basis.FunctionalBasis" title="pseries_basis.order.fun_basis.FunctionalBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.order.fun_basis.FunctionalBasis</span></code></a></p>
-<p>Class for the power functional basis generated by the exponential.</p>
-<p>This class represents the FunctionalBasis formed by the set of powers
-of the exponential function <span class="math notranslate nohighlight">\(f(x) = exp(x)-1\)</span>. The minus one only shows up
-because <span class="math notranslate nohighlight">\(f(x)\)</span> must have order 0.</p>
-<p>Following the notation in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>, we can find that
-this basis has compatibilities with the multiplication by <span class="math notranslate nohighlight">\(exp(x)\)</span> and the
-derivation operator</p>
-<dl class="simple">
-<dt>INPUT:</dt><dd><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">E</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(exp(x)\)</span>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Dx</span></code>: the name for the operator representing the derivation by <span class="math notranslate nohighlight">\(x\)</span>.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="pseries_basis.order.fun_basis.BesselBasis">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.order.fun_basis.</span></span><span class="sig-name descname"><span class="pre">BesselBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Xi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Xi'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Dx'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.order.fun_basis.BesselBasis" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="../psbasis.html#pseries_basis.psbasis.OrderBasis" title="pseries_basis.psbasis.OrderBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.psbasis.OrderBasis</span></code></a></p>
-<p>Class for representing a basis of Bessel functions.</p>
-<p>The Bessel functions with integer index form naturally an order basis. They are usually denoted
-by <span class="math notranslate nohighlight">\(J_n(x)\)</span> where <span class="math notranslate nohighlight">\(n\)</span> is a natural number.</p>
-<dl class="simple">
-<dt>INPUT:</dt><dd><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">Xi</span></code>: the name for the operator representing the multiplication by <span class="math notranslate nohighlight">\(1/x\)</span>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Dx</span></code>: the name of the operator representing the standard derivation.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="pseries_basis.order.fun_basis.BesselBasis.element">
-<span class="sig-name descname"><span class="pre">element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.order.fun_basis.BesselBasis.element" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to return the <span class="math notranslate nohighlight">\(n\)</span>-th element of the basis.</p>
-<p>This method <em>implements</em> the corresponding abstract method from <a class="reference internal" href="../psbasis.html#pseries_basis.psbasis.PSBasis" title="pseries_basis.psbasis.PSBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSBasis</span></code></a>.
-See method <code class="xref py py-func docutils literal notranslate"><span class="pre">element()</span></code> for further information.</p>
-<p>This method removes the optional argument of variable name.</p>
-<p>For a <a class="reference internal" href="#pseries_basis.order.fun_basis.BesselBasis" title="pseries_basis.order.fun_basis.BesselBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">BesselBasis</span></code></a> the output will be the <span class="math notranslate nohighlight">\(n\)</span>-th Bessel function <span class="math notranslate nohighlight">\(J_n(x)\)</span>.</p>
-<p>OUTPUT:</p>
-<p>The <span class="math notranslate nohighlight">\(n\)</span>-th Bessel function that has order <span class="math notranslate nohighlight">\(n\)</span> as a formal power series.</p>
-<p>TODO: add examples</p>
-</dd></dl>
-
-</dd></dl>
-
 </section>
 
 
@@ -172,9 +104,9 @@ See method <code class="xref py py-func docutils literal notranslate"><span clas
         <li class="right" >
           <a href="../order.html" title="Order basis: more bases for formal power series"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../order.html" >Order basis: more bases for formal power series</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Funtional basis: the most basi order bases</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Funtional basis: the most basic order bases</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

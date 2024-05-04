@@ -1,0 +1,168 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Basic structures for q-Series &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.4.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Order basis: more bases for formal power series" href="../order.html" />
+    <link rel="prev" title="Q-series as Power series basis" href="../qbasis.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../order.html" title="Order basis: more bases for formal power series"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../qbasis.html" title="Q-series as Power series basis"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../qbasis.html" accesskey="U">Q-series as Power series basis</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Basic structures for q-Series</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-pseries_basis.qbasis.qbasis">
+<span id="basic-structures-for-q-series"></span><h1>Basic structures for q-Series<a class="headerlink" href="#module-pseries_basis.qbasis.qbasis" title="Permalink to this headline">¶</a></h1>
+<p>Module with the basic classes for implementing <span class="math notranslate nohighlight">\(q\)</span>-series.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.qbasis.qbasis.QBasis">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.qbasis.qbasis.</span></span><span class="sig-name descname"><span class="pre">QBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_extend_by_zero</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.qbasis.qbasis.QBasis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.qbasis.qbasis.QFactorialBasis">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.qbasis.qbasis.</span></span><span class="sig-name descname"><span class="pre">QFactorialBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ak</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_2seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.qbasis.qbasis.QFactorialBasis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.qbasis.qbasis.QBinomialBasis">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.qbasis.qbasis.</span></span><span class="sig-name descname"><span class="pre">QBinomialBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.qbasis.qbasis.QBinomialBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Factory of <span class="math notranslate nohighlight">\(q\)</span>-binomial basis of generic form.</p>
+<p>This method creates a <span class="math notranslate nohighlight">\(q\)</span>-binomial basis where the <span class="math notranslate nohighlight">\(k\)</span> element of the basis is the sequence</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\left[\begin{array}{c}an+c\\k+t\right]_{q^e}\end{split}\]</div>
+<p>These bases are always compatible with <span class="math notranslate nohighlight">\(E: n \mapsto n+1\)</span> and the multiplication by <span class="math notranslate nohighlight">\(q^{aen}\)</span>.
+This method guarantees the input <span class="math notranslate nohighlight">\(a\)</span>, <span class="math notranslate nohighlight">\(c\)</span>, <span class="math notranslate nohighlight">\(t\)</span> and <span class="math notranslate nohighlight">\(e\)</span> are of correct form, build the <span class="math notranslate nohighlight">\(QBasis\)</span> corresponding
+to it and include both compatibilities automatically.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">a</span></code>: the integer value for <span class="math notranslate nohighlight">\(a\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">c</span></code>: the integer value for <span class="math notranslate nohighlight">\(c\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">t</span></code>: the integer value for <span class="math notranslate nohighlight">\(t\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">e</span></code>: the integer value for <span class="math notranslate nohighlight">\(e\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">universe</span></code>: decides the inner universe of the sequence. It must include the value of <code class="docutils literal notranslate"><span class="pre">q</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">q</span></code>: the name or value for the <span class="math notranslate nohighlight">\(q\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">q_n</span></code>: the name of the operator that will be use for the multiplication by <span class="math notranslate nohighlight">\(q^{aen}\)</span>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.qbasis.qbasis.QPowerBasis">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.qbasis.qbasis.</span></span><span class="sig-name descname"><span class="pre">QPowerBasis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.qbasis.qbasis.QPowerBasis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to create a <span class="math notranslate nohighlight">\(q\)</span>-basis with <span class="math notranslate nohighlight">\(q\)</span>-powers as its elements.</p>
+<p>The elements of the basis will be <span class="math notranslate nohighlight">\(P_k(n) = q^{ank}\)</span>. These basis are 
+compatible with the multiplication by <span class="math notranslate nohighlight">\(q^{an}\)</span> and the shift in <span class="math notranslate nohighlight">\(n\)</span>.</p>
+<p>The name for the shift in <span class="math notranslate nohighlight">\(n\)</span> will be coded as “E”. The name for the 
+multiplication operator is given by <code class="docutils literal notranslate"><span class="pre">q_n</span></code>. If not, we will use <code class="docutils literal notranslate"><span class="pre">f&quot;q_{a}n&quot;</span></code>.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">a</span></code>: a positive integer defining the parameter <span class="math notranslate nohighlight">\(a\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">universe</span></code>: desired base universe for the basis. It must includes <span class="math notranslate nohighlight">\(q\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">q</span></code>: name for the <span class="math notranslate nohighlight">\(q\)</span> that will be used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">q_n</span></code> (optional): name for the multiplication by <span class="math notranslate nohighlight">\(q^{an}\)</span>.</p></li>
+</ul>
+<p>TODO: add examples</p>
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../qbasis.html"
+                          title="previous chapter">Q-series as Power series basis</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../order.html"
+                          title="next chapter">Order basis: more bases for formal power series</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/pseries_basis/qbasis/qbasis.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../order.html" title="Order basis: more bases for formal power series"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../qbasis.html" title="Q-series as Power series basis"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../qbasis.html" >Q-series as Power series basis</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Basic structures for q-Series</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,592 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Basic framework for Sequences &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.4.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Different implementations of special sequences" href="element.html" />
+    <link rel="prev" title="Infinite Sequences Framework: working with sequences in SageMath" href="../sequences.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="element.html" title="Different implementations of special sequences"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../sequences.html" title="Infinite Sequences Framework: working with sequences in SageMath"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../sequences.html" accesskey="U">Infinite Sequences Framework: working with sequences in SageMath</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Basic framework for Sequences</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-pseries_basis.sequences.base">
+<span id="basic-framework-for-sequences"></span><h1>Basic framework for Sequences<a class="headerlink" href="#module-pseries_basis.sequences.base" title="Permalink to this headline">¶</a></h1>
+<p>Base module for Sequence</p>
+<p>This module contains the basic structures for Sequences and their interaction with the category and parent-element 
+framework of SageMath. We include the main definition for a class for sequence and a specific case for Constant
+Sequence.</p>
+<p>All other types of sequences will inherit from the main class <a class="reference internal" href="#pseries_basis.sequences.base.Sequence" title="pseries_basis.sequences.base.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a> and must define a relation among other
+previously implemented sequences in order to provide appropriate conversion among different types of sequences. This is somehow
+similar to the inheritance or coercion systems from Python or SageMath, but adding an extra layer of flexibility when 
+implementing sequences within the same ring.</p>
+<p>More specifically, we define a Parent structure (see <code class="xref py py-class docutils literal notranslate"><span class="pre">SequenceSet</span></code>) that will include all
+the sequences of a fixed dimension over a fixed ring in SageMath. This, together with the Construction Functor
+<code class="xref py py-class docutils literal notranslate"><span class="pre">SequenceFunctor</span></code> will allow to interact with different objects in SageMath transforming them
+into sequences that can be then computed with in this framework.</p>
+<p>When implementing different types of sequences that all belong to the same parent <code class="xref py py-class docutils literal notranslate"><span class="pre">SequenceSet</span></code>,
+we needed to provide a way to interact even if the classes are different between the sequences. For example,
+we may use the simple sequence given by a callable in Python. However, we may consider simpler types of 
+sequences given by a Polynomial, or a Sage Expression (see <a class="reference internal" href="element.html#module-pseries_basis.sequences.element" title="pseries_basis.sequences.element"><code class="xref py py-mod docutils literal notranslate"><span class="pre">element</span></code></a>). We could even consider 
+sequences defined via recurrence equations.</p>
+<p>That is the reason we provided a system that will allow to register different classes of sequences and 
+the interactions among them are automatically define. Essentially, when a new class is instantiated, we 
+register this class into a directed graph, where the edges define conversions that can be perform. Then, 
+when two sequences meet in an operation and need to be merged, we find the minimal common structure (always 
+existing since the “callable” base definition is always available) that can represent both structures
+and we then perform the operation at that level.</p>
+<p>One particular instance of a class of sequence that is the opposite to the callable sequence is the 
+Constant Sequence. This sequence can be converted to any type of sequence and it is used as a base case for
+all other sequences.</p>
+<section id="basic-sequences-from-callables">
+<h2>Basic sequences from callables<a class="headerlink" href="#basic-sequences-from-callables" title="Permalink to this headline">¶</a></h2>
+<p>We can easily take any callable with appropriate number of arguments and transform it into a sequence within the 
+framework of this module. We only need to use the <a class="reference internal" href="#pseries_basis.sequences.base.Sequence" title="pseries_basis.sequences.base.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a> class:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis.sequences</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fac</span> <span class="o">=</span> <span class="n">Sequence</span><span class="p">(</span><span class="n">factorial</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span> <span class="o">=</span> <span class="n">Fibonacci</span><span class="p">()</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fac</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Integer</span> <span class="n">Ring</span><span class="p">]:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Integer</span> <span class="n">Ring</span><span class="p">]:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">Fac</span> <span class="o">+</span> <span class="n">Fib</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">29</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">Fac</span> <span class="o">-</span> <span class="n">Fib</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">19</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">Fac</span> <span class="o">*</span> <span class="n">Fib</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">120</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">Fac</span> <span class="o">/</span> <span class="n">Fib</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">24</span><span class="o">/</span><span class="mi">5</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">Fac</span> <span class="o">%</span> <span class="n">Fib</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">Fac</span> <span class="o">//</span> <span class="n">Fib</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The relation between a constant sequence and a callable sequence will always go to a callable sequence. This is handled automatically:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">Seq2</span> <span class="o">=</span> <span class="n">ConstantSequence</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Seq2</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span> <span class="o">+</span> <span class="n">Seq2</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Integer</span> <span class="n">Ring</span><span class="p">]:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Seq2</span> <span class="o">+</span> <span class="n">Fib</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Integer</span> <span class="n">Ring</span><span class="p">]:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span> <span class="o">*</span> <span class="n">Seq2</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Integer</span> <span class="n">Ring</span><span class="p">]:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Seq2</span> <span class="o">*</span> <span class="n">Fib</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Integer</span> <span class="n">Ring</span><span class="p">]:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span> <span class="o">%</span> <span class="n">Seq2</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Integer</span> <span class="n">Ring</span><span class="p">]:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The coercion will also work with more complexes types of SageMath rings:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="n">NumberField</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">](</span><span class="s2">&quot;a^2 - 2&quot;</span><span class="p">),</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span><span class="mf">.0</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">SeqA</span> <span class="o">=</span> <span class="n">ConstantSequence</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Seq2</span> <span class="o">+</span> <span class="n">SeqA</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Number</span> <span class="n">Field</span> <span class="ow">in</span> <span class="n">a</span> <span class="k">with</span> <span class="n">defining</span> <span class="n">polynomial</span> <span class="n">a</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]:</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">SeqA</span> <span class="o">*</span> <span class="n">Fac</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Number</span> <span class="n">Field</span> <span class="ow">in</span> <span class="n">a</span> <span class="k">with</span> <span class="n">defining</span> <span class="n">polynomial</span> <span class="n">a</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]:</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">a</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">SeqA</span><span class="o">**</span><span class="mi">2</span> <span class="o">==</span> <span class="n">Seq2</span>
+<span class="kc">True</span>
+</pre></div>
+</div>
+<p>We can also use any element that can be coerced into the sequence space:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">+</span> <span class="n">Fac</span> <span class="o">*</span> <span class="mi">2</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Number</span> <span class="n">Field</span> <span class="ow">in</span> <span class="n">a</span> <span class="k">with</span> <span class="n">defining</span> <span class="n">polynomial</span> <span class="n">a</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]:</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">4</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">*</span> <span class="n">Fac</span> <span class="o">*</span> <span class="n">a</span> <span class="o">==</span> <span class="mi">2</span><span class="o">*</span><span class="n">Fac</span>
+<span class="kc">True</span>
+</pre></div>
+</div>
+</section>
+<section id="special-operations-of-sequences">
+<h2>Special operations of sequences<a class="headerlink" href="#special-operations-of-sequences" title="Permalink to this headline">¶</a></h2>
+<p>Sequences has many operations defined over them. In particular, the shift operation allows to move the sequence back and forth:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">Sequence</span> <span class="n">over</span> <span class="p">[</span><span class="n">Integer</span> <span class="n">Ring</span><span class="p">]:</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">==</span> <span class="n">Fibonacci</span><span class="p">(</span><span class="n">Fib</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="n">Fib</span><span class="p">(</span><span class="mi">6</span><span class="p">))</span>
+<span class="kc">True</span>
+</pre></div>
+</div>
+<p>When considering multivariate sequences, the shift operation can be defined to any of its coefficients:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">Binomial</span><span class="o">.</span><span class="n">generic</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">)</span>
+<span class="n">binomial</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Binomial</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">generic</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">)</span>
+<span class="n">binomial</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can also consider subsequences of any given sequence. A subsequence is defined as a new sequence of the same dimension but where we 
+take the elements of the original sequence in a specific order:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">Binomial</span><span class="o">.</span><span class="n">subsequence</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="n">Fac</span><span class="p">))</span><span class="o">.</span><span class="n">generic</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">)</span>
+<span class="n">binomial</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">factorial</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fac</span><span class="o">.</span><span class="n">subsequence</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="n">Sequence</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))[:</span><span class="mi">10</span><span class="p">]</span> <span class="c1"># repeated Factorial sequence</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span><span class="o">.</span><span class="n">subsequence</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="n">Sequence</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))[:</span><span class="mi">10</span><span class="p">]</span> <span class="c1"># quadratic sparse Fibonacci sequence</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">55</span><span class="p">,</span> <span class="mi">1597</span><span class="p">,</span> <span class="mi">121393</span><span class="p">,</span> <span class="mi">24157817</span><span class="p">,</span> <span class="mi">12586269025</span><span class="p">,</span> <span class="mi">17167680177565</span><span class="p">,</span> <span class="mi">61305790721611591</span><span class="p">,</span> <span class="mi">573147844013817084101</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The final operation we provide for any sequence is the slicing operation. This is equivalent to the subsequence operation
+when one of the arguments is constant and, hence, removed. Namely, a slice of a sequence is another sequence with <strong>fewer</strong>
+dimension than the original sequence. In the case of slicing <em>too much</em> we return just the corresponding element:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">Fac</span><span class="o">.</span><span class="n">slicing</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span> <span class="o">==</span> <span class="n">Fac</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="kc">True</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Binomial</span><span class="o">.</span><span class="n">slicing</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span><span class="o">.</span><span class="n">generic</span><span class="p">(</span><span class="s2">&quot;k&quot;</span><span class="p">)</span>
+<span class="n">binomial</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Binomial</span><span class="o">.</span><span class="n">slicing</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span><span class="o">.</span><span class="n">generic</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">)</span>
+<span class="mi">1</span><span class="o">/</span><span class="mi">3628800</span><span class="o">*</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">5</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">6</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">7</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">8</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">9</span><span class="p">)</span><span class="o">*</span><span class="n">n</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Binomial</span><span class="o">.</span><span class="n">slicing</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span> <span class="o">==</span> <span class="n">Binomial</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+<span class="kc">True</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.base.</span></span><span class="sig-name descname"><span class="pre">Sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_extend_by_zero</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sage.categories.morphism.SetMorphism</span></code></p>
+<p>Main class for sequences. It defines a universe for its elements and a general interface to access the sequence.</p>
+<p>To extend this class to a more detailed type of sequence, we need to do the following:</p>
+<ul class="simple">
+<li><p>Override the class method <a class="reference internal" href="#pseries_basis.sequences.base.Sequence.register_class" title="pseries_basis.sequences.base.Sequence.register_class"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_class()</span></code></a> with the desired classes we want to be directly below and above</p></li>
+<li><p>Implement the following methods:
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_change_dim()</span></code>: changes the dimension of a sequence.
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_change_class()</span></code>: receives a class (given when registering the sequence class) and cast the current sequence to the new class.
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_change_from_class()</span></code>: class method that receives a sequence in a different class and transform into the current class. 
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_neg_()</span></code>: implement the negation of a sequence for a given class.
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_final_add()</span></code>: implement the addition for two sequences of the same parent and class.
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_final_sub()</span></code>: implement the difference for two sequences of the same parent and class.
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_final_mul()</span></code>: implement the hadamard product for two sequences of the same parent and class.
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_final_div()</span></code>: implement the hadamard division for two sequences of the same parent and class.
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_final_mod()</span></code>: implement the hadamard module for two sequences of the same parent and class.
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_final_floordiv()</span></code>: implement the hadamard floor division for two sequences of the same parent and class.</p></li>
+<li><p>Consider updating the following methods:
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_element()</span></code> to adjust how the sequence is computed.
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_shift()</span></code> to adjust the output of the shifted sequence.
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_subsequence()</span></code> to adjust the output of the subsequence.
+- <code class="xref py py-func docutils literal notranslate"><span class="pre">_slicing()</span></code> to adjust the output of the sliced sequence.
+- <a class="reference internal" href="#pseries_basis.sequences.base.Sequence.args_to_self" title="pseries_basis.sequences.base.Sequence.args_to_self"><code class="xref py py-func docutils literal notranslate"><span class="pre">args_to_self()</span></code></a> to declare how an element is built.</p></li>
+</ul>
+<p>This class inherits from <code class="xref py py-class docutils literal notranslate"><span class="pre">sage.categories.morphism.SetMorphism`allowing</span> <span class="pre">us</span> <span class="pre">to</span> <span class="pre">use</span> <span class="pre">methods</span> <span class="pre">such</span> <span class="pre">as</span>
+<span class="pre">``domain`</span></code> and <code class="docutils literal notranslate"><span class="pre">codomain</span></code>, <code class="docutils literal notranslate"><span class="pre">__call__</span></code>, etc.</p>
+<p>However, we have overridden the method __mul__ to fit better to the parent-element Sage framework.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.MinimalCommonClass">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MinimalCommonClass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cls2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.MinimalCommonClass" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.almost_equals">
+<span class="sig-name descname"><span class="pre">almost_equals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.almost_equals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that checks if two sequences are equals at the beginning.</p>
+<p>This method receives another <a class="reference internal" href="#pseries_basis.sequences.base.Sequence" title="pseries_basis.sequences.base.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a> and a number of elements to be checked and then it 
+proceeds to check if all the first elements are equal for both sequences. This is helpful in some sequences
+to guarantee equality through the whole sequence.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sequence</span></code>: a <a class="reference internal" href="#pseries_basis.sequences.base.Sequence" title="pseries_basis.sequences.base.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a> that will be compare with <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">order</span></code>: number of elements that will be compared.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the first <code class="docutils literal notranslate"><span class="pre">order</span></code> elements of both sequences are equal (even in different 
+universes). <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis.sequences.base</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="k">def</span> <span class="nf">fib</span><span class="p">(</span><span class="n">n</span><span class="p">):</span> <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">n</span><span class="o">==</span><span class="mi">1</span> <span class="k">else</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span> <span class="o">=</span> <span class="n">Sequence</span><span class="p">(</span><span class="n">fib</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fac</span> <span class="o">=</span> <span class="n">Sequence</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span> <span class="p">:</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">ZZ</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">34</span><span class="p">,</span> <span class="mi">55</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fac</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">720</span><span class="p">,</span> <span class="mi">5040</span><span class="p">,</span> <span class="mi">40320</span><span class="p">,</span> <span class="mi">362880</span><span class="p">]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span><span class="o">.</span><span class="n">almost_equals</span><span class="p">(</span><span class="n">Fac</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="kc">True</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span><span class="o">.</span><span class="n">almost_equals</span><span class="p">(</span><span class="n">Fac</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="kc">True</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Fib</span><span class="o">.</span><span class="n">almost_equals</span><span class="p">(</span><span class="n">Fac</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="kc">False</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.almost_zero">
+<span class="sig-name descname"><span class="pre">almost_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.almost_zero" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that checks if a sequence is zero at the beginning.</p>
+<p>This method receives a number of elements to be checked and then it proceeds to check if all the first 
+elements of the sequence are equal to zero. This is helpful in some sequence to guarantee that the whole 
+sequence is exactly zero.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.args_to_self">
+<span class="sig-name descname"><span class="pre">args_to_self</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.args_to_self" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to return the arguments necessary to reproduce this sequence</p>
+<p>This method returns a list and a dictionary of arguments that when used on 
+<code class="docutils literal notranslate"><span class="pre">self.__class__</span></code>, it creates an equal sequence to <code class="docutils literal notranslate"><span class="pre">self</span></code>. It is useful to 
+change some of the arguments or to create copies of the sequences.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.as_constant">
+<span class="sig-name descname"><span class="pre">as_constant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.as_constant" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.as_polynomial">
+<span class="sig-name descname"><span class="pre">as_polynomial</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.as_polynomial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to cast a sequence to a polynomial sequence</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.as_rational">
+<span class="sig-name descname"><span class="pre">as_rational</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.as_rational" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to cast a sequence to a rational sequence</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.change_class">
+<span class="sig-name descname"><span class="pre">change_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">goal_class</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.change_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method transforms the current sequence to an equivalent sequence
+in a different (but compatible) class. This method defines how to 
+convert a sequence into another class.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.change_dimension">
+<span class="sig-name descname"><span class="pre">change_dimension</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.change_dimension" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to create an equivalent sequence to <code class="docutils literal notranslate"><span class="pre">self</span></code> but with more dimensions.</p>
+<p>This method creates a copy of this sequences with several extra dimensions and 
+giving the old dimensions a new position.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.change_universe">
+<span class="sig-name descname"><span class="pre">change_universe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_universe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.change_universe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that change the universe of a sequence. This can help to use the same universe in different 
+spaces or when it is required to force a specific universe.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.composition">
+<span class="sig-name descname"><span class="pre">composition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.composition" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.diagonal">
+<span class="sig-name descname"><span class="pre">diagonal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.diagonal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that return the diagonal sequence of a multi-variate sequence</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.dim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attribute with the number of variables for the sequence.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.element">
+<span class="sig-name descname"><span class="pre">element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_generic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_debug</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">indices</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.element" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.extra_info">
+<span class="sig-name descname"><span class="pre">extra_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.extra_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.generic">
+<span class="sig-name descname"><span class="pre">generic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.generic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that tries to create a generic evaluation for the sequence.</p>
+<p>The given names are used as variable names.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.interlace">
+<span class="sig-name descname"><span class="pre">interlace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_to_interlace</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">others</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.interlace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.is_constant">
+<span class="sig-name descname"><span class="pre">is_constant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.is_constant" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.is_hypergeometric">
+<span class="sig-name descname"><span class="pre">is_hypergeometric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.is_hypergeometric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check if a sequence is hypergeometric or not</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.is_polynomial">
+<span class="sig-name descname"><span class="pre">is_polynomial</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.is_polynomial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check if a sequence is polynomial</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.is_rational">
+<span class="sig-name descname"><span class="pre">is_rational</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.is_rational" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check if a sequence is rational</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.linear_subsequence">
+<span class="sig-name descname"><span class="pre">linear_subsequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.linear_subsequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to compute a linear subsequence of <code class="docutils literal notranslate"><span class="pre">self</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.partial_prod">
+<span class="sig-name descname"><span class="pre">partial_prod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.partial_prod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to create the partial product sequence.</p>
+<p>Given a sequence <span class="math notranslate nohighlight">\((a_n)_n\)</span>, we can always define the sequence of partial products,
+i.e., <span class="math notranslate nohighlight">\(b_n = \prod_{i=0}^n a_i\)</span>. This method creates the corresponding 
+sequence.</p>
+<p>Similarly, we can do the same for multivariate sequences. More precisely, we 
+require the index that we will compute the product for. Iterated call of this method
+may allow multiplying through several dimensions of the sequence.</p>
+<p><em>INFORMATION</em>: this method may be overridden for subclasses to offer a better
+structure of these sequences.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">index</span></code>: the index over which we will compute the partial product sequence. <code class="docutils literal notranslate"><span class="pre">None</span></code> 
+is allowed for univariate sequences.</p></li>
+</ul>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis.sequences</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">N</span> <span class="o">=</span> <span class="n">ExpressionSequence</span><span class="p">(</span><span class="n">var</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">),</span> <span class="n">universe</span><span class="o">=</span><span class="n">QQ</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">N</span><span class="o">.</span><span class="n">shift</span><span class="p">()</span><span class="o">.</span><span class="n">partial_prod</span><span class="p">()</span> <span class="o">==</span> <span class="n">Factorial</span>
+<span class="kc">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.partial_sum">
+<span class="sig-name descname"><span class="pre">partial_sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.partial_sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to create the partial sum sequence.</p>
+<p>Given a sequence <span class="math notranslate nohighlight">\((a_n)_n\)</span>, we can always define the sequence of partial sums,
+i.e., <span class="math notranslate nohighlight">\(b_n = \sum_{i=0}^n a_i\)</span>. This method creates the corresponding 
+sequence.</p>
+<p>Similarly, we can do the same for multivariate sequences. More precisely, we 
+require the index that we will compute the sum for. Iterated call of this method
+may allow summing through several dimensions of the sequence.</p>
+<p><em>INFORMATION</em>: this method may be overridden for subclasses to offer a better
+structure of these sequences.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">index</span></code>: the index over which we will compute the partial sum sequence. <code class="docutils literal notranslate"><span class="pre">None</span></code> 
+is allowed for univariate sequences.</p></li>
+</ul>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis.sequences</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">N</span> <span class="o">=</span> <span class="n">ExpressionSequence</span><span class="p">(</span><span class="n">var</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">),</span> <span class="n">universe</span><span class="o">=</span><span class="n">QQ</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">N</span><span class="o">.</span><span class="n">partial_sum</span><span class="p">()</span> <span class="o">==</span> <span class="n">ExpressionSequence</span><span class="p">((</span><span class="n">n</span><span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">universe</span><span class="o">=</span><span class="n">QQ</span><span class="p">)</span>
+<span class="kc">True</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">N</span><span class="o">.</span><span class="n">shift</span><span class="p">()</span><span class="o">.</span><span class="n">partial_sum</span><span class="p">()</span> <span class="o">==</span> <span class="n">ExpressionSequence</span><span class="p">((</span><span class="n">n</span><span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">universe</span><span class="o">=</span><span class="n">QQ</span><span class="p">)</span>
+<span class="kc">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.register_class">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">register_class</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.register_class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.shift">
+<span class="sig-name descname"><span class="pre">shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">shifts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.shift" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to compute the shifted sequence given some shifting indices.</p>
+<p>Given a sequence <span class="math notranslate nohighlight">\((a_n)_n\)</span>, we can always consider the <span class="math notranslate nohighlight">\(k\)</span>-shifted sequence
+for any <span class="math notranslate nohighlight">\(k \mathbb{Z}\)</span> defined by <span class="math notranslate nohighlight">\(b_n = a_{n+k}\)</span>. This method allows a 
+sequence in any number of variables to obtained its shifted version for any tuple of 
+shifts.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">shifts</span></code>: a list of integers providing the shifts for each of the dimensions of 
+the sequence. It must be only integers and have same length as <code class="docutils literal notranslate"><span class="pre">self.dim</span></code>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.slicing">
+<span class="sig-name descname"><span class="pre">slicing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">vals</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.slicing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to obtain a slice of a sequence.</p>
+<p>When we have a sequence <span class="math notranslate nohighlight">\(f: \mathbb{N}^k \rightarrow R\)</span>, we can fix some of the arguments 
+arguments <span class="math notranslate nohighlight">\((a_1,\ldots, a_t)\)</span> and build a new sequence by:</p>
+<div class="math notranslate nohighlight">
+\[\tilde{f}(n_1,\ldots, n_{k-t}) = f(a_1,\ldots,a_t,n_1,\ldots,n_{k-t})\]</div>
+<p>This method build the corresponding slicing sequence where the dimension has been reduced
+consequently.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p>A list of tuples <span class="math notranslate nohighlight">\((i,n)\)</span> such that we will fix the <span class="math notranslate nohighlight">\(i\)</span>-th entry to take the value <span class="math notranslate nohighlight">\(n\)</span>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.subsequence">
+<span class="sig-name descname"><span class="pre">subsequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">vals</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.subsequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to compute a subsequence of a given sequence.</p>
+<p>This allows to substitute the arguments of the current sequence by another sequence over the integers.
+This is the equivalent as the composition of two functions and, hence, we require that the 
+composed function maps integers to integers.</p>
+<p>This allows to obtain sparse subsequences, linear subsequences, etc.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p>A list of tuples indicating the subsequence to be taken. It can have several formats:
+- <span class="math notranslate nohighlight">\((i, f: \mathbb{N} \rightarrow \mathbb{N}): changes the index \)</span> by the sequence <span class="math notranslate nohighlight">\(f\)</span>.
+- <span class="math notranslate nohighlight">\((i, (a,b))\)</span>: transforms the <span class="math notranslate nohighlight">\(i\)</span>-th index of the sequence linearly by taking the subsequence <span class="math notranslate nohighlight">\(ai+b\)</span>.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>The corresponding subsequence after taking the consideration of the input.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.swap">
+<span class="sig-name descname"><span class="pre">swap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.swap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that exchange the indices of a multi-dimensional sequence.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.Sequence.universe">
+<span class="sig-name descname"><span class="pre">universe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.Sequence.universe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attribute with the common parent for all the elements of this sequence</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.ConstantSequence">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.base.</span></span><span class="sig-name descname"><span class="pre">ConstantSequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_extend_by_zero</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.ConstantSequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pseries_basis.sequences.base.Sequence" title="pseries_basis.sequences.base.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.sequences.base.Sequence</span></code></a></p>
+<p>Class representing constant elements in the Sequence ring.</p>
+<p>This class is the entry-point from other SageMath structures to the sequence setting. Namely, 
+if <span class="math notranslate nohighlight">\(x\)</span> is an element in a universe ring <span class="math notranslate nohighlight">\(R\)</span> for a sequence set (see class <code class="xref py py-class docutils literal notranslate"><span class="pre">SequenceSet</span></code>),
+then it can represent the constant sequence <span class="math notranslate nohighlight">\((x, x, x, \ldots)\)</span>.</p>
+<p>This class is, hence, at the bottom of the Sequence hierarchy. This class has no default tranfromation to any other type
+of sequences and all other sequences types <strong>must</strong> implement a transformation from <a class="reference internal" href="#pseries_basis.sequences.base.ConstantSequence" title="pseries_basis.sequences.base.ConstantSequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstantSequence</span></code></a>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.ConstantSequence.args_to_self">
+<span class="sig-name descname"><span class="pre">args_to_self</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.ConstantSequence.args_to_self" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.sequences.base.IdentitySequence">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.base.</span></span><span class="sig-name descname"><span class="pre">IdentitySequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.base.IdentitySequence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Basic framework for Sequences</a><ul>
+<li><a class="reference internal" href="#basic-sequences-from-callables">Basic sequences from callables</a></li>
+<li><a class="reference internal" href="#special-operations-of-sequences">Special operations of sequences</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../sequences.html"
+                          title="previous chapter">Infinite Sequences Framework: working with sequences in SageMath</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="element.html"
+                          title="next chapter">Different implementations of special sequences</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/pseries_basis/sequences/base.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="element.html" title="Different implementations of special sequences"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../sequences.html" title="Infinite Sequences Framework: working with sequences in SageMath"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../sequences.html" >Infinite Sequences Framework: working with sequences in SageMath</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Basic framework for Sequences</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Interface with other platforms &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
+    <title>Interface with other platforms &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.4.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
     
@@ -14,7 +14,7 @@
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
-    <script async="async" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../misc.html" title="Sequences and other utilities"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../misc.html" accesskey="U">Sequences and other utilities</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Interface with other platforms</a></li> 
       </ul>
@@ -51,7 +51,64 @@
 <span id="interface-with-other-platforms"></span><h1>Interface with other platforms<a class="headerlink" href="#module-pseries_basis.misc.io" title="Permalink to this headline">¶</a></h1>
 <p>File with some connections of the <a class="reference internal" href="../../index.html#module-pseries_basis" title="pseries_basis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pseries_basis</span></code></a> with other packages.</p>
 <p>The methods, classes and functionalities in this module are focused on the 
-interation of sequences, basis, and solutions with things outside SageMath.</p>
+interaction of sequences, basis, and solutions with things outside SageMath.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.io.operator2Mathematica">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.io.</span></span><span class="sig-name descname"><span class="pre">operator2Mathematica</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.io.operator2Mathematica" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to write an <code class="xref py py-class docutils literal notranslate"><span class="pre">OreOperator</span></code> into a string</p>
+<p>This method writes down an Ore Operators as a string where the possible meaning 
+of extra variables (see the case of <span class="math notranslate nohighlight">\(q\)</span>-sequences) is translated.</p>
+<p>These strings should be valid input as Mathematica code.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">operator</span></code>: a <code class="xref py py-class docutils literal notranslate"><span class="pre">OreOperator</span></code> to write down to a file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sequence_var</span></code>: the variable to be substitute for the sequence name in Mathematica. If not
+given, we leave the operators as they are.</p></li>
+</ul>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis.misc.ore</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis.misc.io</span> <span class="kn">import</span> <span class="n">operator2Mathematica</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">A</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">E</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_recurrence_algebra</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">L</span> <span class="o">=</span> <span class="n">n</span><span class="o">^</span><span class="mi">3</span> <span class="o">*</span><span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">E</span> <span class="o">+</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">operator2Mathematica</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+<span class="s1">&#39;(n - 1)*1+(n^2 + 1)*E+(n^3)*E^2&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">operator2Mathematica</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span>
+<span class="s1">&#39;(n - 1)*a[n]+(n^2 + 1)*a[n+1]+(n^3)*a[n+2]&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">A</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">E</span><span class="p">,</span><span class="n">Ei</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_double_recurrence_algebra</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">L</span> <span class="o">=</span> <span class="n">n</span><span class="o">^</span><span class="mi">3</span> <span class="o">*</span><span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">n</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">E</span> <span class="o">+</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">n</span><span class="o">^</span><span class="mi">3</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">Ei</span> <span class="o">-</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">Ei</span><span class="o">^</span><span class="mi">2</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">operator2Mathematica</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+<span class="s1">&#39;(n^3)*E^2+(-2*n + 1)*E^(-2)+(n^2 + 1)*E+(n^3 + 1)*E^(-1)+(n - 1)*1&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">operator2Mathematica</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">)</span>
+<span class="s1">&#39;(n^3)*t[n+2]+(-2*n + 1)*t[n-2]+(n^2 + 1)*t[n+1]+(n^3 + 1)*t[n-1]+(n - 1)*t[n]&#39;</span>
+</pre></div>
+</div>
+<p>We can also have <span class="math notranslate nohighlight">\(q\)</span>-shifts in the mix. Then the variable <span class="math notranslate nohighlight">\(qn\)</span> associated is translated into
+the corresponding <span class="math notranslate nohighlight">\(q^n\)</span>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">A</span><span class="p">,</span> <span class="p">(</span><span class="n">qn</span><span class="p">,</span><span class="n">S</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_qshift_algebra</span><span class="p">(</span><span class="s1">&#39;qn&#39;</span><span class="p">,</span> <span class="n">name_qshift</span><span class="o">=</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="n">QQ</span><span class="p">[</span><span class="s1">&#39;q&#39;</span><span class="p">])</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">q</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">base</span><span class="p">()(</span><span class="s1">&#39;q&#39;</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">L</span> <span class="o">=</span> <span class="n">qn</span><span class="o">^</span><span class="mi">3</span> <span class="o">*</span><span class="n">S</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">qn</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">S</span> <span class="o">+</span> <span class="p">(</span><span class="n">qn</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">operator2Mathematica</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+<span class="s1">&#39;(q^(1*n) - 1)*1+(q^(2*n) + 1)*S+(q^(3*n))*S^2&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">operator2Mathematica</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">)</span>
+<span class="s1">&#39;(q^(1*n) - 1)*p[n]+(q^(2*n) + 1)*p[n+1]+(q^(3*n))*p[n+2]&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">A</span><span class="p">,</span> <span class="p">(</span><span class="n">qn</span><span class="p">,</span><span class="n">S</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_qshift_algebra</span><span class="p">(</span><span class="s1">&#39;qn&#39;</span><span class="p">,</span> <span class="n">name_qshift</span><span class="o">=</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="n">QQ</span><span class="p">[</span><span class="s1">&#39;q&#39;</span><span class="p">],</span> <span class="n">power</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">q</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">base</span><span class="p">()(</span><span class="s1">&#39;q&#39;</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">L</span> <span class="o">=</span> <span class="n">q</span><span class="o">^</span><span class="mi">3</span><span class="o">*</span><span class="n">qn</span><span class="o">^</span><span class="mi">3</span> <span class="o">*</span><span class="n">S</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">q</span><span class="o">*</span><span class="n">qn</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">S</span> <span class="o">+</span> <span class="p">(</span><span class="n">qn</span><span class="o">-</span><span class="n">q</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">operator2Mathematica</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+<span class="s1">&#39;(q^(2*n) - q^2)*1+(q*q^(4*n) + 1)*S+(q^3*q^(6*n))*S^2&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">operator2Mathematica</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s2">&quot;uu&quot;</span><span class="p">)</span>
+<span class="s1">&#39;(q^(2*n) - q^2)*uu[n]+(q*q^(4*n) + 1)*uu[n+1]+(q^3*q^(6*n))*uu[n+2]&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">A</span><span class="p">,</span> <span class="p">(</span><span class="n">qn</span><span class="p">,</span><span class="n">S</span><span class="p">,</span><span class="n">Si</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_double_qshift_algebra</span><span class="p">(</span><span class="s1">&#39;qn&#39;</span><span class="p">,</span> <span class="n">name_qshift</span><span class="o">=</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="n">QQ</span><span class="p">[</span><span class="s1">&#39;q&#39;</span><span class="p">])</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">q</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">base</span><span class="p">()(</span><span class="s1">&#39;q&#39;</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">L</span> <span class="o">=</span> <span class="n">qn</span><span class="o">^</span><span class="mi">3</span> <span class="o">*</span><span class="n">S</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">qn</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">S</span> <span class="o">+</span> <span class="p">(</span><span class="n">qn</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">Si</span> <span class="o">-</span> <span class="n">qn</span><span class="o">*</span><span class="n">q</span><span class="o">*</span><span class="n">Si</span><span class="o">^</span><span class="mi">2</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">operator2Mathematica</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+<span class="s1">&#39;(q^(3*n))*S^2+(-q*q^(1*n))*S^(-2)+(q^(2*n) + 1)*S+(1)*S^(-1)+(q^(1*n) - 1)*1&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">operator2Mathematica</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">)</span>
+<span class="s1">&#39;(q^(3*n))*y[n+2]+(-q*q^(1*n))*y[n-2]+(q^(2*n) + 1)*y[n+1]+(1)*y[n-1]+(q^(1*n) - 1)*y[n]&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="pseries_basis.misc.io.operator2file">
 <span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.io.</span></span><span class="sig-name descname"><span class="pre">operator2file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.io.operator2file" title="Permalink to this definition">¶</a></dt>
@@ -90,7 +147,7 @@ with respect to the package <a class="reference internal" href="../../index.html
 <p>This method reads from the formulas on the OEIS Sequence and computes a recurrence equation
 that is valid for this sequence (for all <span class="math notranslate nohighlight">\(n\)</span>). The computations in this method requires
 parsing and extracting information from the text of the formulas. We make use of some generic
-formating in OEIS that does not always hold. Hence, sometimes this method returns <code class="docutils literal notranslate"><span class="pre">None</span></code>
+formatting in OEIS that does not always hold. Hence, sometimes this method returns <code class="docutils literal notranslate"><span class="pre">None</span></code>
 even when the sequence is D-finite.</p>
 </dd></dl>
 
@@ -172,7 +229,7 @@ the corresponding elements of the generated sequence coincide with the terms of 
         <li class="right" >
           <a href="../misc.html" title="Sequences and other utilities"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../misc.html" >Sequences and other utilities</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Interface with other platforms</a></li> 
       </ul>

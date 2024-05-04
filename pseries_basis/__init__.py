@@ -14,8 +14,8 @@ r'''
     ********************************************************
     - *Author*: Antonio Jiménez-Pastor
     - *License*: GNU Public License v3.0
-    - *Home page*: `<https://github.com/Antonio-JP/pseries_basis>`_
-    - *Documenation*: `<https://antonio-jp.github.io/pseries_basis/>`_
+    - *Home page*: :git:`Antonio-JP/pseries_basis`
+    - *Documentation*: `<https://antonio-jp.github.io/pseries_basis/>`_
     - *Online demo*: `On Binder <https://mybinder.org/v2/gh/Antonio-JP/pseries_basis/master?labpath=notebooks%2Fpaper_examples.ipynb>`_
 
     **Main use-case**
@@ -53,19 +53,19 @@ r'''
     #########################################################
 
     This package can be installed, used, modified and distributed freely under the conditions of the 
-    `GNU General Public License v3 <https://www.gnu.org/licenses/gpl-3.0.html>`_ (see the file `LICENSE <https://github.com/Antonio-JP/pseries_basis/blob/master/LICENSE>`_).
+    `GNU General Public License v3 <https://www.gnu.org/licenses/gpl-3.0.html>`_.
 
     There are two different ways of installing the package into your SageMath distribution:
 
-    **Install from souce code**
+    **Install from source code**
     **********************************************************
 
     The package can be obtained from the public git repository on GitHub:
-    * by clicking `here <https://github.com/Antonio-JP/pseries_basis>`_ for the webpage view,
-    * or by cloning the repository by `https <https://github.com/Antonio-JP/pseries_basis.git>`_,
-    * or downloading the latest version in `zip <https://github.com/Antonio-JP/pseries_basis/archive/master.zip>`_ format.
+    * from the repository: :git:`Antonio-JP/pseries_basis` for the webpage view,
+    * or by cloning the repository using https: :git:`Antonio-JP/pseries_basis.git`,
+    * or downloading the latest version: :git:`Antonio-JP/pseries_basis/archive/master.zip`.
 
-    After cloning or downloading the source cose, you may install it by running the following command line from the main folder of the repository::
+    After cloning or downloading the source code, you may install it by running the following command line from the main folder of the repository::
 
         $ make install
 
@@ -84,7 +84,7 @@ r'''
     **Loading the package**
     ***********************************************************
 
-    Once installed, the full functionality of the pacakge can be used after importing it with the command::
+    Once installed, the full functionality of the package can be used after importing it with the command::
 
         sage: from pseries_basis import *
 
@@ -96,20 +96,20 @@ r'''
     `P_n(x) = \binom{x}{n}`. It is well known that for `n\in\mathbb{N}`, `P_n(x)` is a polynomial of degree `n`. 
     We can create this basis easily::
 
-        sage: B = BinomialBasis()
+        sage: B = BinomialBasis
         sage: B
-        Binomial basis (x) choose n
-        sage: B[:3]
-        [1, x, 1/2*x^2 - 1/2*x]
+        Basis of Sequences over Rational Field: (binomial(n, k))
+        sage: [el.generic() for el in B[:3]]
+        [1, n, 1/2*n^2 - 1/2*n]
 
     We can also create basis using the idea of a *falling factorial*::
 
         sage: F = FallingBasis(1,0,1)
         sage: F
-        Falling Factorial Basis (1, x, x(x-1),...)
-        sage: F[:3]
-        [1, x, x^2 - x]
-        sage: [F.root_sequence()(i) for i in range(10)]
+        Basis of Sequences over Rational Field: (1, n, n^2 - n, n^3 - 3*n^2 + 2*n, n^4 - 6*n^3 + 11*n^2 - 6*n,...)
+        sage: [el.generic() for el in F[:3]]
+        [1, n, n^2 - n]
+        sage: F.rho[:10]
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
     There are plenty of methods to check compatibility with a basis. We refer to the `documentation <https://antonio-jp.github.io/pseries_basis/>`_ for further information.
@@ -119,33 +119,70 @@ r'''
 
     This package has been developed on top of `SageMath`_ and depends on the following packages:
 
-    * ``ore_algebra`` (`GitHub ore\_algebra <https://github.com/mkauers/ore_algebra>`_): developed by `M. Kauers <http://www.kauers.de/>`_ and `M. Mezzarobba <http://marc.mezzarobba.net/>`_.
-    * ``dd_functions`` (`GitHub dd\_functions <https://github.com/Antonio-JP/dd_functions>`_): developed by `A. Jiménez-Pastor <https://scholar.google.com/citations?user=1gq-jy4AAAAJ&hl=es>`_.
+    * ``ore_algebra`` (:git:`mkauers/ore_algebra>`): developed by `M. Kauers <http://www.kauers.de/>`_ and `M. Mezzarobba <http://marc.mezzarobba.net/>`_.
+    * ``dd_functions`` (:git:`Antonio-JP/dd_functions`): developed by `A. Jiménez-Pastor <https://scholar.google.com/citations?user=1gq-jy4AAAAJ&hl=es>`_.
 
-    **Package under active developement**
+    **Package under active development**
 
-    This package is still under an active developement and further features will be included in future version of the code. This means that several bugs may exist or appear. 
-    We would thank anyone that, after detecting any error, would post it in the `issues page <https://github.com/Antonio-JP/pseries_basis/issues>`_ of the repository 
-    using the label `bug <https://github.com/github/docs/labels/bug>`_.
+    This package is still under an active development and further features will be included in future version of the code. This means that several bugs may exist or appear. 
+    We would thank anyone that, after detecting any error, would post it in the issues page (:git:`Antonio-JP/pseries_basis/issues`) of the repository 
+    using the label bug (:git:`github/docs/labels/bug`).
 
-    Moreover, any requested feature can be post in the `issues page <https://github.com/Antonio-JP/pseries_basis/issues>`_ of the repository using the label 
-    `enhancement <https://github.com/github/docs/labels/enhancement>`_.
+    Moreover, any requested feature can be post in the issues page (:git:`Antonio-JP/pseries_basis/issues`) of the repository using the label 
+    enhancement (:git:`github/docs/labels/enhancement`).
 
     **Acknowledgements**
     ***********************************************************
 
-    This package has been developed with the finaltial support of the following insitutions:
+    This package has been developed with the financial support of the following institutions:
 
     * The Austrian Science Fund (FWF): by W1214-N15, project DK15.
     * The Oberösterreich region: by the Innovatives OÖ-2010 plus program.
     * The Île-de-France region: by the project "XOR".
+    * The Poul Due Jensen Foundation: grant 883901.
 '''
+import logging
+import sys
 
+import sage
+
+## Configuring logger for this package
+
+# Getting the logger
+logger = logging.getLogger(__name__)
+# Base level = logging.INFO
+logger.setLevel(logging.INFO)
+
+# Formatting messages for the logger
+formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+# Configuring handlers -> one on file, other in stderr
+fh = logging.FileHandler(f"{__name__}.log")
+ch = logging.StreamHandler(sys.stderr)
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
+
+# Remove the propagation of logger to avoid repeated messages
+logger.propagate = False
+
+
+## Configuring generic imports from the `pseries_basis` module
 from .misc import *
-from .psbasis import *
-from .factorial import *
-from .orthogonal import *
 from .order import *
+from .psbasis import *
+from .polynomial import *
+from .qbasis import *
+from .sequences import *
 
-# fixing imports that were destroyed from these
-from sage.all import factorial, order # pylint: disable=unused-import
+## Fixing imports that were destroyed from these
+factorial = sage.functions.other.factorial
+order = sage.misc.functional.order 
+
+def pseries_bases_version():
+    r'''
+        Method to obtain the current version of the installed package :mod:`pseries_basis`.
+    '''
+    import pkg_resources
+    return pkg_resources.get_distribution('pseries_basis').version

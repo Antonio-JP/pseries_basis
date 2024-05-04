@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Access and communication with ore_algebra &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
+    <title>Access and communication with ore_algebra &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.4.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
     
@@ -14,10 +14,10 @@
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Interface for Sequences" href="sequences.html" />
     <link rel="prev" title="Interface with other platforms" href="io.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -30,12 +30,9 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="sequences.html" title="Interface for Sequences"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
           <a href="io.html" title="Interface with other platforms"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../misc.html" accesskey="U">Sequences and other utilities</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Access and communication with <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code></a></li> 
       </ul>
@@ -48,15 +45,268 @@
             
   <section id="module-pseries_basis.misc.ore">
 <span id="access-and-communication-with-ore-algebra"></span><h1>Access and communication with <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code><a class="headerlink" href="#module-pseries_basis.misc.ore" title="Permalink to this headline">¶</a></h1>
-<p>Module to unify the interaction with the module <code class="xref py py-mod docutils literal notranslate"><span class="pre">ore_algebra</span></code>.</p>
-<p>The module <code class="xref py py-mod docutils literal notranslate"><span class="pre">ore_algebra</span></code> provide a good implementation of different Ore Operators, 
-that allow us to represent linear operators over the formal power series ring or over the 
-sequence ring.</p>
-<p>This module will provide several methods and classes to unify the access to the <code class="xref py py-mod docutils literal notranslate"><span class="pre">ore_algebra</span></code>
-module within the package <a class="reference internal" href="../../index.html#module-pseries_basis" title="pseries_basis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pseries_basis</span></code></a>.</p>
+<p>Module to define the sequences that are defined using some operator.</p>
+<p>A linear operator <span class="math notranslate nohighlight">\(L : \mathbb{K}[[x]] \rightarrow \mathbb{K}[[x]]\)</span> can define an 
+element of the power series ring by setting <span class="math notranslate nohighlight">\(L \cdot y(x) = 0\)</span> and providing some 
+initial conditions (namely, <span class="math notranslate nohighlight">\(y(0), y'(0)\)</span>, etc.).</p>
+<p>In SageMath these operators can be easily represented using the module <code class="xref py py-mod docutils literal notranslate"><span class="pre">ore_algebra</span></code>.
+However, these operators have a critical limitation: all the generators for these Ore Algebras
+must commute. For those cases where this is not true, we can use the module 
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">noncom_rings</span></code>.</p>
+<p>This module offers a unified access to these two types of operators and will allow other classes
+in <a class="reference internal" href="../../index.html#module-pseries_basis" title="pseries_basis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pseries_basis</span></code></a>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.is_recurrence_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">is_recurrence_algebra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algebra</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.is_recurrence_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check whether an <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra_generic</span></code> has the first operator a shift operator.
+See <a class="reference internal" href="#pseries_basis.misc.ore.gens_recurrence_algebra" title="pseries_basis.misc.ore.gens_recurrence_algebra"><code class="xref py py-func docutils literal notranslate"><span class="pre">gens_recurrence_algebra()</span></code></a> to see what is a valid shift operator.</p>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">ore_algebra</span> <span class="kn">import</span> <span class="n">OreAlgebra</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">is_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="o">^</span><span class="mi">2</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">)))</span>
+<span class="kc">False</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">is_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">)))</span>
+<span class="kc">True</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">is_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">+</span><span class="mi">10</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">)))</span>
+<span class="kc">True</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">R</span><span class="o">.&lt;</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">QQ</span><span class="p">[]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">is_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">y</span><span class="o">*</span><span class="n">x</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">)))</span>
+<span class="kc">False</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">is_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">derivative</span><span class="p">())))</span>
+<span class="kc">False</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">is_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">)))</span>
+<span class="kc">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.gens_recurrence_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">gens_recurrence_algebra</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.gens_recurrence_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that returns the information about a recurrence ore algebra.</p>
+<p>A recurrence ore algebra is defined by a <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra_generic</span></code>
+with exactly 1 generator <span class="math notranslate nohighlight">\(S\)</span> that acts over a ring where (at most) one generator <span class="math notranslate nohighlight">\(v\)</span> is affected like <span class="math notranslate nohighlight">\(S(v) = v + \alpha\)</span>. The 
+other generators must commute with <span class="math notranslate nohighlight">\(S\)</span> (i.e., <span class="math notranslate nohighlight">\(S(x) = x\)</span>).</p>
+<p>This method returns the triplet <span class="math notranslate nohighlight">\((v, S, \alpha)\)</span>.</p>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">ore_algebra</span> <span class="kn">import</span> <span class="n">OreAlgebra</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">gens_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="o">^</span><span class="mi">2</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">)))</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">gens_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">)))</span>
+<span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">R</span><span class="o">.&lt;</span><span class="n">t</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">QQ</span><span class="p">[]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">gens_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">+</span><span class="mi">10</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">)))</span>
+<span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">R</span><span class="o">.&lt;</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">QQ</span><span class="p">[]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">gens_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">y</span><span class="o">*</span><span class="n">x</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">)))</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">gens_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">derivative</span><span class="p">())))</span>
+</pre></div>
+</div>
+<p>We allow an operators that commutes with all the variables. In that case, the <span class="math notranslate nohighlight">\(\alpha\)</span> return is <code class="docutils literal notranslate"><span class="pre">None</span></code>
+since we can not know which variable is the shift referring to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="n">gens_recurrence_algebra</span><span class="p">(</span><span class="n">OreAlgebra</span><span class="p">(</span><span class="n">QQ</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">)))</span>
+<span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.is_double_recurrence_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">is_double_recurrence_algebra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algebra</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.is_double_recurrence_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check whether an <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra_generic</span></code> is a double recurrence algebra.
+See <a class="reference internal" href="#pseries_basis.misc.ore.gens_double_recurrence_algebra" title="pseries_basis.misc.ore.gens_double_recurrence_algebra"><code class="xref py py-func docutils literal notranslate"><span class="pre">gens_double_recurrence_algebra()</span></code></a> to see what is a valid shift operator.</p>
+<p>TODO: Add examples using those in <a class="reference internal" href="#pseries_basis.misc.ore.gens_double_recurrence_algebra" title="pseries_basis.misc.ore.gens_double_recurrence_algebra"><code class="xref py py-func docutils literal notranslate"><span class="pre">gens_double_recurrence_algebra()</span></code></a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.gens_double_recurrence_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">gens_double_recurrence_algebra</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.gens_double_recurrence_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that returns the information about a double recurrence ore algebra.</p>
+<p>A double recurrence ore algebra is defined by a <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra_generic</span></code>
+with exactly 2 generator <span class="math notranslate nohighlight">\(S\)</span> and <span class="math notranslate nohighlight">\(S_i\)</span> that acts over a ring where (at most) one generator <span class="math notranslate nohighlight">\(v\)</span> is affected like <span class="math notranslate nohighlight">\(S(v) = v + \alpha\)</span>
+and <span class="math notranslate nohighlight">\(S_i(v) = v - \alpha\)</span>. The other generators must commute with <span class="math notranslate nohighlight">\(S\)</span> and <span class="math notranslate nohighlight">\(S_i\)</span> (i.e., <span class="math notranslate nohighlight">\(S(x) = x\)</span>), which implies that <span class="math notranslate nohighlight">\(S S_i = S_i S = 1\)</span>.</p>
+<p>This method returns the tuple <span class="math notranslate nohighlight">\((v, S, S_i, \alpha)\)</span>.</p>
+<p>TODO – add examples</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.is_differential_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">is_differential_algebra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algebra</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.is_differential_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check whether an <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra_generic</span></code> has the first operator a differential operator.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.is_qshift_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">is_qshift_algebra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algebra</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.is_qshift_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check whether an algebra behaves like one with Q-shifts operators.
+See <a class="reference internal" href="#pseries_basis.misc.ore.gens_qshift_algebra" title="pseries_basis.misc.ore.gens_qshift_algebra"><code class="xref py py-func docutils literal notranslate"><span class="pre">gens_qshift_algebra()</span></code></a> for further information on the definition of a <span class="math notranslate nohighlight">\(q\)</span>-shift operator</p>
+<p>TODO: Add examples using those in <a class="reference internal" href="#pseries_basis.misc.ore.gens_qshift_algebra" title="pseries_basis.misc.ore.gens_qshift_algebra"><code class="xref py py-func docutils literal notranslate"><span class="pre">gens_qshift_algebra()</span></code></a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.gens_qshift_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">gens_qshift_algebra</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.gens_qshift_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that returns the information about a <span class="math notranslate nohighlight">\(q\)</span>-shift recurrence ore algebra.</p>
+<p>A <span class="math notranslate nohighlight">\(q\)</span>-shift recurrence ore algebra is defined by a <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra_generic</span></code>
+with exactly 1 generator <span class="math notranslate nohighlight">\(S\)</span> that acts over a ring where (at most) one generator <span class="math notranslate nohighlight">\(v\)</span> is affected like <span class="math notranslate nohighlight">\(S(v) = qv\)</span>. 
+The other generators must commute with <span class="math notranslate nohighlight">\(S\)</span> (i.e., <span class="math notranslate nohighlight">\(S(x) = x\)</span>).</p>
+<p>This method returns the tuple <span class="math notranslate nohighlight">\((v, S, q)\)</span>.</p>
+<p>In the case <code class="docutils literal notranslate"><span class="pre">name_q</span></code> is given, we require that the value for <span class="math notranslate nohighlight">\(q\)</span> found in the previous description must be <code class="docutils literal notranslate"><span class="pre">name_q</span></code>.</p>
+<p>TODO – add examples</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.is_double_qshift_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">is_double_qshift_algebra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algebra</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.is_double_qshift_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to check whether an algebra behaves like a double Q-shifts operators.
+See <a class="reference internal" href="#pseries_basis.misc.ore.gens_double_qshift_algebra" title="pseries_basis.misc.ore.gens_double_qshift_algebra"><code class="xref py py-func docutils literal notranslate"><span class="pre">gens_double_qshift_algebra()</span></code></a> for further information on the definition of a double <span class="math notranslate nohighlight">\(q\)</span>-shift operator</p>
+<p>TODO: Add examples using those in <a class="reference internal" href="#pseries_basis.misc.ore.gens_double_qshift_algebra" title="pseries_basis.misc.ore.gens_double_qshift_algebra"><code class="xref py py-func docutils literal notranslate"><span class="pre">gens_double_qshift_algebra()</span></code></a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.gens_double_qshift_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">gens_double_qshift_algebra</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.gens_double_qshift_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that returns the information about a double <span class="math notranslate nohighlight">\(q\)</span>-shift ore algebra.</p>
+<p>A double <span class="math notranslate nohighlight">\(q\)</span>-shift ore algebra is defined by a <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra_generic</span></code>
+with exactly 2 generator <span class="math notranslate nohighlight">\(S\)</span> and <span class="math notranslate nohighlight">\(S_i\)</span> that acts over a ring where (at most) one generator <span class="math notranslate nohighlight">\(v\)</span> is affected like <span class="math notranslate nohighlight">\(S(v) = qv\)</span>
+and <span class="math notranslate nohighlight">\(S_i(v) = v/q\)</span>. The other generators must commute with <span class="math notranslate nohighlight">\(S\)</span> and <span class="math notranslate nohighlight">\(S_i\)</span> (i.e., <span class="math notranslate nohighlight">\(S(x) = x\)</span>), which implies that <span class="math notranslate nohighlight">\(S S_i = S_i S = 1\)</span>.</p>
+<p>This method returns the tuple <span class="math notranslate nohighlight">\((v, S, S_i, q)\)</span>.</p>
+<p>In the case <code class="docutils literal notranslate"><span class="pre">name_q</span></code> is given, we require that the value for <span class="math notranslate nohighlight">\(q\)</span> found in the previous description must be <code class="docutils literal notranslate"><span class="pre">name_q</span></code>.</p>
+<p>TODO – add examples</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.get_recurrence_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">get_recurrence_algebra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_x='x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_shift='E'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rational=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base=Rational</span> <span class="pre">Field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.get_recurrence_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get always the same ore algebra</p>
+<p>This method unifies the access for OreAlgebra to get the recurrence shift operator
+<span class="math notranslate nohighlight">\(x \mapsto x+1\)</span>. The method allows to provide the names for the inner variable <span class="math notranslate nohighlight">\(x\)</span> 
+and the shift operator.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name_x</span></code>: string with the name of the inner variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">name_shift</span></code>: string with the name of the shift operator for the algebra.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rational</span></code>: boolean (<code class="docutils literal notranslate"><span class="pre">True</span></code> by default) deciding whether the base ring is 
+the field of rational functions or a polynomial ring.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span></code>: the base field for the polynomial ring w.r.t. <code class="docutils literal notranslate"><span class="pre">name_x</span></code>.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>A tuple <span class="math notranslate nohighlight">\((A, (x, E))\)</span> where <span class="math notranslate nohighlight">\(A\)</span> is the corresponding recurrence algebra, <span class="math notranslate nohighlight">\(x\)</span> is the 
+variable of the inner variable and <span class="math notranslate nohighlight">\(E\)</span> the recurrence operator with <span class="math notranslate nohighlight">\(E(x) = x+1\)</span>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.get_double_recurrence_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">get_double_recurrence_algebra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_x='x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_shift='E'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rational=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base=Rational</span> <span class="pre">Field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.get_double_recurrence_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get always the same ore algebra</p>
+<p>This method unifies the access for OreAlgebra to get the recurrence shift operator
+<span class="math notranslate nohighlight">\(x \mapsto x+1\)</span> and its inverse in an <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra_generic</span></code>. The method allows to provide the names for the inner variable <span class="math notranslate nohighlight">\(x\)</span> 
+and the shift operator. The inverse shift will be named by adding an <span class="math notranslate nohighlight">\(i\)</span> to the name of the shift.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name_x</span></code>: string with the name of the inner variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">name_shift</span></code>: string with the name of the shift operator for the algebra.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rational</span></code>: boolean (<code class="docutils literal notranslate"><span class="pre">True</span></code> by default) deciding whether the base ring is 
+the field of rational functions or a polynomial ring.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span></code>: the base field for the polynomial ring w.r.t. <code class="docutils literal notranslate"><span class="pre">name_x</span></code>.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>A tuple <span class="math notranslate nohighlight">\((A, (x, E, Ei))\)</span> where <span class="math notranslate nohighlight">\(A\)</span> is the corresponding recurrence algebra, <span class="math notranslate nohighlight">\(x\)</span> is the 
+variable of the inner variable and <span class="math notranslate nohighlight">\(E\)</span> the recurrence operator with <span class="math notranslate nohighlight">\(E(x) = x+1\)</span> and 
+<span class="math notranslate nohighlight">\(Ei\)</span> is the inverse recurrence operator, i.e., <span class="math notranslate nohighlight">\(Ei(x) = x-1\)</span>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.get_differential_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">get_differential_algebra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_x='x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_der='Dx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rational=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base=Rational</span> <span class="pre">Field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.get_differential_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get always the same ore algebra</p>
+<p>This method unifies the access for OreAlgebra to get the derivation operator
+<span class="math notranslate nohighlight">\(D(f(x)) = f'(x)\)</span>. The method allows to provide the names for the inner variable <span class="math notranslate nohighlight">\(x\)</span> 
+and the given derivation.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name_x</span></code>: string with the name of the inner variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">name_der</span></code>: string with the name of the derivation for the algebra.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rational</span></code>: boolean (<code class="docutils literal notranslate"><span class="pre">True</span></code> by default) deciding whether the base ring is 
+the field of rational functions or a polynomial ring.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span></code>: the base field for the polynomial ring w.r.t. <code class="docutils literal notranslate"><span class="pre">name_x</span></code>.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>A tuple <span class="math notranslate nohighlight">\((A, (x, D))\)</span> where <span class="math notranslate nohighlight">\(A\)</span> is the corresponding recurrence algebra, <span class="math notranslate nohighlight">\(x\)</span> is the 
+variable of the inner variable and <span class="math notranslate nohighlight">\(D\)</span> the recurrence operator with <span class="math notranslate nohighlight">\(D(x) = 1\)</span>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.get_qshift_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">get_qshift_algebra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_x='x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_q='q'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_qshift='E'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">power=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rational=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base=Rational</span> <span class="pre">Field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.get_qshift_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get always the same ore algebra</p>
+<p>This method unifies the access for OreAlgebra to get the recurrence <span class="math notranslate nohighlight">\(q\)</span>-shift operator
+<span class="math notranslate nohighlight">\(x \mapsto qx\)</span>. The method allows to provide the names for the inner variable <span class="math notranslate nohighlight">\(x\)</span> 
+and the shift operator.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name_x</span></code>: string with the name of the inner variable (will be the sequence <span class="math notranslate nohighlight">\(q^n\)</span>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">name_qshift</span></code>: string with the name of the shift operator for the algebra (will be the natural shift <span class="math notranslate nohighlight">\(n \mapsto n+1\)</span>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rational</span></code>: boolean (<code class="docutils literal notranslate"><span class="pre">True</span></code> by default) deciding whether the base ring is 
+the field of rational functions or a polynomial ring.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span></code>: the base field for the polynomial ring w.r.t. <code class="docutils literal notranslate"><span class="pre">name_x</span></code>.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>A tuple <span class="math notranslate nohighlight">\((A, (x, Q))\)</span> where <span class="math notranslate nohighlight">\(A\)</span> is the corresponding <span class="math notranslate nohighlight">\(q\)</span>-recurrence algebra, <span class="math notranslate nohighlight">\(x\)</span> is the 
+variable of the inner variable and <span class="math notranslate nohighlight">\(Q\)</span> the recurrence operator with <span class="math notranslate nohighlight">\(Q(x) = qx\)</span>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.get_double_qshift_algebra">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">get_double_qshift_algebra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_x='x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_q='q'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_qshift='E'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">power=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rational=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base=Rational</span> <span class="pre">Field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.get_double_qshift_algebra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to get always the same ore algebra</p>
+<p>This method unifies the access for OreAlgebra to get the recurrence <span class="math notranslate nohighlight">\(q\)</span>-shift operator
+<span class="math notranslate nohighlight">\(x \mapsto qx\)</span> and its inverse in an <code class="xref py py-class docutils literal notranslate"><span class="pre">OreAlgebra_generic</span></code>. The method allows to provide the names for the inner variable <span class="math notranslate nohighlight">\(x\)</span> 
+and the shift operator. The inverse shift will be named by adding an <span class="math notranslate nohighlight">\(i\)</span> to the name of the shift.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name_x</span></code>: string with the name of the inner variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">name_shift</span></code>: string with the name of the shift operator for the algebra.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rational</span></code>: boolean (<code class="docutils literal notranslate"><span class="pre">True</span></code> by default) deciding whether the base ring is 
+the field of rational functions or a polynomial ring.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span></code>: the base field for the polynomial ring w.r.t. <code class="docutils literal notranslate"><span class="pre">name_x</span></code>.</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>A tuple <span class="math notranslate nohighlight">\((A, (x, E, Ei))\)</span> where <span class="math notranslate nohighlight">\(A\)</span> is the corresponding recurrence algebra, <span class="math notranslate nohighlight">\(x\)</span> is the 
+variable of the inner variable and <span class="math notranslate nohighlight">\(E\)</span> the recurrence operator with <span class="math notranslate nohighlight">\(E(x) = x+1\)</span> and 
+<span class="math notranslate nohighlight">\(Ei\)</span> is the inverse recurrence operator, i.e., <span class="math notranslate nohighlight">\(Ei(x) = x-1\)</span>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.apply_operator_to_seq">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">apply_operator_to_seq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.apply_operator_to_seq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to apply an operator to a sequence.</p>
+<p>This method will be similar to the usual __call__ method from <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code>, but with sequences that
+are given as functions.</p>
+<p>INPUT:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">operator</span></code>: and operator with 1 generator (the shift) over the polynomial ring <span class="math notranslate nohighlight">\(\mathbb{R}[x]\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seq</span></code>: a sequence in functional format. This means that we can call it with integer values and we 
+obtain the values of the sequence at each point.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kwds</span></code>: optional named arguments. If “q_name” is given, we pass it to the qshift checkers</p></li>
+</ul>
+<p>OUTPUT:</p>
+<p>A sequence in function format.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.required_init">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">required_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.required_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to compute the number of required initial values for a sequence.</p>
+<p>When given a recurrence operator, we need some initial conditions to completely define 
+a solution to the recurrence operator. This method computes the maximal index we need to compute
+in order to have a fully defined sequence.</p>
+<p>TODO: add examples</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="pseries_basis.misc.ore.solution">
-<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.solution" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.solution" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to generate a <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code> solution to a recurrence operator</p>
 <p>This method receives a recurrence operator and a list of initial conditions and creates a <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>
 object that represent this exact solution. If not enough initial values are given, we raise an exception.</p>
@@ -65,22 +315,17 @@ object that represent this exact solution. If not enough initial values are give
 <li><p><code class="docutils literal notranslate"><span class="pre">operator</span></code>: a recurrence operator. We assume it only has 1 generator and it is the natural shift.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">init</span></code>: list or tuple of initial values for the sequence.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">check_init</span></code>: flag indicating whether to check or not the consistency of <code class="docutils literal notranslate"><span class="pre">init</span></code> with the operator given
-(mainly used if the data provided is more than necessary, see method <code class="xref py py-func docutils literal notranslate"><span class="pre">required_init()</span></code>)</p></li>
+(mainly used if the data provided is more than necessary, see method <a class="reference internal" href="#pseries_basis.misc.ore.required_init" title="pseries_basis.misc.ore.required_init"><code class="xref py py-func docutils literal notranslate"><span class="pre">required_init()</span></code></a>)</p></li>
 </ul>
 <p>OUTPUT:</p>
 <p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code> with the solution to <code class="docutils literal notranslate"><span class="pre">operator</span></code> and initial values given by <code class="docutils literal notranslate"><span class="pre">init</span></code>.</p>
+<p>TODO: add examples</p>
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="pseries_basis.misc.ore.OreSequence">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">OreSequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_sym</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.OreSequence" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="sequences.html#pseries_basis.misc.sequences.Sequence" title="pseries_basis.misc.sequences.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">pseries_basis.misc.sequences.Sequence</span></code></a></p>
-<p>Class to represent a sequence defined by a linear operator. This will include
-C-finite, D-finite, Q-finite and similar type of sequences.</p>
-<p>These sequences are always defined with a linear operator acting (somehow) on the 
-sequences and some initial onditions.</p>
-<p>TODO: Implement or use other class for this idea</p>
-</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.misc.ore.unroll_matrix">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.misc.ore.</span></span><span class="sig-name descname"><span class="pre">unroll_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_builder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.misc.ore.unroll_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </section>
 
@@ -95,11 +340,6 @@ sequences and some initial onditions.</p>
     <h4>Previous topic</h4>
     <p class="topless"><a href="io.html"
                           title="previous chapter">Interface with other platforms</a></p>
-  </div>
-  <div>
-    <h4>Next topic</h4>
-    <p class="topless"><a href="sequences.html"
-                          title="next chapter">Interface for Sequences</a></p>
   </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
@@ -132,12 +372,9 @@ sequences and some initial onditions.</p>
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="sequences.html" title="Interface for Sequences"
-             >next</a> |</li>
-        <li class="right" >
           <a href="io.html" title="Interface with other platforms"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../misc.html" >Sequences and other utilities</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Access and communication with <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code></a></li> 
       </ul>
