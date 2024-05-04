@@ -56,7 +56,7 @@ Q_factorial = QSequence(lambda n : q_factorial(n, q=__q), __Rq, 1, q=__q)
 @lru_cache(maxsize=256)
 def Q_binomial_type(a:int = 1, b: int = 0, c: int = 0, r : int = 0, s: int = 1, t: int = 0, e: int = 1):
     r'''
-        Creates the `q`-sequence ``QBinomial[a*n + b*k + c, r*n + s*k + t; q**e]
+        Creates the `q`-sequence `\left[\begin{array}{c}an + bk + c\\rn + sk + t\end{array}\right]_{q^e}`
     '''
     R = reduce(lambda p, q : pushout(p,q), [__Rq] + [parent(el) for el in (a,b,c,r,s,t)])
     a,b,c,r,s,t = [R(el) for el in (a,b,c,r,s,t)]

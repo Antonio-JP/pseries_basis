@@ -1987,6 +1987,8 @@ def DefiniteSumSolutions(operator, *input: int | list[int]):
 __all__ = [
     ## Classes and methods to define a factorial basis
     "FactorialBasis", "RootSequenceBasis", "FallingBasis", "PowerTypeBasis", "BinomialTypeBasis",
+    ## Examples of factorial bases
+    "FallingFactorial", "RaisingFactorial", "PowerBasis", "BinomialBasis",
     ## Shuffled bases
     "ShuffledBasis", "ProductBasis",
     ## Divisibility conditions
