@@ -37,7 +37,9 @@ doc: no-deps
 	cd docsrc && $(SAGE) -sh -c "make html"
 
 doc-github: doc
-	cp -a docsrc/build/html/. ./docs
+	@rm -rf ./docs
+	@cp -a docsrc/build/html/. ./docs
+	@echo "" > ./docs/.nojekyll
 		
 # Cleaning commands
 clean: clean_doc clean_pyc

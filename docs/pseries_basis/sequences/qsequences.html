@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Implementing \(q\)-sequences into SageMath &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.4.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Examples of Sequences and \(q\)-Sequences" href="examples.html" />
+    <link rel="prev" title="Different implementations of special sequences" href="element.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples of Sequences and \(q\)-Sequences"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="element.html" title="Different implementations of special sequences"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../sequences.html" accesskey="U">Infinite Sequences Framework: working with sequences in SageMath</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Implementing <span class="math notranslate nohighlight">\(q\)</span>-sequences into SageMath</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-pseries_basis.sequences.qsequences">
+<span id="implementing-q-sequences-into-sagemath"></span><h1>Implementing <span class="math notranslate nohighlight">\(q\)</span>-sequences into SageMath<a class="headerlink" href="#module-pseries_basis.sequences.qsequences" title="Permalink to this headline">¶</a></h1>
+<p>Module to define q-sequences</p>
+<p>A q-sequence is a sequence whose value is define for <span class="math notranslate nohighlight">\(q^n\)</span> instead of simply <span class="math notranslate nohighlight">\(n\)</span>. This, in particular,
+has a main implication on how things are computed. More precisely, we need an element in the universe 
+that will act as <span class="math notranslate nohighlight">\(q\)</span>.</p>
+<p>Usually, <span class="math notranslate nohighlight">\(q\)</span> is a transcendental variable over the original universe, however, we may allow any element 
+in the universe of a sequence to take the role of <span class="math notranslate nohighlight">\(q\)</span>.</p>
+<p>Since the behavior of these sequences are quite different to the standard sequences, the relation 
+in terms of class casting (see <a class="reference internal" href="base.html#pseries_basis.sequences.base.Sequence" title="pseries_basis.sequences.base.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Sequence</span></code></a>) is reset for q-sequences, meaning that 
+besides the basic relation with base sequences and constant sequences, they are not related with any 
+other classical sequences. This imply that any operation will fall to the basic callable sequences.</p>
+<p>These classes inherit from the main class <a class="reference internal" href="base.html#pseries_basis.sequences.base.Sequence" title="pseries_basis.sequences.base.Sequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.Sequence</span></code></a>, hence they need to implement the 
+following method in order to interact properly with other sequences:</p>
+<ul>
+<li><p>Override the class method <code class="xref py py-func docutils literal notranslate"><span class="pre">register_class()</span></code> with the desired classes we want to be directly below.</p></li>
+<li><p>Implement the following methods:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_change_class()</span></code>: receives a class (given when registering the sequence class) and cast the current sequence to the new class.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_neg_()</span></code>: implement the negation of a sequence for a given class.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_final_add()</span></code>: implement the addition for two sequences of the same parent and class.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_final_sub()</span></code>: implement the difference for two sequences of the same parent and class.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_final_mul()</span></code>: implement the hadamard product for two sequences of the same parent and class.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_final_div()</span></code>: implement the hadamard division for two sequences of the same parent and class.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_final_mod()</span></code>: implement the hadamard module for two sequences of the same parent and class.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_final_floordiv()</span></code>: implement the hadamard floor division for two sequences of the same parent and class.</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.sequences.qsequences.QSequence">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.qsequences.</span></span><span class="sig-name descname"><span class="pre">QSequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_extend_by_zero</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.qsequences.QSequence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.sequences.qsequences.QPower">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.qsequences.</span></span><span class="sig-name descname"><span class="pre">QPower</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">power</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.qsequences.QPower" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.sequences.qsequences.QExpressionSequence">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.qsequences.</span></span><span class="sig-name descname"><span class="pre">QExpressionSequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expression</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_extend_by_zero</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.qsequences.QExpressionSequence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.sequences.qsequences.QRationalSequence">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.qsequences.</span></span><span class="sig-name descname"><span class="pre">QRationalSequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rational</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_extend_by_zero</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.qsequences.QRationalSequence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.sequences.qsequences.is_QSequence">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.qsequences.</span></span><span class="sig-name descname"><span class="pre">is_QSequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">element</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.qsequences.is_QSequence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="element.html"
+                          title="previous chapter">Different implementations of special sequences</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="examples.html"
+                          title="next chapter">Examples of Sequences and <span class="math notranslate nohighlight">\(q\)</span>-Sequences</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/pseries_basis/sequences/qsequences.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples of Sequences and \(q\)-Sequences"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="element.html" title="Different implementations of special sequences"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../sequences.html" >Infinite Sequences Framework: working with sequences in SageMath</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Implementing <span class="math notranslate nohighlight">\(q\)</span>-sequences into SageMath</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

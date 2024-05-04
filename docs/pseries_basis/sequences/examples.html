@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Examples of Sequences and \(q\)-Sequences &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.4.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Polynomial Bases: basic bases for formal power series" href="../polynomial.html" />
+    <link rel="prev" title="Implementing \(q\)-sequences into SageMath" href="qsequences.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../polynomial.html" title="Polynomial Bases: basic bases for formal power series"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="qsequences.html" title="Implementing \(q\)-sequences into SageMath"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../sequences.html" accesskey="U">Infinite Sequences Framework: working with sequences in SageMath</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Examples of Sequences and <span class="math notranslate nohighlight">\(q\)</span>-Sequences</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-pseries_basis.sequences.examples">
+<span id="examples-of-sequences-and-q-sequences"></span><h1>Examples of Sequences and <span class="math notranslate nohighlight">\(q\)</span>-Sequences<a class="headerlink" href="#module-pseries_basis.sequences.examples" title="Permalink to this headline">¶</a></h1>
+<p>Module containing examples of sequences that can be useful for the user.</p>
+<p>This module contains several common examples for sequences that can be reuse further in the future.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.sequences.examples.Fibonacci">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.examples.</span></span><span class="sig-name descname"><span class="pre">Fibonacci</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.examples.Fibonacci" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that defines the Fibonacci sequence for a given set of initial values.</p>
+<p>The universe of the sequence is defined on the fly depending on the given values.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.sequences.examples.Q_binomial_type">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.examples.</span></span><span class="sig-name descname"><span class="pre">Q_binomial_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.examples.Q_binomial_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the <span class="math notranslate nohighlight">\(q\)</span>-sequence <span class="math notranslate nohighlight">\(\left[\begin{array}{c}an + bk + c\\rn + sk + t\end{array}\right]_{q^e}\)</span></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pseries_basis.sequences.examples.Q_pochhammer">
+<span class="sig-prename descclassname"><span class="pre">pseries_basis.sequences.examples.</span></span><span class="sig-name descname"><span class="pre">Q_pochhammer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.sequences.examples.Q_pochhammer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the sequence <span class="math notranslate nohighlight">\((a;q)_n\)</span> as a <span class="math notranslate nohighlight">\(q\)</span>-sequence.</p>
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="qsequences.html"
+                          title="previous chapter">Implementing <span class="math notranslate nohighlight">\(q\)</span>-sequences into SageMath</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../polynomial.html"
+                          title="next chapter">Polynomial Bases: basic bases for formal power series</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/pseries_basis/sequences/examples.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../polynomial.html" title="Polynomial Bases: basic bases for formal power series"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="qsequences.html" title="Implementing \(q\)-sequences into SageMath"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../sequences.html" >Infinite Sequences Framework: working with sequences in SageMath</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Examples of Sequences and <span class="math notranslate nohighlight">\(q\)</span>-Sequences</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

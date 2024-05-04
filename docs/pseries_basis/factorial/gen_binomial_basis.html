@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Generalized Binomial Bases &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</title>
+    <title>Generalized Binomial Bases &#8212; Inverse Zeibelger Problem: Power Series basis for Sage 0.4.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
     
@@ -14,7 +14,6 @@
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
-    <script async="async" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -28,15 +27,12 @@
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="../orthogonal.html" title="Orthogonal basis: a complex type of polynomial bases"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="product_basis.html" title="Product Basis: combining Factorial basis"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../factorial.html" accesskey="U">Factorial Basis: simplest Polynomial basis</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Generalized Binomial Bases</a></li> 
       </ul>
@@ -47,106 +43,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="module-pseries_basis.factorial.gen_binomial_basis">
-<span id="generalized-binomial-bases"></span><h1>Generalized Binomial Bases<a class="headerlink" href="#module-pseries_basis.factorial.gen_binomial_basis" title="Permalink to this headline">¶</a></h1>
-<p>Auxiliary file for extra utility methods</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="pseries_basis.factorial.gen_binomial_basis.DefiniteSumSolutions">
-<span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial.gen_binomial_basis.</span></span><span class="sig-name descname"><span class="pre">DefiniteSumSolutions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.gen_binomial_basis.DefiniteSumSolutions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Petkovšek’s algorithm for transforming operators into recurrence equations.</p>
-<p>This method is the complete execution for the algorithm <strong>DefiniteSumSolutions</strong> described in
-<a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>. This methods takes an operator <span class="math notranslate nohighlight">\(L\)</span> and convert the problem
-of being solution <span class="math notranslate nohighlight">\(L \cdot y(x) = 0\)</span> to a recurrence equation assuming some hypergeometric
-terms in the expansion.</p>
-<p>The operator must be a difference operator of <span class="math notranslate nohighlight">\(\mathbb{Q}[x]&lt;E&gt;\)</span> where <span class="math notranslate nohighlight">\(E: x \mapsto x+1\)</span>. The operator may 
-belong to a different ring from the package <em>ore_algebra</em>, but the generator must have the 
-behavior previously described.</p>
-<p>This function does not check the nature of the generator, so using this algorithm with different 
-types of operators may lead to some inconsistent results.</p>
-<p>INPUT:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">operator</span></code>: difference operator to be transformed.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">input</span></code>: the coefficients of the binomial coefficients we assume appear in the expansion
-of the solutions. This input can be given with the following formats:
-- <code class="docutils literal notranslate"><span class="pre">a_1,a_2,...,a_m,b_1,b_2,...,b_m</span></code>: an unrolled list of <span class="math notranslate nohighlight">\(2m\)</span> elements.
-- <code class="docutils literal notranslate"><span class="pre">[a_1,a_2,...,a_m,b_1,b_2,...,b_m]</span></code>: a compress list of <span class="math notranslate nohighlight">\(2m\)</span> elements.
-- <code class="docutils literal notranslate"><span class="pre">[a_1,...,a_m],[b_1,...,b_m]</span></code>: two lists of <span class="math notranslate nohighlight">\(m\)</span> elements.</p></li>
-</ul>
-<p>OUTPUT:</p>
-<p>An operator <span class="math notranslate nohighlight">\(\tilde{L}\)</span> such that if a sequence <span class="math notranslate nohighlight">\((c_n)_n\)</span> satisfies <span class="math notranslate nohighlight">\(L \cdot (c_n)_n = 0\)</span> then 
-the power series</p>
-<div class="math notranslate nohighlight">
-\[y(x) = \sum_{n \geq 0}\prod{i=1}^m c_n\binom{a_i*x+b_i}{n}\]</div>
-<p>satisfies <span class="math notranslate nohighlight">\(L \cdot y(x) = 0\)</span>.</p>
-<p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">pseries_basis</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">ore_algebra</span> <span class="kn">import</span> <span class="n">OreAlgebra</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">R</span><span class="o">.&lt;</span><span class="n">x</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">QQ</span><span class="p">[];</span> <span class="n">OE</span><span class="o">.&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">OreAlgebra</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="n">p</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">p</span> <span class="p">:</span> <span class="mi">0</span><span class="p">))</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">DefiniteSumSolutions</span><span class="p">((</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">E</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">Sn</span> <span class="o">-</span> <span class="mi">1</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">example_2</span> <span class="o">=</span> <span class="mi">4</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">E</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">5</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">20</span><span class="o">*</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="o">+</span><span class="mi">50</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">27</span><span class="p">)</span><span class="o">*</span><span class="n">E</span> <span class="o">+</span> <span class="mi">9</span><span class="o">*</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">7</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">DefiniteSumSolutions</span><span class="p">(</span><span class="n">example_2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
-<span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">Sn</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pseries_basis.factorial.gen_binomial_basis.GeneralizedBinomial">
-<span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial.gen_binomial_basis.</span></span><span class="sig-name descname"><span class="pre">GeneralizedBinomial</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.gen_binomial_basis.GeneralizedBinomial" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to get a basis which includes the general binomial coefficients.</p>
-<p>The binomial coefficients of shape</p>
-<div class="math notranslate nohighlight">
-\[\binom{ax+bn+c}{mn+r}\]</div>
-<p>can be (as a sequence of <span class="math notranslate nohighlight">\(n\)</span>) polynomials when <span class="math notranslate nohighlight">\(c \in \mathbb{Z}\)</span>, <span class="math notranslate nohighlight">\(a,b,m,r \in \mathbb{N}\)</span> with <span class="math notranslate nohighlight">\(a, m &gt; 0\)</span>
-and <span class="math notranslate nohighlight">\(b \leq m\)</span>. However these polynomials have degree <span class="math notranslate nohighlight">\(nm\)</span>, so they do not form a basis of mathbb{K}[[x]]. 
-This method creates a factorial basis as a <code class="xref py py-class docutils literal notranslate"><span class="pre">ProductBasis</span></code> that contains the specified binomial coefficients
-in the corresponding positions of the sequence. The intermediate steps are a possible extension to obtain
-every <span class="math notranslate nohighlight">\(m\)</span> steps all the necessary roots.</p>
-<p>Moreover, when <span class="math notranslate nohighlight">\(r=0\)</span>, this basis are naturally <span class="math notranslate nohighlight">\((b+1, 0)\)</span>-compatible with the shift <span class="math notranslate nohighlight">\(\tilde{E}: x\mapsto x+(1/a)\)</span>.
-This method includes that compatibility in the basis after computing it with a guessing procedure (see 
-<a class="reference internal" href="#pseries_basis.factorial.gen_binomial_basis.guess_compatibility_E" title="pseries_basis.factorial.gen_binomial_basis.guess_compatibility_E"><code class="xref py py-func docutils literal notranslate"><span class="pre">guess_compatibility_E()</span></code></a> for further information). Then we also include the compatibility with the classical
-shift <span class="math notranslate nohighlight">\(E: x\mapsto x+1\)</span> using the compatibility with <span class="math notranslate nohighlight">\(\tilde{E}\)</span>.</p>
-<p>INPUT:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">a</span></code>: value for the parameter <span class="math notranslate nohighlight">\(a\)</span>. It must be a positive integer.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">b</span></code>: value for the parameter <span class="math notranslate nohighlight">\(b\)</span>. It must be a non-negative integer smaller or equal to <code class="docutils literal notranslate"><span class="pre">m</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">c</span></code>: value for the parameter <span class="math notranslate nohighlight">\(c\)</span>. It must be an integer.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">m</span></code>: value for the parameter <span class="math notranslate nohighlight">\(m\)</span>. It must be a positive integer.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">r</span></code>: value for the parameter <span class="math notranslate nohighlight">\(r\)</span>. It must be a non-negative integer.</p></li>
-</ul>
-<p>OUTPUT:</p>
-<p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code> such that the <span class="math notranslate nohighlight">\(nm\)</span>-th term is of the form</p>
-<div class="math notranslate nohighlight">
-\[\binom{ax+bn+c}{mn+r}.\]</div>
-<p>If <span class="math notranslate nohighlight">\(r = 0\)</span>, this basis will have included the compatibility with the usual shift <span class="math notranslate nohighlight">\(E: x\mapsto x+1\)</span> with name “E”
-and also the compatibility with the <em>minimal</em> shift <span class="math notranslate nohighlight">\(\tilde{E}: x \mapsto x + 1/a\)</span> with name “Et”.</p>
-<p>TODO: add tests</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pseries_basis.factorial.gen_binomial_basis.guess_compatibility_E">
-<span class="sig-prename descclassname"><span class="pre">pseries_basis.factorial.gen_binomial_basis.</span></span><span class="sig-name descname"><span class="pre">guess_compatibility_E</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sections</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bound_roots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bound_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pseries_basis.factorial.gen_binomial_basis.guess_compatibility_E" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to guess the compatibility of a shift with a basis.</p>
-<p>This method use <code class="docutils literal notranslate"><span class="pre">ore_algebra</span></code> package to guess a possible compatibility condition
-for a shift with a basis. This uses the generalization of Proposition 3 in <a class="reference external" href="http://arxiv.org/abs/2202.05550">Arxiv 2202.05550</a>
-to characterize the compatibility of a shift with a factorial basis.</p>
-<p>INPUT:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">basis</span></code>: a <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorialBasis</span></code> to guess the compatibility.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">shift</span></code>: value that is added to <span class="math notranslate nohighlight">\(x\)</span> with the shift we want to guess (i.e., <span class="math notranslate nohighlight">\(E(x) = x+\alpha\)</span> where
-<span class="math notranslate nohighlight">\(\alpha\)</span> is the value of <code class="docutils literal notranslate"><span class="pre">shift</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">sections</span></code>: number of desired section in the compatibility condition.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">A</span></code>: vale for the compatibility bound <span class="math notranslate nohighlight">\(A\)</span>. If non is given, we guess a possible choice.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">bound_roots</span></code>: bound for checking that the root characterization holds for <code class="docutils literal notranslate"><span class="pre">basis</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">bound_data</span></code>: amount of data we compute i order to do the guessing.</p></li>
-</ul>
-<p>OUTPUT:</p>
-<p>A guessed compatibility condition <span class="math notranslate nohighlight">\((A,B,m,\alpha_{i,j}(n))\)</span> for <code class="docutils literal notranslate"><span class="pre">basis</span></code> and the shift
-operator <span class="math notranslate nohighlight">\(E: x \mapsto x+\alpha\)</span>.</p>
-<p>TODO: add examples?</p>
-</dd></dl>
-
+  <section id="generalized-binomial-bases">
+<h1>Generalized Binomial Bases<a class="headerlink" href="#generalized-binomial-bases" title="Permalink to this headline">¶</a></h1>
 </section>
 
 
@@ -194,15 +92,12 @@ operator <span class="math notranslate nohighlight">\(E: x \mapsto x+\alpha\)</s
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="../orthogonal.html" title="Orthogonal basis: a complex type of polynomial bases"
              >next</a> |</li>
         <li class="right" >
           <a href="product_basis.html" title="Product Basis: combining Factorial basis"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Inverse Zeibelger Problem: Power Series basis for Sage 0.3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pseries_basis</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../factorial.html" >Factorial Basis: simplest Polynomial basis</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Generalized Binomial Bases</a></li> 
       </ul>
