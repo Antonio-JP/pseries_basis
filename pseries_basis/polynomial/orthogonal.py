@@ -345,4 +345,9 @@ def HermitePBasis(universe=QQ):
     output.set_derivation("Dn", Compatibility([[RationalSequence(output.ore_var(), universe=universe), ConstantSequence(0, universe=universe)]], 1, 0, 1), True)
     return output
 
-__all__ = ["OrthogonalBasis", "JacobiBasis", "GegenbauerBasis", "LegendreBasis", "TChebyshevBasis", "UChebyshevBasis", "LaguerreBasis", "HermiteBasis", "HermitePBasis"]
+__all__ = [
+    ## Class for orthogonal bases
+    "OrthogonalBasis", 
+    ## Specific types of orthogonal bases
+    "JacobiBasis", "GegenbauerBasis", "LegendreBasis", "TChebyshevBasis", "UChebyshevBasis", "LaguerreBasis", "HermiteBasis", "HermitePBasis"
+]

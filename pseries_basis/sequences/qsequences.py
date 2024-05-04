@@ -70,4 +70,4 @@ def QRationalSequence(rational, variables=None, universe=None, *, q, power: int 
     return output
     
 
-__all__ = ["QSequence", "QExpressionSequence", "QRationalSequence", "is_QSequence"]
+__all__ = ["QSequence", "QPower", "QExpressionSequence", "QRationalSequence", "is_QSequence"]

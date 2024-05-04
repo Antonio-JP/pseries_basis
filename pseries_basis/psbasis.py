@@ -1002,14 +1002,15 @@ class PSBasis(Sequence):
             * ``output``: by default the output of this method is a Laurent Polynomial in 
               a shift operator with sequences as coefficients. This argument indicates 
               where we should transform this output to be used later. It allow two options:
-                - "rational": force the sequence in the output to be rational sequences.
-                - "expression": force the sequence in the output to be an expression sequence.
-                - "ore_double": a Ore Algebra with two operators will be used as output.
-                  This requires the sequences are rational functions in the shift variable 
-                  and the two operators on the algebra will act as the forward and backward 
-                  shift.
-                - "ore": a Ore Algebra with just a shift will be used as output. Similar to the
-                  double case, but we remove completely the inverse shift.
+
+              * "rational": force the sequence in the output to be rational sequences.
+              * "expression": force the sequence in the output to be an expression sequence.
+              * "ore_double": a Ore Algebra with two operators will be used as output.
+                This requires the sequences are rational functions in the shift variable 
+                and the two operators on the algebra will act as the forward and backward 
+                shift.
+              * "ore": a Ore Algebra with just a shift will be used as output. Similar to the
+                double case, but we remove completely the inverse shift.
             
             OUTPUT:
 
@@ -1557,3 +1558,5 @@ def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: C
         if not lhs.almost_equals(rhs, bound):
             return ((n,lhs, rhs), False if _full else False)
     return True
+
+__all__ = ["PSBasis", "Compatibility", "basis_matrix", "check_compatibility"]

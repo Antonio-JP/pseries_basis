@@ -1156,8 +1156,6 @@ class ShuffledBasis(FactorialBasis):
 
         * ``factors``: the basis that build the sieved basis.
         * ``cycle``: a tuple of length `m` indicating which factor use in each step.
-        ??* ``init``: value for the constant element of the basis.
-        ??* ``var_name``: name of the operator representing the multiplication by `x`.
 
         EXAMPLES::
 
@@ -1985,3 +1983,14 @@ def DefiniteSumSolutions(operator, *input: int | list[int]):
 ## TODO def multiset_inclusion(l1 : list|tuple, l2 : list|tuple) -> bool
 ## TODO def guess_compatibility_E(basis: FactorialBasis, shift: element.Element = 1, sections: int = None, A: int = None, bound_roots: int = 50, bound_data: int = 50) -> OreOperator
 ## TODO def guess_rational_function(data: Collection, algebra: OreAlgebra_generic) -> element.Element
+
+__all__ = [
+    ## Classes and methods to define a factorial basis
+    "FactorialBasis", "RootSequenceBasis", "FallingBasis", "PowerTypeBasis", "BinomialTypeBasis",
+    ## Shuffled bases
+    "ShuffledBasis", "ProductBasis",
+    ## Divisibility conditions
+    "DivisionCondition", "check_division_condition",
+    ## Other useful methods
+    "DefiniteSumSolutions"
+]

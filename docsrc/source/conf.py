@@ -18,6 +18,8 @@ from codecs import open
 from pathlib import Path
 
 try:
+    ## We first load sage_cmd_line to avoid weird import errors
+    import sage.all_cmdline # pylint: disable=unused-import
     from sage.env import SAGE_DOC_SRC, SAGE_SRC
 except ImportError:
     raise RuntimeError("to build the documentation you need to be inside a Sage shell (run first the command 'sage -sh' in a shell")

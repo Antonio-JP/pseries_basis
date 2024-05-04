@@ -83,6 +83,8 @@ def Q_pochhammer(a=__q, q=__q):
 
 
 __all__ = [
+    ## Classical sequences
     "Factorial", "Binomial", "Fibonacci",
-    "QPower", "Qn", "Q_int", "Q_factorial", "Q_binomial", "Q_pochhammer"
+    ## q-sequences
+    "Qn", "Q_int", "Q_factorial", "Q_binomial_type", "Q_binomial", "Q_pochhammer"
 ]

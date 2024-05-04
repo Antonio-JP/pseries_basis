@@ -49,4 +49,4 @@ class BesselBasis(PSBasis):
         # self.set_compatibility(Xi, (Q12/n)*Sn + (Q12/n)*Sni)
         # self.set_derivation(Dx, Q12*Sn - Q12*Sni)
 
-__all__ = ["FunctionalBasis", "ExponentialBasis", "BesselBasis"]
+__all__ = []

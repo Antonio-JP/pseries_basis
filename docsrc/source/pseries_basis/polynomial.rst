@@ -11,8 +11,8 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
-   factorial/factorial
-   factorial/orthogonal
+   polynomial/factorial
+   polynomial/orthogonal
 
 Indices and Tables
 *********************

@@ -42,7 +42,6 @@ from typing import Any, Callable
 
 from ..sequences.base import Sequence
 
-_Fields = Fields.__classcall__(Fields)
 Element = element.Element
 
 #############################################################################################
@@ -144,8 +143,6 @@ def gens_double_recurrence_algebra(algebra: OreAlgebra_generic) -> tuple[Element
 
         This method returns the tuple `(v, S, S_i, \alpha)`.
 
-        EXAMPLES::
-
         TODO -- add examples
     '''
     if isinstance(algebra, OreAlgebra_generic) and algebra.ngens() == 2:
@@ -224,8 +221,6 @@ def gens_qshift_algebra(algebra: OreAlgebra_generic, name_q : str = None) -> tup
 
         In the case ``name_q`` is given, we require that the value for `q` found in the previous description must be ``name_q``.
 
-        EXAMPLES::
-
         TODO -- add examples
     '''
     q = None
@@ -286,8 +281,6 @@ def gens_double_qshift_algebra(algebra: OreAlgebra_generic, name_q : str = None)
         This method returns the tuple `(v, S, S_i, q)`.
 
         In the case ``name_q`` is given, we require that the value for `q` found in the previous description must be ``name_q``.
-
-        EXAMPLES::
 
         TODO -- add examples
     '''
@@ -1060,23 +1053,12 @@ def poly_decomposition(polynomial : Element) -> tuple[list[Element],list[Element
     return monomials, coefficients
 
 __all__ = [
-    "is_recurrence_algebra", 
-    "gens_recurrence_algebra",
-    "is_double_recurrence_algebra",
-    "gens_double_recurrence_algebra",
-    "is_differential_algebra",
-    "is_qshift_algebra",
-    "gens_qshift_algebra",
-    "is_double_qshift_algebra",
-    "gens_double_qshift_algebra",
-    "get_recurrence_algebra",
-    "get_double_recurrence_algebra",
-    "get_differential_algebra",
-    "get_qshift_algebra",
-    "get_double_qshift_algebra",
-    "apply_operator_to_seq",
-    "required_init",
-    "solution",
-    "unroll_matrix",
-    "poly_decomposition"
+    ## Methods to check type of an ore-algebra
+    "is_recurrence_algebra", "is_double_recurrence_algebra", "is_differential_algebra", "is_qshift_algebra", "is_double_qshift_algebra",
+    ## Methods to obtain the generators of a specific type of ore-algebra
+    "gens_recurrence_algebra", "gens_double_recurrence_algebra", "gens_qshift_algebra", "gens_double_qshift_algebra",
+    ## Method to create specific types of ore-algebras
+    "get_recurrence_algebra", "get_double_recurrence_algebra", "get_differential_algebra", "get_qshift_algebra", "get_double_qshift_algebra",
+    ## Other useful methods using ore-operators
+    "apply_operator_to_seq", "required_init", "solution", "unroll_matrix"
 ]

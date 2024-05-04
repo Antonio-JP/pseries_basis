@@ -10,10 +10,10 @@ import logging
 import re
 
 from sage.arith.functions import lcm
-from sage.calculus.var import var
 from sage.databases.oeis import OEISSequence
 from sage.misc.cachefunc import cached_method
 from sage.rings.integer_ring import ZZ
+from sage.symbolic.ring import SR
 
 from ore_algebra.ore_operator import OreOperator
 
@@ -263,7 +263,7 @@ class EnhOEISSequence(OEISSequence):
         return min(pos)
 
     def __analyze_formula(self, formula: str, start_pos: int) -> OreOperator:
-        n = var('n')
+        n = SR.var('n')
         # getting the part of the formula until a "with" a "." or the end of the line
         end_pos = self.__find_several_first(formula, ".", " with", ",", "[", start = start_pos)
         end_pos = len(formula) if end_pos < 0 else end_pos

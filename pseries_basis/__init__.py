@@ -144,6 +144,8 @@ r'''
 import logging
 import sys
 
+import sage
+
 ## Configuring logger for this package
 
 # Getting the logger
@@ -175,8 +177,8 @@ from .qbasis import *
 from .sequences import *
 
 ## Fixing imports that were destroyed from these
-from sage.functions.other import factorial # pylint: disable=unused-import
-from sage.misc.functional import order # pylint: disable=unused-import
+factorial = sage.functions.other.factorial
+order = sage.misc.functional.order 
 
 def pseries_bases_version():
     r'''
