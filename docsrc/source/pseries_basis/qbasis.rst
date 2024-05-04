@@ -5,9 +5,6 @@ Q-series as Power series basis
 
 .. automodule:: pseries_basis.qbasis
    :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order: bysource
 
 Submodules 
 *********************

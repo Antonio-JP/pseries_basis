@@ -4,9 +4,6 @@ Inverse Zeibelger Problem
 
 .. automodule:: pseries_basis
    :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order: bysource
 
 Submodules 
 ########################################################
@@ -15,11 +12,11 @@ Submodules
    :maxdepth: 1
 
    pseries_basis/psbasis
-   pseries_basis/factorial
-   pseries_basis/orthogonal
+   pseries_basis/sequences
+   pseries_basis/polynomial
+   pseries_basis/qbasis
    pseries_basis/order
    pseries_basis/misc
-   pseries_basis/sequences
 
 Indices and Tables
 ***********************************************************

@@ -1,13 +1,9 @@
 .. nodoctest
 
-Orthogonal basis: a complex type of polynomial bases
+Polynomial Bases: basic bases for formal power series
 ======================================================
 
-.. automodule:: pseries_basis.orthogonal
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order: bysource
+.. automodule:: pseries_basis.polynomial
 
 Submodules 
 *********************
@@ -15,7 +11,8 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
-   orthogonal/ortho_basis
+   factorial/factorial
+   factorial/orthogonal
 
 Indices and Tables
 *********************

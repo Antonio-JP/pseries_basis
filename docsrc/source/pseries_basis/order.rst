@@ -5,9 +5,6 @@ Order basis: more bases for formal power series
 
 .. automodule:: pseries_basis.order
    :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order: bysource
 
 Submodules 
 *********************

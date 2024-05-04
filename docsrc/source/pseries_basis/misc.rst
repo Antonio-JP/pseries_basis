@@ -5,9 +5,6 @@ Sequences and other utilities
 
 .. automodule:: pseries_basis.misc
    :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order: bysource
 
 Submodules 
 *********************
@@ -16,9 +13,7 @@ Submodules
    :maxdepth: 1
 
    misc/io
-   misc/noncom_rings
    misc/ore
-   misc/sequences
 
 Indices and Tables
 *********************

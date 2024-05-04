@@ -1,6 +1,6 @@
 .. nodoctest
 
-Examples of Sequences and `q`-sequences
+Examples of Sequences and `q`-Sequences
 ======================================================
 
 .. automodule:: pseries_basis.sequences.examples

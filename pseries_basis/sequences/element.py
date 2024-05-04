@@ -26,7 +26,7 @@ r'''
 from __future__ import annotations
 
 from typing import Collection, Mapping
-from .base import ConstantSequence, Sequence, IdentitySequence
+
 from sage.calculus.var import var
 from sage.categories.pushout import pushout
 from sage.rings.integer_ring import ZZ
@@ -37,6 +37,8 @@ from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.structure.element import parent
 from sage.symbolic.expression import Expression
 from sage.symbolic.ring import SR
+
+from .base import ConstantSequence, Sequence, IdentitySequence
 
 class ExpressionSequence(Sequence):
     r'''

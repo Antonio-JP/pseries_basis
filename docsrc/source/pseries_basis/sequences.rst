@@ -5,8 +5,6 @@ Infinite Sequences Framework: working with sequences in SageMath
 
 .. automodule:: pseries_basis.sequences
    :members:
-   :undoc-members:
-   :show-inheritance:
 
 Submodules 
 *********************
@@ -16,8 +14,8 @@ Submodules
 
    sequences/base
    sequences/element
-   sequences/examples
    sequences/qsequences
+   sequences/examples
 
 Indices and Tables
 *********************

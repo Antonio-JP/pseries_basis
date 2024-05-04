@@ -3,7 +3,7 @@
 Factorial Basis: simplest Polynomial basis
 ======================================================
 
-.. automodule:: pseries_basis.factorial.factorial_basis
+.. automodule:: pseries_basis.polynomial.factorial
    :members:
    :undoc-members:
    :show-inheritance:
