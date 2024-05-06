@@ -1,0 +1,842 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     29373,        834]
+NotebookOptionsPosition[     23819,        721]
+NotebookOutlinePosition[     24190,        737]
+CellTagsIndexPosition[     24147,        734]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["\<\
+qFunctions Package usage in the \[OpenCurlyDoubleQuote]Factorial Basis Method \
+for q -Series Applications\[CloseCurlyDoubleQuote] Paper\
+\>", "Title",
+ CellChangeTimes->{{3.923914393493867*^9, 3.9239144023535633`*^9}, {
+  3.9239145105836167`*^9, 
+  3.923914547528736*^9}},ExpressionUUID->"33d1ad05-7b5b-4fb4-b642-\
+2f69805b6cf2"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"<<", "qFunctions.m"}]], "Input",
+ CellLabel->"In[1]:=",ExpressionUUID->"da1c5708-f11b-4777-935a-95d4be29c6be"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"In order to use the full functionality you have to load the \
+HolonomicFunctions package.\"\>"], "Print",
+ CellChangeTimes->{3.9239143806281433`*^9, 3.923918224992866*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"6b7ef12a-9318-4018-9dff-2f60dd6d46b2"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{
+    RowBox[{
+    "qFunctions", " ", "by", " ", "Jakob", " ", "Ablinger", " ", "and", " ", 
+     "Ali", " ", 
+     RowBox[{"K", ".", " ", "Uncu"}]}], " ", "\[LongDash]", " ", "RISC", " ", 
+    "\[LongDash]", " ", 
+    RowBox[{"Version", " ", "1.1"}]}], 
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{"03", "/", "11"}], "/", "23"}], ")"}]}], 
+  ButtonBox[
+   StyleBox["Help", "Hyperlink",
+    FontVariations->{"Underline"->True}],
+   Appearance->{Automatic, None, "Normal", Automatic},
+   ButtonData:>{"", ""},
+   ButtonFunction:>qFunctions`Private`qFunctionsHelp[],
+   Evaluator->Automatic]}]], "Print",
+ CellFrame->0.5,
+ CellChangeTimes->{3.9239182250227213`*^9},
+ FontColor->GrayLevel[0.],
+ Background->RGBColor[0.796887, 0.789075, 0.871107],
+ ButtonBoxOptions->{
+ Active->True},ExpressionUUID->"901aaead-2438-4e35-a71b-b09a5213a821"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Example 5.2 (Identity 3.38 of Sills [21]) ", "Subchapter",
+ CellChangeTimes->{{3.923914332188242*^9, 3.9239143740735035`*^9}, {
+  3.9239146078641896`*^9, 3.9239146089541397`*^9}, {3.9239151094423623`*^9, 
+  3.9239151111077895`*^9}},ExpressionUUID->"b8b658ca-26f0-4e0b-a162-\
+a624c42eb905"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+Guessing - Proving a shorter recurrence operator for a' (k) :\
+\>", "Subsection",
+ CellChangeTimes->{{3.923915115585734*^9, 
+  3.9239151181069956`*^9}},ExpressionUUID->"2c305f19-fdf9-419b-86a4-\
+675f163d5583"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+First we input the annihilating operator applied to a\[CloseCurlyQuote](k) in \
+Mathematica (a\[CloseCurlyQuote](k) is denoted by a[k] here):\
+\>", "Subsubsection",
+ CellChangeTimes->{{3.9239145658892107`*^9, 
+  3.9239146472542205`*^9}},ExpressionUUID->"b5b51ff8-9661-4faf-923c-\
+7d8de60566a4"],
+
+Cell["In qFunctions all recurrences are implicitly set equal to 0.", "Text",
+ CellChangeTimes->{{3.92391485419413*^9, 
+  3.9239148664562488`*^9}},ExpressionUUID->"037b5d32-8946-4dc9-8cfb-\
+bf858e6e8eee"],
+
+Cell[BoxData[
+ RowBox[{"recAkPrimeApplied", ":=", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"-", 
+       SuperscriptBox["q", 
+        RowBox[{"5", "+", 
+         RowBox[{"2", " ", "k"}]}]]}], "+", 
+      SuperscriptBox["q", 
+       RowBox[{"6", "+", 
+        RowBox[{"3", " ", "k"}]}]], "+", 
+      SuperscriptBox["q", 
+       RowBox[{"7", "+", 
+        RowBox[{"3", " ", "k"}]}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"8", "+", 
+        RowBox[{"4", " ", "k"}]}]]}], ")"}], " ", 
+    RowBox[{"a", "[", "k", "]"}]}], "+", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{
+      SuperscriptBox["q", 
+       RowBox[{"6", "+", 
+        RowBox[{"2", " ", "k"}]}]], "+", 
+      SuperscriptBox["q", 
+       RowBox[{"7", "+", 
+        RowBox[{"2", " ", "k"}]}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"8", "+", 
+        RowBox[{"3", " ", "k"}]}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"9", "+", 
+        RowBox[{"3", " ", "k"}]}]]}], ")"}], " ", 
+    RowBox[{"a", "[", 
+     RowBox[{"1", "+", "k"}], "]"}]}], "+", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{"q", "-", 
+      SuperscriptBox["q", 
+       RowBox[{"2", "+", "k"}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"3", "+", "k"}]], "+", 
+      SuperscriptBox["q", 
+       RowBox[{"4", "+", 
+        RowBox[{"2", " ", "k"}]}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"8", "+", 
+        RowBox[{"2", " ", "k"}]}]]}], ")"}], " ", 
+    RowBox[{"a", "[", 
+     RowBox[{"2", "+", "k"}], "]"}]}], "+", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"-", "1"}], "-", "q", "+", 
+      SuperscriptBox["q", 
+       RowBox[{"2", "+", "k"}]], "+", 
+      SuperscriptBox["q", 
+       RowBox[{"3", "+", "k"}]]}], ")"}], " ", 
+    RowBox[{"a", "[", 
+     RowBox[{"3", "+", "k"}], "]"}]}], "+", 
+   RowBox[{"a", "[", 
+    RowBox[{"4", "+", "k"}], "]"}]}]}]], "Input",
+ CellLabel->"In[2]:=",ExpressionUUID->"7ce6ab7f-1940-47b8-a643-751ffbf7b5d9"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["List 20 initial values:", "Subsubsection",
+ CellChangeTimes->{{3.9239146595340557`*^9, 
+  3.9239146685741167`*^9}},ExpressionUUID->"9dd8fa16-2b22-4406-bab5-\
+e1f13634c2ad"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"list20InitialValues", " ", "=", " ", 
+  RowBox[{"qREToList", "[", 
+   RowBox[{"recAkPrimeApplied", ",", " ", 
+    RowBox[{"a", "[", "k", "]"}], ",", " ", 
+    RowBox[{"{", 
+     RowBox[{"0", ",", " ", 
+      RowBox[{"{", 
+       RowBox[{"1", ",", " ", "q", ",", " ", 
+        RowBox[{"q", "^", "4"}], ",", " ", 
+        RowBox[{"q", "^", "7"}], ",", " ", 
+        RowBox[{"q", "^", "12"}]}], "}"}]}], "}"}], ",", " ", "20"}], 
+   "]"}]}]], "Input",
+ CellChangeTimes->{3.9239149636276417`*^9},
+ CellLabel->"In[3]:=",ExpressionUUID->"0c551e2b-23e1-47fb-a26a-d0079ccf5385"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"1", ",", "q", ",", 
+   SuperscriptBox["q", "4"], ",", 
+   SuperscriptBox["q", "7"], ",", 
+   SuperscriptBox["q", "12"], ",", 
+   SuperscriptBox["q", "17"], ",", 
+   SuperscriptBox["q", "24"], ",", 
+   SuperscriptBox["q", "31"], ",", 
+   SuperscriptBox["q", "40"], ",", 
+   SuperscriptBox["q", "49"], ",", 
+   SuperscriptBox["q", "60"], ",", 
+   SuperscriptBox["q", "71"], ",", 
+   SuperscriptBox["q", "84"], ",", 
+   SuperscriptBox["q", "97"], ",", 
+   SuperscriptBox["q", "112"], ",", 
+   SuperscriptBox["q", "127"], ",", 
+   SuperscriptBox["q", "144"], ",", 
+   SuperscriptBox["q", "161"], ",", 
+   SuperscriptBox["q", "180"], ",", 
+   SuperscriptBox["q", "199"]}], "}"}]], "Output",
+ CellChangeTimes->{3.9239149640825834`*^9, 3.9239182278525352`*^9},
+ CellLabel->"Out[3]=",ExpressionUUID->"19ff90d2-c1f7-49d7-b7eb-2ad8329f61bb"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Guess a recurrence with order 2 by ansatz:", "Subsubsection",
+ CellChangeTimes->{{3.9239146786103153`*^9, 
+  3.923914740934096*^9}},ExpressionUUID->"120eee6b-d68d-4937-a78b-\
+397932c70758"],
+
+Cell["\<\
+ (One can see free variables arise if they bounds 2,{2,4} are changed for \
+larger values.)\
+\>", "Text",
+ CellChangeTimes->{{3.9239147438743744`*^9, 
+  3.9239147516241612`*^9}},ExpressionUUID->"f98ebbc7-1142-4750-854c-\
+380c671ccf4f"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"GuessedRecFromInitialConditions", " ", "=", " ", 
+  RowBox[{"GuessqRecurrence", "[", 
+   RowBox[{"list20InitialValues", ",", " ", 
+    RowBox[{"a", "[", "k", "]"}], ",", " ", "2", ",", " ", 
+    RowBox[{"{", 
+     RowBox[{"2", ",", " ", "4"}], "}"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{3.923914973562995*^9},
+ CellLabel->"In[4]:=",ExpressionUUID->"c0395324-2810-47cf-bf13-7e1a9d899298"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   SuperscriptBox["q", 
+    RowBox[{"4", "+", 
+     RowBox[{"2", " ", "k"}]}]], " ", 
+   RowBox[{"a", "[", "k", "]"}]}], "-", 
+  RowBox[{"a", "[", 
+   RowBox[{"2", "+", "k"}], "]"}]}]], "Output",
+ CellChangeTimes->{{3.9239149666077714`*^9, 3.9239149746354275`*^9}, 
+   3.9239182282046795`*^9},
+ CellLabel->"Out[4]=",ExpressionUUID->"0a5cc496-0681-4444-b6c2-b11f56349422"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+We calculate 20 initial values of this sequence with the same initial values \
+as the original a[k]:\
+\>", "Subsubsection",
+ CellChangeTimes->{{3.9239147761942406`*^9, 
+  3.923914802054482*^9}},ExpressionUUID->"4895738a-2855-455e-9613-\
+937a4fa4f19c"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"list20InitialValuesFromGuessed", " ", "=", " ", 
+  RowBox[{"qREToList", "[", 
+   RowBox[{"recAkPrimeApplied", ",", " ", 
+    RowBox[{"a", "[", "k", "]"}], ",", " ", 
+    RowBox[{"{", 
+     RowBox[{"0", ",", " ", 
+      RowBox[{"{", 
+       RowBox[{"1", ",", " ", "q"}], "}"}]}], "}"}], ",", " ", "20"}], 
+   "]"}]}]], "Input",
+ CellLabel->"In[5]:=",ExpressionUUID->"706674cc-3194-4d40-a8ed-dd687c9cac8a"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"1", ",", "q", ",", 
+   SuperscriptBox["q", "4"], ",", 
+   SuperscriptBox["q", "7"], ",", 
+   SuperscriptBox["q", "12"], ",", 
+   SuperscriptBox["q", "17"], ",", 
+   SuperscriptBox["q", "24"], ",", 
+   SuperscriptBox["q", "31"], ",", 
+   SuperscriptBox["q", "40"], ",", 
+   SuperscriptBox["q", "49"], ",", 
+   SuperscriptBox["q", "60"], ",", 
+   SuperscriptBox["q", "71"], ",", 
+   SuperscriptBox["q", "84"], ",", 
+   SuperscriptBox["q", "97"], ",", 
+   SuperscriptBox["q", "112"], ",", 
+   SuperscriptBox["q", "127"], ",", 
+   SuperscriptBox["q", "144"], ",", 
+   SuperscriptBox["q", "161"], ",", 
+   SuperscriptBox["q", "180"], ",", 
+   SuperscriptBox["q", "199"]}], "}"}]], "Output",
+ CellChangeTimes->{3.923914977005396*^9, 3.9239182282986546`*^9},
+ CellLabel->"Out[5]=",ExpressionUUID->"744615ee-884c-4c84-bbe8-1b7ff790ded8"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+And show that it is equal to the previously calculated initial values:\
+\>", "Subsubsection",
+ CellChangeTimes->{{3.923914810689151*^9, 
+  3.923914831258344*^9}},ExpressionUUID->"abee5f83-9f3b-4068-8dd6-\
+f6f1ad703c97"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"list20InitialValues", " ", "==", " ", 
+  "list20InitialValuesFromGuessed"}]], "Input",
+ CellLabel->"In[6]:=",ExpressionUUID->"3a292a88-0e64-4f1f-92e8-c862c16701ec"],
+
+Cell[BoxData["True"], "Output",
+ CellChangeTimes->{3.923914980017029*^9, 3.9239182284227085`*^9},
+ CellLabel->"Out[6]=",ExpressionUUID->"943da060-bf70-452d-b0e4-2c751d5f704b"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+Prove that the GCD of the high-order (from Factorial basis method) and \
+low-order (guessed) recurrences is the guessed recurrence.\
+\>", "Subsubsection",
+ CellChangeTimes->{{3.923914764388587*^9, 3.9239147656962442`*^9}, {
+  3.9239148405141*^9, 3.923914846264578*^9}, {3.923914880434568*^9, 
+  3.9239149371252236`*^9}},ExpressionUUID->"e4216d82-1749-4055-a36c-\
+af500d4790e6"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"qREGCD", "[", 
+   RowBox[{
+   "recAkPrimeApplied", ",", " ", "GuessedRecFromInitialConditions", ",", " ", 
+    RowBox[{"a", "[", "k", "]"}]}], "]"}], " "}]], "Input",
+ CellChangeTimes->{{3.9238952497441626`*^9, 3.923895300116661*^9}, {
+  3.923895336632462*^9, 3.9238953555717764`*^9}, {3.9238953879701815`*^9, 
+  3.9238955391369123`*^9}, {3.9238958707275753`*^9, 3.923895996930962*^9}, {
+  3.923914378233226*^9, 3.9239143841733847`*^9}, {3.9239146514801645`*^9, 
+  3.9239146719242153`*^9}, {3.923914755034793*^9, 3.9239147713055453`*^9}, {
+  3.9239148052294006`*^9, 3.9239148339219475`*^9}, {3.923914877044482*^9, 
+  3.923914877309476*^9}},
+ CellLabel->"In[7]:=",ExpressionUUID->"b8c1b51d-374a-4f47-8a00-96cf8b1eb93a"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"-", 
+    SuperscriptBox["q", 
+     RowBox[{"4", "+", 
+      RowBox[{"2", " ", "k"}]}]]}], " ", 
+   RowBox[{"a", "[", "k", "]"}]}], "+", 
+  RowBox[{"a", "[", 
+   RowBox[{"2", "+", "k"}], "]"}]}]], "Output",
+ CellChangeTimes->{3.9239149815220833`*^9, 3.9239182287675257`*^9},
+ CellLabel->"Out[7]=",ExpressionUUID->"f93969c4-78f3-45b2-aa2a-9cf6263696c6"]
+}, Open  ]],
+
+Cell["\<\
+There is a sign of the guessed recurrence and the GCD calculated here, but \
+this is unimportant. Since all recurrences are implicitly equal to 0, we can \
+conclude they are the same recurrence relation for a[k].\
+\>", "Text",
+ CellChangeTimes->{{3.9239149436748176`*^9, 3.923914948725067*^9}, {
+  3.9239149861480336`*^9, 
+  3.923915101759307*^9}},ExpressionUUID->"1d89091d-241b-40bb-a109-\
+a6c700fe3343"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Example 5.5 (Proof of Theorem 1.4) ", "Subchapter",
+ CellChangeTimes->{{3.923914332188242*^9, 3.9239143740735035`*^9}, {
+  3.9239146078641896`*^9, 3.9239146089541397`*^9}, {3.9239151094423623`*^9, 
+  3.9239151111077895`*^9}, {3.923917342415555*^9, 
+  3.923917347885537*^9}},ExpressionUUID->"21402e7e-43db-46a3-b73c-\
+f97ee5a7bc3e"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+Guessing - Proving a shorter recurrence operator for \\hat{c}(k) :\
+\>", "Subsection",
+ CellChangeTimes->{{3.923915115585734*^9, 3.9239151181069956`*^9}, {
+  3.923917358260783*^9, 
+  3.923917364740725*^9}},ExpressionUUID->"4144938a-5c66-4b11-9a48-\
+20f250a7025f"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+First we input the annihilating operator applied to \\hat{c}(k) in \
+Mathematica (a\[CloseCurlyQuote](k) is denoted by c[k] here):\
+\>", "Subsubsection",
+ CellChangeTimes->{{3.9239145658892107`*^9, 3.9239146472542205`*^9}, {
+  3.92391737229049*^9, 
+  3.923917374700765*^9}},ExpressionUUID->"7217788e-063b-4e33-933c-\
+bbb56f080d5f"],
+
+Cell["In qFunctions all recurrences are implicitly set equal to 0.", "Text",
+ CellChangeTimes->{{3.92391485419413*^9, 
+  3.9239148664562488`*^9}},ExpressionUUID->"31ba63fa-0928-455d-89bc-\
+ff5428905698"],
+
+Cell[BoxData[
+ RowBox[{"recCHatIPrimeApplied", ":=", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"-", 
+       SuperscriptBox["q", 
+        RowBox[{"2", "+", 
+         RowBox[{"3", " ", "k"}]}]]}], "+", 
+      SuperscriptBox["q", 
+       RowBox[{"3", "+", 
+        RowBox[{"4", " ", "k"}]}]], "+", 
+      SuperscriptBox["q", 
+       RowBox[{"4", "+", 
+        RowBox[{"4", " ", "k"}]}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"5", "+", 
+        RowBox[{"5", " ", "k"}]}]]}], ")"}], " ", 
+    RowBox[{"c", "[", "k", "]"}]}], "+", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"-", 
+       SuperscriptBox["q", 
+        RowBox[{"2", "+", 
+         RowBox[{"2", " ", "k"}]}]]}], "+", 
+      SuperscriptBox["q", 
+       RowBox[{"3", "+", 
+        RowBox[{"3", " ", "k"}]}]], "+", 
+      RowBox[{"2", " ", 
+       SuperscriptBox["q", 
+        RowBox[{"4", "+", 
+         RowBox[{"3", " ", "k"}]}]]}], "+", 
+      SuperscriptBox["q", 
+       RowBox[{"5", "+", 
+        RowBox[{"3", " ", "k"}]}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"5", "+", 
+        RowBox[{"4", " ", "k"}]}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"6", "+", 
+        RowBox[{"4", " ", "k"}]}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"7", "+", 
+        RowBox[{"4", " ", "k"}]}]]}], ")"}], " ", 
+    RowBox[{"c", "[", 
+     RowBox[{"1", "+", "k"}], "]"}]}], "+", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{"q", "-", 
+      SuperscriptBox["q", 
+       RowBox[{"2", "+", "k"}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"3", "+", "k"}]], "+", 
+      SuperscriptBox["q", 
+       RowBox[{"3", "+", 
+        RowBox[{"2", " ", "k"}]}]], "+", 
+      RowBox[{"2", " ", 
+       SuperscriptBox["q", 
+        RowBox[{"4", "+", 
+         RowBox[{"2", " ", "k"}]}]]}], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"5", "+", 
+        RowBox[{"3", " ", "k"}]}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"6", "+", 
+        RowBox[{"3", " ", "k"}]}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"7", "+", 
+        RowBox[{"3", " ", "k"}]}]]}], ")"}], " ", 
+    RowBox[{"c", "[", 
+     RowBox[{"2", "+", "k"}], "]"}]}], "+", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"-", "1"}], "-", "q", "+", 
+      SuperscriptBox["q", 
+       RowBox[{"2", "+", "k"}]], "+", 
+      SuperscriptBox["q", 
+       RowBox[{"3", "+", "k"}]], "-", 
+      SuperscriptBox["q", 
+       RowBox[{"5", "+", 
+        RowBox[{"2", " ", "k"}]}]]}], ")"}], " ", 
+    RowBox[{"c", "[", 
+     RowBox[{"3", "+", "k"}], "]"}]}], "+", 
+   RowBox[{"c", "[", 
+    RowBox[{"4", "+", "k"}], "]"}]}]}]], "Input",
+ CellChangeTimes->{{3.9239175586207533`*^9, 3.9239175813963118`*^9}},
+ CellLabel->"In[8]:=",ExpressionUUID->"587c2ebe-eafd-44b7-ba90-4259724957d6"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["List 20 initial values:", "Subsubsection",
+ CellChangeTimes->{{3.9239146595340557`*^9, 
+  3.9239146685741167`*^9}},ExpressionUUID->"a62bc0b6-1676-40b0-ba31-\
+d1596d441a67"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"list20InitialValues", " ", "=", " ", 
+   RowBox[{"qREToList", "[", 
+    RowBox[{"recCHatIPrimeApplied", ",", " ", 
+     RowBox[{"c", "[", "k", "]"}], ",", " ", 
+     RowBox[{"{", 
+      RowBox[{"0", ",", " ", 
+       RowBox[{"{", 
+        RowBox[{"1", ",", 
+         RowBox[{"-", "1"}], ",", "0", ",", 
+         RowBox[{"-", 
+          RowBox[{"q", "^", "4"}]}], ",", 
+         RowBox[{"-", 
+          RowBox[{"q", "^", "9"}]}]}], "}"}]}], "}"}], ",", " ", "20"}], 
+    "]"}]}], ";"}]], "Input",
+ CellChangeTimes->{
+  3.9239149636276417`*^9, {3.9239175887367535`*^9, 3.923917590282879*^9}, {
+   3.9239179365989122`*^9, 3.9239179401970515`*^9}, 3.923918102832517*^9},
+ CellLabel->"In[9]:=",ExpressionUUID->"a6fc615f-afb8-4cc6-83b3-cdd7ba4c9939"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Guess a recurrence with order 2 by ansatz:", "Subsubsection",
+ CellChangeTimes->{{3.9239146786103153`*^9, 
+  3.923914740934096*^9}},ExpressionUUID->"2900b609-355e-444a-93eb-\
+262a43d3bdbe"],
+
+Cell["\<\
+ (One can see free variables arise if they bounds 2,{3,1} are changed for \
+larger values.)
+We check up to the q^101 precision.\
+\>", "Text",
+ CellChangeTimes->{{3.9239147438743744`*^9, 3.9239147516241612`*^9}, {
+  3.923918001882443*^9, 3.9239180209520655`*^9}, {3.923918252743166*^9, 
+  3.9239182536026936`*^9}},ExpressionUUID->"e11b2836-a24d-444e-9a99-\
+fff7653f2b47"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"GuessedRecFromInitialConditions", " ", "=", " ", 
+  RowBox[{"GuessqRecurrence", "[", 
+   RowBox[{"list20InitialValues", ",", " ", 
+    RowBox[{"c", "[", "k", "]"}], ",", " ", "2", ",", " ", 
+    RowBox[{"{", 
+     RowBox[{"3", ",", " ", "1"}], "}"}], ",", 
+    RowBox[{"ExpansionOrder", "\[Rule]", "100"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{
+  3.923914973562995*^9, {3.923917960052111*^9, 3.9239179944825134`*^9}, {
+   3.9239181398821287`*^9, 3.9239181399621286`*^9}},
+ CellLabel->"In[10]:=",ExpressionUUID->"9c989d98-2509-4468-a653-c426a2433169"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"-", 
+    SuperscriptBox["q", 
+     RowBox[{"1", "+", 
+      RowBox[{"3", " ", "k"}]}]]}], " ", 
+   RowBox[{"c", "[", "k", "]"}]}], "-", 
+  RowBox[{
+   SuperscriptBox["q", 
+    RowBox[{"1", "+", 
+     RowBox[{"2", " ", "k"}]}]], " ", 
+   RowBox[{"c", "[", 
+    RowBox[{"1", "+", "k"}], "]"}]}], "+", 
+  RowBox[{"c", "[", 
+   RowBox[{"2", "+", "k"}], "]"}]}]], "Output",
+ CellChangeTimes->{{3.9239149666077714`*^9, 3.9239149746354275`*^9}, {
+   3.9239179637517033`*^9, 3.923917995116989*^9}, 3.9239181062224483`*^9, 
+   3.923918141072443*^9, 3.9239182301478443`*^9},
+ CellLabel->"Out[10]=",ExpressionUUID->"992a7afa-6232-4b19-aa9f-b238a25b5b41"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+We calculate 20 initial values of this sequence with the same initial values \
+as the original c[k]:\
+\>", "Subsubsection",
+ CellChangeTimes->{{3.9239147761942406`*^9, 3.923914802054482*^9}, 
+   3.9239182443527155`*^9},ExpressionUUID->"53f5dab6-9f8f-4aa8-9c34-\
+2a4ac55a013b"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"list20InitialValuesFromGuessed", " ", "=", " ", 
+   RowBox[{"qREToList", "[", 
+    RowBox[{"recCHatIPrimeApplied", ",", " ", 
+     RowBox[{"c", "[", "k", "]"}], ",", " ", 
+     RowBox[{"{", 
+      RowBox[{"0", ",", " ", 
+       RowBox[{"{", 
+        RowBox[{"1", ",", 
+         RowBox[{"-", "1"}]}], "}"}]}], "}"}], ",", " ", "20"}], "]"}]}], 
+  ";"}]], "Input",
+ CellChangeTimes->{{3.923918041902338*^9, 3.9239180615223465`*^9}, 
+   3.923918107866284*^9},
+ CellLabel->"In[11]:=",ExpressionUUID->"fa81a76f-15aa-4927-a966-83d4c8dffb56"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+And show that it is equal to the previously calculated initial values:\
+\>", "Subsubsection",
+ CellChangeTimes->{{3.923914810689151*^9, 
+  3.923914831258344*^9}},ExpressionUUID->"3a28ffa8-a224-4697-ac55-\
+535b6e9afbb6"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"list20InitialValues", " ", "==", " ", 
+  "list20InitialValuesFromGuessed"}]], "Input",
+ CellLabel->"In[12]:=",ExpressionUUID->"0c4e2d4f-03b1-41e8-bd76-5ef39abea31d"],
+
+Cell[BoxData["True"], "Output",
+ CellChangeTimes->{3.923914980017029*^9, 3.9239180730587463`*^9, 
+  3.9239181100625105`*^9, 3.9239182306630273`*^9},
+ CellLabel->"Out[12]=",ExpressionUUID->"731957a1-6803-49bc-a73a-605556f75f28"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+Prove that the GCD of the high-order (from Factorial basis method) and \
+low-order (guessed) recurrences is the guessed recurrence.\
+\>", "Subsubsection",
+ CellChangeTimes->{{3.923914764388587*^9, 3.9239147656962442`*^9}, {
+  3.9239148405141*^9, 3.923914846264578*^9}, {3.923914880434568*^9, 
+  3.9239149371252236`*^9}},ExpressionUUID->"cb17e250-706b-4318-b1e5-\
+a94e386e5cdc"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"qREGCD", "[", 
+   RowBox[{
+   "recCHatIPrimeApplied", ",", " ", "GuessedRecFromInitialConditions", ",", 
+    " ", 
+    RowBox[{"c", "[", "k", "]"}]}], "]"}], " "}]], "Input",
+ CellChangeTimes->{{3.9238952497441626`*^9, 3.923895300116661*^9}, {
+   3.923895336632462*^9, 3.9238953555717764`*^9}, {3.9238953879701815`*^9, 
+   3.9238955391369123`*^9}, {3.9238958707275753`*^9, 3.923895996930962*^9}, {
+   3.923914378233226*^9, 3.9239143841733847`*^9}, {3.9239146514801645`*^9, 
+   3.9239146719242153`*^9}, {3.923914755034793*^9, 3.9239147713055453`*^9}, {
+   3.9239148052294006`*^9, 3.9239148339219475`*^9}, {3.923914877044482*^9, 
+   3.923914877309476*^9}, 3.9239176422694273`*^9, {3.9239180814126472`*^9, 
+   3.923918082992014*^9}},
+ CellLabel->"In[13]:=",ExpressionUUID->"8bb927a1-3302-49f1-ad5c-0380dd710fd0"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"-", 
+    SuperscriptBox["q", 
+     RowBox[{"1", "+", 
+      RowBox[{"3", " ", "k"}]}]]}], " ", 
+   RowBox[{"c", "[", "k", "]"}]}], "-", 
+  RowBox[{
+   SuperscriptBox["q", 
+    RowBox[{"1", "+", 
+     RowBox[{"2", " ", "k"}]}]], " ", 
+   RowBox[{"c", "[", 
+    RowBox[{"1", "+", "k"}], "]"}]}], "+", 
+  RowBox[{"c", "[", 
+   RowBox[{"2", "+", "k"}], "]"}]}]], "Output",
+ CellChangeTimes->{
+  3.9239149815220833`*^9, {3.923918075777076*^9, 3.923918086677102*^9}, {
+   3.9239181192570643`*^9, 3.923918142672451*^9}, 3.923918230977368*^9},
+ CellLabel->"Out[13]=",ExpressionUUID->"900a6894-8df1-4452-9561-3f90560716aa"]
+}, Open  ]],
+
+Cell["\<\
+There is a sign of the guessed recurrence and the GCD calculated here, but \
+this is unimportant. Since all recurrences are implicitly equal to 0, we can \
+conclude they are the same recurrence relation for c[k].\
+\>", "Text",
+ CellChangeTimes->{{3.9239149436748176`*^9, 3.923914948725067*^9}, {
+   3.9239149861480336`*^9, 3.923915101759307*^9}, 
+   3.9239181479925566`*^9},ExpressionUUID->"c407e8e2-d17f-43bf-93df-\
+c8df3ce34778"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{766, 772},
+WindowMargins->{{Automatic, -7}, {Automatic, 0}},
+Magnification:>0.9 Inherited,
+FrontEndVersion->"11.3 for Microsoft Windows (64-bit) (March 6, 2018)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 340, 7, 197, "Title",ExpressionUUID->"33d1ad05-7b5b-4fb4-b642-2f69805b6cf2"],
+Cell[CellGroupData[{
+Cell[945, 33, 134, 2, 26, "Input",ExpressionUUID->"da1c5708-f11b-4777-935a-95d4be29c6be"],
+Cell[CellGroupData[{
+Cell[1104, 39, 293, 5, 21, "Print",ExpressionUUID->"6b7ef12a-9318-4018-9dff-2f60dd6d46b2"],
+Cell[1400, 46, 879, 25, 39, "Print",ExpressionUUID->"901aaead-2438-4e35-a71b-b09a5213a821"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[2328, 77, 295, 4, 57, "Subchapter",ExpressionUUID->"b8b658ca-26f0-4e0b-a162-a624c42eb905"],
+Cell[CellGroupData[{
+Cell[2648, 85, 219, 5, 48, "Subsection",ExpressionUUID->"2c305f19-fdf9-419b-86a4-675f163d5583"],
+Cell[CellGroupData[{
+Cell[2892, 94, 304, 6, 63, "Subsubsection",ExpressionUUID->"b5b51ff8-9661-4faf-923c-7d8de60566a4"],
+Cell[3199, 102, 203, 3, 31, "Text",ExpressionUUID->"037b5d32-8946-4dc9-8cfb-bf858e6e8eee"],
+Cell[3405, 107, 1960, 64, 55, "Input",ExpressionUUID->"7ce6ab7f-1940-47b8-a643-751ffbf7b5d9"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[5402, 176, 178, 3, 40, "Subsubsection",ExpressionUUID->"9dd8fa16-2b22-4406-bab5-e1f13634c2ad"],
+Cell[CellGroupData[{
+Cell[5605, 183, 594, 14, 26, "Input",ExpressionUUID->"0c551e2b-23e1-47fb-a26a-d0079ccf5385"],
+Cell[6202, 199, 871, 22, 36, "Output",ExpressionUUID->"19ff90d2-c1f7-49d7-b7eb-2ad8329f61bb"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[7122, 227, 195, 3, 40, "Subsubsection",ExpressionUUID->"120eee6b-d68d-4937-a78b-397932c70758"],
+Cell[7320, 232, 245, 6, 31, "Text",ExpressionUUID->"f98ebbc7-1142-4750-854c-380c671ccf4f"],
+Cell[CellGroupData[{
+Cell[7590, 242, 415, 8, 26, "Input",ExpressionUUID->"c0395324-2810-47cf-bf13-7e1a9d899298"],
+Cell[8008, 252, 406, 11, 32, "Output",ExpressionUUID->"0a5cc496-0681-4444-b6c2-b11f56349422"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[8463, 269, 261, 6, 40, "Subsubsection",ExpressionUUID->"4895738a-2855-455e-9613-937a4fa4f19c"],
+Cell[CellGroupData[{
+Cell[8749, 279, 428, 10, 26, "Input",ExpressionUUID->"706674cc-3194-4d40-a8ed-dd687c9cac8a"],
+Cell[9180, 291, 869, 22, 36, "Output",ExpressionUUID->"744615ee-884c-4c84-bbe8-1b7ff790ded8"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[10098, 319, 229, 5, 40, "Subsubsection",ExpressionUUID->"abee5f83-9f3b-4068-8dd6-f6f1ad703c97"],
+Cell[CellGroupData[{
+Cell[10352, 328, 188, 3, 26, "Input",ExpressionUUID->"3a292a88-0e64-4f1f-92e8-c862c16701ec"],
+Cell[10543, 333, 175, 2, 30, "Output",ExpressionUUID->"943da060-bf70-452d-b0e4-2c751d5f704b"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[10767, 341, 387, 7, 63, "Subsubsection",ExpressionUUID->"e4216d82-1749-4055-a36c-af500d4790e6"],
+Cell[CellGroupData[{
+Cell[11179, 352, 753, 13, 26, "Input",ExpressionUUID->"b8c1b51d-374a-4f47-8a00-96cf8b1eb93a"],
+Cell[11935, 367, 398, 11, 32, "Output",ExpressionUUID->"f93969c4-78f3-45b2-aa2a-9cf6263696c6"]
+}, Open  ]],
+Cell[12348, 381, 415, 8, 52, "Text",ExpressionUUID->"1d89091d-241b-40bb-a109-a6c700fe3343"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[12824, 396, 337, 5, 57, "Subchapter",ExpressionUUID->"21402e7e-43db-46a3-b73c-f97ee5a7bc3e"],
+Cell[CellGroupData[{
+Cell[13186, 405, 273, 6, 48, "Subsection",ExpressionUUID->"4144938a-5c66-4b11-9a48-20f250a7025f"],
+Cell[CellGroupData[{
+Cell[13484, 415, 341, 7, 63, "Subsubsection",ExpressionUUID->"7217788e-063b-4e33-933c-bbb56f080d5f"],
+Cell[13828, 424, 203, 3, 31, "Text",ExpressionUUID->"31ba63fa-0928-455d-89bc-ff5428905698"],
+Cell[14034, 429, 2783, 89, 90, "Input",ExpressionUUID->"587c2ebe-eafd-44b7-ba90-4259724957d6"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[16854, 523, 178, 3, 40, "Subsubsection",ExpressionUUID->"a62bc0b6-1676-40b0-ba31-d1596d441a67"],
+Cell[17035, 528, 779, 19, 45, "Input",ExpressionUUID->"a6fc615f-afb8-4cc6-83b3-cdd7ba4c9939"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[17851, 552, 195, 3, 40, "Subsubsection",ExpressionUUID->"2900b609-355e-444a-93eb-262a43d3bdbe"],
+Cell[18049, 557, 380, 8, 52, "Text",ExpressionUUID->"e11b2836-a24d-444e-9a99-fff7653f2b47"],
+Cell[CellGroupData[{
+Cell[18454, 569, 577, 11, 45, "Input",ExpressionUUID->"9c989d98-2509-4468-a653-c426a2433169"],
+Cell[19034, 582, 690, 19, 32, "Output",ExpressionUUID->"992a7afa-6232-4b19-aa9f-b238a25b5b41"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[19773, 607, 286, 6, 40, "Subsubsection",ExpressionUUID->"53f5dab6-9f8f-4aa8-9c34-2a4ac55a013b"],
+Cell[20062, 615, 570, 14, 26, "Input",ExpressionUUID->"fa81a76f-15aa-4927-a966-83d4c8dffb56"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[20669, 634, 229, 5, 40, "Subsubsection",ExpressionUUID->"3a28ffa8-a224-4697-ac55-535b6e9afbb6"],
+Cell[CellGroupData[{
+Cell[20923, 643, 189, 3, 26, "Input",ExpressionUUID->"0c4e2d4f-03b1-41e8-bd76-5ef39abea31d"],
+Cell[21115, 648, 227, 3, 30, "Output",ExpressionUUID->"731957a1-6803-49bc-a73a-605556f75f28"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[21391, 657, 387, 7, 63, "Subsubsection",ExpressionUUID->"cb17e250-706b-4318-b1e5-a94e386e5cdc"],
+Cell[CellGroupData[{
+Cell[21803, 668, 844, 15, 26, "Input",ExpressionUUID->"8bb927a1-3302-49f1-ad5c-0380dd710fd0"],
+Cell[22650, 685, 661, 19, 32, "Output",ExpressionUUID->"900a6894-8df1-4452-9561-3f90560716aa"]
+}, Open  ]],
+Cell[23326, 707, 441, 8, 52, "Text",ExpressionUUID->"c407e8e2-d17f-43bf-93df-c8df3ce34778"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
