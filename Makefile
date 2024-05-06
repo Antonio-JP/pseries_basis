@@ -31,6 +31,9 @@ coverage:
 
 lint:
 	$(SAGE) -tox -e relint,pycodestyle-minimal -- pseries_basis
+
+ready: lint test
+	@echo "Repository is ready to push: check with act th actions in case of changes."
 	
 # Documentation commands
 doc: no-deps
