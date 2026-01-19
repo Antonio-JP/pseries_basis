@@ -30,9 +30,9 @@ from typing import Collection, Mapping
 from sage.calculus.var import var
 from sage.categories.pushout import pushout
 from sage.rings.integer_ring import ZZ
-from sage.rings.fraction_field import is_FractionField 
-from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
-from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
+from sage.rings.fraction_field import FractionField_generic
+from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
+from sage.rings.polynomial.polynomial_ring import PolynomialRing_generic
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.structure.element import parent
 from sage.symbolic.expression import Expression
@@ -533,9 +533,9 @@ class RationalSequence(ExpressionSequence):
     def __init__(self, rational, variables=None, universe=None, *, meanings: Sequence | Collection[Sequence] | Mapping[str,Sequence] = None, _extend_by_zero=False, **kwds):
         ## Checking rational is a rational expression
         R = rational.parent() if hasattr(rational, "parent") else parent(rational)
-        if is_FractionField(R):
+        if isinstance(R, FractionField_generic):
             R = R.base()
-        if not (is_PolynomialRing(R) or is_MPolynomialRing(R)):
+        if not isinstance(R, (PolynomialRing_generic, MPolynomialRing_base)):
             if universe is None or variables is None:
                 raise TypeError(f"Incomplete information: 'rational' was not a rational expression and 'universe'/'variables' was not given.")
             else:
@@ -562,9 +562,9 @@ class RationalSequence(ExpressionSequence):
 
         ## Computing the remaining universe
         if universe is None:
-            if is_PolynomialRing(R) and len(variables) > 0:
+            if isinstance(R, PolynomialRing_generic) and len(variables) > 0:
                 universe = R.base()
-            elif is_PolynomialRing(R):
+            elif isinstance(R, PolynomialRing_generic):
                 universe = R
             else:
                 universe = R.remove_var(*variables)

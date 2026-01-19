@@ -30,19 +30,17 @@ from sage.matrix.constructor import Matrix
 from sage.misc.misc_c import prod
 from sage.rings.fraction_field import FractionField_1poly_field
 from sage.rings.integer_ring import ZZ
-from sage.rings.polynomial.polynomial_ring import PolynomialRing_field, is_PolynomialRing
+from sage.rings.polynomial.polynomial_ring import PolynomialRing_field, PolynomialRing_generic
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.rational_field import QQ
-from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
+from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.ring import Algebra # pylint: disable=no-name-in-module
 from sage.structure.parent import Parent
-from sage.structure import element
+from sage.structure.element import Element
 
 from typing import Any, Callable
 
 from ..sequences.base import Sequence
-
-Element = element.Element
 
 #############################################################################################
 ###
@@ -196,7 +194,7 @@ def __get_power_q(element, q):
     if len(element.coefficients()) > 1 or element.coefficients()[0] != 1:
         return -1
     
-    return element.degree() if is_PolynomialRing(element.parent()) else element.degree(q)
+    return element.degree() if isinstance(element.parent(), PolynomialRing_generic) else element.degree(q)
          
 
 def is_qshift_algebra(algebra : OreAlgebra_generic, name_q : str = None) -> bool:
@@ -331,7 +329,7 @@ def is_based_polynomial(algebra: OreAlgebra_generic) -> bool:
     r'''
         Method to check whether an :class:`OreAlgebra_generic` has the base ring as a polynomial ring.
     '''
-    return any(is_poly(algebra.base()) for is_poly in (is_PolynomialRing, is_MPolynomialRing))
+    return isinstance(algebra.base(), (PolynomialRing_generic, MPolynomialRing_base))
 
 def is_based_field(algebra: OreAlgebra_generic) -> bool:
     r'''
@@ -1037,7 +1035,7 @@ def poly_decomposition(polynomial : Element) -> tuple[list[Element],list[Element
         
         This method unifies the behavior or Univariate and Multivariate polynomials.
     '''
-    if is_PolynomialRing(polynomial.parent()):
+    if isinstance(polynomial.parent(), PolynomialRing_generic):
         g = polynomial.parent().gens()[0]
         d = polynomial.degree()
         monomials = [g**i for i in range(d+1)]
@@ -1045,7 +1043,7 @@ def poly_decomposition(polynomial : Element) -> tuple[list[Element],list[Element
         # we clean the zeros to have a sparse representation
         monomials = [monomials[i] for i in range(d+1) if coefficients[i] != 0]
         coefficients = [c for c in coefficients if c != 0]
-    elif is_MPolynomialRing(polynomial.parent()):
+    elif isinstance(polynomial.parent(), MPolynomialRing_base):
         monomials = polynomial.monomials()
         coefficients = polynomial.coefficients()
     else:

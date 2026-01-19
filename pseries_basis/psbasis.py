@@ -100,7 +100,7 @@ from functools import reduce
 from ore_algebra.ore_algebra import OreAlgebra_generic
 from ore_algebra.ore_operator import OreOperator
 
-from sage.algebras.free_algebra import FreeAlgebra, is_FreeAlgebra
+from sage.algebras.free_algebra import FreeAlgebra, FreeAlgebra_generic
 from sage.arith.functions import lcm
 from sage.categories.pushout import pushout
 from sage.matrix.constructor import Matrix
@@ -700,7 +700,7 @@ class PSBasis(Sequence):
         FA = self.__get_algebra()
         operator = self.__cast_to_algebra(str(operator))
         ## We split evaluation in cases to avoid problems with FreeAlgebra implementations
-        if is_FreeAlgebra(FA):
+        if isinstance(FA, FreeAlgebra_generic):
             ## Special evaluation since the method in FreeAlgebra does not work
             to_eval = [self.__basic_compatibilities[v] for v in FA.variable_names()]
             output = sum(
