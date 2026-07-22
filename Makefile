@@ -1,42 +1,57 @@
 SHELL:=/bin/bash
-ZIP=pseries_basis# ZIP name
+
+# Package folder
+PACKAGE=pseries_basis
+
+ZIP=$(PACKAGE)# ZIP name
 VERSION=$(shell cat ./VERSION)
 
 # change to your sage command if needed
 SAGE=sage
 
-# Package folder
-PACKAGE=pseries_basis
-
-all: install lint doc test
-	
+all: install doc test
+		
 # Installing commands
-install:
+install: clean_build
 	$(SAGE) -pip install --upgrade .
 
-no-deps:
+no-deps: clean_build
 	$(SAGE) -pip install --upgrade --no-deps .
 
 uninstall:
 	$(SAGE) -pip uninstall $(PACKAGE)
 
-develop:
+develop: clean_build
 	$(SAGE) -pip install --upgrade -e .
 
 test: no-deps
-	$(SAGE) -tox -e doctest -- pseries_basis
+	$(SAGE) -tox -e doctest -- $(PACKAGE)
 
 coverage:
-	$(SAGE) -tox -e coverage -- pseries_basis
+	$(SAGE) -tox -e coverage -- $(PACKAGE)
 
-lint:
-	$(SAGE) -tox -e relint,pycodestyle-minimal -- pseries_basis
+lint: whitespace
+	$(SAGE) -tox -e relint,pycodestyle-minimal -- $(PACKAGE)
 
-ready: lint test
-	@echo "Repository is ready to push: check with act th actions in case of changes."
-	
+whitespace:
+	@echo "Removing trailing whitespaces in all .py files"
+	@find . -type f -name "*.py" -exec perl -pi -e 's/[ \t]+$$//' {} +
+
+audit:
+	@echo "###############################################################################"
+	@echo "Checking documentation of new elements for release..."
+	@echo "-------------------------------------------------------------------------------"
+	@python3 scripts/release_audit.py --no-ok
+	@echo "###############################################################################"
+	@echo "Checking all TODOs for this branch are resolved..."
+	@echo "-------------------------------------------------------------------------------"
+	@python3 scripts/todo_audit.py
+
+ready: audit lint test
+	@echo "Repository is ready to push: check with act the actions in case of changes."
+
 # Documentation commands
-doc: no-deps
+doc:
 	cd docsrc && $(SAGE) -sh -c "make html"
 
 doc-github: doc
@@ -47,15 +62,18 @@ doc-github: doc
 # Cleaning commands
 clean: clean_doc clean_pyc
 
+clean_build:
+	@echo "Cleaning previous build files"
+	@rm -rf ./build ./$(PACKAGE).egg-info
+
 clean_doc:
 	@echo "Cleaning documentation"
+	@rm -rf docs/* docs/.buildinfo docs/.nojekyll
 	@cd docsrc && $(SAGE) -sh -c "make clean"
 	
 clean_pyc:
 	@echo "Cleaning the Python precompiled files (.pyc)"
 	@find . -name "*.pyc" -exec rm {} +
-	@find . -name "__pycache__" -exec rm -d {} +
-	@rm -rf ./build
 
-.PHONY: all install develop test coverage clean clean_doc doc doc-pdf
+.PHONY: all install develop test coverage clean clean_doc doc doc-pdf audit whitespace
 	
