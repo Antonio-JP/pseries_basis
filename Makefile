@@ -41,11 +41,11 @@ audit:
 	@echo "###############################################################################"
 	@echo "Checking documentation of new elements for release..."
 	@echo "-------------------------------------------------------------------------------"
-	@python3 scripts/release_audit.py --no-ok
+	@python3 ci-scripts/release_audit.py --no-ok
 	@echo "###############################################################################"
 	@echo "Checking all TODOs for this branch are resolved..."
 	@echo "-------------------------------------------------------------------------------"
-	@python3 scripts/todo_audit.py
+	@python3 ci-scripts/todo_audit.py
 
 ready: audit lint test
 	@echo "Repository is ready to push: check with act the actions in case of changes."
