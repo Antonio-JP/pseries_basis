@@ -25,7 +25,7 @@ r'''
 '''
 from __future__ import annotations
 
-from typing import Collection, Mapping
+from typing import Any, Collection, Mapping, Type
 
 from sage.calculus.var import var
 from sage.categories.pushout import pushout
@@ -34,7 +34,8 @@ from sage.rings.fraction_field import is_FractionField
 from sage.rings.polynomial.multi_polynomial_ring import is_MPolynomialRing
 from sage.rings.polynomial.polynomial_ring import is_PolynomialRing
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.structure.element import parent
+from sage.structure.element import parent, Element
+from sage.structure.parent import Parent
 from sage.symbolic.expression import Expression
 from sage.symbolic.ring import SR
 
@@ -344,7 +345,7 @@ class ExpressionSequence(Sequence):
         
         return result
 
-    def _subsequence_input(self, index: int, input: tuple[int,int] | Sequence) -> Expression | Sequence | bool: # TODO
+    def _subsequence_input(self, index: int, input: tuple[int,int] | Sequence) -> Expression | Sequence | bool: # TODO (unassigned)
         vars = self.variables()
         inner = self.meanings()[str(vars[index])]
         if isinstance(input, (list,tuple)): # case of a linear subsequence
@@ -513,24 +514,26 @@ class RationalSequence(ExpressionSequence):
         On top of this class we find the Expression sequences. When we operate with these, we lose the information of the rational expression 
         and fall into the symbolic ring::
 
-            TODO: add examples with Expression sequences
+            TODO (update_sage_10): add examples with Expression sequences
 
         Conversely, on the bottom of this class we always find the class :class:`ConstantSequence` which will always convert into 
         an ExpressionSequence with the same variables::
 
-            TODO: add examples with constant sequences.
+            TODO (update_sage_10): add examples with constant sequences.
 
         Additionally with the usual restrictions for computing with sequences, :class:`RationalSequence` has an extra restriction
         to compute with these sequences. Namely, we require that the polynomial rings used to define the sequence are compatible
         for operations::
 
-            TODO: add examples with arithmetics on RationalSequence. Show error when variables do not match.
+            TODO (update_sage_10): add examples with arithmetics on RationalSequence. Show error when variables do not match.
 
         We can also compute any other operation over sequences as defined in :class:`Sequence`::
 
-            TODO: add examples using :func:`~.base.Sequence.subsequence`, :func:`~.base.Sequence.slicing`, :func:`~.base.Sequence.shift`
+            TODO (update_sage_10): add examples using :func:`~.base.Sequence.subsequence`, :func:`~.base.Sequence.slicing`, :func:`~.base.Sequence.shift`
     '''
-    def __init__(self, rational, variables=None, universe=None, *, meanings: Sequence | Collection[Sequence] | Mapping[str,Sequence] = None, _extend_by_zero=False, **kwds):
+    def __init__(self, 
+                 rational: Element, variables: tuple[Element] = None, universe: Parent = None, *, 
+                 meanings: Sequence | Collection[Sequence] | Mapping[str,Sequence] = None, _extend_by_zero: bool = False, **kwds: Any):
         ## Checking rational is a rational expression
         R = rational.parent() if hasattr(rational, "parent") else parent(rational)
         if is_FractionField(R):
@@ -558,7 +561,6 @@ class RationalSequence(ExpressionSequence):
         
         F = R.fraction_field()
         rational = F(rational)
-        # dim = len(variables) TODO: remove
 
         ## Computing the remaining universe
         if universe is None:
@@ -570,39 +572,32 @@ class RationalSequence(ExpressionSequence):
                 universe = R.remove_var(*variables)
             universe = universe.fraction_field() if not universe.is_field() else universe
 
-        # ## Now we check argument "meaning"  TODO: remove
-        # if meanings is None:
-        #     meanings = dim*[IdentitySequence(universe, **kwds)]
-        # elif isinstance(meanings, Sequence):
-        #     meanings = dim*[meanings]
-
-        # if not isinstance(meanings, Collection):
-        #     raise TypeError(f"[ExpressionSequence] The meanings of the variables is ill-formatted: incorrect type")
-        # if not isinstance(meanings, Mapping): # If it is not a map, we convert it
-        #     if len(meanings) != dim:
-        #         raise ValueError(f"[ExpressionSequence] The meanings of the variables is ill-formated: incorrect size")
-        #     meanings = {str(var): val for (var,val) in zip(variables, meanings)}
-        
-        # if any(SR(v) not in variables for v in meanings):
-        #     raise ValueError(f"[ExpressionSequence] The meanings of the variables is ill-formatted: incorrect names")
-        # if any(not (isinstance(el, Sequence) or (el in self.universe)) for el in meanings.values()):
-        #     raise ValueError(f"[ExpressionSequence] The meanings of the variables is ill-formatted: incorrect values for meanings")
-        
         ## Storing the data for the sequence
         self.__F = F
         super().__init__(rational, tuple(variables), universe, meanings=meanings, _extend_by_zero=_extend_by_zero, **kwds)
-        # self.__generic = rational TODO: remove
-        # self.__variables = tuple(variables) TODO: remove
-        # self.__meanings = meanings TODO: remove
-            
-        # super().__init__(None, universe, dim, _extend_by_zero=_extend_by_zero, **kwds) TODO: remove
 
     ## Methods for the casting of sequences
     @classmethod
     def register_class(cls):
-        return cls._register_class([ExpressionSequence], [ConstantSequence])
+        r'''
+            Overriden class method from :class:`pseries_basis.sequences.base.Sequence` to register the 
+            subclasses and superclasses of rational sequences.
 
-    def _change_class(self, cls, **extra_info):
+            ::NO EXAMPLE::
+        '''
+        cls._register_class([ExpressionSequence], [ConstantSequence])
+
+    def _change_class(self, cls: Type[Sequence], **extra_info: Any) -> Sequence:
+        r'''
+            Auxiliary method to change the class of a rational sequence into a given class.
+
+            This is part of the inner-coercion system for sequences. It is called when it is necessary to transform a
+            rational sequence into another type of sequence with any possible extra information.
+
+            If the transformation is not known at this level, we try the conversion in the super class.
+
+            ::NO EXAMPLE::
+        '''
         if cls == ExpressionSequence:
             return ExpressionSequence(
                 SR(self.generic()),
@@ -616,7 +611,17 @@ class RationalSequence(ExpressionSequence):
             return super()._change_class(cls, **extra_info)
 
     @classmethod
-    def _change_from_class(cls, sequence: Sequence, **extra_info):
+    def _change_from_class(cls, sequence: Sequence, **extra_info: Any) -> RationalSequence:
+        r'''
+            Class method to change a sequence of a valid type into a :class:`RationalSequence`. 
+
+            This is part of the inner-coercion system for sequences. It is called when it is necessary to transform a 
+            sequence into a rational sequence with any possible extra information.
+
+            If the transformation is not possible, a :class:`NotImplementedError` is raised. 
+
+            ::NO EXAMPLE::
+        '''
         if isinstance(sequence, ConstantSequence):
             return RationalSequence(
                 extra_info["field"](sequence.element(*[0 for _ in range(sequence.dim)])), 
@@ -629,24 +634,39 @@ class RationalSequence(ExpressionSequence):
         else:
             raise NotImplementedError(f"The class {sequence.__class__} not recognized as subclass of ExpressionSequence")
 
-    def extra_info(self) -> dict:
+    def extra_info(self) -> dict[str, Any]:
+        r'''
+            Overriden method from :class:`pseries_basis.sequences.base.Sequence` to return the extra information of the sequence.
+
+            In a rational sequence, the necessary information is the same as for an :class:`ExpressionSequence` plus the field of the rational functions. 
+            
+            ::NO EXAMPLE::
+        '''
         dict = super().extra_info()
         dict["field"] = self.__F
         return dict
 
-    def _eval_generic(self, **values):
+    def _eval_generic(self, **values: Element) -> Element:
+        r'''Auxiliary metho to evaluate the generic expression of ``self`` with given values. (::NO EXAMPLE::)'''
         return self.generic()(**values)
 
     def is_polynomial(self) -> bool:
+        r'''Overriden method from :class:`pseries_basis.sequences.base.Sequence` to return know if a sequence is polynomial. (::NO EXAMPLE::)'''
         return self.generic().denominator() == 1
+    
     def as_polynomial(self) -> Sequence:
+        r'''Overriden method from :class:`pseries_basis.sequences.base.Sequence` to return self since this is a polynomial sequence. (::NO EXAMPLE::)'''
         if self.is_polynomial():
             return self
         else:
             raise ValueError(f"{self} is not a polynomial sequence.")
+        
     def is_rational(self) -> bool:
+        r'''Overriden method from :class:`pseries_basis.sequences.base.Sequence` to return know if a sequence is rational. (::NO EXAMPLE::)'''
         return True
+    
     def as_rational(self) -> Sequence:
+        r'''Overriden method from :class:`pseries_basis.sequences.base.Sequence` to return self since this is a rational sequence. (::NO EXAMPLE::)'''
         return self
     
 __all__=["ExpressionSequence", "RationalSequence"]
