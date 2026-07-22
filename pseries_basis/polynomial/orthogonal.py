@@ -1,7 +1,7 @@
 r'''
     Sage package for Orthogonal Series Basis.
 
-    TODO: review this file to check the compatibility with the derivative in general.
+    TODO (unassigned): review this file to check the compatibility with the derivative in general.
 '''
 from __future__ import annotations
 
@@ -207,7 +207,7 @@ class OrthogonalBasis(PSBasis):
 
                 A(n)P_n(x)'' + B(n)P_n(x)' + C(n)P_n(x) = 0.
 
-            TODO: add examples
+            TODO (unassigned): add examples
         '''
         raise NotImplementedError(f"Method get_differential_equation not yet implemented")
 
@@ -235,7 +235,7 @@ class OrthogonalBasis(PSBasis):
 
                 A(n)P_{n}(x)' = (B(n)x+C(n))P_n(x) + D(n)P_{n-1}(x).
 
-            TODO: add examples
+            TODO (unassigned): add examples
 
             WARNING: **this method is currently not implemented.**
         '''

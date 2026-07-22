@@ -127,7 +127,7 @@ def QPowerBasis(a: int = 1, universe=None, *, q= "q", q_n = None):
         * ``q``: name for the `q` that will be used.
         * ``q_n`` (optional): name for the multiplication by `q^{an}`.
 
-        TODO: add examples
+        TODO (unassigned): add examples
     '''
     if a not in ZZ or a < 0:
         raise TypeError(f"[QPowerBasis] The value for the parameter `a` must be a natural number.")

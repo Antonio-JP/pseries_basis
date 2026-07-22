@@ -128,7 +128,7 @@ def is_double_recurrence_algebra(algebra: OreAlgebra_generic) -> bool:
         Method to check whether an :class:`OreAlgebra_generic` is a double recurrence algebra.
         See :func:`gens_double_recurrence_algebra` to see what is a valid shift operator.
         
-        TODO: Add examples using those in :func:`gens_double_recurrence_algebra`
+        TODO (unassigned): Add examples using those in :func:`gens_double_recurrence_algebra`
     '''
     return gens_double_recurrence_algebra(algebra) is not None
 
@@ -204,7 +204,7 @@ def is_qshift_algebra(algebra : OreAlgebra_generic, name_q : str = None) -> bool
         Method to check whether an algebra behaves like one with Q-shifts operators.
         See :func:`gens_qshift_algebra` for further information on the definition of a `q`-shift operator
         
-        TODO: Add examples using those in :func:`gens_qshift_algebra`
+        TODO (unassigned): Add examples using those in :func:`gens_qshift_algebra`
     '''
     return gens_qshift_algebra(algebra, name_q) is not None
 
@@ -265,7 +265,7 @@ def is_double_qshift_algebra(algebra : OreAlgebra_generic, name_q : str = None):
         Method to check whether an algebra behaves like a double Q-shifts operators.
         See :func:`gens_double_qshift_algebra` for further information on the definition of a double `q`-shift operator
 
-        TODO: Add examples using those in :func:`gens_double_qshift_algebra`
+        TODO (unassigned): Add examples using those in :func:`gens_double_qshift_algebra`
     '''
     return gens_double_qshift_algebra(algebra, name_q) is not None
 
@@ -577,7 +577,7 @@ def get_double_qshift_algebra(name_x : str = "x", name_q = "q", name_qshift : st
 ### METHODS INVOLVING ORE ALGEBRAS AND OTHER STRUCTURES
 ###
 #############################################################################################
-def apply_operator_to_seq(operator : OreOperator, sequence : Sequence, **kwds) -> Sequence: # TODO: check this method
+def apply_operator_to_seq(operator : OreOperator, sequence : Sequence, **kwds) -> Sequence: # TODO (unassigned): check this method
     r'''
         Method to apply an operator to a sequence.
         
@@ -648,7 +648,7 @@ def required_init(operator : OreOperator) -> int:
         a solution to the recurrence operator. This method computes the maximal index we need to compute
         in order to have a fully defined sequence.
 
-        TODO: add examples
+        TODO (unassigned): add examples
     '''
     monomials, coeffs = poly_decomposition(operator.polynomial())
     if is_recurrence_algebra(operator.parent()):
@@ -786,7 +786,7 @@ def solution(operator: OreOperator, init: list | tuple, check_init=True, **kwds)
 
         A :class:`Sequence` with the solution to ``operator`` and initial values given by ``init``.
 
-        TODO: add examples
+        TODO (unassigned): add examples
     '''
     logger.debug(f"[solution] Computing a sequence solution to {operator} with initial condition {init}")
     if is_recurrence_algebra(operator.parent()):
@@ -901,7 +901,7 @@ def unroll_matrix(operator: OreOperator, seq_builder: Callable[[Any], Sequence],
         transpose.append([sum((-coeffs[r-l][m-r] / coeffs[r][m-r])*transpose[-l][j] for l in range(1, r+1)) for j in range(operator.order())])
     return Matrix(transpose).transpose()
 
-## TODO: Maybe review this class
+## TODO (unassigned): Maybe review this class
 # class OreSequence(Sequence):
 #     r'''
 #         Class to represent a sequence defined by a linear operator. This will include
@@ -910,7 +910,7 @@ def unroll_matrix(operator: OreOperator, seq_builder: Callable[[Any], Sequence],
 #         These sequences are always defined with a linear operator acting (somehow) on the 
 #         sequences and some initial conditions. 
 
-#         TODO: Implement or use other class for this idea
+#         TODO (unassigned): Implement or use other class for this idea
 #     '''
 #     def __init__(self, operator : OreOperator, init: Collection[Element], universe: Parent = None):
 #         self.__sequence = solution(operator, init, True)

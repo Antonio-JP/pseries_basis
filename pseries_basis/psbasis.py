@@ -363,7 +363,7 @@ class PSBasis(Sequence):
 
             This method assumes that the sequence given by ``factor`` never vanishes.
 
-            TODO: add examples.
+            TODO (unassigned): add examples.
         '''
         if not isinstance(factor, Sequence):
             if factor in self.base:
@@ -576,7 +576,7 @@ class PSBasis(Sequence):
             It will return the created compatibility condition in case of success or an error
             if something goes wrong.
 
-            TODO: add examples
+            TODO (unassigned): add examples
         '''
         if not sub and name in self.__basic_compatibilities:
             raise ValueError(f"The operator {name} was already compatible with this basis.")
@@ -691,7 +691,7 @@ class PSBasis(Sequence):
             
             This method is cached.
 
-            TODO: add examples
+            TODO (unassigned): add examples
         '''
         # Base case when the input is the name of an operator
         if isinstance(operator, str) and operator in self.__basic_compatibilities:
@@ -742,7 +742,7 @@ class PSBasis(Sequence):
             A boolean value indicating if the method :func:`compatibility` will
             return something or an error.
 
-            TODO: add examples
+            TODO (unassigned): add examples
         '''
         if isinstance(operator, str) and operator in self.__basic_compatibilities:
             return True
@@ -782,7 +782,7 @@ class PSBasis(Sequence):
 
             Either a string in ("homomorphism", "derivation", "any") or None.
 
-            TODO: add examples
+            TODO (unassigned): add examples
         '''
         if isinstance(operator, str) and operator in self.__basic_compatibilities:
             if operator in self.__homomorphisms: 
@@ -1016,7 +1016,7 @@ class PSBasis(Sequence):
 
             A recurrence or a matrix of recurrences as described in :doi:`10.1016/j.jsc.2022.11.002`.
 
-            TODO: add examples.
+            TODO (unassigned): add examples.
         '''
         logger.debug(f"[recurrence] --- STARTING COMPUTATION OF A RECURRENCE")
         recurrence = self._basic_recurrence(operator, sections)
@@ -1096,7 +1096,7 @@ class Compatibility:
         pretend to obtain the compatibility in more sections than given with the coefficients, consider the method
         :func:`in_sections` after the creation of the basic compatibility.
 
-        TODO: add examples from the use of :class:`PSBasis`.
+        TODO (unassigned): add examples from the use of :class:`PSBasis`.
     '''
     def __init__(self, c, A: int = None, B: int = None, t: int = None):
         ## Processing number of sections
@@ -1226,7 +1226,7 @@ class Compatibility:
             A new :class:`Compatibility` for the operator obtained as the addition of the operators
             that defined ``self`` and ``other``.
 
-            TODO: add examples
+            TODO (unassigned): add examples
         '''
         if not isinstance(other, Compatibility):
             raise TypeError("[comp-add] Require a compatibility to compute the addition")
@@ -1278,7 +1278,7 @@ class Compatibility:
             A new :class:`Compatibility` for the operator obtained as the product of the operators
             that defined ``self`` and ``other``.
 
-            TODO: add examples
+            TODO (unassigned): add examples
         '''
         if not isinstance(other, Compatibility):
             raise TypeError("[comp-mul] Require a compatibility to compute the product")
@@ -1543,7 +1543,7 @@ def check_compatibility(basis: PSBasis, compatibility : Compatibility, action: C
         this output: ``False`` guarantees that the compatibility is **not** for the action, however, ``True``
         provides a nice hint the result should be True, but it is not a complete proof.
 
-        TODO: add examples 
+        TODO (unassigned): add examples 
     '''
     if not isinstance(compatibility, Compatibility):
         compatibility = basis.compatibility(compatibility)

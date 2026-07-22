@@ -273,7 +273,7 @@ class FactorialBasis(PSBasis):
             Hence the set of polynomials `\{Q^{(k)}_t(n)\}_t` is again a factorial basis. This method 
             returns this new factorial basis for ``shift`` taking the value of `k`.
 
-            TODO: add tests
+            TODO (unassigned): add tests
         '''
         _, self_args = self.args_to_self()
         self_args.pop("as_2seq") # we remove the previous 2-dimensional sequence representation
@@ -466,7 +466,7 @@ class FactorialBasis(PSBasis):
         
 
     ##################################################################################
-    ### TODO: def increasing_polynomial(self, *args, **kwds)
+    ### TODO (unassigned): def increasing_polynomial(self, *args, **kwds)
 
 def RootSequenceBasis(rho: Sequence, lc: Sequence, 
                         universe = None, *, 
@@ -614,7 +614,7 @@ def PowerTypeBasis(a = 1, b = 0, universe = None, Dn: str = 'Dn'):
         * ``Dn``: the name for the operator representing the derivation by `n`. If not given, we will
           consider `Dn` as default.
         
-        TODO: add examples
+        TODO (unassigned): add examples
     '''
     output = FallingBasis(a, b, 0, universe, None)
     universe = output.base
@@ -1094,7 +1094,7 @@ def check_division_condition(basis: FactorialBasis, division : DivisionCondition
         this output: ``False`` guarantees that the compatibility is **not** for the action, however, ``True``
         provides a nice hint the result should be True, but it is not a complete proof.
 
-        TODO: add examples 
+        TODO (unassigned): add examples 
     '''
     if not isinstance(basis, FactorialBasis):
         raise TypeError(f"[check_division] The given basis must be factorial")
@@ -1319,7 +1319,7 @@ class ShuffledBasis(FactorialBasis):
             else:
                 logger.info(f"[ShuffledBasis] Compatibility with derivation {D=} could not be extended (not in all bases)")
 
-        ## TODO: Fill from here
+        ## TODO (unassigned): Fill from here
         ## 1. (DONE) Call the super method of Factorial Basis with the necessary information.
         ##    1.1. Test the creation of elements (fix tests of __init__)
         ## 2. Create the compatibility w.r.t. "n". In particular, extend "any" operators.
@@ -1414,7 +1414,7 @@ class ShuffledBasis(FactorialBasis):
 
             Number of factors of this :class:`ShuffledBasis`.
             
-            TODO: add examples
+            TODO (unassigned): add examples
         '''
         return len(self.factors)
     F = nfactors #: alias for the number of factors
@@ -1430,7 +1430,7 @@ class ShuffledBasis(FactorialBasis):
 
             Number of sections of this :class:`ShuffledBasis`.
             
-            TODO: add examples
+            TODO (unassigned): add examples
         '''
         return len(self.cycle)
     m = nsections #: alias for the number of sections in the cycle
@@ -1640,7 +1640,7 @@ class ShuffledBasis(FactorialBasis):
 
     #         WARNING: currently the compatibilities aer not extended to the increasing basis.
 
-    #         TODO: add examples
+    #         TODO (unassigned): add examples
     #     '''
     #     ## Checking the input "src"
     #     if(type(shift) in (tuple, list)):
@@ -1675,7 +1675,7 @@ class ShuffledBasis(FactorialBasis):
     #         In order to know if an operator is an *endomorphism* or a *derivation*, we check if we have extended already those 
     #         compatibilities. If we do not found them, we assume they are multiplication operators.
 
-    #         TODO: add examples
+    #         TODO (unassigned): add examples
     #     '''
     #     comp_type = self.compatibility_type(operator)
     #     if(comp_type == "der"):
