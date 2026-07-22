@@ -120,8 +120,7 @@ r'''
     This package has been developed on top of `SageMath`_ and depends on the following packages:
 
     * ``ore_algebra`` (:git:`mkauers/ore_algebra>`): developed by `M. Kauers <http://www.kauers.de/>`_ and `M. Mezzarobba <http://marc.mezzarobba.net/>`_.
-    * ``dd_functions`` (:git:`Antonio-JP/dd_functions`): developed by `A. Jiménez-Pastor <https://scholar.google.com/citations?user=1gq-jy4AAAAJ&hl=es>`_.
-
+    
     **Package under active development**
 
     This package is still under an active development and further features will be included in future version of the code. This means that several bugs may exist or appear. 
@@ -183,6 +182,12 @@ order = sage.misc.functional.order
 def pseries_bases_version():
     r'''
         Method to obtain the current version of the installed package :mod:`pseries_basis`.
+
+        EXAMPLES::
+
+            sage: from pseries_basis import pseries_bases_version
+            sage: pseries_bases_version()
+            '0.5.0'
     '''
     import pkg_resources
     return pkg_resources.get_distribution('pseries_basis').version
